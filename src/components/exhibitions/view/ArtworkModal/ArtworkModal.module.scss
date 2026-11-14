@@ -16,34 +16,26 @@
 // its right edge is the content's (the image's), 24px in on a phone, 40px from lg up. Scoped to the
 // overlay so it outranks the bare reset (same weight otherwise; load order would decide).
 // The room menu button's look and corner (RoomControls.module.scss): 44 px, 10 px corners.
+// The window's own ×, as every other window's (ui/Modal `.close`): no box, no shadow, no hover
+// fill (owner, 2026-11-14). Not the room's 44 px button look: this is a window over the room,
+// not a room control (owner, 2026-11-14). Fixed, so it stays in reach however far the work's page
+// scrolls (no Esc on a phone).
 .overlay .close {
   position: fixed;
-  top: calc(var(--space-5) + env(safe-area-inset-top));
-  right: calc(var(--space-5) + env(safe-area-inset-right));
+  top: calc(var(--space-3) + env(safe-area-inset-top));
+  right: calc(var(--space-3) + env(safe-area-inset-right));
   z-index: 999;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  background-color: $room-control-bg;
-  box-shadow: $room-control-shadow;
-  color: var(--color-dark-surface);
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: var(--color-text-primary);
   cursor: pointer;
-
-  @media #{$touch-room} {
-    top: calc(var(--space-2) + env(safe-area-inset-top));
-    right: calc(var(--space-2) + env(safe-area-inset-right));
-  }
-
-  &:focus-visible {
-    outline: none;
-    box-shadow:
-      $room-control-shadow,
-      0 0 0 2px var(--color-white),
-      0 0 0 4px var(--color-dark-surface);
-  }
 }
 
 // The artwork page's own column (PageLayout): as wide, the same side margins, so the grey box and

@@ -96,7 +96,7 @@ export const PrintsSelection = ({ selection }: Props) => {
 
       <div className={styles.results}>
         {visible.length === 0 ? (
-          <EmptyState message={emptyMessage} className={styles.emptyResults} />
+          <EmptyState message={emptyMessage} className={styles.emptyResults} squared />
         ) : (
           /* `fromPrints` and not the filtered list: the arrows on the artwork
              page walk the whole curated selection, so a work opened from a

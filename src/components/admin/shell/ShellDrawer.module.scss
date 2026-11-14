@@ -44,16 +44,10 @@
   justify-content: center;
   border-radius: var(--radius-md);
   color: var(--color-white);
-
-  &:hover {
-    background: var(--admin-nav-hover);
-  }
+  // No hover fill on a × (owner, 2026-11-14: "remove the hover circle in all x buttons").
 }
 
 .light .header .close {
   color: var(--color-black);
-
-  &:hover {
-    background: var(--color-gray-15);
-  }
+  // No hover fill on a × (owner, 2026-11-14: "remove the hover circle in all x buttons").
 }

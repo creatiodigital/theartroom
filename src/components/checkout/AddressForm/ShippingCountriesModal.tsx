@@ -120,9 +120,6 @@ export const ShippingCountriesModal = ({
           </div>
           <Button variant="bare" className={styles.close} onClick={onClose} aria-label="Close">
             <X size={18} weight="light" aria-hidden />
-            <span className={styles.closeWord} aria-hidden>
-              Close
-            </span>
           </Button>
         </div>
 

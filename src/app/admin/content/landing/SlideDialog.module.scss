@@ -48,7 +48,7 @@
   cursor: pointer;
 
   &:hover {
-    background: var(--color-gray-15);
+    // No hover fill on a × (owner, 2026-11-14: "remove the hover circle in all x buttons").
     color: var(--color-black);
   }
 }

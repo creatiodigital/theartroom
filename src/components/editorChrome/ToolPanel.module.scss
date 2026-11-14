@@ -87,10 +87,7 @@
   justify-content: center;
   border-radius: var(--radius-md);
   color: var(--color-text-primary);
-
-  &:hover {
-    background: var(--color-gray-20);
-  }
+  // No hover fill on a × (owner, 2026-11-14: "remove the hover circle in all x buttons").
 
   @media #{$touch-room} {
     width: 44px;

@@ -236,7 +236,6 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
           <Button
             variant="ghost"
             onClick={close}
-            label="Close"
             iconRight={<Icon name="close" size={16} />}
             className={styles.closeButton}
             aria-label="Close wizard"

@@ -351,11 +351,8 @@ export const LoginPage = () => {
       </div>
 
       {showForgotPassword && (
-        <Modal onClose={() => setShowForgotPassword(false)}>
-          <ForgotPasswordModal
-            onClose={() => setShowForgotPassword(false)}
-            onBack={() => setShowForgotPassword(false)}
-          />
+        <Modal onClose={() => setShowForgotPassword(false)} showClose>
+          <ForgotPasswordModal onBack={() => setShowForgotPassword(false)} />
         </Modal>
       )}
     </>

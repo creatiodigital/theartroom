@@ -34,7 +34,7 @@ export const ArtistsPage = ({ artists }: ArtistsPageProps) => {
     <PageLayout>
       <div className={styles.page}>
         {artists.length === 0 ? (
-          <EmptyState message="No artists found." />
+          <EmptyState message="No artists found." squared />
         ) : (
           <>
             <PageIntro

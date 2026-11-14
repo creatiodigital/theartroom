@@ -58,7 +58,7 @@
   font-weight: var(--font-regular);
   color: var(--color-dark-surface);
   background-color: $room-control-bg;
-  border-radius: 10px;
+  border-radius: 0;
   box-shadow: $room-control-shadow;
   cursor: pointer;
 
@@ -73,6 +73,12 @@
       0 0 0 2px var(--color-white),
       0 0 0 4px var(--color-dark-surface);
   }
+}
+
+// After a tap or a click, no ring, even when the focus comes back to the button in code (RoomMenu
+// keeps the last input on the wrapper; a phone shows such a focus as keyboard focus).
+.menuWrap[data-input='pointer'] .menuButton:focus-visible {
+  box-shadow: $room-control-shadow;
 }
 
 .menuWrap .menuButton {
@@ -123,7 +129,7 @@
   width: 244px;
   padding: 6px;
   background-color: var(--color-white);
-  border-radius: 14px;
+  border-radius: 0;
   box-shadow: $room-menu-shadow;
 
   @media #{$phone-room} {
@@ -144,7 +150,7 @@
   line-height: 1;
   color: var(--color-dark-surface);
   text-align: left;
-  border-radius: 9px;
+  border-radius: 0;
   cursor: pointer;
 
   svg {
@@ -181,7 +187,7 @@
   height: 20px;
   margin-left: auto;
   background-color: var(--color-toggle-off);
-  border-radius: 10px;
+  border-radius: 0;
   transition: background-color 0.15s ease;
 
   &::after {
@@ -192,7 +198,7 @@
     width: 14px;
     height: 14px;
     background-color: var(--color-white);
-    border-radius: 50%;
+    border-radius: 0;
     transition: transform 0.15s ease;
   }
 }
