@@ -18,6 +18,7 @@ import {
 } from '@phosphor-icons/react'
 
 import { isBakedSpace } from '@/lib/bake/bakedSpaces'
+import { RoomLanguageSwitch } from '@/components/exhibitions/RoomLanguageSwitch/RoomLanguageSwitch'
 import { Button } from '@/components/ui/Button'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { FURNITURE_PANEL_ENABLED } from '@/components/scene/spaces/objects/Bench/benchSettings'
@@ -333,7 +334,12 @@ export const Menu = () => {
           />
         )}
       </nav>
-      <EditingPill />
+      {/* AR-182: English | French under the pill, so the artist sees both languages on the walls
+          (only with a second language; even while visitors don't see the switch). */}
+      <div className={styles.topLeft} data-panel-overlay>
+        <EditingPill />
+        <RoomLanguageSwitch tone="editor" />
+      </div>
     </>
   )
 }
