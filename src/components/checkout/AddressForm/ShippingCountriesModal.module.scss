@@ -188,26 +188,17 @@
   }
 }
 
-// × Close, as the Learn more window; the × only on phones.
+// The × alone, top right, as every window (owner, 2026-11-14: the word "Close" is redundant).
 .window .close {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 8px;
   padding: 4px 0;
-  font-family: var(--font-sans), var(--font-sans-fallback);
-  font-size: 14px;
   color: var(--public-text);
   cursor: pointer;
 
   &:focus-visible {
     outline: 2px solid var(--public-text);
     outline-offset: 3px;
-  }
-}
-
-.closeWord {
-  @include media-down(sm) {
-    display: none;
   }
 }

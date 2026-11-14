@@ -42,6 +42,12 @@
   display: grid;
   aspect-ratio: 1 / 1;
   min-width: 0;
+
+  // Phones: the tallest print's shape, never taller than the square (HomePrints.tsx
+  // `phoneStageAspect`), so a landscape print has no wide band of grey above and below.
+  @include media-down(md) {
+    aspect-ratio: var(--phone-stage-aspect);
+  }
 }
 
 .slide {

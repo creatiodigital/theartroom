@@ -27,6 +27,9 @@ type ConfirmModalProps = {
   /** 'wide' fits form-sized content: broader panel, message area scrolls
    *  internally (title + actions stay pinned). Default fits short confirms. */
   size?: 'regular' | 'wide'
+  /** 'public' on the client side (the cart, the print wizard): a square window and square
+   *  buttons, as every client control (owner, 2026-11-14). The dashboard keeps the default. */
+  tone?: 'default' | 'public'
   onConfirm: () => void
   onCancel: () => void
 }
@@ -41,17 +44,20 @@ export const ConfirmModal = ({
   busy = false,
   hideConfirm = false,
   size = 'regular',
+  tone = 'default',
   onConfirm,
   onCancel,
 }: ConfirmModalProps) => {
   const titleId = useId()
   const wide = size === 'wide'
+  const buttonSize = tone === 'public' ? 'regularSquared' : undefined
 
   return (
     <Modal
       onClose={busy ? () => {} : onCancel}
       titleId={titleId}
       maxWidth={wide ? 'min(760px, 90vw)' : undefined}
+      tone={tone}
     >
       <div className={wide ? styles.bodyWide : styles.body}>
         <h2 id={titleId} className={styles.title}>
@@ -65,6 +71,7 @@ export const ConfirmModal = ({
           <Button
             font="dashboard"
             variant="secondary"
+            size={buttonSize}
             label={cancelLabel}
             onClick={onCancel}
             disabled={busy}
@@ -72,6 +79,7 @@ export const ConfirmModal = ({
           {!hideConfirm && (
             <Button
               font="dashboard"
+              size={buttonSize}
               variant={destructive ? 'danger' : 'primary'}
               label={busy ? 'Working…' : confirmLabel}
               onClick={onConfirm}

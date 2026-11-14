@@ -12,14 +12,14 @@ import { email } from '@/lib/validation'
 
 import styles from './ForgotPasswordModal.module.scss'
 
+// Closed by its window's corner × (the `Modal` around it), not from inside.
 type ForgotPasswordModalProps = {
-  onClose: () => void
   onBack: () => void
 }
 
 const forgotValidators = { email: email() }
 
-export const ForgotPasswordModal = ({ onClose, onBack }: ForgotPasswordModalProps) => {
+export const ForgotPasswordModal = ({ onBack }: ForgotPasswordModalProps) => {
   const [emailField, setEmailField] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -67,9 +67,7 @@ export const ForgotPasswordModal = ({ onClose, onBack }: ForgotPasswordModalProp
         <Text as="p" className={styles.hint}>
           Don&apos;t see it? Check your spam folder.
         </Text>
-        <div className={styles.actions}>
-          <Button size="small" label="Close" onClick={onClose} />
-        </div>
+        {/* No Close button: the corner × closes it (owner, 2026-11-14). */}
       </div>
     )
   }

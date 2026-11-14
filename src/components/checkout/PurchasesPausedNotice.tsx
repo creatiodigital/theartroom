@@ -17,7 +17,7 @@ type Props = {
 export const PurchasesPausedNotice = ({ title }: Props) => (
   <PageLayout>
     <PageHeader pageTitle={title} />
-    <EmptyState message="Purchases are temporarily paused — please check back soon." />
+    <EmptyState message="Purchases are temporarily paused — please check back soon." squared />
     <Button variant="secondary" size="bigSquared" href="/" label="Back to the gallery" />
   </PageLayout>
 )

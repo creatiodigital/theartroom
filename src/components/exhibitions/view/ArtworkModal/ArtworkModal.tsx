@@ -100,8 +100,8 @@ export const ArtworkModal = ({ presentation }: ArtworkModalProps) => {
       // inside it scroll independently instead of the scene swallowing the scroll.
       data-panel-overlay
     >
-      {/* other-screens.md "Artwork details in the 3D room": a close × in the room menu button's
-          place and look (44 px, 10 px corners). */}
+      {/* The window's own × top right, as every window (owner, 2026-11-14), not the room
+          menu button's look (other-screens.md had it so). */}
       <Button
         variant="bare"
         className={styles.close}

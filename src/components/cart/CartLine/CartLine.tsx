@@ -117,6 +117,7 @@ export const CartLine = ({ item }: CartLineProps) => {
 
       {confirmingRemove && (
         <ConfirmModal
+          tone="public"
           title="Remove print?"
           message={`Remove “${item.title}” from your cart?`}
           confirmLabel="Remove"

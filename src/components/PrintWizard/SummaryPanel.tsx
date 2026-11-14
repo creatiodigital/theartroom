@@ -243,6 +243,7 @@ export const SummaryPanel = ({
 
       {confirmDupOpen && (
         <ConfirmModal
+          tone="public"
           title="Already in your cart"
           message="You already have this exact print in your cart. Add it again and we’ll just increase that item’s quantity."
           confirmLabel="Add anyway"
