@@ -134,6 +134,7 @@ test.describe('Edit artwork: the re-read on return (Q139 a, Q153)', () => {
       'technique',
       'description',
       'textContent',
+      'textContentSecond',
       'featured',
       'imageUrl',
     ])

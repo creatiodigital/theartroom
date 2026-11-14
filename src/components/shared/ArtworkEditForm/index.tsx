@@ -38,6 +38,7 @@ import { EditorPanel } from './EditorPanel'
 import { LockNote } from './LockNote'
 import { OptionChips } from './OptionChips'
 import { SectionNav } from './SectionNav'
+import { SecondTextField } from './SecondTextField'
 import {
   ARTWORK_EDIT_FORM_ID,
   ARTWORK_SECTION,
@@ -95,6 +96,13 @@ export type Artwork = {
   originalImageUrl: string | null
   originalDpi: number | null
   textContent: string | null
+  /** AR-182: a text's second version (no language of its own). */
+  textContentSecond?: string | null
+  /**
+   * AR-182 (privileged GET, texts only): the exhibitions whose 3D room shows this text and offer a
+   * second language, for the Second language field's line.
+   */
+  secondLanguageRooms?: { id: string; title: string; language: string }[]
   soundUrl: string | null
   featured: boolean
   hiddenFromExhibition: boolean
@@ -141,6 +149,8 @@ export type ArtworkFormData = {
   dimensions: string
   description: string
   textContent: string
+  /** AR-182: the text's second version ('' = none: the English text shows). */
+  textContentSecond: string
   featured: boolean
   hiddenFromExhibition: boolean
   printEnabled: boolean
@@ -187,6 +197,7 @@ export const getInitialFormData = (): ArtworkFormData => ({
   dimensions: '',
   description: '',
   textContent: '',
+  textContentSecond: '',
   featured: false,
   hiddenFromExhibition: false,
   printEnabled: false,
@@ -213,6 +224,7 @@ export const populateFormData = (data: Artwork): ArtworkFormData => ({
   dimensions: data.dimensions || '',
   description: data.description || '',
   textContent: stripHtml(data.textContent || ''),
+  textContentSecond: data.textContentSecond || '',
   featured: data.featured ?? false,
   hiddenFromExhibition: data.hiddenFromExhibition ?? false,
   printEnabled: data.printEnabled ?? false,
@@ -255,6 +267,8 @@ type ArtworkEditFormProps = {
   saving: boolean
   error: string
   onFormChange: (field: string, value: ArtworkFormValue) => void
+  /** AR-182: the loaded artwork's `secondLanguageRooms` (texts only). */
+  secondLanguageRooms?: { id: string; title: string; language: string }[]
   /** The artist's own exhibitions, for the Exhibitions checkbox section. Renders
    *  only when this is supplied — the wall-view ArtworkEditModal is already
    *  inside one exhibition and has no use for a cross-exhibition picker. Each
@@ -488,6 +502,7 @@ export const ArtworkEditForm = ({
   saving,
   error,
   onFormChange,
+  secondLanguageRooms,
   onPrintOptionsChange,
   onPrintRecommendationsChange,
   onEditionTypeChange,
@@ -1510,6 +1525,15 @@ export const ArtworkEditForm = ({
                   Text styling (font, weight, size) is limited in 3D and can be adjusted in the wall
                   panel.
                 </p>
+                {/* AR-182: its second version, where an exhibition shows it with a second language
+                    (or once it has one). Never names the language (owner, 2026-11-14). */}
+                {(secondLanguageRooms?.length || formData.textContentSecond) && (
+                  <SecondTextField
+                    value={formData.textContentSecond}
+                    onChange={(value) => onFormChange('textContentSecond', value)}
+                    rooms={secondLanguageRooms ?? []}
+                  />
+                )}
               </EditorPanel>
             )}
 

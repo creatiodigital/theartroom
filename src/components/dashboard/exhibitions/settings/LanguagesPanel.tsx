@@ -24,7 +24,6 @@ type PlacedRow = {
     artworkType?: string
     hiddenFromExhibition?: boolean
     textContentSecond?: string | null
-    textContentSecondLang?: string | null
   }
 }
 
@@ -50,8 +49,8 @@ const countLine = (translated: number, english: number, language: SecondLanguage
  * Exhibition settings › Languages (AR-182, docs/wall-languages; designs/wall-languages-editor
  * §1): English always, one optional second language for the texts inside the 3D space, and the
  * visitor switch (off by default, so texts can be translated over days unseen). Everything
- * saves at once and the room reads it live: no publish needed. Changing or removing the
- * language keeps every translation (hidden until that language is chosen again).
+ * saves at once and the room reads it live: no publish needed. A text's second version doesn't
+ * record a language, so changing or removing the language keeps every one.
  */
 export function LanguagesPanel({ exhibitionId, initial, roomHref }: LanguagesPanelProps) {
   const [settings, setSettings] = useState<LanguageSettings>(initial)
@@ -82,11 +81,7 @@ export function LanguagesPanel({ exhibitionId, initial, roomHref }: LanguagesPan
     const texts = rows.filter(
       (row) => row.artwork?.artworkType === 'text' && !row.artwork.hiddenFromExhibition,
     )
-    const translated = texts.filter(
-      (row) =>
-        row.artwork?.textContentSecondLang === language.code &&
-        !!row.artwork.textContentSecond?.trim(),
-    ).length
+    const translated = texts.filter((row) => !!row.artwork?.textContentSecond?.trim()).length
     return { total: texts.length, translated, english: texts.length - translated }
   }, [rows, language])
 
@@ -245,8 +240,9 @@ export function LanguagesPanel({ exhibitionId, initial, roomHref }: LanguagesPan
           }
           message={
             <>
-              The {language.name} versions of your texts are kept, hidden. Choose {language.name}{' '}
-              again to show them.
+              {confirmingLanguage
+                ? `Every text keeps its second version, now shown as ${confirmingLanguage.name}: check that they are in ${confirmingLanguage.name}.`
+                : 'Every text keeps its second version, unseen until a second language is chosen again.'}
               {settings.secondLanguageVisible &&
                 ' The language switch is hidden from visitors until you show it again.'}
             </>

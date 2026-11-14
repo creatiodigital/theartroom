@@ -2,12 +2,14 @@
  * AR-182: a second language for the texts inside an exhibition's 3D room (docs/wall-languages).
  *
  * English is always the main language. An exhibition may offer ONE second language, for the room's
- * text artworks only; nothing else on the site is translated. A text with no version in the
- * room's language shows its English text, so the room is never half empty.
+ * text artworks only; nothing else on the site is translated. A text artwork has one optional
+ * second version, which doesn't record a language (owner, 2026-11-14): it is shown in whatever
+ * second language the exhibition offers. A text without one shows its English text, so the room
+ * is never half empty.
  */
 
 export type SecondLanguage = {
-  /** The stored code (`Exhibition.secondLanguage`, `Artwork.textContentSecondLang`). */
+  /** The stored code (`Exhibition.secondLanguage`). */
   code: string
   /**
    * The name, in English everywhere it is shown: the dashboard's list, the room's switch
@@ -37,23 +39,29 @@ export const secondLanguageOf = (code: string | null | undefined): SecondLanguag
 export type RoomTextFields = {
   textContent?: string | null
   textContentSecond?: string | null
-  textContentSecondLang?: string | null
 }
 
 /**
  * The text a text artwork shows in the room. `roomLanguage` is the second language being shown,
- * null for English. A version written for another language (the exhibition's language changed
- * since) stays hidden; an empty one means "same in both languages". Either way: English.
+ * null for English. In the second language: its second version, or its English text when it has
+ * none (an empty one means "same in both languages").
  */
 export const roomTextOf = (
   artwork: RoomTextFields,
   roomLanguage: string | null,
 ): string | undefined => {
   const second = artwork.textContentSecond
-  if (roomLanguage && artwork.textContentSecondLang === roomLanguage && second?.trim()) {
-    return second
-  }
+  if (roomLanguage && second?.trim()) return second
   return artwork.textContent ?? undefined
+}
+
+/**
+ * The stored second version an editor sent (the wall save, the text page): an absent one leaves it
+ * as it is; an empty one ("same in both languages") stores none.
+ */
+export const secondTextFields = (text: unknown): { textContentSecond?: string | null } => {
+  if (text === undefined) return {}
+  return { textContentSecond: typeof text === 'string' && text.trim() ? text : null }
 }
 
 /** The visitor's choice for this visit (the room menu's switch), per exhibition. */

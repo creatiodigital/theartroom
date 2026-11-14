@@ -66,7 +66,6 @@ export const buildArtworksBatch = ({
         // whose second text was never loaded here can never lose it.
         ...(artwork.textContentSecond !== undefined && {
           textContentSecond: artwork.textContentSecond,
-          textContentSecondLang: artwork.textContentSecondLang ?? null,
         }),
         featured: artwork.featured ?? false,
         hiddenFromExhibition: artwork.hiddenFromExhibition ?? false,

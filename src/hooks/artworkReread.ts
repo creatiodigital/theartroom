@@ -15,7 +15,7 @@ import type { TArtwork } from '@/types/artwork'
  *
  * The wall's Save writes each work's details from the editor's own copy, so a copy older than a
  * studio save would put the old values back. When the editor's tab is in front again, each such
- * work is read (GET only, nothing is ever sent) and compared on the nine fields the wall view's
+ * work is read (GET only, nothing is ever sent) and compared on the fields the wall view's
  * overlay mirrors after its own save. A difference is applied, unless a wall is open with unsaved
  * changes: then it is held, the left panel says so, and it is applied once the wall is saved or
  * discarded. The wall's save itself first takes the studio's values for every field but a text
@@ -31,6 +31,8 @@ export const REREAD_FIELDS = [
   { property: 'technique', server: 'technique' },
   { property: 'description', server: 'description' },
   { property: 'textContent', server: 'textContent' },
+  // AR-182: the text's second version, a wall field as the text is.
+  { property: 'textContentSecond', server: 'textContentSecond' },
   { property: 'featured', server: 'featured' },
   { property: 'imageUrl', server: 'imageUrl' },
 ] as const
@@ -39,10 +41,15 @@ type RereadProperty = (typeof REREAD_FIELDS)[number]['property']
 export type ServerArtwork = Partial<Record<(typeof REREAD_FIELDS)[number]['server'], unknown>>
 export type RereadPatch = Partial<Pick<TArtwork, RereadProperty>>
 
-/** The one field a wall Save keeps from the wall's copy: a text item's text, which the wall edits (Q157). */
-const WALL_FIELD = 'textContent'
-/** The studio's values a wall Save sends: every field but that one. */
-export type StudioValues = Partial<Pick<TArtwork, Exclude<RereadProperty, typeof WALL_FIELD>>>
+/**
+ * The fields a wall Save keeps from the wall's copy: a text item's words, which the wall edits
+ * (Q157), in English and (AR-182) its second version.
+ */
+const WALL_FIELDS = ['textContent', 'textContentSecond'] as const
+type WallField = (typeof WALL_FIELDS)[number]
+const isWallField = (property: string) => (WALL_FIELDS as readonly string[]).includes(property)
+/** The studio's values a wall Save sends: every field but those. */
+export type StudioValues = Partial<Pick<TArtwork, Exclude<RereadProperty, WallField>>>
 
 // As the page load stores them (lib/exhibitionArtworkMapper.ts mapToArtwork): text `|| undefined`,
 // featured `?? false`.
@@ -72,7 +79,7 @@ export const artworkDetailsPatch = (
 export const studioValuesOf = (server: ServerArtwork): StudioValues => {
   const values: Record<string, unknown> = {}
   for (const { property, server: field } of REREAD_FIELDS) {
-    if (property !== WALL_FIELD) values[property] = storedValue(property, server[field])
+    if (!isWallField(property)) values[property] = storedValue(property, server[field])
   }
   return values as StudioValues
 }
@@ -143,7 +150,7 @@ export const rereadOpenedWorks = async (
     if (!(state.wallView.isWallView && selectWallUnsaved(state))) {
       rereadActions(artworkId, patch).forEach((action) => store.dispatch(action))
       held.delete(artworkId)
-    } else if (Object.keys(patch).some((property) => property !== WALL_FIELD)) {
+    } else if (Object.keys(patch).some((property) => !isWallField(property))) {
       held.add(artworkId)
     } else {
       // Held only for what a wall Save loads (Q157): a text alone keeps the wall's copy, and is

@@ -895,6 +895,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         soundUrl={soundUrl}
         videoUrl={videoUrl}
         exhibitions={exhibitions}
+        secondLanguageRooms={artwork?.secondLanguageRooms}
         uploading={soundUploading || videoUploading}
         loadingText={videoUploading ? 'Uploading video…' : 'Uploading sound…'}
         saving={saving}

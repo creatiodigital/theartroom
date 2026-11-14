@@ -13,6 +13,7 @@ import type { PrintRecommendations, PrintRestrictions } from '@/lib/print-provid
 import { Prisma } from '@/generated/prisma'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
+import { secondLanguageOf, secondTextFields } from '@/lib/roomLanguage'
 import { generateUniqueSlug } from '@/lib/slugify'
 import { sanitizeLine } from '@/utils/sanitizeLine'
 
@@ -197,8 +198,40 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
       select: { exhibitionId: true, sectionId: true },
     })
 
+    // AR-182: the exhibitions whose 3D room shows this text and offers a second language, for the
+    // text page's Second language field (where it shows; which language a new version is in).
+    const secondLanguageRooms =
+      artwork.artworkType === 'text'
+        ? [
+            ...new Map(
+              (
+                await prisma.exhibitionArtwork.findMany({
+                  where: {
+                    artworkId: id,
+                    wallId: { not: null },
+                    exhibition: { secondLanguage: { not: null } },
+                  },
+                  select: {
+                    exhibition: { select: { id: true, mainTitle: true, secondLanguage: true } },
+                  },
+                })
+              )
+                .filter((row) => secondLanguageOf(row.exhibition.secondLanguage))
+                .map(({ exhibition }) => [
+                  exhibition.id,
+                  {
+                    id: exhibition.id,
+                    title: exhibition.mainTitle,
+                    language: exhibition.secondLanguage as string,
+                  },
+                ]),
+            ).values(),
+          ]
+        : []
+
     return NextResponse.json({
       ...artwork,
+      secondLanguageRooms,
       exhibitionIds: memberOf.map((m) => m.exhibitionId),
       // The section each show places this work in (null = no section), so the
       // Exhibitions picker pre-selects instead of resetting on every save.
@@ -339,6 +372,8 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       dimensions: body.dimensions,
       description: body.description,
       textContent: body.textContent,
+      // AR-182: the second-language version (only when sent; empty = same in both languages).
+      ...secondTextFields(body.textContentSecond),
       featured: body.featured === true || body.featured === 'true',
       printEnabled: body.printEnabled === true || body.printEnabled === 'true',
       printPriceCents,

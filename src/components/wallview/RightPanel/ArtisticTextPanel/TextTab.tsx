@@ -92,17 +92,8 @@ export function TextTab({ active }: TextTabProps) {
   if (!currentArtworkId || !artwork) return null
 
   const english = artwork.textContent ?? ''
-  // The version for this exhibition's language; one written for another stays as it is, unseen.
-  const second =
-    language && artwork.textContentSecondLang === language.code
-      ? (artwork.textContentSecond ?? '')
-      : ''
-  const otherLanguage =
-    language &&
-    !!artwork.textContentSecond?.trim() &&
-    artwork.textContentSecondLang !== language.code
-      ? secondLanguageOf(artwork.textContentSecondLang)
-      : null
+  // Its second version: it doesn't record a language; the exhibition's second language shows it.
+  const second = artwork.textContentSecond ?? ''
 
   const style: WallTextStyle = {
     fontSize: fontSize?.value ?? 16,
@@ -129,13 +120,6 @@ export function TextTab({ active }: TextTabProps) {
     if (!language) return
     // '' (not undefined): the wall save sends it, so a cleared version is cleared.
     dispatch(editArtisticText({ currentArtworkId, property: 'textContentSecond', value }))
-    dispatch(
-      editArtisticText({
-        currentArtworkId,
-        property: 'textContentSecondLang',
-        value: language.code,
-      }),
-    )
   }
 
   // Taller: the longer text fits, the box's top edge stays where it is.
@@ -242,15 +226,15 @@ export function TextTab({ active }: TextTabProps) {
 
         {language ? (
           <div className={tab.field}>
+            {/* "Second language", never the language's name (owner, 2026-11-14). */}
             <label htmlFor={secondId} className={tab.label}>
-              {language.name}
+              Second language
             </label>
             <p id={`${secondId}-help`} className={styles.note}>
               Optional. Leave empty to show the English text.
             </p>
             <textarea
               id={secondId}
-              lang={language.code}
               className={tab.textarea}
               rows={6}
               value={second}
@@ -258,13 +242,7 @@ export function TextTab({ active }: TextTabProps) {
               onChange={(event) => setSecond(event.target.value)}
               onFocus={() => dispatch(setRoomLanguage(language.code))}
             />
-            {otherLanguage && (
-              <p className={styles.note}>
-                This text also has a {otherLanguage.name} version, kept but not shown here. Writing
-                a {language.name} version replaces it.
-              </p>
-            )}
-            {fitLine(secondFit, second, language.name)}
+            {fitLine(secondFit, second, 'second-language')}
           </div>
         ) : (
           <p className={styles.note}>

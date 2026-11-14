@@ -55,7 +55,6 @@ export async function freezeExhibition(exhibitionId: string) {
               artworkType: true,
               textContent: true,
               textContentSecond: true,
-              textContentSecondLang: true,
               hiddenFromExhibition: true,
             },
           },

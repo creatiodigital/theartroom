@@ -36,7 +36,6 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
   const {
     textContent,
     textContentSecond,
-    textContentSecondLang,
     textAlign,
     textVerticalAlign,
     textColor,
@@ -61,10 +60,7 @@ const ArtisticText = ({ artworkId }: ArtisticTextProps) => {
     textBorderOffset,
   } = artisticText
 
-  const shownText = roomTextOf(
-    { textContent, textContentSecond, textContentSecondLang },
-    roomLanguage,
-  )
+  const shownText = roomTextOf({ textContent, textContentSecond }, roomLanguage)
 
   const verticalAlignMap: Record<'top' | 'center' | 'bottom', string> = {
     top: 'flex-start',

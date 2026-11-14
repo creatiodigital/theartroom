@@ -1,7 +1,13 @@
 import { test, expect } from '@playwright/test'
 
 import { canEditExhibition } from '../src/lib/exhibitionEditors'
-import { ENGLISH, roomLanguageOnEntry, roomTextOf, secondLanguageOf } from '../src/lib/roomLanguage'
+import {
+  ENGLISH,
+  roomLanguageOnEntry,
+  roomTextOf,
+  secondLanguageOf,
+  secondTextFields,
+} from '../src/lib/roomLanguage'
 
 // AR-182 (docs/wall-languages): which words a text artwork shows in the room, and which language
 // the room opens in. Pure functions, exercised directly.
@@ -9,7 +15,6 @@ import { ENGLISH, roomLanguageOnEntry, roomTextOf, secondLanguageOf } from '../s
 const text = {
   textContent: 'The garden in winter',
   textContentSecond: 'Le jardin en hiver',
-  textContentSecondLang: 'fr',
 }
 
 test.describe('roomTextOf', () => {
@@ -17,21 +22,27 @@ test.describe('roomTextOf', () => {
     expect(roomTextOf(text, null)).toBe('The garden in winter')
   })
 
-  test('French room: the French version', () => {
+  test('second-language room: the second version, whatever the language', () => {
     expect(roomTextOf(text, 'fr')).toBe('Le jardin en hiver')
+    // The version doesn't record a language: it shows in the exhibition's second language.
+    expect(roomTextOf(text, 'es')).toBe('Le jardin en hiver')
   })
 
-  test('no version: English (a name or a date is the same in both)', () => {
+  test('no second version: English (a name or a date is the same in both)', () => {
     expect(roomTextOf({ textContent: 'Anna Berg', textContentSecond: null }, 'fr')).toBe(
       'Anna Berg',
     )
     expect(roomTextOf({ ...text, textContentSecond: '   ' }, 'fr')).toBe('The garden in winter')
   })
+})
 
-  test('a version written for another language stays hidden', () => {
-    // The exhibition's language changed from French to Spanish: the French texts are kept, unseen.
-    expect(roomTextOf(text, 'es')).toBe('The garden in winter')
-    expect(roomTextOf({ ...text, textContentSecondLang: null }, 'fr')).toBe('The garden in winter')
+test.describe('secondTextFields', () => {
+  test('absent: left as it is; empty: none; else stored as written', () => {
+    expect(secondTextFields(undefined)).toEqual({})
+    expect(secondTextFields('')).toEqual({ textContentSecond: null })
+    expect(secondTextFields('  ')).toEqual({ textContentSecond: null })
+    expect(secondTextFields(null)).toEqual({ textContentSecond: null })
+    expect(secondTextFields('Le jardin')).toEqual({ textContentSecond: 'Le jardin' })
   })
 })
 
