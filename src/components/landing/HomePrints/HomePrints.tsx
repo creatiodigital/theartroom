@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import c from 'classnames'
 
 import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
@@ -14,6 +14,24 @@ import styles from './HomePrints.module.scss'
 const ROTATE_MS = 6000
 
 const workTitle = (slide: HomePrintSlide) => slide.title || slide.name
+
+/** Each slide's margin, as a share of the stage's width (`.slide { margin: 6% }`). */
+const SLIDE_MARGIN = 0.06
+
+/** The print as shown, width over height: cropped to the piece where the render marks it. */
+const shownAspect = ({ presentation: view }: HomePrintSlide) =>
+  view.piece ? (view.aspect * view.piece.w) / view.piece.h : view.aspect
+
+/**
+ * The phone stage's shape, width over height (owner, 2026-11-14: less empty grey above and below
+ * the print). The tallest print in the rotation fills the height inside the slide's margin, so a
+ * list of landscape prints gets a shorter stage; never taller than the square every other screen
+ * keeps, so a portrait print is no smaller than before.
+ */
+const phoneStageAspect = (slides: HomePrintSlide[]) => {
+  const tallest = Math.min(...slides.map(shownAspect))
+  return Math.max(1, 1 / ((1 - 2 * SLIDE_MARGIN) / tallest + 2 * SLIDE_MARGIN))
+}
 
 /**
  * The homepage's Fine-art prints (docs/public-redesign/home.md §5): on the render wall's grey, a
@@ -71,7 +89,10 @@ export const HomePrints = ({ slides }: { slides: HomePrintSlide[] }) => {
       onBlur={hold(false)}
     >
       <div className={styles.inner}>
-        <div className={styles.stage}>
+        <div
+          className={styles.stage}
+          style={{ '--phone-stage-aspect': phoneStageAspect(slides) } as CSSProperties}
+        >
           {slides.map((slide, i) => {
             const title = workTitle(slide)
             return (
@@ -134,9 +155,8 @@ export const HomePrints = ({ slides }: { slides: HomePrintSlide[] }) => {
                   <i>{workTitle(slide)}</i>
                   {slide.year ? `, ${slide.year}` : ''}
                 </span>
-                <span className={styles.artist}>
-                  {slide.artistName} · available as a signed print
-                </span>
+                {/* The artist alone: no edition wording here (owner, 2026-11-14). */}
+                <span className={styles.artist}>{slide.artistName}</span>
               </div>
             ))}
           </div>

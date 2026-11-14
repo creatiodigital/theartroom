@@ -179,8 +179,8 @@ export type HomePrintSlide = Pick<
 
 /**
  * What the homepage rotates: the Home page prints list, in its order, keeping only works that are
- * available to buy right now (the caption says "available as a signed print", so a sold-out
- * edition is left out here, unlike /prints) and that have a print presentation render (home.md
+ * available to buy right now (the section sells them, so a sold-out edition is left out here,
+ * unlike /prints: questions.md Q-P22) and that have a print presentation render (home.md
  * §5: skipped until rendered). FAILS QUIET: no list, no section.
  */
 export async function getHomePrints(): Promise<HomePrintSlide[]> {
