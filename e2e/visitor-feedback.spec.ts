@@ -135,6 +135,7 @@ test('home: the band opens the window, and a message ends on the thank-you', asy
   await expect
     .poll(() => prisma.feedback.count({ where: { message: { contains: `${MARKER} the rooms` } } }))
     .toBe(1)
-  await thanks.getByRole('button', { name: 'Close', exact: true }).last().click()
+  // The corner × alone: no Close button under the thanks (owner, 2026-11-14).
+  await thanks.getByRole('button', { name: 'Close', exact: true }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
 })

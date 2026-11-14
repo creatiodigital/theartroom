@@ -100,8 +100,7 @@ export const FeedbackWindow = ({ source, exhibitionId, onClose }: FeedbackWindow
             Thank you
           </h2>
           <p className={styles.sub}>Your note goes straight to the gallery. We read every one.</p>
-          {/* The black primary, as Send feedback (owner, 2026-11-12); the corner × stays. */}
-          <Button variant="primary" size="bigSquared" fullWidth label="Close" onClick={onClose} />
+          {/* No Close button: the corner × alone closes every window (owner, 2026-11-14). */}
         </div>
       ) : (
         <form className={styles.form} onSubmit={handleSubmit} noValidate>

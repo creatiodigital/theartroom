@@ -87,6 +87,28 @@ export const RoomMenu = ({
     setOpen(false)
   }
 
+  // What was used last: a key, or a finger or the mouse, kept on the wrapper (`data-input`). The
+  // focus comes back to the button in code (this menu's close; About and Feedback on theirs), and a
+  // phone shows a focus moved in code as keyboard focus: after a tap the button wore the keyboard
+  // ring (owner, 2026-11-14). The ring is for keyboards, so it shows only after a key.
+  useEffect(() => {
+    const wrap = wrapRef.current
+    if (!wrap) return
+    const onKey = () => {
+      wrap.dataset.input = 'keyboard'
+    }
+    const onPointer = () => {
+      wrap.dataset.input = 'pointer'
+    }
+    // Capture: before the room or the menu stops a key on its way.
+    document.addEventListener('keydown', onKey, true)
+    document.addEventListener('pointerdown', onPointer, true)
+    return () => {
+      document.removeEventListener('keydown', onKey, true)
+      document.removeEventListener('pointerdown', onPointer, true)
+    }
+  }, [])
+
   // Focus goes to the first item on open.
   useLayoutEffect(() => {
     if (open) focusItem(items()[0])

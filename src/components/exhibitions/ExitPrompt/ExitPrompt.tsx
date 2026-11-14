@@ -41,7 +41,7 @@ export const ExitPrompt = ({ open, restartsAtEntrance, onLeave, onCancel }: Exit
   if (!open) return null
 
   return (
-    <Modal onClose={onCancel} titleId={titleId}>
+    <Modal onClose={onCancel} titleId={titleId} tone="public">
       <div className={styles.body}>
         <Monogram className={styles.monogram} aria-hidden />
 

@@ -20,7 +20,8 @@ interface FeaturedArtistsProps {
 
 /**
  * The homepage's Featured artists (docs/public-redesign/home.md §6): today's featured artists as
- * portrait photos (4:5, cropped from the sides; owner, 2026-11-12), four in a row (two on phones),
+ * portrait photos (4:5, cropped from the sides; owner, 2026-11-12), four in a row; on phones one
+ * per row, landscape (4:3; owner, 2026-11-14),
  * the name in serif only, each a link to the artist's page; "All artists" on the heading row.
  */
 export const FeaturedArtists = ({ artists }: FeaturedArtistsProps) => {

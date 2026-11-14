@@ -57,7 +57,7 @@
   }
 
   // Stacked layout (mobile/tablet): the panels below inset content by
-  // space-5, and the ghost CLOSE button carries space-4 of its own side
+  // space-5, and the ghost close button (×) carries space-4 of its own side
   // padding. Trim the header's right padding so the button's visible edge
   // lands on the panels' right content edge (keeps the tap area intact).
   // Declared after media-up(md) so it wins in the 768–1040px overlap.
@@ -67,6 +67,10 @@
 }
 
 .headerActions {
+  // Always the right-hand column (order-flow.md: "cart and Close on the right"). Placed by hand:
+  // below md the title is `display: none`, out of the grid, and the actions fell into its 1fr
+  // column, right after the wordmark.
+  grid-column: 3;
   display: flex;
   align-items: center;
   gap: var(--space-5);
@@ -84,18 +88,14 @@
   overflow: visible;
 }
 
+// The × alone (owner, 2026-11-14: the word "Close" is redundant on every window).
 .closeButton {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
   background: none;
   border: none;
   cursor: pointer;
-  font-family: var(--font-sans);
-  font-size: var(--text-xs);
-  letter-spacing: 0.12em;
   color: var(--color-text-primary);
-  text-transform: uppercase;
 }
 
 .closeIcon {
@@ -167,7 +167,7 @@
 .tooltipHeaderImage {
   width: 100%;
   margin: 0 0 var(--space-3);
-  border-radius: 4px;
+  border-radius: 0;
   overflow: hidden;
   background: var(--color-gray-15);
   line-height: 0;
@@ -536,7 +536,7 @@
   -webkit-appearance: none;
   appearance: none;
   background: var(--color-border-strong);
-  border-radius: 2px;
+  border-radius: 0;
   outline: none;
   cursor: pointer;
 
@@ -547,7 +547,7 @@
     height: 14px;
     background: var(--color-white);
     border: 1px solid var(--color-text-secondary);
-    border-radius: 50%;
+    border-radius: 0;
     cursor: pointer;
   }
 
@@ -556,7 +556,7 @@
     height: 14px;
     background: var(--color-white);
     border: 1px solid var(--color-text-secondary);
-    border-radius: 50%;
+    border-radius: 0;
     cursor: pointer;
   }
 

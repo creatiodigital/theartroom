@@ -7,6 +7,15 @@
 // 2026-11-13; was a bottom sheet touching the edges). It starts under the menu button (44 px, 8 px
 // from the top on touch, 20 px otherwise), so the button stays in reach: pressing it closes every
 // open window (owner, 2026-11-13).
+// Outside the panel (owner, 2026-11-14: "close if I click outside it, as all the others do"): clear,
+// over the room and under the room's buttons, so the menu button above it still answers.
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: $room-button-z - 1;
+  touch-action: none;
+}
+
 .panel {
   position: fixed;
   top: calc(20px + env(safe-area-inset-top));
@@ -17,7 +26,7 @@
   flex-direction: column;
   width: 400px;
   max-width: calc(100vw - 40px);
-  border-radius: 14px;
+  border-radius: 0;
   background: var(--color-white);
   box-shadow:
     0 12px 36px rgba(0, 0, 0, 0.18),
@@ -33,7 +42,7 @@
     max-width: 440px;
     max-height: calc(100dvh - 72px - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     margin-inline: auto;
-    border-radius: 8px;
+    border-radius: 0;
   }
 }
 
@@ -66,13 +75,10 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: 0;
   color: var(--public-text);
   cursor: pointer;
-
-  &:hover {
-    background: var(--public-field);
-  }
+  // No hover fill on a × (owner, 2026-11-14: "remove the hover circle in all x buttons").
 
   &:focus-visible {
     outline: 2px solid var(--public-text);

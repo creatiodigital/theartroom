@@ -72,9 +72,9 @@ const getExhibitions = () =>
     take: 6,
   })
 
-// The Featured artists section: hidden for now, on every screen size (owner, 2026-11-13). Set to
-// true to show it again; while false its read is skipped too.
-const SHOW_FEATURED_ARTISTS = false
+// The Featured artists section: hidden on 2026-11-13, shown again on 2026-11-14 (owner). Set to
+// false to hide it; while false its read is skipped too.
+const SHOW_FEATURED_ARTISTS = true
 
 const getFeaturedArtists = async () => {
   return prisma.user.findMany({
