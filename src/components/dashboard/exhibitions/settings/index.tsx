@@ -581,7 +581,6 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
           secondLanguage: exhibition.secondLanguage ?? null,
           secondLanguageVisible: exhibition.secondLanguageVisible ?? false,
         }}
-        roomHref={handler ? `/exhibitions/${handler}/${exhibition.url}/visit` : null}
       />
 
       <SectionsEditor exhibitionId={exhibition.id} />

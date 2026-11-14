@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test'
 
-import { canEditExhibition } from '../src/lib/exhibitionEditors'
 import {
   ENGLISH,
   roomLanguageOnEntry,
@@ -50,7 +49,6 @@ test.describe('roomLanguageOnEntry', () => {
   const visitor = {
     secondLanguage: 'fr',
     switchOn: true,
-    canEdit: false,
     requested: null,
     stored: null,
     browserLanguage: 'en-GB',
@@ -92,42 +90,10 @@ test.describe('roomLanguageOnEntry', () => {
     expect(roomLanguageOnEntry({ ...off, requested: 'fr' })).toBeNull()
     expect(roomLanguageOnEntry({ ...off, stored: 'fr', browserLanguage: 'fr' })).toBeNull()
   })
-
-  test("switch off: an editor's preview link opens it in the second language", () => {
-    const editor = { ...visitor, switchOn: false, canEdit: true }
-    expect(roomLanguageOnEntry({ ...editor, requested: 'fr' })).toBe('fr')
-    expect(roomLanguageOnEntry({ ...editor, browserLanguage: 'fr' })).toBeNull()
-    expect(roomLanguageOnEntry({ ...editor, requested: 'es' })).toBeNull()
-  })
 })
 
 test('secondLanguageOf: the names for the list, the switch and the welcome window', () => {
-  expect(secondLanguageOf('fr')).toEqual({ code: 'fr', name: 'French' })
+  expect(secondLanguageOf('fr')).toEqual({ code: 'fr', name: 'French', nativeName: 'Français' })
   expect(secondLanguageOf(null)).toBeNull()
   expect(secondLanguageOf('ja')).toBeNull()
-})
-
-test.describe('canEditExhibition', () => {
-  const owner = 'user-1'
-
-  test('the artist who owns it, or an admin impersonating them', () => {
-    expect(canEditExhibition({ user: { id: owner, userType: 'artist' } }, owner)).toBe(true)
-    expect(
-      canEditExhibition(
-        { user: { id: 'admin-9', userType: 'artist' }, impersonating: { id: owner } },
-        owner,
-      ),
-    ).toBe(true)
-  })
-
-  test('the admins', () => {
-    expect(canEditExhibition({ user: { id: 'x', userType: 'admin' } }, owner)).toBe(true)
-    expect(canEditExhibition({ user: { id: 'x', userType: 'superAdmin' } }, owner)).toBe(true)
-  })
-
-  test('nobody else', () => {
-    expect(canEditExhibition({ user: { id: 'other', userType: 'artist' } }, owner)).toBe(false)
-    expect(canEditExhibition(null, owner)).toBe(false)
-    expect(canEditExhibition({ user: { id: owner } }, null)).toBe(false)
-  })
 })

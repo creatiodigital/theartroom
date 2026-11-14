@@ -226,15 +226,17 @@ export function TextTab({ active }: TextTabProps) {
 
         {language ? (
           <div className={tab.field}>
-            {/* "Second language", never the language's name (owner, 2026-11-14). */}
+            {/* The editor is in English: the field is named in English, "French" (README, answers). */}
             <label htmlFor={secondId} className={tab.label}>
-              Second language
+              {language.name}
             </label>
             <p id={`${secondId}-help`} className={styles.note}>
               Optional. Leave empty to show the English text.
             </p>
             <textarea
               id={secondId}
+              // The browser's spelling check in the exhibition's language.
+              lang={language.code}
               className={tab.textarea}
               rows={6}
               value={second}
@@ -242,7 +244,7 @@ export function TextTab({ active }: TextTabProps) {
               onChange={(event) => setSecond(event.target.value)}
               onFocus={() => dispatch(setRoomLanguage(language.code))}
             />
-            {fitLine(secondFit, second, 'second-language')}
+            {fitLine(secondFit, second, language.name)}
           </div>
         ) : (
           <p className={styles.note}>

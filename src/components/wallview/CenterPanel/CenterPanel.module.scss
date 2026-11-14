@@ -17,12 +17,3 @@
   height: 50000px;
   background: var(--color-surface-workspace);
 }
-
-// AR-182: English | French over the wall, top center, under the ruler.
-.languageSwitch {
-  position: absolute;
-  top: 40px;
-  left: 50%;
-  z-index: 21;
-  transform: translateX(-50%);
-}

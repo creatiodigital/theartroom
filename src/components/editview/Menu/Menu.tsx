@@ -16,6 +16,7 @@ import {
   Rows,
   type Icon,
 } from '@phosphor-icons/react'
+import c from 'classnames'
 
 import { isBakedSpace } from '@/lib/bake/bakedSpaces'
 import { RoomLanguageSwitch } from '@/components/exhibitions/RoomLanguageSwitch/RoomLanguageSwitch'
@@ -90,6 +91,18 @@ export const Menu = () => {
   )
   const isWindowsPanelOpen = useSelector((state: RootState) => state.dashboard.isWindowsPanelOpen)
   const isBakePanelOpen = useSelector((state: RootState) => state.dashboard.isBakePanelOpen)
+  const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
+  // A tool panel on the right: the language preview waits beside it.
+  const anyPanelOpen =
+    isLightingPanelOpen ||
+    isPanelsPanelOpen ||
+    isFurniturePanelOpen ||
+    isFloorPanelOpen ||
+    isCameraPanelOpen ||
+    isWallCeilingPanelOpen ||
+    isWindowsPanelOpen ||
+    isBakePanelOpen ||
+    isArtworkPanelOpen
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId)
 
   // Presentation only: the server decides who may bake or publish.
@@ -334,10 +347,14 @@ export const Menu = () => {
           />
         )}
       </nav>
-      {/* AR-182: English | French under the pill, so the artist sees both languages on the walls
-          (only with a second language; even while visitors don't see the switch). */}
-      <div className={styles.topLeft} data-panel-overlay>
-        <EditingPill />
+      <EditingPill />
+      {/* AR-182: the 3D view's English | French preview (README, answers 2026-11-14): the whole room
+          in the second language, untranslated texts in English. Editors only, even while visitors
+          don't see the switch; never saved; the editor opens in English. */}
+      <div
+        className={c(styles.languageSwitch, anyPanelOpen && styles.languageSwitchBesidePanel)}
+        data-panel-overlay
+      >
         <RoomLanguageSwitch tone="editor" />
       </div>
     </>

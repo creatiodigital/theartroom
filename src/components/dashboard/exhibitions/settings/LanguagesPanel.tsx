@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowSquareOut } from '@phosphor-icons/react'
 
 import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
 import { AdminSelect } from '@/components/admin/ui/AdminSelect'
@@ -30,8 +29,6 @@ type PlacedRow = {
 type LanguagesPanelProps = {
   exhibitionId: string
   initial: LanguageSettings
-  /** The 3D room's address, for "Preview in …" (none when the artist's handler isn't known). */
-  roomHref: string | null
 }
 
 /** "14 texts have a French version · 4 show in English": a count, never a progress bar. */
@@ -52,7 +49,7 @@ const countLine = (translated: number, english: number, language: SecondLanguage
  * saves at once and the room reads it live: no publish needed. A text's second version doesn't
  * record a language, so changing or removing the language keeps every one.
  */
-export function LanguagesPanel({ exhibitionId, initial, roomHref }: LanguagesPanelProps) {
+export function LanguagesPanel({ exhibitionId, initial }: LanguagesPanelProps) {
   const [settings, setSettings] = useState<LanguageSettings>(initial)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -210,18 +207,6 @@ export function LanguagesPanel({ exhibitionId, initial, roomHref }: LanguagesPan
               Translate only the texts you want; the others stay in English.
             </span>
           </div>
-          {roomHref && (
-            <a
-              href={`${roomHref}?lang=${language.code}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={page.outline}
-            >
-              Preview in {language.name}
-              <ArrowSquareOut size={14} weight="light" aria-hidden />
-              <span className="sr-only"> (opens in a new tab)</span>
-            </a>
-          )}
         </div>
       )}
 

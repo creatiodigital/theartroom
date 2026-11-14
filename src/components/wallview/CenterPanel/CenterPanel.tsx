@@ -3,7 +3,6 @@
 import { useEffect, useRef } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
-import { RoomLanguageSwitch } from '@/components/exhibitions/RoomLanguageSwitch/RoomLanguageSwitch'
 import { useDeselectArtwork } from '@/components/wallview/hooks/useDeselectArtwork'
 import { Wall } from '@/components/wallview/Wall/Wall'
 import { Ruler } from '@/components/wallview/Ruler/Ruler'
@@ -93,11 +92,6 @@ export const CenterPanel = () => {
   return (
     <div ref={containerRef} className={styles.panel}>
       <Ruler />
-      {/* AR-182: the whole wall in English or the second language (as in the 3D editor). */}
-      {/* Pressing it keeps the selection, as the panels do. */}
-      <div className={styles.languageSwitch} data-no-deselect="true">
-        <RoomLanguageSwitch tone="editor" />
-      </div>
       <div
         id="wallWrapper"
         className={styles.wrapper}

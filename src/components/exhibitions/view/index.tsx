@@ -21,6 +21,7 @@ import {
   ArrowUp,
   HandArrowUp,
   HandSwipeRight,
+  List,
   MouseSimple,
   SpeakerHigh,
   X,
@@ -82,7 +83,6 @@ import { RoomMenu } from './RoomControls/RoomMenu'
 import { TouchControlsGuide } from './TouchControlsGuide/TouchControlsGuide'
 import styles from './ExhibitionView.module.scss'
 import { getConsent, CONSENT_CHANGE_EVENT } from '@/lib/consent'
-import { canEditExhibition } from '@/lib/exhibitionEditors'
 import { readRoomLanguageChoice, roomLanguageOnEntry, secondLanguageOf } from '@/lib/roomLanguage'
 
 /**
@@ -269,6 +269,16 @@ const useHasSoundOrVideo = () => {
 
 const MEDIA_NOTICE_STORAGE_PREFIX = 'the-art-room:media-notice-dismissed:'
 
+// AR-182: the language window's "Don't show again", per exhibition, in this browser.
+const LANGUAGE_WELCOME_STORAGE_PREFIX = 'the-art-room:language-welcome-dismissed:'
+const languageWelcomeDismissed = (exhibitionId: string) => {
+  try {
+    return localStorage.getItem(`${LANGUAGE_WELCOME_STORAGE_PREFIX}${exhibitionId}`) === 'true'
+  } catch {
+    return false
+  }
+}
+
 /** What the room menu's "How to move around" calls: today's help button handler. */
 interface NavigationHelpHandle {
   open: () => void
@@ -345,6 +355,8 @@ const NavigationHelpModal = ({
     if (!exhibitionId || !artworksReady || !consentSettled) return
     if (hasCheckedStorage.current) return
     hasCheckedStorage.current = true
+    // AR-182: the language window opens first, unless "Don't show again" was chosen here.
+    const welcomesInLanguage = !!languageName && !languageWelcomeDismissed(exhibitionId)
 
     try {
       const mediaKey = `${MEDIA_NOTICE_STORAGE_PREFIX}${exhibitionId}`
@@ -352,7 +364,7 @@ const NavigationHelpModal = ({
       if (mediaDone) setMediaDismissed(true)
       if (!mediaDone && hasMediaArtworks) {
         // AR-182: after the language window, when there is one.
-        if (languageName) {
+        if (welcomesInLanguage) {
           setMediaAfterLanguage(true)
           return
         }
@@ -361,7 +373,7 @@ const NavigationHelpModal = ({
       }
     } catch {
       if (hasMediaArtworks) {
-        if (languageName) setMediaAfterLanguage(true)
+        if (welcomesInLanguage) setMediaAfterLanguage(true)
         else setCurrentStep('media')
       }
     }
@@ -371,9 +383,10 @@ const NavigationHelpModal = ({
   // loader and the cookie banner), before the media notice. In English: the site is English.
   useEffect(() => {
     if (!languageName || languageShown || !revealed || !consentSettled || !artworksReady) return
+    if (!exhibitionId || languageWelcomeDismissed(exhibitionId)) return
     setLanguageShown(true)
     setCurrentStep('language')
-  }, [languageName, languageShown, revealed, consentSettled, artworksReady])
+  }, [languageName, languageShown, revealed, consentSettled, artworksReady, exhibitionId])
 
   // The keyboard lands on OK (Button takes no ref: the dialog finds it).
   const languageDialogRef = useRef<HTMLDivElement>(null)
@@ -390,6 +403,18 @@ const NavigationHelpModal = ({
       setMediaAfterLanguage(false)
       setTimeout(() => setCurrentStep('media'), 300)
     }
+  }
+
+  // Closes it as OK does, and it never opens again for this exhibition in this browser.
+  const handleLanguageNeverAgain = () => {
+    try {
+      if (exhibitionId) {
+        localStorage.setItem(`${LANGUAGE_WELCOME_STORAGE_PREFIX}${exhibitionId}`, 'true')
+      }
+    } catch {
+      // Storage unavailable: it shows again on the next visit.
+    }
+    handleCloseLanguage()
   }
 
   const handleCloseHelp = () => {
@@ -629,13 +654,28 @@ const NavigationHelpModal = ({
             >
               This exhibition is also available in {languageName}
             </Text>
-            <Button
-              variant="primary"
-              size="regularSquared"
-              label="OK"
-              className={styles.dismissButton}
-              onClick={handleCloseLanguage}
-            />
+            <Text as="p" size="sm" className={styles.languageWelcomeText}>
+              Open the menu
+              <span className={styles.menuKey} aria-hidden>
+                <List size={15} weight="light" />
+              </span>
+              to switch languages.
+            </Text>
+            <div className={styles.languageWelcomeActions}>
+              <Button
+                variant="primary"
+                size="regularSquared"
+                label="OK"
+                className={styles.dismissButton}
+                onClick={handleCloseLanguage}
+              />
+              <Button
+                variant="bare"
+                label="Don't show again"
+                className={styles.languageWelcomeNever}
+                onClick={handleLanguageNeverAgain}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -806,16 +846,13 @@ export const ExhibitionViewPage = ({
   }, [dispatch, exhibitionSlug])
 
   // AR-182: the language the room's texts open in (docs/wall-languages), decided once per
-  // exhibition (after the reset above). An editor's preview link (`?lang=fr`) opens the room in
-  // the second language even while the visitor switch is off: only then does it wait for the
-  // session. Both languages come with the room's one load, so switching needs no request.
-  const canEdit = canEditExhibition(session, exhibition?.userId)
+  // exhibition (after the reset above). Visitors only, while the exhibition shows them the switch;
+  // editors preview in the editor. Both languages come with the room's one load, so switching
+  // needs no request.
   const requestedLanguage = searchParams.get('lang')
   const languageDecidedFor = useRef<string | null>(null)
   useEffect(() => {
     if (!exhibition?.id) return
-    const needsSession = !exhibition.secondLanguageVisible && !!requestedLanguage
-    if (needsSession && sessionStatus === 'loading') return
     if (languageDecidedFor.current === exhibition.id) return
     languageDecidedFor.current = exhibition.id
     dispatch(
@@ -823,7 +860,6 @@ export const ExhibitionViewPage = ({
         roomLanguageOnEntry({
           secondLanguage: exhibition.secondLanguage,
           switchOn: exhibition.secondLanguageVisible,
-          canEdit,
           requested: requestedLanguage,
           stored: readRoomLanguageChoice(exhibition.id),
           browserLanguage: navigator.language,
@@ -835,8 +871,6 @@ export const ExhibitionViewPage = ({
     exhibition?.id,
     exhibition?.secondLanguage,
     exhibition?.secondLanguageVisible,
-    sessionStatus,
-    canEdit,
     requestedLanguage,
   ])
 

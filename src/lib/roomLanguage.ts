@@ -12,11 +12,13 @@ export type SecondLanguage = {
   /** The stored code (`Exhibition.secondLanguage`). */
   code: string
   /**
-   * The name, in English everywhere it is shown: the dashboard's list, the room's switch
-   * ("English | French"), its welcome window ("also available in French"). Never the name in its
-   * own language (owner, 2026-11-14: "French", not "Français"); the site is English.
+   * The name in English: the dashboard and the editors, which are in English (the settings card,
+   * the editors' switches, the wall editor's field), and the room's English welcome window
+   * ("also available in French"). README, answers 2026-11-14.
    */
   name: string
+  /** Its own name, for the visitor's switch in the room menu only, so its readers recognise it. */
+  nativeName: string
 }
 
 /**
@@ -25,11 +27,11 @@ export type SecondLanguage = {
  * glyphs with their accents; none has CJK, and not all have Greek or Cyrillic.
  */
 export const SECOND_LANGUAGES: readonly SecondLanguage[] = [
-  { code: 'es', name: 'Spanish' },
-  { code: 'fr', name: 'French' },
-  { code: 'de', name: 'German' },
-  { code: 'it', name: 'Italian' },
-  { code: 'pt', name: 'Portuguese' },
+  { code: 'es', name: 'Spanish', nativeName: 'Español' },
+  { code: 'fr', name: 'French', nativeName: 'Français' },
+  { code: 'de', name: 'German', nativeName: 'Deutsch' },
+  { code: 'it', name: 'Italian', nativeName: 'Italiano' },
+  { code: 'pt', name: 'Portuguese', nativeName: 'Português' },
 ]
 
 /** The language with this code, or null for none or a code that isn't offered. */
@@ -90,9 +92,7 @@ export type RoomLanguageOnEntryInput = {
   secondLanguage: string | null | undefined
   /** `Exhibition.secondLanguageVisible`: the visitor switch is on. */
   switchOn: boolean | undefined
-  /** The viewer can edit this exhibition: the preview link works for them with the switch off. */
-  canEdit: boolean
-  /** `?lang=` on the room's URL (the editors' preview link opens the room in that language). */
+  /** `?lang=` on the room's URL: a link may open the room in that language. */
   requested: string | null
   /** The visitor's choice earlier in this visit. */
   stored: string | null
@@ -103,15 +103,13 @@ export type RoomLanguageOnEntryInput = {
 /**
  * The language the room opens in: the second language's code, or null for English.
  *
- * With the switch off, visitors only ever get English; an editor gets the second language only
- * by asking for it (the dashboard's preview link). With it on: the link's `?lang=`, then the
- * visitor's choice earlier in this visit, then the browser's language when it is the second
- * language, then English.
+ * With the switch off, visitors only ever get English (editors preview in the editor). With it
+ * on: the link's `?lang=`, then the visitor's choice earlier in this visit, then the browser's
+ * language when it is the second language, then English.
  */
 export const roomLanguageOnEntry = ({
   secondLanguage,
   switchOn,
-  canEdit,
   requested,
   stored,
   browserLanguage,
@@ -121,7 +119,7 @@ export const roomLanguageOnEntry = ({
   const pick = (code: string | null) =>
     code === language.code ? language.code : code === ENGLISH ? null : undefined
 
-  if (!switchOn) return canEdit && requested === language.code ? language.code : null
+  if (!switchOn) return null
 
   const fromLink = pick(requested)
   if (fromLink !== undefined) return fromLink

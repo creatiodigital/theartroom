@@ -201,10 +201,63 @@
 .languageWelcome {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: 14px;
   max-width: 470px;
   padding: var(--space-8) var(--space-8) var(--space-6);
   text-align: center;
+}
+
+.languageWelcome .languageWelcomeText {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+
+// The menu button, drawn small and square inside the sentence.
+.menuKey {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin: 0 2px;
+  background: var(--color-white);
+  border-radius: 0;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+  color: var(--color-dark-surface);
+}
+
+// OK, then Don't show again, 6px apart (the panel's button rule gives each a top margin).
+.languageWelcomeActions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: var(--space-2);
+}
+
+.languageWelcome .languageWelcomeActions :global(.button) {
+  margin-top: 0;
+}
+
+.languageWelcome .languageWelcomeNever {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
+  border-radius: 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+
+  &:hover {
+    color: var(--color-dark-surface);
+  }
 }
 
 // Two classes: Typography's size class would win over one.

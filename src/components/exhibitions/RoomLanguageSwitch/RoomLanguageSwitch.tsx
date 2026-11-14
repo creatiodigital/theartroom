@@ -12,10 +12,10 @@ import styles from './RoomLanguageSwitch.module.scss'
 
 type RoomLanguageSwitchProps = {
   /**
-   * room: the visitor's room menu (square corners, docs/public-redesign README); the choice is
-   * remembered for this visit. editor: a floating pill in the 3D editor and over the wall view, so
-   * the artist sees how both languages sit on the walls; panel: the wall view's Text tab. In the
-   * editors nothing is remembered: they open in English.
+   * room: the visitor's room menu (square corners, docs/public-redesign README; the language's own
+   * name); the choice is remembered for this visit. editor: the 3D editor's preview, top right;
+   * panel: the wall view's Text tab, the 2D wall's preview. The editors' previews are never saved
+   * or shown to visitors, and the editor always opens in English.
    */
   tone: 'room' | 'editor' | 'panel'
   className?: string
@@ -41,9 +41,15 @@ export function RoomLanguageSwitch({ tone, className }: RoomLanguageSwitchProps)
     if (tone === 'room' && exhibitionId) storeRoomLanguageChoice(exhibitionId, code)
   }
 
+  // Visitors read the language's own name ("Français"); the editors, which are in English, its
+  // English name (README, answers 2026-11-14).
   const options = [
-    { code: null, name: 'English' },
-    { code: language.code, name: language.name },
+    { code: null, lang: 'en', name: 'English' },
+    {
+      code: language.code,
+      lang: language.code,
+      name: tone === 'room' ? language.nativeName : language.name,
+    },
   ]
 
   return (
@@ -67,7 +73,7 @@ export function RoomLanguageSwitch({ tone, className }: RoomLanguageSwitchProps)
             className={c(styles.option, pressed && styles.pressed)}
             onClick={() => choose(option.code)}
           >
-            {option.name}
+            {tone === 'room' ? <span lang={option.lang}>{option.name}</span> : option.name}
           </Button>
         )
       })}

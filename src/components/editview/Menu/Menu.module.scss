@@ -93,30 +93,13 @@
   line-height: 1.1;
 }
 
-// Beside the toolbar (left 16 + 76 + 16): the editing pill and, under it, the language switch
-// of an exhibition with a second language (AR-182).
-.topLeft {
+// NEW: the editing pill, beside the toolbar (left 16 + 76 + 16).
+.pill {
   position: fixed;
   top: var(--space-4);
   left: 108px;
   z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-2);
   max-width: min(360px, calc(100vw - 140px));
-
-  @media #{$phone-room} {
-    top: var(--space-2);
-    left: 92px;
-    max-width: calc(100vw - 100px);
-  }
-}
-
-// NEW: the editing pill.
-.pill {
-  max-width: 100%;
-  box-sizing: border-box;
   margin: 0;
   display: flex;
   align-items: center;
@@ -129,6 +112,12 @@
   font-size: 13px;
   line-height: 1.4;
   white-space: nowrap;
+
+  @media #{$phone-room} {
+    top: var(--space-2);
+    left: 92px;
+    max-width: calc(100vw - 100px);
+  }
 }
 
 .pillDot {
@@ -150,4 +139,27 @@
   text-overflow: ellipsis;
   font-weight: var(--font-semibold);
   color: var(--color-black);
+}
+
+// AR-182: the 3D view's English | French preview, top right (README, answers 2026-11-14). A tool
+// panel opens there (ToolPanel: 16px in, 384px wide): while one is open it waits beside it.
+.languageSwitch {
+  position: fixed;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 2;
+
+  @media #{$phone-room} {
+    top: var(--space-2);
+    right: var(--space-2);
+  }
+}
+
+.languageSwitchBesidePanel {
+  right: calc(var(--space-4) + 384px + var(--space-3));
+
+  // Phones: an open panel covers the room, the preview with it.
+  @media #{$phone-room} {
+    display: none;
+  }
 }
