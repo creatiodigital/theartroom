@@ -91,7 +91,7 @@ test.describe('roomLanguageOnEntry', () => {
 })
 
 test('secondLanguageOf: the names for the list, the switch and the welcome window', () => {
-  expect(secondLanguageOf('fr')).toEqual({ code: 'fr', name: 'Français', englishName: 'French' })
+  expect(secondLanguageOf('fr')).toEqual({ code: 'fr', name: 'French' })
   expect(secondLanguageOf(null)).toBeNull()
   expect(secondLanguageOf('ja')).toBeNull()
 })

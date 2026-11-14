@@ -9,23 +9,25 @@
 export type SecondLanguage = {
   /** The stored code (`Exhibition.secondLanguage`, `Artwork.textContentSecondLang`). */
   code: string
-  /** The name in its own language: the dashboard's list, the room's switch. */
+  /**
+   * The name, in English everywhere it is shown: the dashboard's list, the room's switch
+   * ("English | French"), its welcome window ("also available in French"). Never the name in its
+   * own language (owner, 2026-11-14: "French", not "Français"); the site is English.
+   */
   name: string
-  /** The name in English: the room's welcome window ("also available in French"). */
-  englishName: string
 }
 
 /**
- * The languages an exhibition can offer, in the owner's order (2026-11-14). Only languages
- * written in standard (Latin) characters (owner): every wall typeface ships Latin glyphs with
- * their accents; none has CJK, and not all have Greek or Cyrillic.
+ * The languages an exhibition can offer besides English, in the owner's order (2026-11-14).
+ * Only languages written in standard (Latin) characters (owner): every wall typeface ships Latin
+ * glyphs with their accents; none has CJK, and not all have Greek or Cyrillic.
  */
 export const SECOND_LANGUAGES: readonly SecondLanguage[] = [
-  { code: 'fr', name: 'Français', englishName: 'French' },
-  { code: 'it', name: 'Italiano', englishName: 'Italian' },
-  { code: 'de', name: 'Deutsch', englishName: 'German' },
-  { code: 'es', name: 'Español', englishName: 'Spanish' },
-  { code: 'pt', name: 'Português', englishName: 'Portuguese' },
+  { code: 'es', name: 'Spanish' },
+  { code: 'fr', name: 'French' },
+  { code: 'de', name: 'German' },
+  { code: 'it', name: 'Italian' },
+  { code: 'pt', name: 'Portuguese' },
 ]
 
 /** The language with this code, or null for none or a code that isn't offered. */

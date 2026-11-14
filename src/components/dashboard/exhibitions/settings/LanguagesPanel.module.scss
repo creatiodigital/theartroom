@@ -1,0 +1,86 @@
+@use '@/styles/mixins' as *;
+
+// Exhibition settings › Languages (AR-182, docs/wall-languages/designs/wall-languages-editor §1).
+// The panel, the help lines and the buttons come from ../../StudioPanel; only the card's rows are
+// here: a name and a line on the left, the value or control on the right, a hairline between.
+
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-6);
+  padding: 14px 0;
+  border-top: 1px solid var(--color-gray-20);
+
+  &:first-child {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.rowText {
+  flex: 1 1 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rowTitle {
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-normal);
+  color: var(--color-black);
+}
+
+.value {
+  font-size: var(--text-sm);
+  color: var(--color-black);
+}
+
+// The select: 260px beside its row from the tablet up, the full width under it on phones.
+.select {
+  flex: 1 1 100%;
+
+  @include media-up(tablet) {
+    flex: 0 0 260px;
+  }
+}
+
+.pill {
+  margin-top: var(--space-1);
+}
+
+// The count and the preview link, on the drawn light box.
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+  padding: 14px;
+  background: var(--color-surface-subtle);
+  border-radius: var(--radius-md);
+}
+
+.count {
+  font-size: 13px;
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+}
+
+.strong {
+  font-weight: var(--font-bold);
+  color: var(--color-black);
+}
