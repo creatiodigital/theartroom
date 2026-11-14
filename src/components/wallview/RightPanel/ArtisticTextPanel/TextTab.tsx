@@ -35,8 +35,9 @@ const linesTooLong = (fit: WallTextFit) =>
 
 /**
  * The selected text's words (AR-182, docs/wall-languages; designs/wall-languages-editor §2): the
- * English text and, when the exhibition has a second language, its optional version (empty: the
- * English text shows). Written here only, never on the wall; each key updates the wall at once.
+ * English text and its optional second-language version, whatever language the exhibition has
+ * (or none yet; empty: the English text shows). Written here only, never on the wall; each key
+ * updates the wall at once.
  * Typing in a field previews the wall in its language. A text that doesn't fit its box says by
  * how many lines, with two fixes: a taller box, or the largest text size at which both fit.
  */
@@ -109,7 +110,7 @@ export function TextTab({ active }: TextTabProps) {
   const fitOf = (text: string, size = style.fontSize) =>
     box ? wallTextFit(text, { ...style, fontSize: size }, box.width2d, box.height2d) : null
   const englishFit = fitOf(english)
-  const secondFit = language ? fitOf(second) : null
+  const secondFit = fitOf(second)
   const texts = [english, second].filter((text) => text.trim())
 
   const setEnglish = (value: string) =>
@@ -117,7 +118,6 @@ export function TextTab({ active }: TextTabProps) {
       editArtisticText({ currentArtworkId, property: 'textContent', value: value || undefined }),
     )
   const setSecond = (value: string) => {
-    if (!language) return
     // '' (not undefined): the wall save sends it, so a cleared version is cleared.
     dispatch(editArtisticText({ currentArtworkId, property: 'textContentSecond', value }))
   }
@@ -208,7 +208,7 @@ export function TextTab({ active }: TextTabProps) {
       <PanelGroup>
         <div className={tab.field}>
           <label htmlFor={englishId} className={tab.label}>
-            {language ? 'English' : 'Text'}
+            English
           </label>
           <textarea
             id={englishId}
@@ -224,47 +224,48 @@ export function TextTab({ active }: TextTabProps) {
           {fitLine(englishFit, english, 'English')}
         </div>
 
-        {language ? (
-          <div className={tab.field}>
-            {/* The editor is in English: the field is named in English, "French" (README, answers). */}
-            <label htmlFor={secondId} className={tab.label}>
-              {language.name}
-            </label>
-            <p id={`${secondId}-help`} className={styles.note}>
-              Optional. Leave empty to show the English text.
-            </p>
-            <textarea
-              id={secondId}
-              // The browser's spelling check in the exhibition's language.
-              lang={language.code}
-              className={tab.textarea}
-              rows={6}
-              value={second}
-              aria-describedby={`${secondId}-help`}
-              onChange={(event) => setSecond(event.target.value)}
-              onFocus={() => dispatch(setRoomLanguage(language.code))}
-            />
-            {fitLine(secondFit, second, language.name)}
-          </div>
-        ) : (
-          <p className={styles.note}>
-            Want this text in a second language too? Choose one in{' '}
-            {exhibitionId ? (
-              <a
-                href={`/dashboard/exhibitions/${exhibitionId}/settings#exhibition-languages`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={tab.inlineLink}
-              >
-                Exhibition settings › Languages
-                <span className="sr-only"> (opens in a new tab)</span>
-              </a>
-            ) : (
-              'Exhibition settings › Languages'
+        {/* Always there, whatever the exhibition's language, or none yet (owner, 2026-11-14). The
+            editor is in English: once a language is chosen the field takes its English name. */}
+        <div className={tab.field}>
+          <label htmlFor={secondId} className={tab.label}>
+            {language ? language.name : 'Second language'}
+          </label>
+          <p id={`${secondId}-help`} className={styles.note}>
+            Optional. Leave empty to show the English text.
+            {!language && (
+              <>
+                {' '}
+                Visitors see it once the exhibition has a second language: choose one in{' '}
+                {exhibitionId ? (
+                  <a
+                    href={`/dashboard/exhibitions/${exhibitionId}/settings#exhibition-languages`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={tab.inlineLink}
+                  >
+                    Exhibition settings › Languages
+                    <span className="sr-only"> (opens in a new tab)</span>
+                  </a>
+                ) : (
+                  'Exhibition settings › Languages'
+                )}
+                .
+              </>
             )}
-            .
           </p>
-        )}
+          <textarea
+            id={secondId}
+            // The browser's spelling check in the exhibition's language, when there is one.
+            lang={language?.code}
+            className={tab.textarea}
+            rows={6}
+            value={second}
+            aria-describedby={`${secondId}-help`}
+            onChange={(event) => setSecond(event.target.value)}
+            onFocus={() => language && dispatch(setRoomLanguage(language.code))}
+          />
+          {fitLine(secondFit, second, language?.name ?? 'second-language')}
+        </div>
       </PanelGroup>
     </>
   )

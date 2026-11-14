@@ -31,7 +31,7 @@ type LanguagesPanelProps = {
   initial: LanguageSettings
 }
 
-/** "14 texts have a French version · 4 show in English": a count, never a progress bar. */
+/** "14 texts have a <second language> version · 4 show in English": a count, never a progress bar. */
 const countLine = (translated: number, english: number, language: SecondLanguage) => {
   const texts = (n: number) => `${n} ${n === 1 ? 'text' : 'texts'}`
   return (

@@ -41,7 +41,7 @@ interface RoomMenuProps {
   /** Every press of the menu button, opening or closing the menu: the room closes its open windows. */
   onButtonPress?: () => void
   /**
-   * AR-182: English | French as the first row (designs/wall-languages-visitor §1), only while the
+   * AR-182: English | the second language as the first row (designs/wall-languages-visitor §1), only while the
    * exhibition shows its visitors the language switch. A press changes every wall text at once
    * and leaves the menu open.
    */

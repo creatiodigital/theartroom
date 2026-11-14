@@ -6,6 +6,7 @@ import {
   roomTextOf,
   secondLanguageOf,
   secondTextFields,
+  secondTextLine,
 } from '../src/lib/roomLanguage'
 
 // AR-182 (docs/wall-languages): which words a text artwork shows in the room, and which language
@@ -96,4 +97,35 @@ test('secondLanguageOf: the names for the list, the switch and the welcome windo
   expect(secondLanguageOf('fr')).toEqual({ code: 'fr', name: 'French', nativeName: 'Français' })
   expect(secondLanguageOf(null)).toBeNull()
   expect(secondLanguageOf('ja')).toBeNull()
+})
+
+test.describe('secondTextLine: the text page says where the second version shows', () => {
+  const kritzendorf = { id: 'k', title: 'Kritzendorf Between Two Floods', language: 'fr' }
+
+  test('in an exhibition with a second language', () => {
+    expect(secondTextLine([kritzendorf])).toBe(
+      'Shown in French in “Kritzendorf Between Two Floods”. Leave empty to show the English text.',
+    )
+  })
+
+  test('in one without a second language yet: where to choose it', () => {
+    expect(secondTextLine([{ ...kritzendorf, language: null }])).toBe(
+      '“Kritzendorf Between Two Floods” has no second language yet: choose one in its Exhibition settings › Languages. Leave empty to show the English text.',
+    )
+  })
+
+  test('in exhibitions with different languages, and not hung anywhere', () => {
+    expect(
+      secondTextLine([
+        kritzendorf,
+        { id: 'v', title: 'Vivrière', language: 'es' },
+        { id: 'b', title: 'Beauty', language: 'fr' },
+      ]),
+    ).toBe(
+      'Shown in French in “Kritzendorf Between Two Floods” and “Beauty” and in Spanish in “Vivrière”. Leave empty to show the English text.',
+    )
+    expect(secondTextLine([])).toBe(
+      'Shown once this text hangs in an exhibition with a second language. Leave empty to show the English text.',
+    )
+  })
 })

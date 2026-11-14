@@ -117,7 +117,7 @@ export const ExhibitionEditPage = ({
         published: exhibition.published ?? false,
         hasPendingChanges: exhibition.hasPendingChanges ?? false,
         previewEnabled: exhibition.previewEnabled ?? false,
-        // AR-182: the editor's English | French switch (Menu) shows the room in either language.
+        // AR-182: the editor's English | second-language switch (Menu) shows the room in either.
         secondLanguage: exhibition.secondLanguage ?? null,
         secondLanguageVisible: exhibition.secondLanguageVisible ?? false,
         // Lighting customization

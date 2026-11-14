@@ -198,40 +198,34 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
       select: { exhibitionId: true, sectionId: true },
     })
 
-    // AR-182: the exhibitions whose 3D room shows this text and offers a second language, for the
-    // text page's Second language field (where it shows; which language a new version is in).
-    const secondLanguageRooms =
+    // AR-182: the exhibitions whose 3D room hangs this text, each with its second language (null:
+    // none yet), for the text page's Second language line (where the version shows, or why not).
+    const textRooms =
       artwork.artworkType === 'text'
         ? [
             ...new Map(
               (
                 await prisma.exhibitionArtwork.findMany({
-                  where: {
-                    artworkId: id,
-                    wallId: { not: null },
-                    exhibition: { secondLanguage: { not: null } },
-                  },
+                  where: { artworkId: id, wallId: { not: null } },
                   select: {
                     exhibition: { select: { id: true, mainTitle: true, secondLanguage: true } },
                   },
                 })
-              )
-                .filter((row) => secondLanguageOf(row.exhibition.secondLanguage))
-                .map(({ exhibition }) => [
-                  exhibition.id,
-                  {
-                    id: exhibition.id,
-                    title: exhibition.mainTitle,
-                    language: exhibition.secondLanguage as string,
-                  },
-                ]),
+              ).map(({ exhibition }) => [
+                exhibition.id,
+                {
+                  id: exhibition.id,
+                  title: exhibition.mainTitle,
+                  language: secondLanguageOf(exhibition.secondLanguage)?.code ?? null,
+                },
+              ]),
             ).values(),
           ]
         : []
 
     return NextResponse.json({
       ...artwork,
-      secondLanguageRooms,
+      textRooms,
       exhibitionIds: memberOf.map((m) => m.exhibitionId),
       // The section each show places this work in (null = no section), so the
       // Exhibitions picker pre-selects instead of resetting on every save.

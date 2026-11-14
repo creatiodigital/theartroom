@@ -14,7 +14,7 @@ export type SecondLanguage = {
   /**
    * The name in English: the dashboard and the editors, which are in English (the settings card,
    * the editors' switches, the wall editor's field), and the room's English welcome window
-   * ("also available in French"). README, answers 2026-11-14.
+   * ("also available in <name>"). README, answers 2026-11-14.
    */
   name: string
   /** Its own name, for the visitor's switch in the room menu only, so its readers recognise it. */
@@ -64,6 +64,51 @@ export const roomTextOf = (
 export const secondTextFields = (text: unknown): { textContentSecond?: string | null } => {
   if (text === undefined) return {}
   return { textContentSecond: typeof text === 'string' && text.trim() ? text : null }
+}
+
+// ---- The text page's Second language line ----
+
+/** An exhibition whose 3D room hangs the text, with its second language (null: none yet). */
+export type TextRoom = { id: string; title: string; language: string | null }
+
+const joined = (parts: string[]) =>
+  parts.length <= 1
+    ? (parts[0] ?? '')
+    : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`
+
+const quoted = (rooms: TextRoom[]) => joined(rooms.map((room) => `“${room.title}”`))
+
+/**
+ * Where the version shows, or why not yet: "Shown in <language> in “A”." (per language, so a text
+ * in exhibitions with different languages names each), then the
+ * rooms with no second language yet, and where to choose one.
+ */
+export const secondTextLine = (rooms: TextRoom[]) => {
+  const byLanguage = new Map<string, TextRoom[]>()
+  const unset: TextRoom[] = []
+  for (const room of rooms) {
+    const name = secondLanguageOf(room.language)?.name
+    if (name) byLanguage.set(name, [...(byLanguage.get(name) ?? []), room])
+    else unset.push(room)
+  }
+  const lines: string[] = []
+  if (byLanguage.size > 0) {
+    lines.push(
+      `Shown ${joined([...byLanguage].map(([name, inRooms]) => `in ${name} in ${quoted(inRooms)}`))}.`,
+    )
+  }
+  if (unset.length > 0) {
+    lines.push(
+      `${quoted(unset)} ${unset.length === 1 ? 'has' : 'have'} no second language yet: choose one in ${
+        unset.length === 1 ? 'its' : 'their'
+      } Exhibition settings › Languages.`,
+    )
+  }
+  if (rooms.length === 0) {
+    lines.push('Shown once this text hangs in an exhibition with a second language.')
+  }
+  lines.push('Leave empty to show the English text.')
+  return lines.join(' ')
 }
 
 /** The visitor's choice for this visit (the room menu's switch), per exhibition. */

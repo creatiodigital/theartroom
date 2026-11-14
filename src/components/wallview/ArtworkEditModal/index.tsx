@@ -511,7 +511,7 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
             saving={saving}
             error={error}
             onFormChange={handleChange}
-            secondLanguageRooms={artwork?.secondLanguageRooms}
+            textRooms={artwork?.textRooms}
             onPrintOptionsChange={handlePrintOptionsChange}
             onPrintRecommendationsChange={handlePrintRecommendationsChange}
             onImageUpload={handleImageUpload}

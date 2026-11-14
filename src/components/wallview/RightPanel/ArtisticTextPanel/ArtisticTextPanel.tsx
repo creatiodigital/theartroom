@@ -135,12 +135,10 @@ const ArtisticText = ({
     monogramSize,
   } = useArtworkDetails(currentArtworkId!)
 
-  // AR-182: the text's second version, when the exhibition has a second language.
-  const secondLanguage = useSelector((state: RootState) => state.exhibition.secondLanguage)
-  const secondText = useSelector((state: RootState) => {
-    const artwork = currentArtworkId ? state.artworks.byId[currentArtworkId] : undefined
-    return secondLanguage ? artwork?.textContentSecond : undefined
-  })
+  // AR-182: the text's second-language version (fitted too, whatever the exhibition's language).
+  const secondText = useSelector((state: RootState) =>
+    currentArtworkId ? state.artworks.byId[currentArtworkId]?.textContentSecond : undefined,
+  )
 
   // Filter font weight options based on selected family's supported variants
   const filteredWeights = useMemo(() => {

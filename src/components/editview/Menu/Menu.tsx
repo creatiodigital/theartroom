@@ -348,7 +348,7 @@ export const Menu = () => {
         )}
       </nav>
       <EditingPill />
-      {/* AR-182: the 3D view's English | French preview (README, answers 2026-11-14): the whole room
+      {/* AR-182: the 3D view's English | second-language preview (README, answers 2026-11-14): the whole room
           in the second language, untranslated texts in English. Editors only, even while visitors
           don't see the switch; never saved; the editor opens in English. */}
       <div

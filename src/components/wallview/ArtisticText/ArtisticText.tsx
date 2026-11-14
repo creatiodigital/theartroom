@@ -21,7 +21,7 @@ interface ArtisticTextProps {
  * A text on the wall. AR-182 (docs/wall-languages): the box is placed and sized here, and its
  * words are written in the panel's Text tab, never on the wall (as an image is added in the
  * library, not on the wall). A double-click opens that tab with the cursor in the English field.
- * The words shown follow the editor's English | French preview; what doesn't fit the box spills
+ * The words shown follow the editor's English | second-language preview; what doesn't fit the box spills
  * out, as it would on the wall in the room, with how many lines are outside.
  */
 const ArtisticText = ({ artworkId }: ArtisticTextProps) => {

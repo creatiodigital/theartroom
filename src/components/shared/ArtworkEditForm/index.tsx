@@ -38,7 +38,7 @@ import { EditorPanel } from './EditorPanel'
 import { LockNote } from './LockNote'
 import { OptionChips } from './OptionChips'
 import { SectionNav } from './SectionNav'
-import { SecondTextField } from './SecondTextField'
+import { SecondTextField, type TextRoom } from './SecondTextField'
 import {
   ARTWORK_EDIT_FORM_ID,
   ARTWORK_SECTION,
@@ -99,10 +99,10 @@ export type Artwork = {
   /** AR-182: a text's second version (no language of its own). */
   textContentSecond?: string | null
   /**
-   * AR-182 (privileged GET, texts only): the exhibitions whose 3D room shows this text and offer a
-   * second language, for the Second language field's line.
+   * AR-182 (privileged GET, texts only): the exhibitions whose 3D room hangs this text, each with
+   * its second language (null: none yet), for the Second language field's line.
    */
-  secondLanguageRooms?: { id: string; title: string; language: string }[]
+  textRooms?: TextRoom[]
   soundUrl: string | null
   featured: boolean
   hiddenFromExhibition: boolean
@@ -267,8 +267,8 @@ type ArtworkEditFormProps = {
   saving: boolean
   error: string
   onFormChange: (field: string, value: ArtworkFormValue) => void
-  /** AR-182: the loaded artwork's `secondLanguageRooms` (texts only). */
-  secondLanguageRooms?: { id: string; title: string; language: string }[]
+  /** AR-182: the loaded artwork's `textRooms` (texts only). */
+  textRooms?: TextRoom[]
   /** The artist's own exhibitions, for the Exhibitions checkbox section. Renders
    *  only when this is supplied — the wall-view ArtworkEditModal is already
    *  inside one exhibition and has no use for a cross-exhibition picker. Each
@@ -502,7 +502,7 @@ export const ArtworkEditForm = ({
   saving,
   error,
   onFormChange,
-  secondLanguageRooms,
+  textRooms,
   onPrintOptionsChange,
   onPrintRecommendationsChange,
   onEditionTypeChange,
@@ -1525,15 +1525,12 @@ export const ArtworkEditForm = ({
                   Text styling (font, weight, size) is limited in 3D and can be adjusted in the wall
                   panel.
                 </p>
-                {/* AR-182: its second version, where an exhibition shows it with a second language
-                    (or once it has one). Never names the language (owner, 2026-11-14). */}
-                {(secondLanguageRooms?.length || formData.textContentSecond) && (
-                  <SecondTextField
-                    value={formData.textContentSecond}
-                    onChange={(value) => onFormChange('textContentSecond', value)}
-                    rooms={secondLanguageRooms ?? []}
-                  />
-                )}
+                {/* AR-182: its second version, always (the line says where it shows, or why not). */}
+                <SecondTextField
+                  value={formData.textContentSecond}
+                  onChange={(value) => onFormChange('textContentSecond', value)}
+                  rooms={textRooms ?? []}
+                />
               </EditorPanel>
             )}
 

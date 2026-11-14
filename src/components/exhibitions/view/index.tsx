@@ -379,7 +379,7 @@ const NavigationHelpModal = ({
     }
   }, [exhibitionId, artworksReady, hasMediaArtworks, consentSettled, languageName])
 
-  // AR-182: "This exhibition is also available in French", once the room is shown (after the
+  // AR-182: "This exhibition is also available in <second language>", once the room is shown (after the
   // loader and the cookie banner), before the media notice. In English: the site is English.
   useEffect(() => {
     if (!languageName || languageShown || !revealed || !consentSettled || !artworksReady) return
