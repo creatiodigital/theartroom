@@ -61,7 +61,12 @@ import { useLightmapBytes } from '@/components/scene/bake/lightmapLoader'
 import { useSceneFailed } from '@/components/scene/sceneFailure'
 import { MonogramLoader } from '@/components/ui/MonogramLoader'
 import { closeArtworkModal, hideArtworkPanel } from '@/redux/slices/dashboardSlice'
-import { declineExit, hidePlaceholders, resetScene } from '@/redux/slices/sceneSlice'
+import {
+  declineExit,
+  hidePlaceholders,
+  resetScene,
+  setRoomLanguage,
+} from '@/redux/slices/sceneSlice'
 import { resetWallView } from '@/redux/slices/wallViewSlice'
 import type { AppDispatch, RootState } from '@/redux/store'
 import type { TExhibition } from '@/types/exhibition'
@@ -76,6 +81,8 @@ import { RoomMenu } from './RoomControls/RoomMenu'
 import { TouchControlsGuide } from './TouchControlsGuide/TouchControlsGuide'
 import styles from './ExhibitionView.module.scss'
 import { getConsent, CONSENT_CHANGE_EVENT } from '@/lib/consent'
+import { canEditExhibition } from '@/lib/exhibitionEditors'
+import { readRoomLanguageChoice, roomLanguageOnEntry } from '@/lib/roomLanguage'
 
 /**
  * Leaving the exhibition, from the menu's Leave exhibition and from the leave dialog's Leave.
@@ -707,6 +714,41 @@ export const ExhibitionViewPage = ({
     }
   }, [dispatch, exhibitionSlug])
 
+  // AR-182: the language the room's texts open in (docs/wall-languages), decided once per
+  // exhibition (after the reset above). An editor's preview link (`?lang=fr`) opens the room in
+  // the second language even while the visitor switch is off: only then does it wait for the
+  // session. Both languages come with the room's one load, so switching needs no request.
+  const canEdit = canEditExhibition(session, exhibition?.userId)
+  const requestedLanguage = searchParams.get('lang')
+  const languageDecidedFor = useRef<string | null>(null)
+  useEffect(() => {
+    if (!exhibition?.id) return
+    const needsSession = !exhibition.secondLanguageVisible && !!requestedLanguage
+    if (needsSession && sessionStatus === 'loading') return
+    if (languageDecidedFor.current === exhibition.id) return
+    languageDecidedFor.current = exhibition.id
+    dispatch(
+      setRoomLanguage(
+        roomLanguageOnEntry({
+          secondLanguage: exhibition.secondLanguage,
+          switchOn: exhibition.secondLanguageVisible,
+          canEdit,
+          requested: requestedLanguage,
+          stored: readRoomLanguageChoice(exhibition.id),
+          browserLanguage: navigator.language,
+        }),
+      ),
+    )
+  }, [
+    dispatch,
+    exhibition?.id,
+    exhibition?.secondLanguage,
+    exhibition?.secondLanguageVisible,
+    sessionStatus,
+    canEdit,
+    requestedLanguage,
+  ])
+
   useEffect(() => {
     if (exhibition) {
       // Warm the texture cache for this exhibition's floor only — from an
@@ -742,6 +784,8 @@ export const ExhibitionViewPage = ({
         published: exhibition.published ?? false,
         hasPendingChanges: exhibition.hasPendingChanges ?? false,
         previewEnabled: exhibition.previewEnabled ?? false,
+        secondLanguage: exhibition.secondLanguage ?? null,
+        secondLanguageVisible: exhibition.secondLanguageVisible ?? false,
         ambientLightColor: exhibition.ambientLightColor ?? undefined,
         ambientLightIntensity: exhibition.ambientLightIntensity ?? undefined,
         skylightColor: exhibition.skylightColor ?? undefined,

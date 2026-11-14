@@ -22,6 +22,8 @@ export type ExhibitionArtworkResponse = {
     description: string | null
     imageUrl: string | null
     textContent: string | null
+    textContentSecond?: string | null
+    textContentSecondLang?: string | null
     soundUrl: string | null
     videoUrl: string | null
     originalWidth: number | null
@@ -159,6 +161,8 @@ export function mapToArtwork(ea: ExhibitionArtworkResponse): TArtwork {
     originalWidth: ea.artwork.originalWidth ?? undefined,
     originalHeight: ea.artwork.originalHeight ?? undefined,
     textContent: ea.artwork.textContent || undefined,
+    textContentSecond: ea.artwork.textContentSecond || undefined,
+    textContentSecondLang: ea.artwork.textContentSecondLang || undefined,
     soundUrl: ea.artwork.soundUrl || undefined,
     videoUrl: ea.artwork.videoUrl || undefined,
     // Display properties from ExhibitionArtwork (per-exhibition)

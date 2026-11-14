@@ -72,6 +72,10 @@ export type TArtwork = {
   supportThickness?: TOption<number> // Canvas/panel depth in cm
   supportColor?: string // Edge color
   textContent?: string
+  /** AR-182: the room's second-language version of `textContent` (docs/wall-languages). */
+  textContentSecond?: string
+  /** AR-182: the language code `textContentSecond` was written for. */
+  textContentSecondLang?: string
   fontFamily?: TOption<TFontFamily>
   fontSize?: TOption<number>
   fontWeight?: TOption<TFontWeight>

@@ -69,4 +69,10 @@ export type TScene = {
    *  many lamps a space has. */
   trackLampGroups: TLampGroup[]
   exitRespawnNonce: number
+  /**
+   * AR-182: the language the room's texts are shown in: the exhibition's second language (its
+   * code), or null for English. Set on entry and by the room menu's switch; every text artwork
+   * reads it, so switching changes them all at once, in place.
+   */
+  roomLanguage: string | null
 }
