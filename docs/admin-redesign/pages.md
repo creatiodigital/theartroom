@@ -1181,3 +1181,9 @@ The wheel over the toolbar scrolls it (no longer walks the room); every Save pan
 - **Step 21 · re-invite of an active user (2026-11-12):** someone with a password of their own gets a 3-day "Set a new
   password" link and keeps their password; others get a temporary one as before; the dialog says both (Q161). Look:
   the new email at `/dev/emails/artist-set-password`.
+- **F1 · Gallery › Feedback (2026-11-14, on AR-182):** menu item after Users; `/admin/feedback` read on the server
+  (admins only, checked again on the page), All · Home page · 3D rooms in the URL (`?from=`), 50 a page (Q165), messages
+  as plain text with their line breaks; Delete asks first (`DELETE /api/admin/feedback/[id]`: admin, same origin, 404
+  when gone). Spec `e2e/admin-feedback.spec.ts`. Look: `/admin/feedback`, desktop and phone.
+
+| F1 | **Gallery › Feedback** (owner 2026-11-14): new menu item and page `/admin/feedback`, a table of every visitor feedback, newest first, filter Home page / 3D rooms, delete each one (asks first). No schema change. | `feedback-list.md` · `designs/admin-feedback-*.dc.html` | — | Built | See Built notes (F1). Pager: Q165. |

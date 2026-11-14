@@ -23,6 +23,7 @@ export const useArtisticText = (artworkId: string) => {
 
   const {
     textContent,
+    textContentSecond,
     textAlign = 'left',
     textVerticalAlign = 'top',
     textColor = '#000000',
@@ -60,6 +61,7 @@ export const useArtisticText = (artworkId: string) => {
 
   return {
     textContent,
+    textContentSecond,
     textAlign,
     textVerticalAlign,
     textColor,

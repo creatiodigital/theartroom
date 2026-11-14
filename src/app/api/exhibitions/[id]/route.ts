@@ -15,6 +15,7 @@ import { exhibitionUpdateRoles } from '@/lib/exhibitionUpdateRoles'
 import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
 import { freezeExhibition } from '@/lib/exhibitionSnapshot'
+import { secondLanguageOf } from '@/lib/roomLanguage'
 
 import { sanitizeLine } from '@/utils/sanitizeLine'
 import { slugify } from '@/utils/slugify'
@@ -94,7 +95,15 @@ type ExhibitionUpdateBody = {
   shadowSpread?: number
   shadowOpacity?: number
   shadowDirection?: number
+
+  // AR-182: the 3D room's second language (a code from SECOND_LANGUAGES, or null) and its
+  // visitor switch. Read live by the room, so they take effect at once, without a publish.
+  secondLanguage?: string | null
+  secondLanguageVisible?: boolean
 }
+
+/** AR-182: keys the room reads live (never from the snapshot): changing them is not a pending change. */
+const LIVE_KEYS = new Set(['secondLanguage', 'secondLanguageVisible'])
 
 /* ------------------------ GET ------------------------ */
 export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -232,6 +241,14 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     ) {
       return NextResponse.json({ error: 'One or more fields are too long.' }, { status: 400 })
     }
+    if (
+      (body.secondLanguage !== undefined &&
+        body.secondLanguage !== null &&
+        !secondLanguageOf(body.secondLanguage)) ||
+      (body.secondLanguageVisible !== undefined && typeof body.secondLanguageVisible !== 'boolean')
+    ) {
+      return NextResponse.json({ error: 'Unknown language setting.' }, { status: 400 })
+    }
 
     const data: Prisma.ExhibitionUpdateInput = {}
     if (body.mainTitle !== undefined) {
@@ -353,6 +370,11 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     if (body.autofocusGroups !== undefined)
       data.autofocusGroups = body.autofocusGroups === null ? Prisma.JsonNull : body.autofocusGroups
 
+    // AR-182: the room's second language and its visitor switch
+    if (body.secondLanguage !== undefined) data.secondLanguage = body.secondLanguage
+    if (body.secondLanguageVisible !== undefined)
+      data.secondLanguageVisible = body.secondLanguageVisible
+
     // Shadow decal controls
     if (body.shadowBlur !== undefined)
       data.shadowBlur = Math.max(0.01, Math.min(0.08, body.shadowBlur))
@@ -436,7 +458,13 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       // changes. (In a baked space, issuing or revoking the preview link is not an edit.)
       const previewLinkOnly =
         bakedSpace && Object.keys(body).every((key) => key === 'previewEnabled')
-      if (!previewLinkOnly && (currentExhibition.published || currentExhibition.previewEnabled)) {
+      // Nor is a setting the room reads live (AR-182: the languages): it is already in effect.
+      const liveOnly = Object.keys(body).every((key) => LIVE_KEYS.has(key))
+      if (
+        !previewLinkOnly &&
+        !liveOnly &&
+        (currentExhibition.published || currentExhibition.previewEnabled)
+      ) {
         data.hasPendingChanges = true
       }
     }

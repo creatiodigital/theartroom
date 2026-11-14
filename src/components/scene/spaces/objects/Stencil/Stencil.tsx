@@ -21,6 +21,7 @@ import {
   createOnArtworkTextMaterial,
 } from '@/components/scene/spaces/objects/Display/artworkFile'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
+import { roomTextOf } from '@/lib/roomLanguage'
 
 type StencilProps = {
   artwork: RuntimeArtwork
@@ -230,6 +231,11 @@ const Stencil = ({ artwork }: StencilProps) => {
     monogramOffset,
     monogramSize,
   } = artwork
+
+  // AR-182: the words in the room's language (English when this text has no version in it).
+  // Only the words change: the card, the box and the text size stay as the artist set them.
+  const roomLanguage = useSelector((state: RootState) => state.scene.roomLanguage)
+  const shownText = roomTextOf(artwork, roomLanguage)
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
@@ -518,7 +524,7 @@ const Stencil = ({ artwork }: StencilProps) => {
       textRef.current.sync()
       calculateTextDimensions()
     }
-  }, [textContent])
+  }, [shownText])
 
   const planeWidth = width || 1
   const planeHeight = height || 1
@@ -643,7 +649,7 @@ const Stencil = ({ artwork }: StencilProps) => {
         )
       })()}
 
-      {textContent && fontSize?.value && (
+      {shownText && fontSize?.value && (
         <mesh
           key={id}
           renderOrder={2}
@@ -693,7 +699,7 @@ const Stencil = ({ artwork }: StencilProps) => {
             outlineWidth="0.2%"
             outlineColor={textColor ?? 'black'}
           >
-            {textContent}
+            {shownText}
           </Text>
         </mesh>
       )}

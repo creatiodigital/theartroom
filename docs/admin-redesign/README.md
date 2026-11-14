@@ -8,6 +8,11 @@ Only the owner uses the admin. There is no deadline: quality over speed, one pag
 
 ## How we work (read this first)
 
+> **New, owner 2026-11-14: Gallery › Feedback (step F1 in `pages.md`).** A new menu item and page `/admin/feedback`:
+> a table of every visitor feedback (newest first, filter Home page / 3D rooms) with a Delete on each row that asks
+> first. No schema change. Spec: `feedback-list.md`; designs: `designs/admin-feedback-list.dc.html` and
+> `designs/admin-feedback-states.dc.html` (also on the canvas). The old "Admin — Feedback" board is superseded.
+
 > **Update, owner 2026-11-12:** from now on (remaining admin work and the whole public redesign), commit without
 > waiting for the owner, stop only for real blockers, and don't run E2E per commit: one full E2E run at the very end.
 > Details: `docs/public-redesign/README.md`, "Workflow".

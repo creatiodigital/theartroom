@@ -81,6 +81,7 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
         description: artworkData.description || undefined,
         imageUrl: artworkData.imageUrl || undefined,
         textContent: artworkData.textContent || undefined,
+        textContentSecond: artworkData.textContentSecond || undefined,
         soundUrl: artworkData.soundUrl || undefined,
         videoUrl: artworkData.videoUrl || undefined,
       }
@@ -152,6 +153,7 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
         description: artworkData.description || undefined,
         imageUrl: artworkData.imageUrl || undefined,
         textContent: artworkData.textContent || undefined,
+        textContentSecond: artworkData.textContentSecond || undefined,
         soundUrl: artworkData.soundUrl || undefined,
         videoUrl: artworkData.videoUrl || undefined,
       }

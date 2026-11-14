@@ -23,6 +23,7 @@ import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { StudioPanel } from '../../StudioPanel'
 import page from '../../StudioPanel/studioPage.module.scss'
 import styles from './ExhibitionSettings.module.scss'
+import { LanguagesPanel } from './LanguagesPanel'
 import { SectionsEditor } from './SectionsEditor'
 
 type Exhibition = {
@@ -43,6 +44,9 @@ type Exhibition = {
   // Display only (the header's dot and badge); the GET returns the whole record.
   published?: boolean
   hasPendingChanges?: boolean
+  // AR-182: the Languages card's starting state (it saves on its own).
+  secondLanguage?: string | null
+  secondLanguageVisible?: boolean
 }
 
 interface ExhibitionSettingsPageProps {
@@ -569,6 +573,15 @@ export const ExhibitionSettingsPage = ({ exhibitionId }: ExhibitionSettingsPageP
           A brief summary shown on exhibition listings. Max 400 characters.
         </p>
       </StudioPanel>
+
+      {/* AR-182: saves on its own, at once (as the name, the image and the sections). */}
+      <LanguagesPanel
+        exhibitionId={exhibition.id}
+        initial={{
+          secondLanguage: exhibition.secondLanguage ?? null,
+          secondLanguageVisible: exhibition.secondLanguageVisible ?? false,
+        }}
+      />
 
       <SectionsEditor exhibitionId={exhibition.id} />
 
