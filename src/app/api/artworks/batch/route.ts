@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 
 import { getEffectiveUserId } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
+import { secondLanguageOf } from '@/lib/roomLanguage'
 import { generateUniqueSlug } from '@/lib/slugify'
 
 // POST batch create artworks (requires auth)
@@ -25,6 +26,8 @@ export async function POST(request: NextRequest) {
         dimensions?: string
         description?: string
         textContent?: string
+        textContentSecond?: string | null
+        textContentSecondLang?: string | null
         featured?: boolean
         hiddenFromExhibition?: boolean
         originalWidth?: number | null
@@ -52,6 +55,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // AR-182: the second-language text, only when sent (an absent key leaves it as it is). An empty
+    // one is "same in both languages": stored as none, with its language.
+    const secondText = (artwork: (typeof artworks)[number]) => {
+      if (artwork.textContentSecond === undefined) return {}
+      const text = artwork.textContentSecond?.trim() ? artwork.textContentSecond : null
+      const lang = secondLanguageOf(artwork.textContentSecondLang)?.code ?? null
+      return text && lang
+        ? { textContentSecond: text, textContentSecondLang: lang }
+        : { textContentSecond: null, textContentSecondLang: null }
+    }
+
     // Use upsert to avoid duplicates (if artwork already exists, update it).
     //
     // `imageUrl` is deliberately NOT written here, even though the wall editor
@@ -77,6 +91,7 @@ export async function POST(request: NextRequest) {
             dimensions: artwork.dimensions || undefined,
             description: artwork.description || undefined,
             textContent: artwork.textContent || undefined,
+            ...secondText(artwork),
             featured: artwork.featured ?? false,
             hiddenFromExhibition: artwork.hiddenFromExhibition ?? false,
             originalWidth: artwork.originalWidth ?? undefined,
@@ -92,6 +107,7 @@ export async function POST(request: NextRequest) {
             dimensions: artwork.dimensions || undefined,
             description: artwork.description || undefined,
             textContent: artwork.textContent || undefined,
+            ...secondText(artwork),
             featured: artwork.featured ?? false,
             hiddenFromExhibition: artwork.hiddenFromExhibition ?? false,
             originalWidth: artwork.originalWidth ?? undefined,

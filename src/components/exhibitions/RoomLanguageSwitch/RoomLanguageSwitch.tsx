@@ -13,10 +13,11 @@ import styles from './RoomLanguageSwitch.module.scss'
 type RoomLanguageSwitchProps = {
   /**
    * room: the visitor's room menu (square corners, docs/public-redesign README); the choice is
-   * remembered for this visit. editor: the 3D editor, beside the toolbar, so the artist sees how
-   * both languages sit on the walls while arranging them; nothing is remembered.
+   * remembered for this visit. editor: a floating pill in the 3D editor and over the wall view, so
+   * the artist sees how both languages sit on the walls; panel: the wall view's Text tab. In the
+   * editors nothing is remembered: they open in English.
    */
-  tone: 'room' | 'editor'
+  tone: 'room' | 'editor' | 'panel'
   className?: string
 }
 

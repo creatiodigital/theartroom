@@ -168,6 +168,14 @@ const wallViewSlice = createSlice({
     setShiftKeyDown: (state: TWallView, action: PayloadAction<boolean>) => {
       state.isShiftKeyDown = action.payload
     },
+    /** AR-182: open this text's Text tab, cursor in its English field. */
+    requestTextFocus: (state: TWallView, action: PayloadAction<string>) => {
+      state.textFocusRequest = action.payload
+    },
+    /** AR-182: the Text tab has put the cursor in the field. */
+    textFocusDone: (state: TWallView) => {
+      state.textFocusRequest = null
+    },
     setSizeLocked: (
       state: TWallView,
       action: PayloadAction<{ artworkId: string; value: boolean }>,
@@ -262,6 +270,8 @@ const wallViewSlice = createSlice({
 })
 
 export const {
+  requestTextFocus,
+  textFocusDone,
   showWallView,
   hideWallView,
   resetWallView,

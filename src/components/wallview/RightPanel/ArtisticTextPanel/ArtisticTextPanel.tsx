@@ -135,6 +135,15 @@ const ArtisticText = ({
     monogramSize,
   } = useArtworkDetails(currentArtworkId!)
 
+  // AR-182: the version in the exhibition's second language, when there is one.
+  const secondLanguage = useSelector((state: RootState) => state.exhibition.secondLanguage)
+  const secondText = useSelector((state: RootState) => {
+    const artwork = currentArtworkId ? state.artworks.byId[currentArtworkId] : undefined
+    return secondLanguage && artwork?.textContentSecondLang === secondLanguage
+      ? artwork.textContentSecond
+      : undefined
+  })
+
   // Filter font weight options based on selected family's supported variants
   const filteredWeights = useMemo(() => {
     const family = (fontFamily?.value ?? 'roboto') as TFontFamily
@@ -183,12 +192,20 @@ const ArtisticText = ({
     // Use an inner span for tight bounding box measurement
     // (block-level scrollHeight often includes trailing line-height space)
     const span = document.createElement('span')
-    span.innerText = textContent
     measurer.appendChild(span)
 
     document.body.appendChild(measurer)
 
-    const measuredHeight = span.getBoundingClientRect().height
+    // AR-182: the box fits the longer of the English text and its version in the exhibition's
+    // second language, so neither spills out.
+    const measuredHeight = Math.max(
+      ...[textContent, secondText]
+        .filter((text): text is string => !!text?.trim())
+        .map((text) => {
+          span.innerText = text
+          return span.getBoundingClientRect().height
+        }),
+    )
 
     document.body.removeChild(measurer)
 
@@ -225,6 +242,7 @@ const ArtisticText = ({
   }, [
     currentArtworkId,
     textContent,
+    secondText,
     exhibitionArtworksById,
     textPadding,
     fontSize,

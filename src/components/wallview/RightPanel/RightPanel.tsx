@@ -13,6 +13,7 @@ import type { RootState } from '@/redux/store'
 import { ArtisticImagePanel } from './ArtisticImagePanel'
 import { ArtisticSoundPanel } from './ArtisticSoundPanel'
 import { ArtisticTextPanel } from './ArtisticTextPanel'
+import { TextTab } from './ArtisticTextPanel/TextTab'
 import ArtisticVideoPanel from './ArtisticVideoPanel/ArtisticVideoPanel'
 import { ArtworkPanel, type ItemTab } from './ArtworkPanel'
 import { GroupPanel } from './GroupPanel'
@@ -52,6 +53,11 @@ const RightPanel = () => {
   // save-first of View details (questions.md Q139 b), shown until the next edit (anything a save
   // sends changes), another selection or an accepted save.
   const [tab, setTab] = useState<ItemTab>('layout')
+  // AR-182: a text just placed or double-clicked opens on its Text tab (TextTab then focuses).
+  const textFocusRequest = useSelector((state: RootState) => state.wallView.textFocusRequest)
+  useEffect(() => {
+    if (textFocusRequest && textFocusRequest === currentArtworkId) setTab('text')
+  }, [textFocusRequest, currentArtworkId])
   const artworksById = useSelector((state: RootState) => state.artworks.byId)
   const autofocusGroups = useSelector(selectAutofocusGroups)
   const [detailsFailed, setDetailsFailed] = useState(false)
@@ -132,6 +138,7 @@ const RightPanel = () => {
             )
           }
           layoutExtra={artworkType === 'text' && <ArtisticTextPanel part="fit" />}
+          textTab={artworkType === 'text' && <TextTab active={tab === 'text'} />}
         >
           {artworkType === 'image' && <ArtisticImagePanel disabled={isLocked} />}
           {artworkType === 'text' && <ArtisticTextPanel disabled={isLocked} />}

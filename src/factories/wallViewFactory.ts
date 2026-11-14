@@ -5,6 +5,7 @@ export const wallViewFactory = (): TWallView => ({
   currentArtworkId: null,
   currentWallId: null,
   editingArtworkId: null,
+  textFocusRequest: null,
   currentWallCoordinates: { x: 0, y: 0, z: 0 },
   currentWallNormal: { x: 0, y: 0, z: 1 },
   scaleFactor: 0.3,

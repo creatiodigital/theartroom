@@ -52,6 +52,11 @@ export type TWallView = {
   currentArtworkId: string | null
   currentWallId: string | null
   editingArtworkId: string | null // Artwork ID for the edit modal overlay
+  /**
+   * AR-182: the text whose Text tab should open with the cursor in its English field (one just
+   * placed on the wall, or double-clicked); cleared once done. Texts are written in the panel.
+   */
+  textFocusRequest: string | null
   currentWallCoordinates: TCoordinates
   currentWallNormal: TCoordinates
   scaleFactor: number

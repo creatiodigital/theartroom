@@ -1,0 +1,76 @@
+// AR-182: the Text tab (designs/wall-languages-editor §2): a field per language, its fit line,
+// and the "doesn't fit" box with its two fixes. The rest comes from RightPanel.module.scss.
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  line-height: 1.4;
+  color: var(--color-text-primary);
+}
+
+.textarea {
+  width: 100%;
+  min-height: 120px;
+  box-sizing: border-box;
+  padding: var(--space-2) 10px;
+  border: 1px solid var(--color-gray-50);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  resize: vertical;
+
+  &::placeholder {
+    color: var(--color-text-secondary);
+  }
+
+  &:focus-visible {
+    border-color: var(--color-dark-surface);
+    outline: none;
+  }
+}
+
+.fits {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.warning {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 10px var(--space-3);
+  border: 1px solid var(--color-red-50);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+}
+
+.warningText {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  line-height: 1.4;
+  color: var(--color-red-50);
+}
+
+.fixes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+}
+
+.inlineLink {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
