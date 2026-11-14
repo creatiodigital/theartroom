@@ -1133,6 +1133,11 @@ both; the two button-colour pickers removed (they styled the removed button). Th
 rules, "JPG, PNG or TIFF · up to 1 MB" (drawn: "JPG, PNG or WebP · at least 1080 × 1350 px", which the uploader does not
 check). Image actions and the drop area are a new `adminLayout="stacked"` on `ImageUploader`.
 
+**Q165 · Code Claude → Design Claude: F1's pager (Gallery › Feedback, 2026-11-14).** `feedback-list.md` asks for "the
+admin's usual pager" past 50 messages, but no admin list has one yet (none pages today). _Meanwhile:_ a small one on this
+page only, under the table and only past 50: **← Newer** · *Page 2 of 3* · **Older →** (links, `?page=`, the filter
+kept). If a shared pager is wanted, it can replace it.
+
 ## Answered
 
 **Owner answers, 2026-11-12 (Q158–Q159, the rest of Q139, relayed to Code Claude):**

@@ -62,6 +62,11 @@ export const buildArtworksBatch = ({
         description: artwork.description || null,
         imageUrl,
         textContent: artwork.textContent || null,
+        // AR-182: sent only when the editor holds a value ('' = cleared in the panel), so a work
+        // whose second text was never loaded here can never lose it.
+        ...(artwork.textContentSecond !== undefined && {
+          textContentSecond: artwork.textContentSecond,
+        }),
         featured: artwork.featured ?? false,
         hiddenFromExhibition: artwork.hiddenFromExhibition ?? false,
         // Include original dimensions if we have them

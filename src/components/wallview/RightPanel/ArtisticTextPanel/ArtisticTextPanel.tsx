@@ -20,6 +20,11 @@ import { ColorPicker } from '@/components/ui/ColorPicker'
 import { getSpaceConfig, type SpaceKey } from '@/components/scene/constants'
 import { DistanceBox, PanelGroup, SegmentStrip, SelectField } from '@/components/wallview/chrome'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
+import {
+  comfortableHeight,
+  measureWallText,
+  type WallTextStyle,
+} from '@/components/wallview/textFit'
 import { convert2DTo3D } from '@/components/wallview/utils'
 import { useArtworkDetails } from '@/components/wallview/RightPanel/hooks/useArtworkDetails'
 import { useArtworkTextHandlers } from '@/components/wallview/RightPanel/hooks/useArtworkTextHandlers'
@@ -40,18 +45,6 @@ import {
   textThicknessOptions,
 } from './constants'
 import { spaceGltfUrl } from '@/components/scene/spaceAsset'
-
-/** Map font-family keys to the CSS custom properties used in the 2D wall view */
-const fontFamilyMap: Record<string, string> = {
-  roboto: 'var(--font-wall-roboto)',
-  lora: 'var(--font-wall-lora)',
-  alegreya: 'var(--font-wall-alegreya)',
-  manrope: 'var(--font-wall-manrope)',
-  'garamond-glc': 'var(--font-wall-garamond-glc)',
-  crimson: 'var(--font-wall-crimson)',
-  'dm-sans': 'var(--font-wall-dm-sans)',
-  'plus-jakarta-sans': 'var(--font-wall-plus-jakarta-sans)',
-}
 
 // Today's text-align values, named and drawn as in designs/wall-view-panels.dc.html.
 const TEXT_ALIGNS = [
@@ -117,7 +110,6 @@ const ArtisticText = ({
     fontWeight,
     letterSpacing,
     fontFamily,
-    textPadding,
     textPaddingTop,
     textPaddingBottom,
     textPaddingLeft,
@@ -134,6 +126,11 @@ const ArtisticText = ({
     monogramOffset,
     monogramSize,
   } = useArtworkDetails(currentArtworkId!)
+
+  // AR-182: the text's second-language version (fitted too, whatever the exhibition's language).
+  const secondText = useSelector((state: RootState) =>
+    currentArtworkId ? state.artworks.byId[currentArtworkId]?.textContentSecond : undefined,
+  )
 
   // Filter font weight options based on selected family's supported variants
   const filteredWeights = useMemo(() => {
@@ -153,47 +150,29 @@ const ArtisticText = ({
     const exhibitionArtwork = exhibitionArtworksById[currentArtworkId]
     if (!exhibitionArtwork) return
 
-    const padding = textPadding?.value ?? 0
-    const fSize = fontSize?.value ?? 16
-    const lHeight = lineHeight?.value ?? 1
-    const lSpacing = letterSpacing?.value ?? 0
-    const fFamily = fontFamily?.value ?? 'roboto'
-    const fWeight = fontWeight?.value ?? 'regular'
+    // AR-182: measured as the wall lays the text out (textFit: its font, size, line height,
+    // letter spacing and its own left and right spacing), the box fitting the longer of the
+    // English text and its second-language version with their top and bottom spacing. It used a
+    // single legacy padding, so the text wrapped at another width than the wall shows.
+    const style: WallTextStyle = {
+      fontSize: fontSize?.value ?? 16,
+      lineHeight: lineHeight?.value ?? 1,
+      letterSpacing: letterSpacing?.value ?? 0,
+      fontFamily: fontFamily?.value ?? 'roboto',
+      fontWeight: fontWeight?.value ?? 'regular',
+      padTop: textPaddingTop?.value ?? 0,
+      padBottom: textPaddingBottom?.value ?? 0,
+      padLeft: textPaddingLeft?.value ?? 0,
+      padRight: textPaddingRight?.value ?? 0,
+    }
+    const heights = [textContent, secondText]
+      .filter((text): text is string => !!text?.trim())
+      .map((text) => measureWallText(text, style, exhibitionArtwork.width2d))
+      .filter((height): height is number => height !== null)
+    if (heights.length === 0) return
 
-    // Content width = current artwork width minus padding on both sides
-    const contentWidth = exhibitionArtwork.width2d - padding * 2
-
-    // Create an off-screen measurement div with the same text styles
-    // constrained to the current content width so text wraps the same way
-    const measurer = document.createElement('div')
-    measurer.style.position = 'absolute'
-    measurer.style.top = '-9999px'
-    measurer.style.left = '-9999px'
-    measurer.style.visibility = 'hidden'
-    measurer.style.whiteSpace = 'pre-wrap' // match the 2D content style
-    measurer.style.wordWrap = 'break-word'
-    measurer.style.overflowWrap = 'break-word'
-    measurer.style.width = `${contentWidth}px` // constrain to current content width
-    measurer.style.fontSize = `${fSize}px`
-    measurer.style.lineHeight = String(lHeight)
-    measurer.style.letterSpacing = `${lSpacing}px`
-    measurer.style.fontFamily = fontFamilyMap[fFamily] ?? fontFamilyMap.roboto
-    measurer.style.fontWeight = fWeight === 'bold' ? '600' : '400'
-
-    // Use an inner span for tight bounding box measurement
-    // (block-level scrollHeight often includes trailing line-height space)
-    const span = document.createElement('span')
-    span.innerText = textContent
-    measurer.appendChild(span)
-
-    document.body.appendChild(measurer)
-
-    const measuredHeight = span.getBoundingClientRect().height
-
-    document.body.removeChild(measurer)
-
-    // Keep current width, only adjust height to fit text + padding
-    const newHeight2d = measuredHeight + padding * 2
+    // Keep current width, only adjust height to fit text + its top and bottom spacing
+    const newHeight2d = comfortableHeight(Math.max(...heights), style)
 
     // Keep artwork horizontally centered, adjust vertical center
     const oldCenterY = exhibitionArtwork.posY2d + exhibitionArtwork.height2d / 2
@@ -225,8 +204,12 @@ const ArtisticText = ({
   }, [
     currentArtworkId,
     textContent,
+    secondText,
     exhibitionArtworksById,
-    textPadding,
+    textPaddingTop,
+    textPaddingBottom,
+    textPaddingLeft,
+    textPaddingRight,
     fontSize,
     lineHeight,
     letterSpacing,

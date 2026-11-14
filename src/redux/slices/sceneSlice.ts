@@ -79,6 +79,11 @@ const sceneSlice = createSlice({
       state.isExitPromptOpen = false
       state.exitPromptSource = null
     },
+
+    /** AR-182: the room's texts in the second language (its code) or in English (null). */
+    setRoomLanguage: (state: TScene, action: PayloadAction<string | null>) => {
+      state.roomLanguage = action.payload
+    },
   },
 })
 
@@ -96,6 +101,7 @@ export const {
   setTrackLampGroups,
   openExitPrompt,
   declineExit,
+  setRoomLanguage,
 } = sceneSlice.actions
 
 export default sceneSlice.reducer

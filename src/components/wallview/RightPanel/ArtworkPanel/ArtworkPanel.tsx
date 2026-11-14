@@ -50,12 +50,18 @@ import { useArtworkHandlers } from '../hooks/useArtworkHandlers'
 import styles from '../RightPanel.module.scss'
 import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 
-export type ItemTab = 'layout' | 'look'
+export type ItemTab = 'text' | 'layout' | 'look'
 
 const ITEM_TABS = [
   { id: 'layout', label: 'Layout' },
   { id: 'look', label: 'Look' },
 ] as const satisfies readonly { id: ItemTab; label: string }[]
+
+// AR-182: a text's words are written in its own first tab.
+const TEXT_ITEM_TABS = [{ id: 'text', label: 'Text' }, ...ITEM_TABS] as const satisfies readonly {
+  id: ItemTab
+  label: string
+}[]
 
 type ArtworkPanelProps = {
   /** The open tab; RightPanel keeps it while the selection changes (wallview.md §3). */
@@ -67,6 +73,8 @@ type ArtworkPanelProps = {
   notice?: ReactNode
   /** More of the Size group for one type: a text box's Fit box to text. */
   layoutExtra?: ReactNode
+  /** AR-182: a text's Text tab, first (its words, in each language). Only texts have one. */
+  textTab?: ReactNode
   /** The Look tab: the type's own panel. */
   children?: ReactNode
 }
@@ -78,14 +86,17 @@ type ArtworkPanelProps = {
  * when they always did.
  */
 const ArtworkPanel = ({
-  tab,
+  tab: chosenTab,
   onTabChange,
   viewDetails,
   notice,
   layoutExtra,
+  textTab,
   children,
 }: ArtworkPanelProps) => {
   const dispatch = useDispatch()
+  // Text kept while an image is selected reads as Layout (only texts have a Text tab).
+  const tab: ItemTab = chosenTab === 'text' && !textTab ? 'layout' : chosenTab
   const currentArtworkId = useSelector((state: RootState) => state.wallView.currentArtworkId)
   const sizeLocked = useSelector((state: RootState) =>
     currentArtworkId ? (state.wallView.sizeLockedById[currentArtworkId] ?? false) : false,
@@ -381,10 +392,25 @@ const ArtworkPanel = ({
           {viewDetails && <span className={styles.actionsEnd}>{viewDetails}</span>}
         </div>
         {notice}
-        <TabStrip label="Item settings" tabs={ITEM_TABS} selected={tab} onSelect={onTabChange} />
+        <TabStrip
+          label="Item settings"
+          tabs={textTab ? TEXT_ITEM_TABS : ITEM_TABS}
+          selected={tab}
+          onSelect={onTabChange}
+        />
       </header>
 
       <div className={styles.body}>
+        {textTab && (
+          <div
+            role="tabpanel"
+            aria-label="Text"
+            hidden={tab !== 'text'}
+            className={styles.tabPanel}
+          >
+            {textTab}
+          </div>
+        )}
         <div
           role="tabpanel"
           aria-label="Layout"

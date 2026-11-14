@@ -14,4 +14,5 @@ export const sceneFactory = (): TScene => ({
   exitPromptSource: null,
   exitRespawnNonce: 0,
   trackLampGroups: [],
+  roomLanguage: null,
 })

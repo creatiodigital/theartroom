@@ -311,6 +311,14 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
           value: formData.textContent,
         }),
       )
+      // AR-182: its second version, so the wall's next save sends what was just saved.
+      dispatch(
+        editArtwork({
+          currentArtworkId: artworkId,
+          property: 'textContentSecond',
+          value: formData.textContentSecond,
+        }),
+      )
       dispatch(
         editArtwork({
           currentArtworkId: artworkId,
@@ -503,6 +511,7 @@ export const ArtworkEditModal = ({ artworkId }: ArtworkEditModalProps) => {
             saving={saving}
             error={error}
             onFormChange={handleChange}
+            textRooms={artwork?.textRooms}
             onPrintOptionsChange={handlePrintOptionsChange}
             onPrintRecommendationsChange={handlePrintRecommendationsChange}
             onImageUpload={handleImageUpload}

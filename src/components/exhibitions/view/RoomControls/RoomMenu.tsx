@@ -15,6 +15,7 @@ import {
 } from '@phosphor-icons/react'
 import c from 'classnames'
 
+import { RoomLanguageSwitch } from '@/components/exhibitions/RoomLanguageSwitch/RoomLanguageSwitch'
 import { Button } from '@/components/ui/Button'
 import { useSceneAudioActions, useSceneAudioState } from '@/contexts/SceneAudioContext'
 import { useIsTouchDevice } from '@/hooks/useIsTouchDevice'
@@ -39,6 +40,12 @@ interface RoomMenuProps {
   onFeedback?: () => void
   /** Every press of the menu button, opening or closing the menu: the room closes its open windows. */
   onButtonPress?: () => void
+  /**
+   * AR-182: English | the second language as the first row (designs/wall-languages-visitor §1), only while the
+   * exhibition shows its visitors the language switch. A press changes every wall text at once
+   * and leaves the menu open.
+   */
+  languageSwitch?: boolean
 }
 
 const ICON = { size: 20, weight: 'light', 'aria-hidden': true } as const
@@ -64,6 +71,7 @@ export const RoomMenu = ({
   onAbout,
   onFeedback,
   onButtonPress,
+  languageSwitch = false,
 }: RoomMenuProps) => {
   const [open, setOpen] = useState(false)
   // The leave dialog (also raised by walking into the exit corridor) takes over: the menu closes.
@@ -196,6 +204,14 @@ export const RoomMenu = ({
           className={styles.panel}
           onKeyDown={onPanelKeyDown}
         >
+          {languageSwitch && (
+            <>
+              <div className={styles.languageRow}>
+                <RoomLanguageSwitch tone="room" />
+              </div>
+              <div role="separator" className={styles.separator} />
+            </>
+          )}
           {onAbout && (
             <Button
               variant="bare"

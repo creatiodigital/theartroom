@@ -179,6 +179,11 @@
   background-color: var(--color-gray-30);
 }
 
+// AR-182: English | the second language, the menu's first row (designs/wall-languages-visitor §1).
+.languageRow {
+  padding: var(--space-2) 6px 10px;
+}
+
 // Sound's on / off switch: 34×20, dark when on, the knob to the right.
 .switch {
   position: relative;

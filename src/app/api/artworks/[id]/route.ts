@@ -13,6 +13,7 @@ import type { PrintRecommendations, PrintRestrictions } from '@/lib/print-provid
 import { Prisma } from '@/generated/prisma'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
+import { secondLanguageOf, secondTextFields } from '@/lib/roomLanguage'
 import { generateUniqueSlug } from '@/lib/slugify'
 import { sanitizeLine } from '@/utils/sanitizeLine'
 
@@ -197,8 +198,34 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ id
       select: { exhibitionId: true, sectionId: true },
     })
 
+    // AR-182: the exhibitions whose 3D room hangs this text, each with its second language (null:
+    // none yet), for the text page's Second language line (where the version shows, or why not).
+    const textRooms =
+      artwork.artworkType === 'text'
+        ? [
+            ...new Map(
+              (
+                await prisma.exhibitionArtwork.findMany({
+                  where: { artworkId: id, wallId: { not: null } },
+                  select: {
+                    exhibition: { select: { id: true, mainTitle: true, secondLanguage: true } },
+                  },
+                })
+              ).map(({ exhibition }) => [
+                exhibition.id,
+                {
+                  id: exhibition.id,
+                  title: exhibition.mainTitle,
+                  language: secondLanguageOf(exhibition.secondLanguage)?.code ?? null,
+                },
+              ]),
+            ).values(),
+          ]
+        : []
+
     return NextResponse.json({
       ...artwork,
+      textRooms,
       exhibitionIds: memberOf.map((m) => m.exhibitionId),
       // The section each show places this work in (null = no section), so the
       // Exhibitions picker pre-selects instead of resetting on every save.
@@ -339,6 +366,8 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       dimensions: body.dimensions,
       description: body.description,
       textContent: body.textContent,
+      // AR-182: the second-language version (only when sent; empty = same in both languages).
+      ...secondTextFields(body.textContentSecond),
       featured: body.featured === true || body.featured === 'true',
       printEnabled: body.printEnabled === true || body.printEnabled === 'true',
       printPriceCents,

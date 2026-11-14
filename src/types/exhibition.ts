@@ -28,6 +28,10 @@ export type TExhibition = {
   published: boolean
   hasPendingChanges: boolean
   previewEnabled: boolean
+  /** AR-182: the room's second language (a code, see lib/roomLanguage); null/absent = none. */
+  secondLanguage?: string | null
+  /** AR-182: the room menu shows the language switch to visitors. */
+  secondLanguageVisible?: boolean
   // Lighting customization
   ambientLightColor?: string
   ambientLightIntensity?: number

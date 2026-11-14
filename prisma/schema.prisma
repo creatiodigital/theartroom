@@ -164,7 +164,12 @@ model Artwork {
   originalFormat       String? // Original file format (JPEG, PNG, etc.)
   originalSizeBytes    Int? // Original file size in bytes
   textContent          String? // Fixed text content for stencil/text artworks
-  soundUrl             String? // Audio file URL for sound artworks
+  // AR-182: the second-language version of `textContent`, shown in the 3D room when the
+  // exhibition's second language is on. Null/empty = same as English. `textContentSecondLang`
+  // is the language code it was written for (taken from the exhibition; never shown).
+  textContentSecond     String?
+  textContentSecondLang String?
+  soundUrl            String? // Audio file URL for sound artworks
   videoUrl             String? // Video file URL for video artworks
   media                ArtworkMedia[]
   featured             Boolean        @default(false)
@@ -711,6 +716,11 @@ model Exhibition {
   previewEnabled    Boolean   @default(false) // When true, visit route is accessible even if unpublished
   previewToken      String? // UUID token required in ?preview= param
   bake              Json? // AR-161: draft BakeRecord; the published one lives in publishedSnapshot
+  // AR-182: one optional second language for the texts inside the 3D room only. A language
+  // code (fr, es, it, de, pt…); null = none. `secondLanguageVisible` shows the visitor switch
+  // (off by default, so texts can be translated before visitors see them).
+  secondLanguage        String?
+  secondLanguageVisible Boolean @default(false)
 
   // Lighting customization (space-agnostic)
   ambientLightColor      String?  @default("#e4e8f2")

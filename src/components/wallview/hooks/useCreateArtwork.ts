@@ -10,6 +10,7 @@ import {
   chooseCurrentArtworkId,
   addArtworkToGroup,
   removeGroup,
+  requestTextFocus,
 } from '@/redux/slices/wallViewSlice'
 import { showWizard } from '@/redux/slices/wizardSlice'
 import type { RootState } from '@/redux/store'
@@ -57,6 +58,8 @@ export const useCreateArtwork = (boundingData: TDimensions) => {
       }
 
       dispatch(createArtworkPosition({ artworkId, artworkPosition }))
+      // AR-182: a text is placed on the wall and written in the panel's Text tab.
+      if (artworkType === 'text') dispatch(requestTextFocus(artworkId))
     },
     [boundingData, wallWidth, wallHeight, dispatch, currentWallId],
   )
@@ -92,6 +95,8 @@ export const useCreateArtwork = (boundingData: TDimensions) => {
       }
 
       dispatch(createArtworkPosition({ artworkId, artworkPosition }))
+      // AR-182: a text is placed on the wall and written in the panel's Text tab.
+      if (artworkType === 'text') dispatch(requestTextFocus(artworkId))
     },
     [boundingData, dispatch, currentWallId],
   )

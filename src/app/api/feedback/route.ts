@@ -6,6 +6,7 @@ import { feedbackSecret, signFeedbackToken } from '@/lib/feedback/feedbackToken'
 import { validateFeedback } from '@/lib/feedback/validateFeedback'
 import { getClientIp } from '@/lib/getClientIp'
 import prisma from '@/lib/prisma'
+import { isSameOrigin } from '@/lib/sameOrigin'
 import { rateLimit } from '@/lib/rateLimit'
 
 /**
@@ -46,18 +47,6 @@ export async function GET() {
     return json({ error: 'Unavailable.' }, 503)
   }
   return json({ token: signFeedbackToken(Date.now(), secret) })
-}
-
-/** The request's own host: the page that posts must be on it (this site, staging or dev). */
-const isSameOrigin = (request: NextRequest) => {
-  const origin = request.headers.get('origin')
-  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host')
-  if (!origin || !host) return false
-  try {
-    return new URL(origin).host === host
-  } catch {
-    return false
-  }
 }
 
 export async function POST(request: NextRequest) {

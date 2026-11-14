@@ -11,6 +11,7 @@ import {
   type Ref,
 } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import c from 'classnames'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import {
@@ -20,6 +21,7 @@ import {
   ArrowUp,
   HandArrowUp,
   HandSwipeRight,
+  List,
   MouseSimple,
   SpeakerHigh,
   X,
@@ -61,7 +63,12 @@ import { useLightmapBytes } from '@/components/scene/bake/lightmapLoader'
 import { useSceneFailed } from '@/components/scene/sceneFailure'
 import { MonogramLoader } from '@/components/ui/MonogramLoader'
 import { closeArtworkModal, hideArtworkPanel } from '@/redux/slices/dashboardSlice'
-import { declineExit, hidePlaceholders, resetScene } from '@/redux/slices/sceneSlice'
+import {
+  declineExit,
+  hidePlaceholders,
+  resetScene,
+  setRoomLanguage,
+} from '@/redux/slices/sceneSlice'
 import { resetWallView } from '@/redux/slices/wallViewSlice'
 import type { AppDispatch, RootState } from '@/redux/store'
 import type { TExhibition } from '@/types/exhibition'
@@ -76,6 +83,7 @@ import { RoomMenu } from './RoomControls/RoomMenu'
 import { TouchControlsGuide } from './TouchControlsGuide/TouchControlsGuide'
 import styles from './ExhibitionView.module.scss'
 import { getConsent, CONSENT_CHANGE_EVENT } from '@/lib/consent'
+import { readRoomLanguageChoice, roomLanguageOnEntry, secondLanguageOf } from '@/lib/roomLanguage'
 
 /**
  * Leaving the exhibition, from the menu's Leave exhibition and from the leave dialog's Leave.
@@ -146,12 +154,14 @@ interface LoadingOverlayProps {
   mode: PageMode
   /** Once the room is revealed with its stored bake on — never when the bake failed to go on. */
   onRevealed?: () => void
+  /** AR-182: once the loader steps aside (the room is shown, or its error message). */
+  onDone?: () => void
   /** The visitor's loader (room-loader.md): the exhibition's title and artist. */
   title?: string
   artist?: string
 }
 
-const LoadingOverlay = ({ mode, onRevealed, title, artist }: LoadingOverlayProps) => {
+const LoadingOverlay = ({ mode, onRevealed, onDone, title, artist }: LoadingOverlayProps) => {
   const { active, progress } = useProgress()
   const bake = useBakeProgress()
   // A stored bake that will be shown (`shownStoredBake`) only downloads (its files are assets) but
@@ -187,6 +197,9 @@ const LoadingOverlay = ({ mode, onRevealed, title, artist }: LoadingOverlayProps
   useEffect(() => {
     if (ready) setDone(true)
   }, [ready])
+  useEffect(() => {
+    if (done) onDone?.()
+  }, [done, onDone])
   const revealedWithBake = done && !sceneFailed && storedBake && bake.phase === 'finished'
   useEffect(() => {
     if (revealedWithBake) onRevealed?.()
@@ -256,6 +269,16 @@ const useHasSoundOrVideo = () => {
 
 const MEDIA_NOTICE_STORAGE_PREFIX = 'the-art-room:media-notice-dismissed:'
 
+// AR-182: the language window's "Don't show again", per exhibition, in this browser.
+const LANGUAGE_WELCOME_STORAGE_PREFIX = 'the-art-room:language-welcome-dismissed:'
+const languageWelcomeDismissed = (exhibitionId: string) => {
+  try {
+    return localStorage.getItem(`${LANGUAGE_WELCOME_STORAGE_PREFIX}${exhibitionId}`) === 'true'
+  } catch {
+    return false
+  }
+}
+
 /** What the room menu's "How to move around" calls: today's help button handler. */
 interface NavigationHelpHandle {
   open: () => void
@@ -273,15 +296,24 @@ interface NavigationHelpModalProps {
    *  show is gated on this so we don't read stale artworks and warn
    *  about media that isn't here. */
   artworksReady?: boolean
+  /**
+   * AR-182: the second language's English name while the exhibition shows visitors the language
+   * switch: the welcome window says the room is also available in it, once the loader is gone.
+   */
+  languageName?: string | null
+  /** AR-182: the loader has stepped aside. */
+  revealed?: boolean
 }
 
-type ModalStep = 'none' | 'help' | 'media'
+type ModalStep = 'none' | 'help' | 'media' | 'language'
 
 const NavigationHelpModal = ({
   ref,
   hidden,
   exhibitionId,
   artworksReady,
+  languageName,
+  revealed,
 }: NavigationHelpModalProps) => {
   // Phones and tablets are taught their finger's controls; everything else the
   // keyboard, mouse and trackpad (AR-172).
@@ -289,6 +321,9 @@ const NavigationHelpModal = ({
   const [currentStep, setCurrentStep] = useState<ModalStep>('none')
   const [mediaDismissed, setMediaDismissed] = useState(false)
   const hasCheckedStorage = useRef(false)
+  // AR-182: the welcome window comes first, once per entry; the media notice waits for it.
+  const [languageShown, setLanguageShown] = useState(false)
+  const [mediaAfterLanguage, setMediaAfterLanguage] = useState(false)
 
   const hasMediaArtworks = useHasSoundOrVideo()
 
@@ -320,19 +355,67 @@ const NavigationHelpModal = ({
     if (!exhibitionId || !artworksReady || !consentSettled) return
     if (hasCheckedStorage.current) return
     hasCheckedStorage.current = true
+    // AR-182: the language window opens first, unless "Don't show again" was chosen here.
+    const welcomesInLanguage = !!languageName && !languageWelcomeDismissed(exhibitionId)
 
     try {
       const mediaKey = `${MEDIA_NOTICE_STORAGE_PREFIX}${exhibitionId}`
       const mediaDone = localStorage.getItem(mediaKey) === 'true'
       if (mediaDone) setMediaDismissed(true)
       if (!mediaDone && hasMediaArtworks) {
+        // AR-182: after the language window, when there is one.
+        if (welcomesInLanguage) {
+          setMediaAfterLanguage(true)
+          return
+        }
         const timer = setTimeout(() => setCurrentStep('media'), 500)
         return () => clearTimeout(timer)
       }
     } catch {
-      if (hasMediaArtworks) setCurrentStep('media')
+      if (hasMediaArtworks) {
+        if (welcomesInLanguage) setMediaAfterLanguage(true)
+        else setCurrentStep('media')
+      }
     }
-  }, [exhibitionId, artworksReady, hasMediaArtworks, consentSettled])
+  }, [exhibitionId, artworksReady, hasMediaArtworks, consentSettled, languageName])
+
+  // AR-182: "This exhibition is also available in <second language>", once the room is shown (after the
+  // loader and the cookie banner), before the media notice. In English: the site is English.
+  useEffect(() => {
+    if (!languageName || languageShown || !revealed || !consentSettled || !artworksReady) return
+    if (!exhibitionId || languageWelcomeDismissed(exhibitionId)) return
+    setLanguageShown(true)
+    setCurrentStep('language')
+  }, [languageName, languageShown, revealed, consentSettled, artworksReady, exhibitionId])
+
+  // The keyboard lands on OK (Button takes no ref: the dialog finds it).
+  const languageDialogRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (currentStep === 'language')
+      languageDialogRef.current
+        ?.querySelector<HTMLElement>('button')
+        ?.focus({ preventScroll: true })
+  }, [currentStep])
+
+  const handleCloseLanguage = () => {
+    setCurrentStep('none')
+    if (mediaAfterLanguage) {
+      setMediaAfterLanguage(false)
+      setTimeout(() => setCurrentStep('media'), 300)
+    }
+  }
+
+  // Closes it as OK does, and it never opens again for this exhibition in this browser.
+  const handleLanguageNeverAgain = () => {
+    try {
+      if (exhibitionId) {
+        localStorage.setItem(`${LANGUAGE_WELCOME_STORAGE_PREFIX}${exhibitionId}`, 'true')
+      }
+    } catch {
+      // Storage unavailable: it shows again on the next visit.
+    }
+    handleCloseLanguage()
+  }
 
   const handleCloseHelp = () => {
     setCurrentStep('none')
@@ -348,7 +431,12 @@ const NavigationHelpModal = ({
   // listener, which would otherwise leave Wall View behind it. A second Escape leaves Wall View.
   const closeOnEscape = useRef(() => {})
   useEffect(() => {
-    closeOnEscape.current = currentStep === 'help' ? handleCloseHelp : handleCloseMedia
+    closeOnEscape.current =
+      currentStep === 'help'
+        ? handleCloseHelp
+        : currentStep === 'language'
+          ? handleCloseLanguage
+          : handleCloseMedia
   })
   const windowOpen = !hidden && currentStep !== 'none'
   useEffect(() => {
@@ -545,6 +633,53 @@ const NavigationHelpModal = ({
         </div>
       )}
 
+      {/* AR-182: the language window (designs/wall-languages-visitor §3); Esc and the backdrop
+          close it as OK does. It doesn't switch the language: the room menu does. */}
+      {currentStep === 'language' && languageName && (
+        <div className={styles.infoOverlay} onClick={handleCloseLanguage}>
+          <div
+            ref={languageDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="room-language-welcome"
+            className={c(styles.infoPanel, styles.languageWelcome)}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Text
+              as="h2"
+              id="room-language-welcome"
+              size="lg"
+              font="serif"
+              className={styles.languageWelcomeTitle}
+            >
+              This exhibition is also available in {languageName}
+            </Text>
+            <Text as="p" size="sm" className={styles.languageWelcomeText}>
+              Open the menu
+              <span className={styles.menuKey} aria-hidden>
+                <List size={15} weight="light" />
+              </span>
+              to switch languages.
+            </Text>
+            <div className={styles.languageWelcomeActions}>
+              <Button
+                variant="primary"
+                size="regularSquared"
+                label="OK"
+                className={styles.dismissButton}
+                onClick={handleCloseLanguage}
+              />
+              <Button
+                variant="bare"
+                label="Don't show again"
+                className={styles.languageWelcomeNever}
+                onClick={handleLanguageNeverAgain}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Media Notice Modal */}
       {currentStep === 'media' && (
         <div className={styles.infoOverlay} onClick={handleCloseMedia}>
@@ -606,6 +741,9 @@ export const ExhibitionViewPage = ({
 }: ExhibitionViewPageProps) => {
   const [aboutOpen, setAboutOpen] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
+  // AR-182: the loader has stepped aside (the language window waits for it).
+  const [roomRevealed, setRoomRevealed] = useState(false)
+  const onLoaderDone = useCallback(() => setRoomRevealed(true), [])
   // AR-176: the page behind the room, so a phone held sideways can paint Safari's strip above it
   // black (globals.scss, `room-page`).
   useEffect(() => {
@@ -707,6 +845,35 @@ export const ExhibitionViewPage = ({
     }
   }, [dispatch, exhibitionSlug])
 
+  // AR-182: the language the room's texts open in (docs/wall-languages), decided once per
+  // exhibition (after the reset above). Visitors only, while the exhibition shows them the switch;
+  // editors preview in the editor. Both languages come with the room's one load, so switching
+  // needs no request.
+  const requestedLanguage = searchParams.get('lang')
+  const languageDecidedFor = useRef<string | null>(null)
+  useEffect(() => {
+    if (!exhibition?.id) return
+    if (languageDecidedFor.current === exhibition.id) return
+    languageDecidedFor.current = exhibition.id
+    dispatch(
+      setRoomLanguage(
+        roomLanguageOnEntry({
+          secondLanguage: exhibition.secondLanguage,
+          switchOn: exhibition.secondLanguageVisible,
+          requested: requestedLanguage,
+          stored: readRoomLanguageChoice(exhibition.id),
+          browserLanguage: navigator.language,
+        }),
+      ),
+    )
+  }, [
+    dispatch,
+    exhibition?.id,
+    exhibition?.secondLanguage,
+    exhibition?.secondLanguageVisible,
+    requestedLanguage,
+  ])
+
   useEffect(() => {
     if (exhibition) {
       // Warm the texture cache for this exhibition's floor only — from an
@@ -742,6 +909,8 @@ export const ExhibitionViewPage = ({
         published: exhibition.published ?? false,
         hasPendingChanges: exhibition.hasPendingChanges ?? false,
         previewEnabled: exhibition.previewEnabled ?? false,
+        secondLanguage: exhibition.secondLanguage ?? null,
+        secondLanguageVisible: exhibition.secondLanguageVisible ?? false,
         ambientLightColor: exhibition.ambientLightColor ?? undefined,
         ambientLightIntensity: exhibition.ambientLightIntensity ?? undefined,
         skylightColor: exhibition.skylightColor ?? undefined,
@@ -972,6 +1141,13 @@ export const ExhibitionViewPage = ({
     }
   }
 
+  // AR-182: the second language visitors can switch to: only while the exhibition shows them the
+  // switch, in the visitor's room (not the bake or review pages).
+  const visitorLanguage =
+    mode === 'visit' && exhibition?.secondLanguageVisible
+      ? secondLanguageOf(exhibition.secondLanguage)
+      : null
+
   // Bake mode mounts the scene once this computer is known to be able to bake.
   const sceneReady = !!exhibition && (mode !== 'bake' || canBake === true)
 
@@ -1011,6 +1187,7 @@ export const ExhibitionViewPage = ({
       onAbout={aboutShown ? () => setAboutOpen(true) : undefined}
       onFeedback={feedbackShown ? () => setFeedbackOpen(true) : undefined}
       onButtonPress={closeRoomWindows}
+      languageSwitch={!!visitorLanguage}
     />
   )
 
@@ -1026,6 +1203,8 @@ export const ExhibitionViewPage = ({
             hidden={shownMode === 'bake'}
             exhibitionId={exhibition?.id}
             artworksReady={artworksReady}
+            languageName={visitorLanguage?.name ?? null}
+            revealed={roomRevealed}
           />
           <LoadingOverlay
             key={shownMode}
@@ -1033,6 +1212,7 @@ export const ExhibitionViewPage = ({
             title={about?.title ?? exhibition?.mainTitle}
             artist={about?.artistName}
             onRevealed={mode === 'review' ? markReviewed : undefined}
+            onDone={onLoaderDone}
           />
         </>
       )}

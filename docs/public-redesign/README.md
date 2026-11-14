@@ -61,6 +61,14 @@ https://claude.ai/code/artifact/6d16f4cf-4c5c-4839-9cbd-65e8360d4772 (images are
 in `designs/` are copies; their images only load inside the canvas. A full copy of every board is in
 `docs/design-canvas/`.
 
+### Square corners for visitors (owner, 2026-11-14)
+
+On the **public site and in the 3D room** (everything a visitor sees), **modals/windows and buttons have no rounded
+corners** (`border-radius: 0`). That covers dialogs and sheets (Where we ship, Learn more, Added to cart, feedback,
+the room's welcome window, About this exhibition panel), every button (black, outlined, the room menu button, the
+cookie banner buttons, the language switch) and small key-like chips. **The admin and the artist studio are not
+affected**: keep their radii. Boards drawn before this rule may still show rounded corners: the rule wins.
+
 ### The logo: always the real SVG (owner, 2026-11-12)
 
 Every "THE ART ROOM" on the public site is the **real logo file `src/icons/logo.svg`** (the same paths as
