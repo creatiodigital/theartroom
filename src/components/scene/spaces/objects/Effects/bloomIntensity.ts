@@ -8,6 +8,13 @@
 export const BLOOM_INTENSITY = 0.3
 
 /**
+ * The glow's threshold in today's look (× `lampGlowScale` in a baked room): what it is and which
+ * fixtures it makes glow is explained at the bloom in `Effects.tsx`. Here so a lightbox's front
+ * (AR-183, `lightboxBloomFeed`) glows by the same rule.
+ */
+export const BLOOM_THRESHOLD = 2.0
+
+/**
  * AR-169 phase 8 (Eduardo's approved look, 2026-10-30): in a baked room only the lamps' bulbs glow.
  * Their brightness and the bloom threshold are both × this (the intensity ÷ it): a bulb's glow,
  * (its brightness − threshold) × intensity, is unchanged, while the window (≈ 2.8 before the

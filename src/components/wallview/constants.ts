@@ -1,3 +1,5 @@
+import { LIGHTBOX_EDGE_CM, isLightbox, readLightbox } from '@/lib/lightbox'
+
 /**
  * Wall view scaling factor: pixels per meter.
  *
@@ -10,6 +12,33 @@
  * overview or zoom in to ~200 % for fine-grained work.
  */
 export const WALL_SCALE = 400
+
+type BorderedArtwork = {
+  artworkType?: string | null
+  showFrame?: boolean
+  imageUrl?: string | null
+  frameSize?: { value: number } | null
+  showPassepartout?: boolean
+  passepartoutSize?: { value: number } | null
+  showPaperBorder?: boolean
+  paperBorderSize?: { value: number } | null
+  showLightbox?: boolean
+  lightboxEdge?: string
+}
+
+/**
+ * How far (cm) an artwork's look reaches past its image on each side: a lightbox's edge (AR-183:
+ * frame, passepartout and paper border are off while it is on), else frame + passepartout + paper
+ * border. Only an image has any.
+ */
+export const getArtworkBorderCm = (artwork: BorderedArtwork | null | undefined): number => {
+  if (!artwork?.imageUrl) return 0
+  if (isLightbox(artwork)) return LIGHTBOX_EDGE_CM[readLightbox(artwork).lightboxEdge]
+  const frame = artwork.showFrame ? (artwork.frameSize?.value ?? 0) : 0
+  const passepartout = artwork.showPassepartout ? (artwork.passepartoutSize?.value ?? 0) : 0
+  const paper = artwork.showPaperBorder ? (artwork.paperBorderSize?.value ?? 0) : 0
+  return frame + passepartout + paper
+}
 
 /**
  * Calculate total frame + passepartout + paper border width in 2D pixels

@@ -21,6 +21,18 @@ import { useFrame } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
 
 import { Frame } from '@/components/scene/spaces/objects/Frame'
+import {
+  LIGHTBOX_WOOD,
+  LightboxBox,
+  LightboxGlow,
+  LightboxSurface,
+} from '@/components/scene/spaces/objects/Lightbox/Lightbox'
+import {
+  LIGHTBOX_RECESS_M,
+  lightboxBox,
+} from '@/components/scene/spaces/objects/Lightbox/lightboxLook'
+import { getArtworkBorderCm } from '@/components/wallview/constants'
+import { type TLightbox, isLightbox, readLightbox } from '@/lib/lightbox'
 import { Passepartout } from '@/components/scene/spaces/objects/Passepartout'
 import { ShadowDecal } from '@/components/scene/spaces/objects/ShadowDecal'
 import { MAX_ANISOTROPY } from '@/components/scene/textureQuality'
@@ -59,6 +71,8 @@ type ArtworkImageProps = {
   height: number
   /** Written on the image mesh (`artworkIdOf`): per-artwork data finds the work by it. */
   artworkId: string
+  /** AR-183: shown as a lightbox (its front's material, `LightboxSurface`). */
+  lightbox?: TLightbox | null
 }
 
 /** Wood textures' width over height (`wooden-frame-light` is 2048 × 1024; the others square). */
@@ -633,8 +647,17 @@ const applyCoverUVs = (texture: Texture, planeWidth: number, planeHeight: number
  * undecoded twin (`useArtworkMap`, ARTWORK_ENCODED_SAMPLING). The material is built here, not as
  * JSX, so R3F never re-marks that texture sRGB as it applies a `map` prop.
  */
-const ArtworkSurfaceMaterial = ({ map, tint }: { map: Texture; tint: Color }) => {
+const ArtworkSurfaceMaterial = ({
+  map,
+  tint,
+  lightbox,
+}: {
+  map: Texture
+  tint: Color
+  lightbox?: TLightbox | null
+}) => {
   const look = useBakedLook()
+  if (lightbox) return <LightboxSurface map={map} lightbox={lightbox} />
   if (look.baked) return <ArtworkFileSurface map={map} />
   return <meshBasicMaterial key="unlit" map={map} color={tint} side={DoubleSide} />
 }
@@ -662,7 +685,7 @@ const useArtworkMap = (texture: Texture, width: number, height: number): Texture
 }
 
 // Component for blob URL images (uses custom loader)
-const BlobImage = ({ url, width, height, artworkId }: ArtworkImageProps) => {
+const BlobImage = ({ url, width, height, artworkId, lightbox }: ArtworkImageProps) => {
   const texture = useBlobTexture(url)
   const ambientColor = useAmbientLightColor('#ffffff', 1.0)
 
@@ -677,6 +700,7 @@ const BlobImage = ({ url, width, height, artworkId }: ArtworkImageProps) => {
       height={height}
       artworkId={artworkId}
       tint={ambientColor}
+      lightbox={lightbox}
     />
   )
 }
@@ -687,6 +711,7 @@ const BlobImageMesh = ({
   height,
   artworkId,
   tint,
+  lightbox,
 }: Omit<ArtworkImageProps, 'url'> & { texture: Texture; tint: Color }) => {
   const map = useArtworkMap(texture, width, height)
   return (
@@ -698,7 +723,7 @@ const BlobImageMesh = ({
       renderOrder={2}
     >
       <planeGeometry args={[width, height]} />
-      <ArtworkSurfaceMaterial map={map} tint={tint} />
+      <ArtworkSurfaceMaterial map={map} tint={tint} lightbox={lightbox} />
     </mesh>
   )
 }
@@ -799,7 +824,7 @@ const useArtworkLod = (
 const useRegularTexture = (url: string): Texture | null => useCachedTexture(url, isNonEmptyUrl)
 
 // Component for regular URL images (uses custom loader with error handling)
-const RegularImage = ({ url, width, height, artworkId }: ArtworkImageProps) => {
+const RegularImage = ({ url, width, height, artworkId, lightbox }: ArtworkImageProps) => {
   const texture = useRegularTexture(url)
   const ambientColor = useAmbientLightColor('#ffffff', 1.0)
   const meshRef = useRef<Mesh>(null)
@@ -817,6 +842,7 @@ const RegularImage = ({ url, width, height, artworkId }: ArtworkImageProps) => {
       height={height}
       artworkId={artworkId}
       tint={ambientColor}
+      lightbox={lightbox}
     />
   )
 }
@@ -828,6 +854,7 @@ const RegularImageMesh = ({
   height,
   artworkId,
   tint,
+  lightbox,
 }: Omit<ArtworkImageProps, 'url'> & {
   meshRef: React.RefObject<Mesh | null>
   texture: Texture
@@ -844,13 +871,13 @@ const RegularImageMesh = ({
       renderOrder={2}
     >
       <planeGeometry args={[width, height]} />
-      <ArtworkSurfaceMaterial map={map} tint={tint} />
+      <ArtworkSurfaceMaterial map={map} tint={tint} lightbox={lightbox} />
     </mesh>
   )
 }
 
 /** A phone's or tablet's artwork image: held at the size it is seen (AR-175, `useTouchArtwork`). */
-const TouchImage = ({ url, width, height, artworkId }: ArtworkImageProps) => {
+const TouchImage = ({ url, width, height, artworkId, lightbox }: ArtworkImageProps) => {
   const anchor = useRef<Group>(null)
   const meshRef = useRef<Mesh>(null)
   const texture = useTouchArtwork(url, anchor, width, height)
@@ -866,6 +893,7 @@ const TouchImage = ({ url, width, height, artworkId }: ArtworkImageProps) => {
           height={height}
           artworkId={artworkId}
           tint={ambientColor}
+          lightbox={lightbox}
         />
       ) : (
         <ImagePlaceholder width={width} height={height} />
@@ -874,7 +902,7 @@ const TouchImage = ({ url, width, height, artworkId }: ArtworkImageProps) => {
   )
 }
 
-const ArtworkImage = ({ url, width, height, artworkId }: ArtworkImageProps) => {
+const ArtworkImage = ({ url, width, height, artworkId, lightbox }: ArtworkImageProps) => {
   // Skip rendering if URL is empty or invalid
   if (!url || url === '') {
     return <ImagePlaceholder width={width} height={height} />
@@ -882,16 +910,40 @@ const ArtworkImage = ({ url, width, height, artworkId }: ArtworkImageProps) => {
 
   // Use custom loader for blob URLs (temporary local previews)
   if (url.startsWith('blob:')) {
-    return <BlobImage url={url} width={width} height={height} artworkId={artworkId} />
+    return (
+      <BlobImage
+        url={url}
+        width={width}
+        height={height}
+        artworkId={artworkId}
+        lightbox={lightbox}
+      />
+    )
   }
 
   // A finger-driven device holds each work at the size it is seen (AR-175).
   if (savesPhoneMemory('artworks')) {
-    return <TouchImage url={url} width={width} height={height} artworkId={artworkId} />
+    return (
+      <TouchImage
+        url={url}
+        width={width}
+        height={height}
+        artworkId={artworkId}
+        lightbox={lightbox}
+      />
+    )
   }
 
   // Use custom loader for regular URLs (with error handling)
-  return <RegularImage url={url} width={width} height={height} artworkId={artworkId} />
+  return (
+    <RegularImage
+      url={url}
+      width={width}
+      height={height}
+      artworkId={artworkId}
+      lightbox={lightbox}
+    />
+  )
 }
 
 // Constants for click detection
@@ -906,19 +958,19 @@ const Display = ({ artwork }: DisplayProps) => {
     height,
     showArtworkInformation,
     imageUrl,
-    showFrame,
+    showFrame: storedShowFrame,
     frameColor,
     frameSize,
     frameThickness,
-    showPassepartout,
+    showPassepartout: storedShowPassepartout,
     passepartoutColor,
     passepartoutSize,
     passepartoutThickness,
-    showPaperBorder,
+    showPaperBorder: storedShowPaperBorder,
     paperBorderSize,
     supportThickness,
     supportColor,
-    showSupport,
+    showSupport: storedShowSupport,
     hideShadow,
     frameMaterial,
     frameCornerStyle,
@@ -927,6 +979,18 @@ const Display = ({ artwork }: DisplayProps) => {
     frameTextureRoughness,
     frameTextureNormalScale,
   } = artwork
+
+  // AR-183 (docs/lightbox): a lightbox has its own box — frame, passepartout, paper border and
+  // support are off while it is on (their settings are kept, for when it is turned off).
+  const lightbox = useMemo(
+    () => (isLightbox(artwork) && imageUrl ? readLightbox(artwork) : null),
+    [artwork, imageUrl],
+  )
+  const showFrame = !lightbox && storedShowFrame
+  const showPassepartout = !lightbox && storedShowPassepartout
+  const showPaperBorder = !lightbox && storedShowPaperBorder
+  const showSupport = !lightbox && storedShowSupport
+  const lightboxSize = lightbox ? lightboxBox(lightbox) : null
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
@@ -981,31 +1045,10 @@ const Display = ({ artwork }: DisplayProps) => {
         for (const memberId of group.artworkIds) {
           const pos = exhibitionArtworksById[memberId]
           if (!pos) continue
-          let halfW = (pos.width3d ?? pos.width2d / 100) / 2
-          let halfH = (pos.height3d ?? pos.height2d / 100) / 2
-
-          // Add frame + passepartout borders (cm → meters)
-          const memberArt = artworksById[memberId]
-          if (memberArt?.showFrame && memberArt?.imageUrl && memberArt?.frameSize?.value) {
-            halfW += memberArt.frameSize.value / 100
-            halfH += memberArt.frameSize.value / 100
-          }
-          if (
-            memberArt?.showPassepartout &&
-            memberArt?.imageUrl &&
-            memberArt?.passepartoutSize?.value
-          ) {
-            halfW += memberArt.passepartoutSize.value / 100
-            halfH += memberArt.passepartoutSize.value / 100
-          }
-          if (
-            memberArt?.showPaperBorder &&
-            memberArt?.imageUrl &&
-            memberArt?.paperBorderSize?.value
-          ) {
-            halfW += memberArt.paperBorderSize.value / 100
-            halfH += memberArt.paperBorderSize.value / 100
-          }
+          // Frame + passepartout + paper border, or a lightbox's edge (cm → meters)
+          const border = getArtworkBorderCm(artworksById[memberId]) / 100
+          const halfW = (pos.width3d ?? pos.width2d / 100) / 2 + border
+          const halfH = (pos.height3d ?? pos.height2d / 100) / 2 + border
 
           minX = Math.min(minX, pos.posX3d - halfW)
           maxX = Math.max(maxX, pos.posX3d + halfW)
@@ -1020,11 +1063,14 @@ const Display = ({ artwork }: DisplayProps) => {
         const centerZ = (minZ + maxZ) / 2
         const groupWidth = Math.max(maxX - minX, maxZ - minZ)
         const groupHeight = maxY - minY
-        // The group's face: its deepest member's support (unframed prints stand out on theirs).
+        // The group's face: its deepest member's support (unframed prints stand out on theirs),
+        // or a lightbox's box.
         const groupFront = Math.max(
           0,
           ...group.artworkIds.map((id) => {
             const member = artworksById[id]
+            if (member?.imageUrl && isLightbox(member))
+              return readLightbox(member).lightboxDepth / 100
             return member?.showSupport ? supportDepthCm(member.supportThickness) / 100 : 0
           }),
         )
@@ -1045,8 +1091,10 @@ const Display = ({ artwork }: DisplayProps) => {
         const pBorder = (showPassepartout ? passepartoutSize?.value : 0) || 0
         const fBorder = (showFrame ? frameSize?.value : 0) || 0
         const paperBorderCm = (showPaperBorder ? paperBorderSize?.value : 0) || 0
-        const displayWidth = (width || 1) + (pBorder * 2 + fBorder * 2 + paperBorderCm * 2) / 100
-        const displayHeight = (height || 1) + (pBorder * 2 + fBorder * 2 + paperBorderCm * 2) / 100
+        const edgeCm = (lightboxSize?.edge ?? 0) * 100
+        const borders = pBorder * 2 + fBorder * 2 + paperBorderCm * 2 + edgeCm * 2
+        const displayWidth = (width || 1) + borders / 100
+        const displayHeight = (height || 1) + borders / 100
 
         dispatch(
           setFocusTarget({
@@ -1058,7 +1106,11 @@ const Display = ({ artwork }: DisplayProps) => {
             // An unframed print stands out on its support: Artwork View frames its face (AR-178, owner,
             // 2026-11-07: "the zoom on unframed artworks it's too much"; up to 10 cm nearer than
             // the wall, it overflowed the screen's margin).
-            front: showSupport ? supportDepthCm(supportThickness) / 100 : 0,
+            front: lightboxSize
+              ? lightboxSize.depth
+              : showSupport
+                ? supportDepthCm(supportThickness) / 100
+                : 0,
           }),
         )
       }
@@ -1086,6 +1138,7 @@ const Display = ({ artwork }: DisplayProps) => {
     frameSize,
     showSupport,
     supportThickness,
+    lightboxSize,
     autofocusGroups,
     exhibitionArtworksById,
     artworksById,
@@ -1230,9 +1283,12 @@ const Display = ({ artwork }: DisplayProps) => {
     roughnessMap: Texture
   } | null>(null)
 
+  // A lightbox in oak or walnut takes the frame's light or dark wood (AR-183).
+  const lightboxWood = lightbox ? LIGHTBOX_WOOD[lightbox.lightboxMaterial] : undefined
   useEffect(() => {
-    // Determine which wood folder to load based on frameMaterial
-    const woodFolder = frameMaterial?.startsWith('wood') ? frameMaterial : 'wood-dark'
+    // Determine which wood folder to load based on frameMaterial (or the lightbox's wood)
+    const woodFolder =
+      lightboxWood ?? (frameMaterial?.startsWith('wood') ? frameMaterial : 'wood-dark')
     const woodBase = assetUrl(`/assets/materials/wooden-frame-${woodFolder.replace('wood-', '')}`)
     // v3: 2026-07-12 recompression (visually lossless; originals in R2)
     const diffuse = cloneFrameTexture(`${woodBase}/diffuse.jpg?v=3`, true)
@@ -1248,14 +1304,15 @@ const Display = ({ artwork }: DisplayProps) => {
       normal.dispose()
       roughnessMap.dispose()
     }
-  }, [frameMaterial])
+  }, [frameMaterial, lightboxWood])
 
   // Apply wood texture control properties reactively. The frame's UVs are in tiles of real board
   // (`WOOD_TILE_M`, AR-169): the artist's scale at its default (2.0) shows the wood at its real
   // size; a 2:1 texture (light wood) covers half as much board across the grain.
-  const texScale = frameTextureScale ?? 2.0
-  const woodAspect = WOOD_ASPECT[frameMaterial ?? ''] ?? 1
-  const texRotation = ((frameTextureRotation ?? 0) * Math.PI) / 180
+  // A lightbox's wood is at its real size, the grain along each bar (AR-183: no settings).
+  const texScale = lightboxWood ? 2.0 : (frameTextureScale ?? 2.0)
+  const woodAspect = WOOD_ASPECT[lightboxWood ?? frameMaterial ?? ''] ?? 1
+  const texRotation = lightboxWood ? 0 : ((frameTextureRotation ?? 0) * Math.PI) / 180
 
   // Per-artwork seed offset so adjacent wood frames don't have identical grain patterns
   const artworkSeedOffset = useMemo(() => {
@@ -1396,9 +1453,16 @@ const Display = ({ artwork }: DisplayProps) => {
   const frameOuterW = passepartoutOuterW + frameBorder * 2
   const frameOuterH = passepartoutOuterH + frameBorder * 2
 
-  // The overall display size (for hit area and shadow)
-  const totalWidth = frameOuterW
-  const totalHeight = frameOuterH
+  // The overall display size (for hit area and shadow): a lightbox's box with its edge.
+  const lightboxEdge = lightboxSize?.edge ?? 0
+  const totalWidth = lightboxSize ? planeWidth + lightboxEdge * 2 : frameOuterW
+  const totalHeight = lightboxSize ? planeHeight + lightboxEdge * 2 : frameOuterH
+  // Where the image sits: on its support, or at a lightbox's front (in its rebate, behind an edge).
+  const imageZ = lightboxSize
+    ? lightboxSize.depth - (lightboxEdge > 0 ? LIGHTBOX_RECESS_M : 0)
+    : showSupport
+      ? supportDepth / 100
+      : 0
 
   return (
     <group
@@ -1415,7 +1479,7 @@ const Display = ({ artwork }: DisplayProps) => {
       </mesh>
 
       {/* Artwork sits on top of support surface — at the artist-specified size */}
-      <group position={[0, 0, showSupport ? supportDepth / 100 : 0]}>
+      <group position={[0, 0, imageZ]}>
         {/* Paper sheet — extends past the image as a white margin on every side */}
         {showPaperBorder && paperBorder > 0 && (
           <mesh renderOrder={1} material={paperMaterial}>
@@ -1441,6 +1505,7 @@ const Display = ({ artwork }: DisplayProps) => {
               width={planeWidth}
               height={planeHeight}
               artworkId={artwork.id}
+              lightbox={lightbox}
             />
           )}
         </group>
@@ -1471,12 +1536,33 @@ const Display = ({ artwork }: DisplayProps) => {
         </group>
       )}
 
+      {/* AR-183: the lightbox's box, and its light on the wall until a bake has it. */}
+      {lightbox && (
+        <>
+          <LightboxBox
+            width={planeWidth}
+            height={planeHeight}
+            lightbox={lightbox}
+            wood={lightboxWood ? woodTextures : null}
+          />
+          <LightboxGlow width={totalWidth} height={totalHeight} lightbox={lightbox} />
+        </>
+      )}
+
       {/* Shadow blur - memoized component, size proportional to frame depth */}
       {!hideShadow && (
         <ShadowDecal
           width={totalWidth}
           height={totalHeight}
-          frameDepth={showFrame ? frameDepth / 100 : showSupport ? supportDepth / 100 : 0}
+          frameDepth={
+            lightboxSize
+              ? lightboxSize.depth
+              : showFrame
+                ? frameDepth / 100
+                : showSupport
+                  ? supportDepth / 100
+                  : 0
+          }
           blur={shadowBlur}
           spread={shadowSpread}
           opacity={shadowOpacity}
