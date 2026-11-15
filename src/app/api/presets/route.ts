@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { getEffectiveUserId } from '@/lib/authUtils'
+import { lightboxCreateData, lightboxFieldsError } from '@/lib/lightbox'
 import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -30,12 +31,16 @@ export async function POST(request: Request) {
     if (authError) return authError
 
     const body = await request.json()
+    const presetType = body.presetType || 'image'
+
+    const lightboxProblem = lightboxFieldsError(body, presetType)
+    if (lightboxProblem) return NextResponse.json({ error: lightboxProblem }, { status: 400 })
 
     const preset = await prisma.artworkPreset.create({
       data: {
         userId,
         name: body.name,
-        presetType: body.presetType || 'image',
+        presetType,
         // Dimensions
         width2d: Number(body.width2d) || 100,
         height2d: Number(body.height2d) || 100,
@@ -68,6 +73,8 @@ export async function POST(request: Request) {
         supportColor: body.supportColor ?? '#ffffff',
         // Shadow
         hideShadow: body.hideShadow ?? false,
+        // AR-183 Lightbox
+        ...lightboxCreateData(body),
         // Text styling
         fontFamily: body.fontFamily ?? 'Montserrat',
         fontSize: Number(body.fontSize) || 16,

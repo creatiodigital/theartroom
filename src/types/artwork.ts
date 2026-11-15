@@ -1,6 +1,12 @@
 // Re-export shared types from fonts.ts for backward compatibility
 export type { TFontFamily, TFontWeight, TOption } from '@/types/fonts'
 
+import type {
+  TLightboxEdge,
+  TLightboxFront,
+  TLightboxLight,
+  TLightboxMaterial,
+} from '@/lib/lightbox'
 import type { TFontFamily, TFontWeight, TOption } from '@/types/fonts'
 
 export type TArtworkKind = 'image' | 'text' | 'sound' | 'shape' | 'video'
@@ -71,6 +77,18 @@ export type TArtwork = {
   showSupport?: boolean // Whether support is visible
   supportThickness?: TOption<number> // Canvas/panel depth in cm
   supportColor?: string // Edge color
+  /**
+   * AR-183 Lightbox (docs/lightbox, src/lib/lightbox.ts): image artworks only, per exhibition.
+   * While on, the room draws neither frame, passepartout, paper border nor support; their
+   * settings are kept for when it is turned off.
+   */
+  showLightbox?: boolean
+  lightboxBrightness?: number // 0..1, Soft..Bright
+  lightboxLight?: TLightboxLight
+  lightboxDepth?: number // cm, 3..15
+  lightboxEdge?: TLightboxEdge
+  lightboxMaterial?: TLightboxMaterial
+  lightboxFront?: TLightboxFront
   textContent?: string
   /**
    * AR-182: the text's second version (docs/wall-languages), shown in the room in whatever second

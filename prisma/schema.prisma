@@ -106,6 +106,16 @@ model ArtworkPreset {
   // Shadow
   hideShadow Boolean @default(false)
 
+  // AR-183 Lightbox (docs/lightbox): a backlit box instead of frame/passepartout/border/support.
+  // Values and ranges: src/lib/lightbox.ts.
+  showLightbox       Boolean @default(false)
+  lightboxBrightness Float   @default(0.55) // 0..1, Soft..Bright
+  lightboxLight      String  @default("neutral") // warm | neutral | cool
+  lightboxDepth      Float   @default(6) // cm, 3..15
+  lightboxEdge       String  @default("thin") // none | thin | wide
+  lightboxMaterial   String  @default("alu-black") // alu-black | alu-silver | white | oak | walnut
+  lightboxFront      String  @default("matte") // matte | glossy
+
   // Text styling (used when presetType = "text")
   fontFamily            String  @default("Montserrat")
   fontSize              Float   @default(16)
@@ -864,6 +874,16 @@ model ExhibitionArtwork {
 
   // Shadow
   hideShadow Boolean @default(false) // Whether to hide artwork shadow
+
+  // AR-183 Lightbox (docs/lightbox): image artworks only. While on, frame, passepartout, paper
+  // border and support are off in the room (their columns are kept). Values: src/lib/lightbox.ts.
+  showLightbox       Boolean @default(false)
+  lightboxBrightness Float   @default(0.55) // 0..1, Soft..Bright
+  lightboxLight      String  @default("neutral") // warm | neutral | cool
+  lightboxDepth      Float   @default(6) // cm, 3..15
+  lightboxEdge       String  @default("thin") // none | thin | wide
+  lightboxMaterial   String  @default("alu-black") // alu-black | alu-silver | white | oak | walnut
+  lightboxFront      String  @default("matte") // matte | glossy
 
   // Text styling (per-exhibition customization)
   fontFamily            String  @default("Montserrat")
