@@ -148,6 +148,7 @@ export const BakeRunner = (props: BakeRunnerProps) => {
             maps: maps.map((m) => ({ ...m.map, url: urls.get(m.file)! })),
             artBounce,
             camera,
+            lightboxes: started.lightboxes,
             ms: started.baker.stats.ms,
           }),
           bakedBy: 'quick-bake',
@@ -169,6 +170,7 @@ export const BakeRunner = (props: BakeRunnerProps) => {
             maps: maps.map((m) => ({ ...m.map, url: publicUrls[m.file]! })),
             artBounce,
             camera,
+            lightboxes: started.lightboxes,
             ms: started.baker.stats.ms,
           }),
         origin: window.location.origin,
@@ -205,6 +207,7 @@ export const BakeRunner = (props: BakeRunnerProps) => {
             ceiling: ceilingColor,
             look: withDaylight(look.space, daylight),
             recessedDimmer,
+            exposure: bakeCamera(latest.current.spaceId).exposure,
           },
           j.restore,
         )

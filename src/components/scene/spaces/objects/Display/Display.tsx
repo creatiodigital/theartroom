@@ -29,8 +29,10 @@ import {
 } from '@/components/scene/spaces/objects/Lightbox/Lightbox'
 import {
   LIGHTBOX_RECESS_M,
+  lightboxBakeKey,
   lightboxBox,
 } from '@/components/scene/spaces/objects/Lightbox/lightboxLook'
+import { LIGHTBOX_BAKE_KEY } from '@/components/scene/bake/lightboxEmitters'
 import { getArtworkBorderCm } from '@/components/wallview/constants'
 import { type TLightbox, isLightbox, readLightbox } from '@/lib/lightbox'
 import { Passepartout } from '@/components/scene/spaces/objects/Passepartout'
@@ -48,7 +50,7 @@ import type { RuntimeArtwork } from '@/utils/artworkTransform'
 import { assetUrl } from '@/lib/assetUrl'
 import { PASSEPARTOUT_THICKNESS } from '@/lib/passepartoutThickness'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
-import { useBakedLook } from '@/components/scene/bake/bakedLook'
+import { useBakedLook, useShownStoredBake } from '@/components/scene/bake/bakedLook'
 import { matLiftFlag } from '@/components/scene/bake/bakeFlags'
 import { useTapFocusGroups } from '@/hooks/useTapFocusGroups'
 
@@ -991,6 +993,19 @@ const Display = ({ artwork }: DisplayProps) => {
   const showPaperBorder = !lightbox && storedShowPaperBorder
   const showSupport = !lightbox && storedShowSupport
   const lightboxSize = lightbox ? lightboxBox(lightbox) : null
+  // AR-183: the front as a bake would light the room with it; the bake shown has it under this
+  // key (`BakeRecord.lightboxes`) only if nothing about its light changed since.
+  const lightboxKey =
+    lightbox && position && quaternion
+      ? lightboxBakeKey(position, quaternion, width || 1, height || 1, lightbox)
+      : null
+  const shownBake = useShownStoredBake()
+  const lightboxBaked = !!lightboxKey && shownBake?.lightboxes?.[artwork.id] === lightboxKey
+  // Read by the bake (`lightboxEmitters`): the key it records the front under.
+  const displayData = useMemo(
+    () => (lightboxKey ? { [LIGHTBOX_BAKE_KEY]: lightboxKey } : {}),
+    [lightboxKey],
+  )
 
   const isPlaceholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
@@ -1467,6 +1482,7 @@ const Display = ({ artwork }: DisplayProps) => {
   return (
     <group
       name={ARTWORK_DISPLAY_NAME}
+      userData={displayData}
       position={position}
       quaternion={quaternion}
       onDoubleClick={handleDoubleClick}
@@ -1545,7 +1561,10 @@ const Display = ({ artwork }: DisplayProps) => {
             lightbox={lightbox}
             wood={lightboxWood ? woodTextures : null}
           />
-          <LightboxGlow width={totalWidth} height={totalHeight} lightbox={lightbox} />
+          {/* The fallback wash, until a bake shown has this lightbox as it is now. */}
+          {!lightboxBaked && (
+            <LightboxGlow width={totalWidth} height={totalHeight} lightbox={lightbox} />
+          )}
         </>
       )}
 

@@ -36,11 +36,14 @@ export const TODAY_LOOK_FRONT = 1.3
 /**
  * The baked look shows the image on screen past the camera (as every artwork file there,
  * `artworkFile.ts`); bloom sees it × this feed (the room's glow threshold is 16 there:
- * `lampGlowScale`). Whites of a Soft box sit just below it (no halo), Bright ones well over it,
- * like a lamp's disc.
+ * `lampGlowScale`, and its strength low: a lamp's disc glows, a lit wall never). Soft: whites at
+ * the threshold, no halo; the middle of the slider a soft halo; Bright the most the alpha carries
+ * (`LIGHTBOX_FEED_MAX`). Once a bake has the lightbox its wall glow is gone and this halo is all
+ * that is left of its light around it on screen: at threshold × (0.9 + 0.7 × brightness) it was
+ * invisible (2026-11-15, quick bake of Florescere).
  */
 export const lightboxBloomFeed = (brightness: number, threshold: number): number =>
-  threshold * (0.9 + 0.7 * brightness)
+  Math.min(LIGHTBOX_FEED_MAX, threshold * (1 + 3 * brightness))
 
 /** The largest feed the alpha can carry (`LIGHTBOX_ALPHA`). */
 export const LIGHTBOX_FEED_MAX = 64
@@ -88,3 +91,28 @@ export const LIGHTBOX_GLOW = {
   atEdge: 0.12,
   reach: (width: number, height: number) => 0.18 + 0.2 * Math.min(width, height),
 } as const
+
+/**
+ * A lightbox's front as a bake lit the room with it (`lightboxEmitters`, `BakeRecord.lightboxes`):
+ * where it hangs, its size, and what changes its light — brightness, light color, depth (where its
+ * front stands) and edge. The same work under another key (moved, resized, made brighter…) is not
+ * in that bake: its fallback glow shows until the next one.
+ */
+export const lightboxBakeKey = (
+  at: { x: number; y: number; z: number },
+  turn: { x: number; y: number; z: number; w: number },
+  width: number,
+  height: number,
+  lightbox: TLightbox,
+): string =>
+  [
+    [at.x, at.y, at.z].map((v) => v.toFixed(3)).join(','),
+    [turn.x, turn.y, turn.z, turn.w].map((v) => v.toFixed(4)).join(','),
+    `${width.toFixed(3)}x${height.toFixed(3)}`,
+    lightbox.lightboxBrightness.toFixed(2),
+    lightbox.lightboxLight,
+    lightbox.lightboxDepth.toFixed(1),
+    lightbox.lightboxEdge,
+  ]
+    .join('|')
+    .replace(/-0\.0+(?=[,|x]|$)/g, (zero) => zero.slice(1))
