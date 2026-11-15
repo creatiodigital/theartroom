@@ -76,7 +76,7 @@ export const buildBakeDraft = ({
   maps,
   artBounce,
   camera,
-  lightboxes,
+  lightboxes = {},
   ms,
 }: {
   id: string
@@ -86,7 +86,7 @@ export const buildBakeDraft = ({
   artBounce: Map<Mesh, Color>
   camera: SpaceCamera
   /** AR-183: artwork id → `lightboxBakeKey`, for the lightboxes this bake lit the room with. */
-  lightboxes: Record<string, string>
+  lightboxes?: Record<string, string>
   ms: number
 }): BakeDraft => ({
   id,
