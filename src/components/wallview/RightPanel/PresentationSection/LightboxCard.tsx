@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import {
   LIGHTBOX_BRIGHTNESS,
   LIGHTBOX_DEPTH,
+  LIGHTBOX_SWATCH,
   type TLightbox,
   type TLightboxEdge,
   type TLightboxFront,
@@ -32,16 +33,12 @@ const EDGES: { value: TLightboxEdge; label: string }[] = [
   { value: 'wide', label: 'Wide' },
 ]
 
-const MATERIALS: { value: TLightboxMaterial; label: string; swatch: string }[] = [
-  { value: 'alu-black', label: 'Black aluminum', swatch: 'linear-gradient(135deg, #2a2a2a, #111)' },
-  {
-    value: 'alu-silver',
-    label: 'Silver aluminum',
-    swatch: 'linear-gradient(135deg, #e3e3e3, #a9a9a9)',
-  },
-  { value: 'white', label: 'White', swatch: '#f7f7f5' },
-  { value: 'oak', label: 'Oak', swatch: 'linear-gradient(135deg, #c9a77c, #a7835a)' },
-  { value: 'walnut', label: 'Walnut', swatch: 'linear-gradient(135deg, #6e4b33, #4a3020)' },
+const MATERIALS: { value: TLightboxMaterial; label: string }[] = [
+  { value: 'alu-black', label: 'Black aluminum' },
+  { value: 'alu-silver', label: 'Silver aluminum' },
+  { value: 'white', label: 'White' },
+  { value: 'oak', label: 'Oak' },
+  { value: 'walnut', label: 'Walnut' },
 ]
 
 const FRONTS: { value: TLightboxFront; label: string }[] = [
@@ -225,7 +222,11 @@ function MaterialSwatches({
             onClick={() => checked || onChange(material.value)}
             disabled={disabled}
           >
-            <span className={styles.chip} style={{ background: material.swatch }} aria-hidden />
+            <span
+              className={styles.chip}
+              style={{ background: LIGHTBOX_SWATCH[material.value] }}
+              aria-hidden
+            />
             <span className={styles.name}>{material.label}</span>
           </Button>
         )

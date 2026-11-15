@@ -33,6 +33,18 @@ export const LIGHTBOX_LIGHT_KELVIN: Record<TLightboxLight, number> = {
   cool: 6500,
 }
 
+/**
+ * Each material's swatch (designs/lightbox.dc.html): the Look card's tiles and, for the metals and
+ * white, the box's edge on the 2D wall (oak and walnut show the frame's wood there).
+ */
+export const LIGHTBOX_SWATCH: Record<TLightboxMaterial, string> = {
+  'alu-black': 'linear-gradient(135deg, #2a2a2a, #111)',
+  'alu-silver': 'linear-gradient(135deg, #e3e3e3, #a9a9a9)',
+  white: '#f7f7f5',
+  oak: 'linear-gradient(135deg, #c9a77c, #a7835a)',
+  walnut: 'linear-gradient(135deg, #6e4b33, #4a3020)',
+}
+
 export type TLightbox = {
   showLightbox: boolean
   lightboxBrightness: number
