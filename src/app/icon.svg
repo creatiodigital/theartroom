@@ -1,4 +1,4 @@
-<svg viewBox="131.5 175.8 156.6 156.6" xmlns="http://www.w3.org/2000/svg">
-<!-- The favicon: the logo's first letter, the T of THE (src/components/brand/BrandMarks.tsx, WORDMARK_PATHS[0]), in the brand red on transparent; owner, 2026-11-16, after White Cube's and Marian Goodman's. The share images and the bookmark icon keep the gallery's card (src/lib/og/avatarCard.tsx). -->
+<svg viewBox="98.5 142.7 222.7 222.7" xmlns="http://www.w3.org/2000/svg">
+<!-- The favicon: the logo's first letter, the T of THE (src/components/brand/BrandMarks.tsx, WORDMARK_PATHS[0]), in the brand red on transparent, 64% of the icon's height (owner, 2026-11-16: "like Marian Goodman", whose M sits as small; at 91% it stood too tall). The share images and the bookmark icon keep the gallery's card (src/lib/og/avatarCard.tsx). -->
 <path d="M261.49,226.75c-.14-7.74-1.02-14.19-2.65-19.35-1.63-5.16-4.31-9.02-8.04-11.6-3.73-2.58-8.85-3.8-15.37-3.67h-14.66l-.2,105.88c0,3.66-.04,6.96-.1,9.87-.07,2.92-.24,5.26-.51,7.02,2.58-.27,5.39-.44,8.45-.51,3.05-.06,5.8-.17,8.25-.3v11.2h-51.72v-8.96c4.48-.27,7.67-1.22,9.57-2.85,1.9-1.63,3.12-4.11,3.67-7.43.54-3.32.81-7.43.81-12.32v-101.4l-17.1.21c-8.28,0-14.32,2.78-18.12,8.35-3.8,5.57-5.7,14.19-5.7,25.86h-9.57l1.22-43.98h120.13l1.22,43.98h-9.57Z" fill="#bd1622"/>
 </svg>
