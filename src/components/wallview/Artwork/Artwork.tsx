@@ -9,7 +9,7 @@ import { ArtisticSound } from '@/components/wallview/ArtisticSound'
 import { ArtisticText } from '@/components/wallview/ArtisticText'
 import ArtisticVideo from '@/components/wallview/ArtisticVideo/ArtisticVideo'
 import { ArtworkMeasurements } from '@/components/wallview/ArtworkMeasurements'
-import { WALL_SCALE } from '@/components/wallview/constants'
+import { getArtworkBorderPx } from '@/components/wallview/constants'
 import { WALL_ITEM_Z_INDEX } from '@/components/wallview/layerOrder'
 import { Handles } from '@/components/wallview/Handles'
 import { useMoveArtwork } from '@/components/wallview/hooks/useMoveArtwork'
@@ -68,25 +68,9 @@ const Artwork = memo(
     const artworkPositions = exhibitionArtworksById[id]
     const { posX2d, posY2d, height2d, width2d } = artworkPositions
 
-    // Calculate how much frame + passepartout + paper-border layers add around the image
-    const {
-      showFrame,
-      frameSize,
-      imageUrl,
-      showPassepartout,
-      passepartoutSize,
-      showPaperBorder,
-      paperBorderSize,
-    } = artwork
-    const scaleMul = WALL_SCALE / 100
-    const frameBorderPx = showFrame && imageUrl && frameSize?.value ? frameSize.value * scaleMul : 0
-    const ppBorderPx =
-      showPassepartout && imageUrl && passepartoutSize?.value
-        ? passepartoutSize.value * scaleMul
-        : 0
-    const paperBorderPx =
-      showPaperBorder && imageUrl && paperBorderSize?.value ? paperBorderSize.value * scaleMul : 0
-    const totalBorderEachSide = frameBorderPx + ppBorderPx + paperBorderPx
+    // How much frame + passepartout + paper-border layers (or a lightbox's edge, AR-183) add
+    // around the image
+    const totalBorderEachSide = getArtworkBorderPx(artwork)
 
     // The container grows to include borders. With border-box, the CSS borders
     // eat inward, so the image content naturally ends up at width2d × height2d.

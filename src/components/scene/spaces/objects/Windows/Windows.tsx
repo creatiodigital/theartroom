@@ -118,7 +118,12 @@ const Windows: React.FC<WindowsProps> = ({
             rotation={glassNode.rotation}
             scale={glassNode.scale}
           >
+            {/* Keyed by the look: a new material when it changes. Dropping the frosted glass's
+                hooks from this one (a bake that fails after the room has shown sends it back to
+                today's look) has r3f set them to 0, and three called the 0 every frame:
+                "material.customProgramCacheKey is not a function" (2026-11-16). */}
             <meshStandardMaterial
+              key={look.baked ? 'frosted' : 'plain'}
               color={windowLightColor}
               emissive={windowLightColor}
               emissiveIntensity={windowLightIntensity * 0.3}

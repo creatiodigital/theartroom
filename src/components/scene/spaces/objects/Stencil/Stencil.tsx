@@ -22,6 +22,7 @@ import {
 } from '@/components/scene/spaces/objects/Display/artworkFile'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
 import { roomTextOf } from '@/lib/roomLanguage'
+import { LIGHTBOX_EDGE_CM, isLightbox, readLightbox } from '@/lib/lightbox'
 
 type StencilProps = {
   artwork: RuntimeArtwork
@@ -292,19 +293,25 @@ const Stencil = ({ artwork }: StencilProps) => {
           let halfW = (pos.width3d ?? pos.width2d / 100) / 2
           let halfH = (pos.height3d ?? pos.height2d / 100) / 2
 
-          // Add frame + passepartout borders (cm → meters)
+          // Add frame + passepartout borders, or a lightbox's edge (AR-183: its frame and
+          // passepartout are off) (cm → meters)
           const memberArt = artworksById[memberId]
-          if (memberArt?.showFrame && memberArt?.imageUrl && memberArt?.frameSize?.value) {
-            halfW += memberArt.frameSize.value / 100
-            halfH += memberArt.frameSize.value / 100
-          }
-          if (
-            memberArt?.showPassepartout &&
-            memberArt?.imageUrl &&
-            memberArt?.passepartoutSize?.value
-          ) {
-            halfW += memberArt.passepartoutSize.value / 100
-            halfH += memberArt.passepartoutSize.value / 100
+          if (memberArt?.imageUrl && isLightbox(memberArt)) {
+            halfW += LIGHTBOX_EDGE_CM[readLightbox(memberArt).lightboxEdge] / 100
+            halfH += LIGHTBOX_EDGE_CM[readLightbox(memberArt).lightboxEdge] / 100
+          } else {
+            if (memberArt?.showFrame && memberArt?.imageUrl && memberArt?.frameSize?.value) {
+              halfW += memberArt.frameSize.value / 100
+              halfH += memberArt.frameSize.value / 100
+            }
+            if (
+              memberArt?.showPassepartout &&
+              memberArt?.imageUrl &&
+              memberArt?.passepartoutSize?.value
+            ) {
+              halfW += memberArt.passepartoutSize.value / 100
+              halfH += memberArt.passepartoutSize.value / 100
+            }
           }
 
           minX = Math.min(minX, pos.posX3d - halfW)

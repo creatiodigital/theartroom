@@ -30,7 +30,7 @@ import { BAKE_DEBUG } from './bakedLook'
  * - `?bakevplclamp=M`: the bounce lights' singularity clamp in meters (default 0.5); the near field
  *   that adds back what it drops follows it.
  */
-export type BakeGroup = 'window' | 'sun' | 'downlights' | 'track'
+export type BakeGroup = 'window' | 'sun' | 'downlights' | 'track' | 'lightbox'
 
 const param = (name: string): string | null =>
   BAKE_DEBUG && typeof window !== 'undefined'

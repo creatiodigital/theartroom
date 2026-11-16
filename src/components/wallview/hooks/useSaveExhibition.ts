@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
+import { isLightbox, readLightbox } from '@/lib/lightbox'
 import { getAllPendingUploads, clearAllPendingUploads } from '@/lib/pendingUploads'
 import { editArtisticImage } from '@/redux/slices/artworkSlice'
 import { setWallSaving } from '@/redux/slices/wallViewSlice'
@@ -241,6 +242,9 @@ export const useSaveExhibition = () => {
             showSupport: artwork.showSupport ?? false,
             hideShadow: artwork.hideShadow ?? false,
             showArtworkInformation: artwork.showArtworkInformation ?? false,
+            // AR-183: only an image is ever sent as a lightbox (the API refuses any other).
+            ...readLightbox(artwork),
+            showLightbox: isLightbox(artwork),
             // Text styling (per-exhibition)
             fontFamily: artwork.fontFamily?.value ?? 'Montserrat',
             fontSize: artwork.fontSize?.value ?? 16,

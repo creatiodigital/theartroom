@@ -1,3 +1,5 @@
+import { LIGHTBOX_EDGE_CM, isLightbox, readLightbox } from '@/lib/lightbox'
+
 /**
  * Wall view scaling factor: pixels per meter.
  *
@@ -11,12 +13,8 @@
  */
 export const WALL_SCALE = 400
 
-/**
- * Calculate total frame + passepartout + paper border width in 2D pixels
- * for a given artwork. Used by alignment, snapping, and grouping
- * to account for the visual extent of the artwork beyond its image area.
- */
-export const getArtworkBorderPx = (artwork: {
+type BorderedArtwork = {
+  artworkType?: string | null
   showFrame?: boolean
   imageUrl?: string | null
   frameSize?: { value: number } | null
@@ -24,19 +22,28 @@ export const getArtworkBorderPx = (artwork: {
   passepartoutSize?: { value: number } | null
   showPaperBorder?: boolean
   paperBorderSize?: { value: number } | null
-}): number => {
-  const scaleMul = WALL_SCALE / 100
-  const framePx =
-    artwork?.showFrame && artwork?.imageUrl && artwork?.frameSize?.value
-      ? artwork.frameSize.value * scaleMul
-      : 0
-  const ppPx =
-    artwork?.showPassepartout && artwork?.imageUrl && artwork?.passepartoutSize?.value
-      ? artwork.passepartoutSize.value * scaleMul
-      : 0
-  const paperPx =
-    artwork?.showPaperBorder && artwork?.imageUrl && artwork?.paperBorderSize?.value
-      ? artwork.paperBorderSize.value * scaleMul
-      : 0
-  return framePx + ppPx + paperPx
+  showLightbox?: boolean
+  lightboxEdge?: string
 }
+
+/**
+ * How far (cm) an artwork's look reaches past its image on each side: a lightbox's edge (AR-183:
+ * frame, passepartout and paper border are off while it is on), else frame + passepartout + paper
+ * border. Only an image has any.
+ */
+export const getArtworkBorderCm = (artwork: BorderedArtwork | null | undefined): number => {
+  if (!artwork?.imageUrl) return 0
+  if (isLightbox(artwork)) return LIGHTBOX_EDGE_CM[readLightbox(artwork).lightboxEdge]
+  const frame = artwork.showFrame ? (artwork.frameSize?.value ?? 0) : 0
+  const passepartout = artwork.showPassepartout ? (artwork.passepartoutSize?.value ?? 0) : 0
+  const paper = artwork.showPaperBorder ? (artwork.paperBorderSize?.value ?? 0) : 0
+  return frame + passepartout + paper
+}
+
+/**
+ * Calculate total frame + passepartout + paper border width (or a lightbox's edge, AR-183) in 2D
+ * pixels for a given artwork. Used by alignment, snapping, and grouping to account for the visual
+ * extent of the artwork beyond its image area.
+ */
+export const getArtworkBorderPx = (artwork: BorderedArtwork | null | undefined): number =>
+  getArtworkBorderCm(artwork) * (WALL_SCALE / 100)

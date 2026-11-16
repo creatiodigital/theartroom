@@ -1,6 +1,7 @@
 import { useSelector } from 'react-redux'
 
 import { WALL_SCALE } from '@/components/wallview/constants'
+import { LIGHTBOX_DEFAULTS, readLightbox } from '@/lib/lightbox'
 import { isPassepartoutThickness } from '@/lib/passepartoutThickness'
 
 import type { RootState } from '@/redux/store'
@@ -66,6 +67,7 @@ export const useArtworkDetails = (currentArtworkId: string) => {
       supportThickness: { label: '2', value: 2 },
       supportColor: '#ffffff',
       showSupport: false,
+      lightbox: LIGHTBOX_DEFAULTS,
       textBackgroundColor: undefined,
       textVerticalAlign: 'top',
       textPadding: { label: '0', value: 0 } as TOption<number>,
@@ -239,6 +241,8 @@ export const useArtworkDetails = (currentArtworkId: string) => {
     supportThickness: supportThickness ?? { label: '2', value: 2 },
     supportColor: supportColor ?? '#ffffff',
     showSupport: showSupport ?? false,
+    // AR-183: the seven lightbox values, each valid (src/lib/lightbox.ts).
+    lightbox: readLightbox(artwork),
     textBackgroundColor,
     textVerticalAlign,
     textPadding,

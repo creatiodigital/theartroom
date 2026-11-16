@@ -15,15 +15,20 @@ type PanelCardProps = {
   level: 'card' | 'group'
   /** On the head's right, e.g. "10 on · pick one to adjust". */
   aside?: ReactNode
+  /**
+   * A card whose switch is on and holds its settings, drawn white with a 1px dark outline
+   * (docs/lightbox: the Lightbox card while on).
+   */
+  outlined?: boolean
   children: ReactNode
 }
 
 /** A card of rows in a tool panel (designs/editor-3d.dc.html, editor-3d-panels.dc.html). */
-export function PanelCard({ title, level, aside, children }: PanelCardProps) {
+export function PanelCard({ title, level, aside, outlined, children }: PanelCardProps) {
   const Heading = level === 'card' ? 'h3' : 'h4'
 
   return (
-    <div className={c(styles.root, styles[level])}>
+    <div className={c(styles.root, styles[level], outlined && styles.outlined)}>
       {(title || aside) && (
         <div className={styles.head}>
           {title && <Heading className={styles.title}>{title}</Heading>}

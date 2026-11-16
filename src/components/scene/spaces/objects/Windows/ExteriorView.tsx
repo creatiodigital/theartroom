@@ -13,6 +13,7 @@ import {
 } from 'three'
 
 import { assetUrl } from '@/lib/assetUrl'
+import { captureError } from '@/lib/observability/captureError'
 import { BAKE_DEBUG } from '@/components/scene/bake/bakedLook'
 import { GLASS_ON_SCREEN } from '@/components/scene/spaces/objects/Effects/bloomIntensity'
 import { countNodes } from '@/components/scene/spaces/objects/nodeIndices'
@@ -403,6 +404,8 @@ class StreetErrorBoundary extends Component<{ children: ReactNode }, { failed: b
   }
   componentDidCatch(error: Error) {
     console.warn('The street view failed to load; the windows keep their glass:', error.message)
+    // Reported here, as handled: the scene's renderer no longer reports what a boundary caught.
+    captureError(error, { flow: 'content', stage: 'street-view-load-failed', level: 'warning' })
   }
   render() {
     return this.state.failed ? null : this.props.children

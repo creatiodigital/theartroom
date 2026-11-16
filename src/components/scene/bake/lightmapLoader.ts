@@ -3,6 +3,7 @@ import { Loader } from 'three'
 import type { DataTexture } from 'three'
 
 import type { BakeMap } from '@/lib/bake/bakeRecord'
+import { withRetries } from '@/components/scene/loadRetry'
 import { savesPhoneMemory } from '@/components/scene/phoneMemory'
 
 import { decodeLightmapPng } from './lightmapCodec'
@@ -36,6 +37,9 @@ const releaseAfterUpload = (texture: DataTexture) => {
  * A slow download that keeps receiving bytes is never cut.
  */
 export const LIGHTMAP_STALL_MS = 30_000
+
+/** A map download that fails for the network is tried once more, after this wait (ms). */
+const LIGHTMAP_RETRY_DELAYS_MS = [1000]
 
 /**
  * The bytes each map download has received, by URL, for the visit page's loader: the maps are the
@@ -188,14 +192,20 @@ export class LightmapLoader extends Loader<DataTexture> {
       return
     }
     note(url, { loaded: 0, total: null, done: false }, true)
-    fetchBytes(
-      resolved,
-      {
-        headers: this.requestHeader,
-        credentials: this.withCredentials ? 'include' : 'same-origin',
-      },
-      LIGHTMAP_STALL_MS,
-      (loaded, total) => note(url, { loaded, total, done: false }),
+    // A dropped or stalled download is tried once more (`withRetries`): a Redmi lost a map to its
+    // stall timer. Once, so a dead line still falls back to today's look in about a minute.
+    withRetries(
+      () =>
+        fetchBytes(
+          resolved,
+          {
+            headers: this.requestHeader,
+            credentials: this.withCredentials ? 'include' : 'same-origin',
+          },
+          LIGHTMAP_STALL_MS,
+          (loaded, total) => note(url, { loaded, total, done: false }),
+        ),
+      LIGHTMAP_RETRY_DELAYS_MS,
     )
       .then((buffer) => {
         note(url, { loaded: buffer.byteLength, total: buffer.byteLength, done: true }, true)

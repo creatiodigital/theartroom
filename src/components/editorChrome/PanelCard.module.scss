@@ -14,6 +14,14 @@
   --editor-row-track: var(--color-gray-35);
 }
 
+// On white now, so the rows' chips and tracks take their on-white shades.
+.card.outlined {
+  background: var(--color-white);
+  box-shadow: 0 0 0 1px var(--color-dark-surface);
+  --editor-row-chip: var(--editor-chip);
+  --editor-row-track: var(--editor-track);
+}
+
 .group {
   gap: 14px;
   padding: 14px;

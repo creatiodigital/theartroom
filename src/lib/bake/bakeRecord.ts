@@ -54,6 +54,13 @@ export interface BakeRecord {
    * irradiance, three units): its mat, frame and text card are lit with it.
    */
   artLight: Record<string, [number, number, number]>
+  /**
+   * AR-183: the lightboxes whose fronts lit this bake — artwork id → the key of the front as baked
+   * (where it hung, its size, brightness, light, depth and edge: `lightboxBakeKey`). A lightbox
+   * shows its fallback glow on the wall until a bake shown has it under its current key. Absent
+   * on a bake without any (and on every bake from before).
+   */
+  lightboxes?: Record<string, string>
   bakedAt: string
   bakedBy: string
   ms: number
@@ -108,6 +115,10 @@ export function isBakeRecord(value: unknown): value is BakeRecord {
     isObject(value.artLight) &&
     !Array.isArray(value.artLight) &&
     Object.values(value.artLight).every((light) => isNumbers(light, 3)) &&
+    (value.lightboxes === undefined ||
+      (isObject(value.lightboxes) &&
+        !Array.isArray(value.lightboxes) &&
+        Object.values(value.lightboxes).every(isStr))) &&
     isStr(value.bakedAt) &&
     isStr(value.bakedBy) &&
     isNum(value.ms) &&

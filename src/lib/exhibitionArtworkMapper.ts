@@ -1,4 +1,5 @@
 import { WALL_SCALE } from '@/components/wallview/constants'
+import { type TLightbox, readLightbox } from '@/lib/lightbox'
 import { isPassepartoutThickness } from '@/lib/passepartoutThickness'
 import type { TArtwork, TArtworkPosition } from '@/types/artwork'
 
@@ -63,6 +64,14 @@ export type ExhibitionArtworkResponse = {
   showSupport: boolean
   hideShadow: boolean
   showArtworkInformation: boolean
+  // AR-183 Lightbox. Optional: a snapshot published before it has none (read as off).
+  showLightbox?: TLightbox['showLightbox']
+  lightboxBrightness?: TLightbox['lightboxBrightness']
+  lightboxLight?: string
+  lightboxDepth?: TLightbox['lightboxDepth']
+  lightboxEdge?: string
+  lightboxMaterial?: string
+  lightboxFront?: string
   // Text styling (per-exhibition)
   fontFamily: string
   fontSize: number
@@ -194,6 +203,7 @@ export function mapToArtwork(ea: ExhibitionArtworkResponse): TArtwork {
     showSupport: ea.showSupport ?? false,
     hideShadow: ea.hideShadow ?? false,
     showArtworkInformation: ea.showArtworkInformation,
+    ...readLightbox(ea),
     // Text styling from ExhibitionArtwork (per-exhibition)
     fontFamily: { label: ea.fontFamily, value: ea.fontFamily.toLowerCase() as 'roboto' | 'lora' },
     fontSize: { label: String(ea.fontSize), value: ea.fontSize },

@@ -202,6 +202,23 @@ const options = (
 const bakeSaves = (calls: Call[]) =>
   calls.filter((c) => c.method === 'PUT' && c.url === `/api/exhibitions/${EXHIBITION}/bake`)
 
+test('AR-183: the draft lists the lightboxes the bake lit, and nothing for a room without one', () => {
+  const draft = (lightboxes?: Record<string, string>) =>
+    buildBakeDraft({
+      id: 'b1',
+      fingerprint: 'fp',
+      unwrap: { hash: 'h', stats: [[1, 2, 3, 4, 5]] },
+      maps: [],
+      artBounce: new Map(),
+      camera: { exposure: 0.62, whiteBalance: [1, 1, 1] },
+      lightboxes,
+      ms: 1,
+    })
+  expect(draft({ 'art-1': 'key' }).lightboxes).toEqual({ 'art-1': 'key' })
+  expect(draft({})).not.toHaveProperty('lightboxes')
+  expect(draft()).not.toHaveProperty('lightboxes')
+})
+
 test('every map is uploaded, then the record is saved last, pointing at the uploaded files', async () => {
   const server = fakeServer({ backend: 'local' })
   const progress: number[] = []

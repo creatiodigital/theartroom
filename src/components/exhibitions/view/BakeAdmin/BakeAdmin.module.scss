@@ -1,13 +1,17 @@
 // AR-161 — the admin's review bar: above the room, below the loader and the visit page's dialogs.
+// Bottom center: the room's own buttons (Exit wall view, the menu) hold the top corners.
 .bar {
   position: fixed;
-  top: var(--space-6);
-  left: var(--space-6);
+  right: 0;
+  bottom: calc(var(--space-6) + env(safe-area-inset-bottom));
+  left: 0;
   z-index: 1000;
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  max-width: calc(100vw - 2 * var(--space-6) - 64px);
+  width: fit-content;
+  max-width: calc(100vw - 2 * var(--space-6));
+  margin-inline: auto;
   padding: var(--space-3) var(--space-4);
   background-color: var(--color-white);
   border: 1px solid var(--color-border-default);

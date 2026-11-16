@@ -32,7 +32,7 @@ import {
 import { ROOM_CAMERA } from '@/components/scene/spaces/objects/Display/artworkFile'
 
 import { ArtworkFileEffect } from './ArtworkFileEffect'
-import { BLOOM_INTENSITY, lampGlowScale } from './bloomIntensity'
+import { BLOOM_INTENSITY, BLOOM_THRESHOLD, lampGlowScale } from './bloomIntensity'
 import { FalseColorEffect } from './FalseColorEffect'
 import { WhiteBalanceEffect } from './WhiteBalanceEffect'
 
@@ -132,7 +132,7 @@ const ENABLE_FXAA = false
  * `mipmapBlur` is the modern path: wide, cheap, stable glow instead of a fixed kernel.
  */
 const ENABLE_BLOOM = true
-const BLOOM_THRESHOLD = 2.0
+// BLOOM_THRESHOLD (2.0) lives in `bloomIntensity.ts`, beside the glow's strength.
 
 /**
  * ❌ FILM GRAIN — TRIED AND REJECTED 2026-09-07. Do not re-propose.

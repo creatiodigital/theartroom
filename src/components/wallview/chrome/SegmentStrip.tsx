@@ -15,6 +15,8 @@ export type Segment = {
   label: string
   /** An icon-only segment when given. */
   icon?: Icon
+  /** A small color dot before the text (docs/lightbox: the light colors). */
+  dot?: string
   /** A choice (`aria-pressed`); left out for an action (e.g. "Top of the wall"). */
   pressed?: boolean
   onClick: () => void
@@ -35,7 +37,7 @@ type SegmentStripProps = {
 export function SegmentStrip({ label, segments }: SegmentStripProps) {
   return (
     <div role="group" aria-label={label} className={styles.strip}>
-      {segments.map(({ key, label: name, icon: SegmentIcon, pressed, onClick, disabled }) => {
+      {segments.map(({ key, label: name, icon: SegmentIcon, dot, pressed, onClick, disabled }) => {
         const button = (
           <Button
             variant="bare"
@@ -46,7 +48,16 @@ export function SegmentStrip({ label, segments }: SegmentStripProps) {
             onClick={onClick}
             disabled={disabled}
           >
-            {SegmentIcon ? <SegmentIcon size={16} weight="light" aria-hidden /> : name}
+            {SegmentIcon ? (
+              <SegmentIcon size={16} weight="light" aria-hidden />
+            ) : dot ? (
+              <>
+                <span className={styles.dot} style={{ background: dot }} aria-hidden />
+                {name}
+              </>
+            ) : (
+              name
+            )}
           </Button>
         )
 
