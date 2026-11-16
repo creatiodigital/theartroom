@@ -1,4 +1,11 @@
-import { FrontSide, MeshStandardMaterial, NoColorSpace, Vector3, type Texture } from 'three'
+import {
+  FrontSide,
+  MeshStandardMaterial,
+  NoColorSpace,
+  Vector2,
+  Vector3,
+  type Texture,
+} from 'three'
 
 import {
   ARTWORK_FILE_ALPHA,
@@ -19,32 +26,40 @@ import { LIGHTBOX_ALPHA, LIGHTBOX_FEED_MAX, LIGHTBOX_FILM } from './lightboxLook
  * patch chains onto these hooks (it touches the indirect diffuse only, which is black here).
  *
  * Baked look: the image is shown past the camera, like every artwork file (`artworkFile.ts`): it
- * writes what the screen shows, rolled off before white (`lightboxShoulder`), and the reflection
- * as the camera shows it. Bloom sees that × the feed; the alpha carries the feed
- * (`LIGHTBOX_ALPHA`) and `ArtworkFileEffect` divides it back out. The outermost pixels (the
- * antialiased edge, the light leak) write the plain artwork marker, feed 1, so an edge pixel
- * shared with the box blends exactly as any artwork's.
+ * writes what the screen shows — the film, lifted by its gain and rolled off before white
+ * (`lightboxShoulder`) — and the reflection as the camera shows it. Bloom sees that × the feed (a
+ * faint rim at the box's edge, `lightboxBloomFeed`); the alpha carries the feed
+ * (`lightboxFeedAlpha`) and `ArtworkFileEffect` divides it back out. The outermost pixels (the
+ * antialiased edge) write the plain artwork marker, feed 1, so an edge pixel shared with the box
+ * blends exactly as any artwork's.
  *
- * Today's look: the front in the room's units; the screen's tone mapping and bloom do the rest.
+ * Today's look: the front in the room's units (`TODAY_LOOK_FRONT`); the screen's tone mapping and
+ * bloom do the rest.
  */
 
 export type LightboxUniforms = {
   lbTint: { value: Vector3 }
   lbGain: { value: number }
+  /** The film's saturation and contrast (`lightboxFilm`). */
+  lbFilm: { value: Vector2 }
   lbFeed: { value: number }
 }
 
 type LightboxShaderOptions = { glossy: boolean; baked: boolean; decode: boolean }
 
 const FILM = LIGHTBOX_FILM
+const glslFloat = (v: number) => v.toFixed(6)
 
 const LIGHTBOX_PARS = /* glsl */ `
 uniform vec3 lbTint;
 uniform float lbGain;
+uniform vec2 lbFilm;
 uniform float lbFeed;
 uniform float roomExposure;
 uniform vec3 roomWhiteBalance;
 varying vec2 vLbUv;
+varying vec2 vLbPos;
+varying vec2 vLbHalf;
 
 // Pixels from the image's nearest edge (screen space: the band is as thin up close as far away).
 float lightboxEdgePx( vec2 uv ) {
@@ -52,23 +67,34 @@ float lightboxEdgePx( vec2 uv ) {
 	return min( d.x, d.y );
 }
 
-// The film's character: saturation and contrast lifted, a soft fall-off to the corners, a thin
-// bright line where it meets the box.
-vec3 lightboxFilm( vec3 c, vec2 uv, float edgePx ) {
+// The share of this pixel's film that lies in the light leak: the band within ${FILM.leakM * 1000} mm of the
+// film's edge, measured in meters (the film's own size), each axis's footprint from fwidth.
+float lightboxLeakAxis( float pos, float halfSize ) {
+	float d = halfSize - abs( pos );
+	float w = max( fwidth( pos ), 1e-7 );
+	float lo = max( d - 0.5 * w, 0.0 );
+	float film = d + 0.5 * w - lo;
+	return clamp( ( min( d + 0.5 * w, ${glslFloat(FILM.leakM)} ) - lo ) / max( film, 1e-7 ), 0.0, 1.0 );
+}
+
+// The film's character: more vivid than a print — saturation up, the darks deepened with white
+// kept white — a soft fall-off to the corners, a bright line where it meets the box.
+vec3 lightboxFilm( vec3 c, vec2 uv ) {
 	float luma = dot( c, vec3( 0.2126, 0.7152, 0.0722 ) );
-	c = max( vec3( 0.0 ), vec3( luma ) + ( c - vec3( luma ) ) * ${FILM.saturation.toFixed(3)} );
-	c = 0.18 * pow( c / 0.18, vec3( ${FILM.contrast.toFixed(3)} ) );
+	c = max( vec3( 0.0 ), vec3( luma ) + ( c - vec3( luma ) ) * lbFilm.x );
+	c = pow( c, vec3( lbFilm.y ) );
 	vec2 p = ( uv - 0.5 ) * 2.0;
 	c *= 1.0 - ${FILM.falloff.toFixed(3)} * 0.5 * dot( p, p );
-	float leak = 1.0 - smoothstep( 0.0, ${FILM.leakPx.toFixed(2)}, edgePx );
+	float leak = max( lightboxLeakAxis( vLbPos.x, vLbHalf.x ), lightboxLeakAxis( vLbPos.y, vLbHalf.y ) );
 	return mix( c, vec3( 1.0 ), ${FILM.leak.toFixed(3)} * leak );
 }
 
 // What the screen can show of it: unchanged up to 0.9, then rolled off towards white (Khronos PBR
-// Neutral's highlight compression, started later): whites stay white, never clip.
+// Neutral's highlight compression, started later): whites stay white, never clip, and the
+// brightest parts burn towards white as a light's do — the color lives in the mid-tones.
 vec3 lightboxShoulder( vec3 color ) {
 	const float start = 0.9;
-	const float desaturation = 0.15;
+	const float desaturation = 0.8;
 	float peak = max( color.r, max( color.g, color.b ) );
 	if ( peak < start ) return color;
 	float d = 1.0 - start;
@@ -86,16 +112,15 @@ ${decode ? 'lbTexel = sRGBTransferEOTF( lbTexel );' : ''}
 
 const LIGHTBOX_OUT = ({ glossy, baked }: LightboxShaderOptions) => /* glsl */ `
 #include <opaque_fragment>
-float lbEdgePx = lightboxEdgePx( vLbUv );
-vec3 lbLight = lightboxFilm( lbTexel.rgb, vLbUv, lbEdgePx ) * lbTint * lbGain;
+vec3 lbLight = lightboxFilm( lbTexel.rgb, vLbUv ) * lbTint * lbGain;
 vec3 lbReflect = ${glossy ? 'outgoingLight' : 'vec3( 0.0 )'};
 ${
   baked
     ? `vec3 lbShown = lightboxShoulder( lbLight ) + lbReflect * roomExposure * roomWhiteBalance;
-if ( lbEdgePx < 2.5 || lbFeed <= 1.0 ) {
+if ( lightboxEdgePx( vLbUv ) < 2.5 || lbFeed <= 1.0 ) {
 	gl_FragColor = vec4( lbShown, ${ARTWORK_FILE_ALPHA.toFixed(2)} );
 } else {
-	gl_FragColor = vec4( lbShown * lbFeed, ${LIGHTBOX_ALPHA.min.toFixed(2)} + ${(LIGHTBOX_ALPHA.max - LIGHTBOX_ALPHA.min).toFixed(2)} * lbFeed / ${LIGHTBOX_FEED_MAX.toFixed(1)} );
+	gl_FragColor = vec4( lbShown * lbFeed, ${glslFloat(LIGHTBOX_ALPHA.min)} + ${glslFloat((LIGHTBOX_ALPHA.max - LIGHTBOX_ALPHA.min) / Math.log2(LIGHTBOX_FEED_MAX))} * log2( lbFeed ) );
 }`
     : 'gl_FragColor = vec4( lbLight + lbReflect, 1.0 );'
 }
@@ -109,6 +134,7 @@ export const createLightboxMaterial = (
   const uniforms: LightboxUniforms = {
     lbTint: { value: new Vector3(1, 1, 1) },
     lbGain: { value: 1 },
+    lbFilm: { value: new Vector2(1, 1) },
     lbFeed: { value: 1 },
   }
   const material = new MeshStandardMaterial({
@@ -125,10 +151,12 @@ export const createLightboxMaterial = (
       roomExposure: ROOM_CAMERA.exposure,
       roomWhiteBalance: ROOM_CAMERA.whiteBalance,
     })
-    shader.vertexShader = `varying vec2 vLbUv;\n${shader.vertexShader}`.replace(
-      '#include <uv_vertex>',
-      '#include <uv_vertex>\n\tvLbUv = uv;',
-    )
+    // The image's plane is one quad: every vertex is a corner, so |position| is its half size.
+    shader.vertexShader =
+      `varying vec2 vLbUv;\nvarying vec2 vLbPos;\nvarying vec2 vLbHalf;\n${shader.vertexShader}`.replace(
+        '#include <uv_vertex>',
+        '#include <uv_vertex>\n\tvLbUv = uv;\n\tvLbPos = position.xy;\n\tvLbHalf = abs( position.xy );',
+      )
     shader.fragmentShader = `${LIGHTBOX_PARS}\n${shader.fragmentShader}`
       .replace('#include <map_fragment>', LIGHTBOX_MAP(options.decode))
       .replace('#include <opaque_fragment>', LIGHTBOX_OUT(options))

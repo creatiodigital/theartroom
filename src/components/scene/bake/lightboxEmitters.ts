@@ -8,13 +8,13 @@ import type { AreaEmitter } from './LightBaker'
 
 /**
  * ⚠️ AR-183 — a lightbox's front in the bake (docs/lightbox §5): an area emitter, as window glass
- * is (`brightenWindows`), so the bake puts its soft wash on the floor below, the walls and the
- * works near it. Its own glow stays live (the front's shader, bloom): only its light on the room
- * is baked.
+ * is (`brightenWindows`), so the bake puts its light on what faces it: the floor below, the works
+ * and walls across. Its own glow stays live (the front's shader, bloom, the wash beside it on its
+ * own wall, which the front never faces): only its light on the room is baked.
  *
- * What you see is what lights the room: the front's radiance is what it shows — the light's color
- * × its brightness × what the film lets through (the image's mean) — in the room's units, i.e.
- * ÷ the camera's exposure (the front is shown past the camera, `lightboxMaterial.ts`).
+ * The front's radiance is the panel's light (`lightboxPanel`: 10–20× a lit wall, tuning round 1)
+ * in the light's color × what the film lets through (the image's mean), in the room's units — a
+ * real light, not what the screen can show of it (the screen tops out at white).
  */
 
 /**
@@ -64,7 +64,6 @@ export const LIGHTBOX_BAKE_KEY = 'lightboxBakeKey'
  */
 export const lightboxEmitters = (
   scene: Object3D,
-  exposure: number,
   vpls: number,
 ): { emitters: AreaEmitter[]; baked: Record<string, string> } => {
   const emitters: AreaEmitter[] = []
@@ -73,15 +72,19 @@ export const lightboxEmitters = (
   scene.traverse((o) => {
     const image = o as Mesh
     const material = image.material as
-      | (Material & { map?: Texture | null; userData: { lightbox?: LightboxUniforms } })
+      | (Material & {
+          map?: Texture | null
+          userData: { lightbox?: LightboxUniforms; lightboxPanel?: number }
+        })
       | undefined
     const uniforms = material?.userData?.lightbox
     if (!image.isMesh || image.name !== 'artworkImage' || !uniforms || !isWorldVisible(image))
       return
     const id = artworkIdOf(image)
-    const shown = filmTransmission(material.map)
+    const panel = material.userData.lightboxPanel
+    if (typeof panel !== 'number') return
     const radiance = new Color(...uniforms.lbTint.value.toArray()).multiplyScalar(
-      (uniforms.lbGain.value * shown) / Math.max(exposure, 0.05),
+      panel * filmTransmission(material.map),
     )
     if (radiance.r + radiance.g + radiance.b <= 0) return
     // A plane of its own just in front of the image (never added to the scene).

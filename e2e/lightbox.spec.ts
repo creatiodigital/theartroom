@@ -6,6 +6,7 @@ import { isBakeRecord } from '../src/lib/bake/bakeRecord'
 import {
   LIGHTBOX_DEFAULTS,
   LIGHTBOX_FIELDS,
+  LIGHTBOX_LIGHT_VERSION,
   isLightbox,
   lightboxFieldsError,
   lightboxUpdateData,
@@ -14,10 +15,20 @@ import {
 import { mapToArtwork, type ExhibitionArtworkResponse } from '../src/lib/exhibitionArtworkMapper'
 import { getArtworkBorderCm } from '../src/components/wallview/constants'
 import {
+  LIGHTBOX_ALPHA,
   LIGHTBOX_FEED_MAX,
+  LIGHTBOX_HALO,
+  LIGHTBOX_WASH,
+  TODAY_LOOK_FRONT,
+  lightboxAlphaFeed,
   lightboxBakeKey,
   lightboxBloomFeed,
+  lightboxFeedAlpha,
+  lightboxFilm,
+  lightboxGain,
+  lightboxPanel,
 } from '../src/components/scene/spaces/objects/Lightbox/lightboxLook'
+import { BLOOM_THRESHOLD } from '../src/components/scene/spaces/objects/Effects/bloomIntensity'
 import artworksReducer, { createArtwork, editArtisticImage } from '../src/redux/slices/artworkSlice'
 import type { TArtwork } from '../src/types/artwork'
 
@@ -221,6 +232,8 @@ test.describe('a lightbox in the bake', () => {
     const turn = { x: 0, y: -0, z: 0, w: 1 }
     const lightbox = { ...LIGHTBOX_DEFAULTS, showLightbox: true }
     const key = lightboxBakeKey(at, turn, 1.2, 0.8, lightbox)
+    // How bakes light with one: a new calibration, and no bake has it any more.
+    expect(key.startsWith(`v${LIGHTBOX_LIGHT_VERSION}|`)).toBe(true)
     // −0 and 0 are the same place.
     expect(key).toBe(lightboxBakeKey({ ...at, z: 0 }, { ...turn, y: 0 }, 1.2, 0.8, lightbox))
     expect(key).not.toMatch(/-0\.0+(?=[,|x]|$)/)
@@ -264,10 +277,44 @@ test.describe('a lightbox in the bake', () => {
     expect(isBakeRecord({ ...record, lightboxes: ['a1'] })).toBe(false)
   })
 
-  test('its bloom feed grows with brightness and stays within what the alpha carries', () => {
+  test('its bloom feed: a faint rim at Soft, a little more at Bright, within what the alpha carries', () => {
     const threshold = 16
-    expect(lightboxBloomFeed(0, threshold)).toBe(threshold)
-    expect(lightboxBloomFeed(0.55, threshold)).toBeGreaterThan(threshold)
+    expect(lightboxBloomFeed(0, threshold)).toBe(threshold * LIGHTBOX_HALO.soft)
+    expect(lightboxBloomFeed(1, threshold)).toBe(threshold * LIGHTBOX_HALO.bright)
+    expect(lightboxBloomFeed(0.55, threshold)).toBeGreaterThan(lightboxBloomFeed(0, threshold))
     expect(lightboxBloomFeed(1, threshold)).toBeLessThanOrEqual(LIGHTBOX_FEED_MAX)
+  })
+
+  test('the feed survives the trip through the alpha, within what the screen keeps', () => {
+    expect(lightboxFeedAlpha(1)).toBeCloseTo(LIGHTBOX_ALPHA.min, 6)
+    expect(lightboxFeedAlpha(LIGHTBOX_FEED_MAX)).toBeCloseTo(LIGHTBOX_ALPHA.max, 6)
+    // The screen's alpha is a half float: 2^-12 apart between 0.25 and 0.5.
+    const halfStep = 2 ** -12
+    for (const feed of [2, 24, 48, 160, LIGHTBOX_FEED_MAX]) {
+      const kept = Math.round(lightboxFeedAlpha(feed) / halfStep) * halfStep
+      expect(Math.abs(lightboxAlphaFeed(kept) / feed - 1), `feed ${feed}`).toBeLessThan(0.005)
+    }
+  })
+
+  test('the light: image lifted and more vivid, panel 10–20× a lit wall, +20 % on the wall round it', () => {
+    // On screen: Soft ×1.1, Bright ×1.8 (owner, 2026-11-15).
+    expect(lightboxGain(0)).toBeCloseTo(1.1, 6)
+    expect(lightboxGain(1)).toBeCloseTo(1.8, 6)
+    // More vivid than a print, more so at Bright.
+    expect(lightboxFilm(0).saturation).toBeGreaterThan(1)
+    expect(lightboxFilm(1).saturation).toBeGreaterThan(lightboxFilm(0).saturation)
+    expect(lightboxFilm(1).contrast).toBeGreaterThan(lightboxFilm(0).contrast)
+    // Today's look: Soft's whites under the glow's threshold, Bright's just past it.
+    expect(lightboxGain(0) * TODAY_LOOK_FRONT).toBeLessThan(BLOOM_THRESHOLD)
+    expect(lightboxGain(1) * TODAY_LOOK_FRONT).toBeGreaterThan(BLOOM_THRESHOLD)
+    // A wall of reflectance 0.8 under 200 lx, in the room's units (`bakedLook.ts`).
+    const litWall = (0.8 * 2.81) / Math.PI
+    expect(lightboxPanel(0) / litWall).toBeCloseTo(10, 6)
+    expect(lightboxPanel(1) / litWall).toBeCloseTo(20, 6)
+    // The wall at the box's edge: +10 % at Soft, +20 % at Bright; out to ~15 cm (very subtle).
+    expect(LIGHTBOX_WASH.atEdge(0)).toBeCloseTo(0.1, 6)
+    expect(LIGHTBOX_WASH.atEdge(1)).toBeCloseTo(0.2, 6)
+    expect(LIGHTBOX_WASH.reach(0.1, 0.1)).toBeGreaterThanOrEqual(0.12)
+    expect(LIGHTBOX_WASH.reach(1, 1)).toBeLessThanOrEqual(0.16)
   })
 })

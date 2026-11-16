@@ -98,3 +98,32 @@ Follow how **`showFrame`** flows through the app; a lightbox travels the same pa
 - Bake: `src/components/scene/bake/LightBaker.ts` (step "1b. Daylight: window glass as area emitters" is the model for
   lightbox emitters), `bakeJob.ts`, `bakedLook.ts`; whatever marks a bake stale when lamps change must also react to
   lightbox position/size/brightness/light colour.
+
+## Tuning round 1 (owner review of the baked room, 2026-11-15)
+Owner: *"I cannot tell this is a lightbox. The only difference I see is that the image is clearer… I need this thing
+to emit some light."* Screenshot: silver aluminium, wide edge, baked room (dark red wall): the image looks like a crisp
+print; no halo, no light on the wall, the box reads as a frame.
+
+**Why** (from the code): artworks are shown as their exact file colours (`ArtworkFileEffect`); the lightbox's front
+divides its bloom feed back out, so on screen it is the file too, just as bright as a print. In a baked room the bloom
+is lamps-only (threshold × `lampGlowScale` 8), the fallback wash is hidden once baked, and the baked emitter
+(brightness × film mean, in room units ÷ exposure) is too weak against the room's light to show on the wall.
+
+**Changes (the look must read as a light source at a glance, at Soft already, unmistakably at Bright):**
+1. **Brighter than a print on screen.** Do not return the front to the exact file: show file × a visible gain,
+   Soft ≈ ×1.1 → Bright ≈ ×1.4, with a soft shoulder so highlights roll into white instead of clipping hard; keep the
+   film's contrast/saturation lift. Prints stay exactly the file; only lightboxes are lifted.
+2. **A visible halo in baked rooms too.** The front must feed the bloom clearly above the baked threshold: at Bright
+   a soft glow ring spills over the edge and onto the wall for roughly 3–6 % of the box's size; at Soft a faint one.
+   Lightboxes are allowed to glow in baked rooms like lamp bulbs (the "lamps only" rule gets "and lightboxes").
+3. **Light on the wall that you can see.** Keep a soft screen-space wash around the box **also when baked** (half the
+   fallback strength), on top of the baked light. And calibrate the baked emitter: a real lightbox is about 10–20×
+   brighter than a lit wall; at Bright on a mid-tone wall, the wall right at the box's edge should be clearly lighter
+   (≈ +50 %), fading to nothing at about 30–40 cm, tinted by the light colour; the floor below a faint wash.
+4. **The box catches its own light.** The inside faces of the edge (the recess around the film) glow with the light
+   colour, and the front face of the edge picks up a little of it near the image. This is what separates a lightbox
+   from a frame.
+5. **The light leak in world units:** a 2–3 mm bright line where the film meets the edge (not 1.5 px), so it stays
+   visible from across the room.
+6. **Check** in the same room: a print next to the lightbox (they must look clearly different), Soft and Bright,
+   black and oak, and one dim room. Send screenshots before committing the tuning.

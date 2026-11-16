@@ -1,6 +1,9 @@
 'use client'
 
-import { LIGHTBOX_TINT } from '@/components/scene/spaces/objects/Lightbox/lightboxLook'
+import {
+  LIGHTBOX_TINT,
+  lightboxFilm,
+} from '@/components/scene/spaces/objects/Lightbox/lightboxLook'
 import { WALL_SCALE } from '@/components/wallview/constants'
 import { assetUrl } from '@/lib/assetUrl'
 import {
@@ -59,7 +62,7 @@ export function LightboxImage({ imageUrl, lightbox }: LightboxImageProps) {
         style={{
           position: 'relative',
           backgroundImage: `url(${imageUrl})`,
-          filter: `brightness(${(1.06 + 0.12 * lightbox.lightboxBrightness).toFixed(3)}) saturate(1.06)`,
+          filter: `brightness(${(1.06 + 0.12 * lightbox.lightboxBrightness).toFixed(3)}) saturate(${lightboxFilm(lightbox.lightboxBrightness).saturation.toFixed(3)})`,
         }}
       >
         {lightbox.lightboxLight !== 'neutral' && (

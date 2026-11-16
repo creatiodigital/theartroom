@@ -2,9 +2,13 @@ import { useLayoutEffect, useMemo, useState } from 'react'
 import { useThree } from '@react-three/fiber'
 import {
   AddEquation,
+  BufferGeometry,
   Color,
   CustomBlending,
+  DoubleSide,
+  DstColorFactor,
   ExtrudeGeometry,
+  Float32BufferAttribute,
   MeshStandardMaterial,
   OneFactor,
   Shape,
@@ -14,7 +18,6 @@ import {
 } from 'three'
 
 import { useBakedLook } from '@/components/scene/bake/bakedLook'
-import { ROOM_CAMERA } from '@/components/scene/spaces/objects/Display/artworkFile'
 import {
   BLOOM_THRESHOLD,
   lampGlowScale,
@@ -26,12 +29,16 @@ import type { TLightbox, TLightboxMaterial } from '@/lib/lightbox'
 
 import {
   LIGHTBOX_FEED_MAX,
-  LIGHTBOX_GLOW,
+  LIGHTBOX_REFLECT,
+  LIGHTBOX_RIM_SIDES,
   LIGHTBOX_TINT,
+  LIGHTBOX_WASH,
   TODAY_LOOK_FRONT,
   lightboxBloomFeed,
   lightboxBox,
+  lightboxFilm,
   lightboxGain,
+  lightboxPanel,
 } from './lightboxLook'
 import { createLightboxMaterial, isEncodedMap } from './lightboxMaterial'
 
@@ -180,8 +187,12 @@ const LightboxSurfaceMaterial = ({
   useLayoutEffect(() => {
     const uniforms = material.userData.lightbox
     uniforms.lbTint.value.set(...LIGHTBOX_TINT[light])
+    // The bake's emitter reads the panel's light (`lightboxEmitters`).
+    material.userData.lightboxPanel = lightboxPanel(brightness)
     const gain = lightboxGain(brightness)
     uniforms.lbGain.value = options.baked ? gain : gain * TODAY_LOOK_FRONT
+    const film = lightboxFilm(brightness)
+    uniforms.lbFilm.value.set(film.saturation, film.contrast)
     uniforms.lbFeed.value =
       options.baked && hdr
         ? Math.min(
@@ -194,7 +205,7 @@ const LightboxSurfaceMaterial = ({
   return <primitive object={material} attach="material" />
 }
 
-const GLOW_VERTEX = /* glsl */ `
+const WASH_VERTEX = /* glsl */ `
 varying vec2 vUv;
 void main() {
 	vUv = uv;
@@ -202,24 +213,23 @@ void main() {
 }
 `
 
-const GLOW_FRAGMENT = /* glsl */ `
-uniform vec2 uInner;
-uniform vec2 uOuter;
+/** The light on the wall round the box (`LIGHTBOX_WASH`): alike on all four sides, fading out. */
+const WASH_FRAGMENT = /* glsl */ `
+uniform vec2 uBox;
+uniform vec2 uPlane;
 uniform vec3 uColor;
 uniform float uReach;
-uniform float uScale;
 varying vec2 vUv;
 void main() {
-	vec2 pos = ( vUv - 0.5 ) * uOuter;
-	vec2 d = abs( pos ) - uInner * 0.5;
+	vec2 pos = ( vUv - 0.5 ) * uPlane;
+	vec2 d = abs( pos ) - uBox * 0.5;
 	if ( d.x < 0.0 && d.y < 0.0 ) discard;
-	float dist = length( max( d, 0.0 ) );
-	float glow = 1.0 - smoothstep( 0.0, uReach, dist );
-	gl_FragColor = vec4( uColor * uScale * glow * glow, 0.0 );
+	float glow = 1.0 - smoothstep( 0.0, uReach, length( max( d, 0.0 ) ) );
+	gl_FragColor = vec4( uColor * glow * glow, 0.0 );
 }
 `
 
-type LightboxGlowProps = {
+type LightboxWashProps = {
   /** The box's outer size (m). */
   width: number
   height: number
@@ -227,53 +237,138 @@ type LightboxGlowProps = {
 }
 
 /**
- * The fallback wash on the wall around the box (docs/lightbox §5): a soft additive glow, tinted
- * and scaled by the brightness. Added light only (the alpha under it, the artwork marker or the
- * wall's, is kept); never a real-time light.
+ * The light on the wall round the box (docs/lightbox §5, tuning round 1: `LIGHTBOX_WASH`): the
+ * wall there that much lighter, in the light's color — a multiply of what the wall shows, so a
+ * dark wall and a white one both read +20 % at Bright. Light only (the alpha under it, the wall's,
+ * is kept); never a real-time light. On a plane over the box and the wall around it, the box's
+ * own area left out.
  */
-export function LightboxGlow({ width, height, lightbox }: LightboxGlowProps) {
-  const baked = useBakedLook().baked
-  const reach = LIGHTBOX_GLOW.reach(width, height)
-  const outerW = width + reach * 2
-  const outerH = height + reach * 2
+export function LightboxWash({ width, height, lightbox }: LightboxWashProps) {
+  const reach = LIGHTBOX_WASH.reach(width, height)
+  const plane: [number, number] = [width + reach * 2, height + reach * 2]
   const [uniforms] = useState(() => ({
-    uInner: { value: new Vector2() },
-    uOuter: { value: new Vector2() },
+    uBox: { value: new Vector2() },
+    uPlane: { value: new Vector2() },
     uColor: { value: new Color() },
     uReach: { value: 0 },
-    // The front's white in the room's units: past the camera in the baked look (÷ its exposure),
-    // as drawn in today's.
-    uScale: { value: 1 },
   }))
-
+  const { lightboxBrightness: brightness, lightboxLight: light } = lightbox
   useLayoutEffect(() => {
-    uniforms.uInner.value.set(width, height)
-    uniforms.uOuter.value.set(outerW, outerH)
+    uniforms.uBox.value.set(width, height)
+    uniforms.uPlane.value.set(width + reach * 2, height + reach * 2)
     uniforms.uReach.value = reach
-    const gain = lightboxGain(lightbox.lightboxBrightness)
     uniforms.uColor.value
-      .setRGB(...LIGHTBOX_TINT[lightbox.lightboxLight])
-      .multiplyScalar(LIGHTBOX_GLOW.atEdge * gain)
-    uniforms.uScale.value = baked
-      ? 1 / Math.max(ROOM_CAMERA.exposure.value, 0.05)
-      : TODAY_LOOK_FRONT
-  }, [uniforms, width, height, outerW, outerH, reach, lightbox, baked])
+      .setRGB(...LIGHTBOX_TINT[light])
+      .multiplyScalar(LIGHTBOX_WASH.atEdge(brightness))
+  }, [uniforms, width, height, reach, brightness, light])
 
   return (
     <mesh position={[0, 0, 0.0015]} renderOrder={0}>
-      <planeGeometry args={[outerW, outerH]} />
+      <planeGeometry args={plane} />
       <shaderMaterial
         transparent
         depthWrite={false}
         blending={CustomBlending}
         blendEquation={AddEquation}
-        blendSrc={OneFactor}
+        blendSrc={DstColorFactor}
         blendDst={OneFactor}
         blendSrcAlpha={ZeroFactor}
         blendDstAlpha={OneFactor}
         uniforms={uniforms}
-        vertexShader={GLOW_VERTEX}
-        fragmentShader={GLOW_FRAGMENT}
+        vertexShader={WASH_VERTEX}
+        fragmentShader={WASH_FRAGMENT}
+      />
+    </mesh>
+  )
+}
+
+const SIDES_VERTEX = /* glsl */ `
+attribute float lipward;
+varying float vLipward;
+void main() {
+	vLipward = lipward;
+	gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+}
+`
+
+const SIDES_FRAGMENT = /* glsl */ `
+uniform vec3 uColor;
+varying float vLipward;
+void main() {
+	gl_FragColor = vec4( uColor * ( 1.0 - 0.3 * vLipward ), 1.0 );
+}
+`
+
+/**
+ * The rebate's four sides, from the film (`z0`) to the box's front (`z1`), just inside the edge's
+ * bars; `lipward` runs 0 at the film to 1 at the front.
+ */
+const rebateGeometry = (width: number, height: number, z0: number, z1: number) => {
+  const x = width / 2 - 0.0001
+  const y = height / 2 - 0.0001
+  const corners: [number, number][] = [
+    [-x, y],
+    [x, y],
+    [x, -y],
+    [-x, -y],
+  ]
+  const position: number[] = []
+  const lipward: number[] = []
+  for (let i = 0; i < 4; i++) {
+    const [ax, ay] = corners[i]!
+    const [bx, by] = corners[(i + 1) % 4]!
+    position.push(ax, ay, z0, bx, by, z0, bx, by, z1, ax, ay, z0, bx, by, z1, ax, ay, z1)
+    lipward.push(0, 0, 1, 0, 1, 1)
+  }
+  const geometry = new BufferGeometry()
+  geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
+  geometry.setAttribute('lipward', new Float32BufferAttribute(lipward, 1))
+  return geometry
+}
+
+type LightboxRimProps = {
+  /** The image's size (m). */
+  width: number
+  height: number
+  /** Where the film sits (m from the wall). */
+  filmZ: number
+  lightbox: TLightbox
+}
+
+/**
+ * The box catching its own light (tuning round 1, docs/lightbox): the rebate's sides around the
+ * film glow in the light's color — × the panel's light and what the box's material gives back
+ * (`LIGHTBOX_REFLECT`, `LIGHTBOX_RIM_SIDES`), in the room's units: past the camera's exposure as any
+ * surface (faint on black, bright on white and silver). Edge to edge there is no rebate.
+ */
+export function LightboxRim({ width, height, filmZ, lightbox }: LightboxRimProps) {
+  const baked = useBakedLook().baked
+  const { edge, depth } = lightboxBox(lightbox)
+  const panel = baked
+    ? lightboxPanel(lightbox.lightboxBrightness)
+    : lightboxGain(lightbox.lightboxBrightness) * TODAY_LOOK_FRONT
+  const light = new Color()
+    .setRGB(...LIGHTBOX_TINT[lightbox.lightboxLight])
+    .multiply(new Color().setRGB(...LIGHTBOX_REFLECT[lightbox.lightboxMaterial]))
+    .multiplyScalar(panel)
+  const [sides] = useState(() => ({ uColor: { value: new Color() } }))
+  useLayoutEffect(() => {
+    sides.uColor.value.copy(light).multiplyScalar(LIGHTBOX_RIM_SIDES)
+  })
+  const geometry = useMemo(
+    () => (edge > 0 && depth > filmZ ? rebateGeometry(width, height, filmZ, depth) : null),
+    [edge, width, height, filmZ, depth],
+  )
+  useDisposable(geometry)
+  if (!geometry) return null
+
+  return (
+    <mesh geometry={geometry}>
+      <shaderMaterial
+        side={DoubleSide}
+        uniforms={sides}
+        vertexShader={SIDES_VERTEX}
+        fragmentShader={SIDES_FRAGMENT}
       />
     </mesh>
   )

@@ -80,8 +80,6 @@ export interface BakeRoom {
    * corridor's re-rated fixtures keep it too.
    */
   recessedDimmer: number
-  /** The space's fixed camera exposure: a lightbox's front, shown past it, emits ÷ this (AR-183). */
-  exposure: number
 }
 
 export interface StartedBake {
@@ -150,7 +148,7 @@ export const startBake = (
   if (vplCube !== null) baker.quality = { ...baker.quality, vplCube }
   baker.seed = bakeSeedFlag()
   // AR-183: lightbox fronts emit too, each with its own samples (the windows' are untouched).
-  const lightboxes = lightboxEmitters(scene, room.exposure, lightboxVpls(baker.quality.emitterVpls))
+  const lightboxes = lightboxEmitters(scene, lightboxVpls(baker.quality.emitterVpls))
   emitters.push(...lightboxes.emitters)
   try {
     return {

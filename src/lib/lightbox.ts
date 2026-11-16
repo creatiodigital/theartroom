@@ -26,7 +26,7 @@ export const LIGHTBOX_DEPTH = { min: 3, max: 15 } as const
 /** The front border around the image, cm. */
 export const LIGHTBOX_EDGE_CM: Record<TLightboxEdge, number> = { none: 0, thin: 1.5, wide: 4 }
 
-/** Colour temperature of each light, kelvin (≈3000 / 4000 / 6500 K). */
+/** Color temperature of each light, kelvin (≈3000 / 4000 / 6500 K). */
 export const LIGHTBOX_LIGHT_KELVIN: Record<TLightboxLight, number> = {
   warm: 3000,
   neutral: 4000,
@@ -67,6 +67,13 @@ export const LIGHTBOX_DEFAULTS: TLightbox = {
 
 /** The seven columns, in schema order. */
 export const LIGHTBOX_FIELDS = Object.keys(LIGHTBOX_DEFAULTS) as (keyof TLightbox)[]
+
+/**
+ * How a bake lights the room with a lightbox (its emitter's calibration). Raised when that changes:
+ * a bake made with the old light is out of date (`fingerprint.ts`) and its fronts no longer count
+ * as baked (`lightboxBakeKey`). 2: tuning round 1 (2026-11-15), the panel at 10–20× a lit wall.
+ */
+export const LIGHTBOX_LIGHT_VERSION = 2
 
 const isOneOf = <T extends string>(list: readonly T[], value: unknown): value is T =>
   typeof value === 'string' && (list as readonly string[]).includes(value)

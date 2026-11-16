@@ -207,7 +207,6 @@ export const BakeRunner = (props: BakeRunnerProps) => {
             ceiling: ceilingColor,
             look: withDaylight(look.space, daylight),
             recessedDimmer,
-            exposure: bakeCamera(latest.current.spaceId).exposure,
           },
           j.restore,
         )
