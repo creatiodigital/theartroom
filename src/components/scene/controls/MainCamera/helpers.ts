@@ -119,15 +119,16 @@ export const handleKeyPress = (
 }
 
 /**
- * In Wall View the same keys move over the wall instead, never turning (AR-178, owner, 2026-11-07: "the up
- * and down arrows will move the camera up and down WITHOUT rotating the camera"): which way, right
- * and up positive.
+ * Wall View's keys, never turning: A / D and ← / → along the wall (`x`, right positive); W / S and
+ * ↑ / ↓ nearer the work and farther (`z`, +1 nearer: `zoomDepth`). Up and down the wall is the
+ * wheel's and the drag's (AR-178, owner, 2026-11-15: "use the w and s keys to go back and forth,
+ * not up and down… same for the arrows"; on 2026-11-07 ↑ / ↓ had moved the eye up and down).
  */
 export const wallMoveKeys = (keysPressed: RefObject<Record<string, boolean>>) => {
   const down = (key: string) => (keysPressed.current?.[key] ? 1 : 0)
   return {
     x: Math.sign(down('d') + down('arrowright')) - Math.sign(down('a') + down('arrowleft')),
-    y: Math.sign(down('w') + down('arrowup')) - Math.sign(down('s') + down('arrowdown')),
+    z: Math.sign(down('w') + down('arrowup')) - Math.sign(down('s') + down('arrowdown')),
   }
 }
 

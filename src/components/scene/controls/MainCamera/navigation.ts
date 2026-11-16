@@ -203,6 +203,31 @@ export const MAX_PAN_SPEED = 3
 /** The keys move over the wall this many screen heights a second: the nearer, the slower. */
 export const WALL_VIEW_KEY_SPEED = 0.6
 
+/**
+ * In Wall View, W / S and ↑ / ↓ zoom: the eye walks straight to the work and back, square to it,
+ * and stays in Wall View; up and down is the wheel's and the drag's (AR-178, owner, 2026-11-15: "do
+ * not leave wall mode, camera will stay perpendicular to the artwork… I just want to be able to
+ * zoom in and out. Same for the arrows up and down"). The distance changes by this share of itself
+ * a second, so a zoom feels the same near and far.
+ */
+export const WALL_VIEW_ZOOM_SPEED = 0.7
+
+/** The farthest W / S take the eye from the work's wall in Wall View (m). */
+export const WALL_VIEW_FARTHEST = 4
+
+/**
+ * The eye's distance from the wall after zooming `way` (+1 nearer, −1 farther) for `dt` seconds:
+ * never nearer than `nearest` (the closest Artwork View frames a work, `artworkViewNearest`), nor
+ * farther than `WALL_VIEW_FARTHEST` — and never pulled in from beyond either end.
+ */
+export const zoomDepth = (depth: number, way: number, dt: number, nearest: number) => {
+  if (way === 0 || dt <= 0) return depth
+  const to = depth * Math.exp(-way * WALL_VIEW_ZOOM_SPEED * dt)
+  return way > 0
+    ? Math.min(depth, Math.max(to, nearest))
+    : Math.max(depth, Math.min(to, WALL_VIEW_FARTHEST))
+}
+
 /** A wall's extent (m): along it (`left` to `right`, measured along the view's right) and up it. */
 export type WallExtent = { left: number; right: number; bottom: number; top: number }
 
@@ -436,6 +461,14 @@ export type LensShift = { x: number; y: number }
 export const NO_SHIFT: LensShift = { x: 0, y: 0 }
 
 export const isShifted = (shift: LensShift) => Math.abs(shift.x) > 1e-5 || Math.abs(shift.y) > 1e-5
+
+/**
+ * The shift that keeps the same point of the wall in the middle of the screen when the eye goes
+ * from `from` to `to` (m) from it: Wall View's zoom (`zoomDepth`) keeps the work where it was framed
+ * (AR-178, owner, 2026-11-15: "I need the camera to stay vertically in the same center").
+ */
+export const zoomShift = (shift: LensShift, from: number, to: number): LensShift =>
+  to > 0 ? { x: (shift.x * from) / to, y: (shift.y * from) / to } : shift
 
 /**
  * The shift that puts `center` in the middle of the screen for an eye at `eye` facing `yaw` and

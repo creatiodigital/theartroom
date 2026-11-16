@@ -25,9 +25,12 @@ import {
   exitDepth,
   fitDistance,
   WALL_VIEW_EDGE_BUFFER,
+  WALL_VIEW_FARTHEST,
   limitStep,
   wallExtent,
   wallViewLimits,
+  zoomDepth,
+  zoomShift,
   viewingDistance,
   wallScroll,
   forwardOf,
@@ -399,12 +402,38 @@ test('in Wall View a swipe or a wheel drags the wall as a page scrolls, both way
   expect(grab.y).toBe(-20)
 })
 
-test('in Wall View the arrows and W A S D move over the wall: up and down, left and right', () => {
-  expect(wallMoveKeys({ current: { arrowup: true } })).toEqual({ x: 0, y: 1 })
-  expect(wallMoveKeys({ current: { s: true, a: true } })).toEqual({ x: -1, y: -1 })
-  expect(wallMoveKeys({ current: { d: true, arrowright: true } })).toEqual({ x: 1, y: 0 })
+test('in Wall View A D and ← → move along the wall; W S and ↑ ↓ zoom, nearer and farther', () => {
+  expect(wallMoveKeys({ current: { arrowup: true } })).toEqual({ x: 0, z: 1 })
+  expect(wallMoveKeys({ current: { w: true } })).toEqual({ x: 0, z: 1 })
+  expect(wallMoveKeys({ current: { s: true, a: true } })).toEqual({ x: -1, z: -1 })
+  expect(wallMoveKeys({ current: { d: true, arrowright: true } })).toEqual({ x: 1, z: 0 })
   // Both ways at once cancel out.
-  expect(wallMoveKeys({ current: { w: true, arrowdown: true } })).toEqual({ x: 0, y: 0 })
+  expect(wallMoveKeys({ current: { w: true, arrowdown: true } })).toEqual({ x: 0, z: 0 })
+})
+
+test("Wall View's zoom: nearer and farther by a share of the distance, between its two ends", () => {
+  const nearest = FOCUS_MIN_DISTANCE
+  // Nearer: less far each moment, never past the closest a work is framed.
+  expect(zoomDepth(2, 1, 0.1, nearest)).toBeLessThan(2)
+  expect(zoomDepth(2, 1, 60, nearest)).toBe(nearest)
+  // Farther: never past the farthest.
+  expect(zoomDepth(2, -1, 0.1, nearest)).toBeGreaterThan(2)
+  expect(zoomDepth(2, -1, 60, nearest)).toBe(WALL_VIEW_FARTHEST)
+  // The same share of the distance near and far: a zoom feels the same at any distance.
+  expect(zoomDepth(1, 1, 0.1, 0.1) / 1).toBeCloseTo(zoomDepth(3, 1, 0.1, 0.1) / 3, 6)
+  // No key, or no time: no move; and never pulled in from beyond an end.
+  expect(zoomDepth(2, 0, 0.1, nearest)).toBe(2)
+  expect(zoomDepth(0.5, 1, 0.1, nearest)).toBe(0.5)
+  expect(zoomDepth(5, -1, 0.1, nearest)).toBe(5)
+})
+
+test("Wall View's zoom keeps the point framed in the middle of the screen", () => {
+  // Framed from 0.75 m with the work's middle 0.29 m above the eye and 0.1 m to its right.
+  const shift = { x: 0.1 / 0.75, y: 0.29 / 0.75 }
+  const far = zoomShift(shift, 0.75, 2)
+  expect(far.x * 2).toBeCloseTo(0.1, 6)
+  expect(far.y * 2).toBeCloseTo(0.29, 6)
+  expect(zoomShift(far, 2, 0.75).y).toBeCloseTo(shift.y, 6)
 })
 
 test("a wall's extent is its own, along it and up it, however it stands in the room", () => {
