@@ -76,6 +76,7 @@ export const buildBakeDraft = ({
   maps,
   artBounce,
   camera,
+  lightboxes = {},
   ms,
 }: {
   id: string
@@ -84,6 +85,8 @@ export const buildBakeDraft = ({
   maps: BakeMap[]
   artBounce: Map<Mesh, Color>
   camera: SpaceCamera
+  /** AR-183: artwork id → `lightboxBakeKey`, for the lightboxes this bake lit the room with. */
+  lightboxes?: Record<string, string>
   ms: number
 }): BakeDraft => ({
   id,
@@ -94,6 +97,8 @@ export const buildBakeDraft = ({
   maps,
   camera: { exposure: camera.exposure, whiteBalance: [...camera.whiteBalance] },
   artLight: artLightRecord(artBounce),
+  // Only when there are any: a room without a lightbox stores the record it always did.
+  ...(Object.keys(lightboxes).length > 0 && { lightboxes }),
   bakedAt: new Date().toISOString(),
   ms,
 })

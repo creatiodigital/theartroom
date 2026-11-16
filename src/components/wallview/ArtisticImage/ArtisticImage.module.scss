@@ -42,3 +42,12 @@
   background: var(--color-black);
   color: var(--color-white);
 }
+
+// AR-183: a lightbox's light color over its image (LightboxImage).
+.lightboxTint {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: multiply;
+  opacity: 0.35;
+  pointer-events: none;
+}

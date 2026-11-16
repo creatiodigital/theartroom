@@ -1,6 +1,10 @@
 import { Effect } from 'postprocessing'
 
 import { ARTWORK_FILE_ALPHA } from '@/components/scene/spaces/objects/Display/artworkFile'
+import {
+  LIGHTBOX_ALPHA,
+  LIGHTBOX_FEED_MAX,
+} from '@/components/scene/spaces/objects/Lightbox/lightboxLook'
 
 /**
  * ⚠️ AR-161 (the baked look) — the LAST screen effect: wherever an artwork image wrote
@@ -9,6 +13,11 @@ import { ARTWORK_FILE_ALPHA } from '@/components/scene/spaces/objects/Display/ar
  * stage then encodes it to sRGB, so the picture on screen is the file. Antialiased edges (alpha
  * between the marker and 1) blend by the share of the pixel the image covers; the marker never
  * reaches the canvas (alpha back to 1).
+ *
+ * AR-183: a lightbox's front writes what the screen shows × its bloom feed, the feed carried in
+ * alpha below the artwork marker, on a log scale (`lightboxFeedAlpha`, `lightboxMaterial.ts`): it
+ * is divided back out here, so the bloom saw a light and the screen shows the picture. Its
+ * outermost pixels write the plain marker, so its edges blend as any artwork's.
  */
 export class ArtworkFileEffect extends Effect {
   constructor() {
@@ -17,6 +26,11 @@ export class ArtworkFileEffect extends Effect {
       /* glsl */ `
         void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
           vec4 scene = texture2D(inputBuffer, uv);
+          if (scene.a > ${(LIGHTBOX_ALPHA.min - 0.02).toFixed(2)} && scene.a < ${(LIGHTBOX_ALPHA.max + 0.02).toFixed(2)}) {
+            float feed = exp2((scene.a - ${LIGHTBOX_ALPHA.min.toFixed(6)}) * ${(Math.log2(LIGHTBOX_FEED_MAX) / (LIGHTBOX_ALPHA.max - LIGHTBOX_ALPHA.min)).toFixed(6)});
+            outputColor = vec4(scene.rgb / max(feed, 1.0), 1.0);
+            return;
+          }
           float marker = ${ARTWORK_FILE_ALPHA.toFixed(2)};
           bool solid = scene.a >= marker - 0.05;
           float share = solid ? clamp((1.0 - scene.a) / (1.0 - marker), 0.0, 1.0) : 0.0;

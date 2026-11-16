@@ -1,6 +1,6 @@
 'use client'
 
-import { Canvas } from '@react-three/fiber'
+import { Canvas, _roots } from '@react-three/fiber'
 import { PerformanceMonitor } from '@react-three/drei'
 
 import { useRef, useState, useCallback, useMemo, Suspense, type ReactNode } from 'react'
@@ -22,6 +22,7 @@ import { Space } from './Space'
 import { WebGLMonitor } from './WebGLMonitor'
 import { WebGLUnavailable } from './WebGLUnavailable'
 import { GL_ATTRIBUTES, useWebGLAvailable } from './webglSupport'
+import { quietCaughtErrors } from './loadRetry'
 
 // Adaptive resolution ladder. Fill rate is this scene's only real budget — cost
 // is pixels × lights, and every pixel evaluates all 22 spotlights in three's
@@ -149,7 +150,14 @@ export const Scene = ({ hideLoader, overlay }: SceneProps = {}) => {
           {webglAvailable === false && <WebGLUnavailable />}
           {webglAvailable && (
             <SceneErrorBoundary exhibitionUrl={exhibitionUrl}>
-              <Canvas shadows={false} dpr={dpr} gl={GL_ATTRIBUTES}>
+              {/* An error a boundary in the scene handles is not reported as uncaught
+                  (`quietCaughtErrors`). */}
+              <Canvas
+                shadows={false}
+                dpr={dpr}
+                gl={GL_ATTRIBUTES}
+                onCreated={(state) => quietCaughtErrors(_roots.get(state.gl.domElement)?.fiber)}
+              >
                 <WebGLMonitor exhibitionUrl={exhibitionUrl} />
                 <Suspense fallback={hideLoader ? null : <Loader />}>
                   {/* INSIDE Suspense on purpose. Mounted outside it, this samples

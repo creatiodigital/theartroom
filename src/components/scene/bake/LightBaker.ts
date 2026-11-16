@@ -168,13 +168,18 @@ export const setBakeGrid = (size: number) => {
 }
 
 /**
- * A surface that emits light into the room — window glass showing the sky. It faces the room
- * center (single planes of either winding).
+ * A surface that emits light into the room — window glass showing the sky, a lightbox's front
+ * (AR-183). It faces the room center (single planes of either winding).
  */
 export interface AreaEmitter {
   mesh: Mesh
   /** Linear radiance as seen (emissive × intensity): what you see is what lights the room. */
   radiance: Color
+  /**
+   * Its own number of samples (a lightbox's front, `lightboxEmitters`), outside the windows'
+   * share of `emitterVpls`: a room's daylight is sampled exactly as without it.
+   */
+  vpls?: number
 }
 
 export interface BakeReceiver {
@@ -1501,16 +1506,21 @@ export class LightBaker {
       }
     }
     const lum = (c: Color) => c.r * 0.2126 + c.g * 0.7152 + c.b * 0.0722
-    const total = tris.reduce((sum, t) => sum + t.area * lum(t.e.radiance), 0)
-    const counts =
-      total > 0
-        ? tris.map((t) =>
-            Math.max(
-              1,
-              Math.round((this.quality.emitterVpls * t.area * lum(t.e.radiance)) / total),
-            ),
-          )
-        : []
+    // The windows share `emitterVpls` by flux; an emitter with its own count spreads it by area.
+    const total = tris.reduce(
+      (sum, t) => (t.e.vpls === undefined ? sum + t.area * lum(t.e.radiance) : sum),
+      0,
+    )
+    const ownArea = new Map<AreaEmitter, number>()
+    for (const t of tris)
+      if (t.e.vpls !== undefined) ownArea.set(t.e, (ownArea.get(t.e) ?? 0) + t.area)
+    const counts = tris.map((t) =>
+      t.e.vpls !== undefined
+        ? Math.max(1, Math.round((t.e.vpls * t.area) / ownArea.get(t.e)!))
+        : total > 0
+          ? Math.max(1, Math.round((this.quality.emitterVpls * t.area * lum(t.e.radiance)) / total))
+          : 0,
+    )
     return { tris, counts, total, vpls: counts.reduce((sum, n) => sum + n, 0) }
   }
 
@@ -1563,8 +1573,8 @@ export class LightBaker {
   }
 
   private sampleEmitters() {
-    const { tris, counts, total } = this.emitterTris()
-    if (total <= 0) return []
+    const { tris, counts } = this.emitterTris()
+    if (!tris.length) return []
     const vpls: { position: Vector3; normal: Vector3; intensity: Color }[] = []
     for (const [index, t] of tris.entries()) {
       const n = counts[index]!

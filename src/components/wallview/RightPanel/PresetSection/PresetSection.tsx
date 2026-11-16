@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button'
 import { getSpaceConfig, type SpaceKey } from '@/components/scene/constants'
 import { SelectField } from '@/components/wallview/chrome'
 import { useBoundingData } from '@/components/wallview/hooks/useBoundingData'
+import { readLightbox } from '@/lib/lightbox'
 import { pushToHistory } from '@/redux/slices/exhibitionSlice'
 import type { RootState, AppDispatch } from '@/redux/store'
 
@@ -129,6 +130,8 @@ const PresetSection = ({ presetType }: PresetSectionProps) => {
       supportColor: artwork.supportColor ?? '#ffffff',
       // Shadow
       hideShadow: artwork.hideShadow ?? false,
+      // AR-183 Lightbox (images only: the API refuses one on any other preset)
+      ...(presetType === 'image' && readLightbox(artwork)),
     }
 
     // Text properties (only for text presets)

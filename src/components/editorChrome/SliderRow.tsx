@@ -12,6 +12,8 @@ type SliderRowProps = {
   label: string
   /** The value chip ("4.5 m", "40%"), also what a screen reader says for the value. */
   value: string
+  /** No chip, only `ends` (docs/lightbox: Brightness reads Soft … Bright, no number). */
+  hideValue?: boolean
   sliderValue: number
   min: number
   max: number
@@ -37,6 +39,7 @@ type SliderRowProps = {
 export function SliderRow({
   label,
   value,
+  hideValue = false,
   sliderValue,
   min,
   max,
@@ -53,7 +56,7 @@ export function SliderRow({
     <div className={c(styles.row, disabled && styles.disabled)}>
       <div className={styles.head}>
         <span className={styles.label}>{label}</span>
-        <span className={styles.chip}>{value}</span>
+        {!hideValue && <span className={styles.chip}>{value}</span>}
       </div>
       <div
         className={c(styles.control, track === 'tone' && styles.tone)}

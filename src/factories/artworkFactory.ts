@@ -1,3 +1,4 @@
+import { LIGHTBOX_DEFAULTS } from '@/lib/lightbox'
 import type { TArtwork, TArtworkKind } from '@/types/artwork'
 
 export const createNewArtwork = ({
@@ -31,6 +32,7 @@ export const createNewArtwork = ({
     showSupport: false,
     supportThickness: { label: '2', value: 2 },
     supportColor: '#ffffff',
+    ...LIGHTBOX_DEFAULTS,
     textContent: '',
     fontFamily: { label: 'Roboto', value: 'roboto' },
     fontSize: { label: '16', value: 16 },

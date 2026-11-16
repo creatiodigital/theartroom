@@ -6,8 +6,10 @@ import type { TArtwork } from '@/types/artwork'
 
 import { WALL_SCALE } from '@/components/wallview/constants'
 import { assetUrl } from '@/lib/assetUrl'
+import { isLightbox, readLightbox } from '@/lib/lightbox'
 
 import styles from './ArtisticImage.module.scss'
+import { LightboxImage } from './LightboxImage'
 
 type ArtisticImageProps = {
   artwork: TArtwork
@@ -28,6 +30,10 @@ const ArtisticImage = ({ artwork }: ArtisticImageProps) => {
     showPaperBorder,
     paperBorderSize,
   } = artwork
+
+  // AR-183: a lightbox has its own box (frame, passepartout and paper border are off while on).
+  if (imageUrl && isLightbox(artwork))
+    return <LightboxImage imageUrl={imageUrl} lightbox={readLightbox(artwork)} />
 
   const frameFolder = (
     frameMaterial === 'wood' ? 'wood-dark' : (frameMaterial ?? 'wood-dark')

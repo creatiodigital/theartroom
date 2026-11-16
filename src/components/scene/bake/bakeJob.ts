@@ -25,6 +25,7 @@ import {
 } from './bakeFlags'
 import { spaceSunDirection, sunEnters } from './spaceSun'
 import { brightenWindows } from './daylight'
+import { lightboxEmitters, lightboxVpls } from './lightboxEmitters'
 import { luminance, type BakeMeter } from './meter'
 import { prepareReceivers } from './receivers'
 import { MAX_FRAME, SETTLE, settleStep } from './settle'
@@ -88,6 +89,8 @@ export interface StartedBake {
   receivers: BakeReceiver[]
   /** Their unwrap: what a stored copy of this bake records. */
   unwrap: { hash: string; stats: number[][] }
+  /** AR-183: the lightboxes this bake lit the room with (artwork id → `lightboxBakeKey`). */
+  lightboxes: Record<string, string>
 }
 
 /**
@@ -144,12 +147,16 @@ export const startBake = (
   const vplCube = bakeVplCubeFlag()
   if (vplCube !== null) baker.quality = { ...baker.quality, vplCube }
   baker.seed = bakeSeedFlag()
+  // AR-183: lightbox fronts emit too, each with its own samples (the windows' are untouched).
+  const lightboxes = lightboxEmitters(scene, lightboxVpls(baker.quality.emitterVpls))
+  emitters.push(...lightboxes.emitters)
   try {
     return {
       baker,
       run: gatherInto(baker, scene, room, receivers, emitters, center),
       receivers,
       unwrap,
+      lightboxes: lightboxes.baked,
     }
   } catch (error) {
     // Nothing else holds it yet.
@@ -198,14 +205,19 @@ const gatherInto = (
       return factor === undefined ? null : lamp.intensity * factor
     })
     const factor = scale.window
-    if (factor !== undefined) emitters.forEach((e) => e.radiance.multiplyScalar(factor))
+    // The windows only (a lightbox's front has its own samples, `vpls`).
+    if (factor !== undefined)
+      emitters.filter((e) => e.vpls === undefined).forEach((e) => e.radiance.multiplyScalar(factor))
   }
   // AR-169 calibration: only the light groups asked for (`bakeFlags`).
   const groups = bakeGroupsFlag()
   if (groups) {
     baker.dropLamps((lamp) => !groups.has(lamp.wide ? 'downlights' : 'track'))
-    // `prepare` holds this array: emptied in place.
-    if (!groups.has('window')) emitters.splice(0)
+    // `prepare` holds this array: emptied in place (of its windows; lightboxes are their own group).
+    for (let i = emitters.length - 1; i >= 0; i--) {
+      const group = emitters[i]!.vpls === undefined ? 'window' : 'lightbox'
+      if (!groups.has(group)) emitters.splice(i, 1)
+    }
   }
   console.info(
     '[AR-169 bake setup]',

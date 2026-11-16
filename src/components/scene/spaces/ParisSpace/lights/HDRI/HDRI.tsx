@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux'
 
 import type { RootState } from '@/redux/store'
 import { assetUrl } from '@/lib/assetUrl'
+import { captureError } from '@/lib/observability/captureError'
 import { useBakedLook } from '@/components/scene/bake/bakedLook'
 import { RoomEnvironmentCapture } from '@/components/scene/RoomEnvironmentCapture'
 
@@ -54,6 +55,8 @@ class HDRIErrorBoundary extends Component<{ children: ReactNode }, { hasError: b
   }
   componentDidCatch(error: Error) {
     console.warn('HDRI failed to load, falling back to no environment:', error.message)
+    // Reported here, as handled: the scene's renderer no longer reports what a boundary caught.
+    captureError(error, { flow: 'content', stage: 'hdri-load-failed', level: 'warning' })
   }
   render() {
     if (this.state.hasError) return null

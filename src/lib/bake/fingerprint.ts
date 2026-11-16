@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto'
 
+import { LIGHTBOX_FIELDS, LIGHTBOX_LIGHT_VERSION } from '@/lib/lightbox'
+
 import { BAKER_VERSION } from './bakeRecord'
 import { bakedFloor, bakedFloorTone } from './commonFloor'
 import { lightShare } from './dimmer'
@@ -69,10 +71,21 @@ export interface BakeFingerprintInput {
   spaceLookVersion: string
 }
 
+/**
+ * AR-183: a lightbox lights the room around it (its front is baked as an area emitter), so its
+ * settings count, but only on a work shown as one — with the version of that light
+ * (`LIGHTBOX_LIGHT_VERSION`): a new calibration stales the bakes that have a lightbox, and only
+ * those. A work that isn't one hashes as it did before the columns existed: adding them staled no
+ * bake.
+ */
+const LIGHTBOX_KEYS = new Set<string>(LIGHTBOX_FIELDS)
+
 function reducePlaced(row: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {}
+  const lightbox = row.showLightbox === true
   for (const [key, value] of Object.entries(row)) {
     if (PLACED_IGNORED.has(key)) continue
+    if (!lightbox && LIGHTBOX_KEYS.has(key)) continue
     if (key === 'artwork') {
       const a = (value ?? {}) as Record<string, unknown>
       out.artwork = { artworkType: a.artworkType, hiddenFromExhibition: a.hiddenFromExhibition }
@@ -80,6 +93,7 @@ function reducePlaced(row: Record<string, unknown>): Record<string, unknown> {
       out[key] = value
     }
   }
+  if (lightbox) out.lightboxLightVersion = LIGHTBOX_LIGHT_VERSION
   return out
 }
 

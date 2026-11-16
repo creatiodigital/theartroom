@@ -581,17 +581,41 @@ const NavigationHelpModal = ({
                     Wall View: stand in front of an artwork
                   </Text>
                 </div>
-                {/* Wall View (MainCamera): the mouse's drag, a swipe and the keys all move over the
-                    wall, never turning; Escape or the Exit Wall View button leaves it. */}
+                {/* Wall View (MainCamera): the mouse's drag, a swipe or the wheel move over the
+                    wall, never turning; W / S and ↑ / ↓ zoom, nearer and farther (AR-178, owner,
+                    2026-11-15); Escape or the Exit Wall View button leaves it. */}
                 <div className={styles.infoItem}>
                   <span className={styles.infoKeyWide}>
                     <MouseSimple size={14} weight="light" aria-hidden />
                     <Text as="span" size="sm">
-                      Drag, Swipe or Arrows
+                      Drag or Swipe
                     </Text>
                   </span>
                   <Text as="span" size="sm">
                     In Wall View: move over the wall
+                  </Text>
+                </div>
+                <div className={styles.infoItem}>
+                  <div className={styles.infoKeysColumn}>
+                    <div className={styles.infoKeys}>
+                      <Text as="span" size="sm" className={styles.infoKey}>
+                        W
+                      </Text>
+                      <Text as="span" size="sm" className={styles.infoKey}>
+                        S
+                      </Text>
+                    </div>
+                    <div className={styles.infoKeys}>
+                      <span className={styles.infoKey}>
+                        <ArrowUp size={14} weight="light" aria-hidden />
+                      </span>
+                      <span className={styles.infoKey}>
+                        <ArrowDown size={14} weight="light" aria-hidden />
+                      </span>
+                    </div>
+                  </div>
+                  <Text as="span" size="sm">
+                    In Wall View: zoom in / out
                   </Text>
                 </div>
                 <div className={styles.infoItem}>

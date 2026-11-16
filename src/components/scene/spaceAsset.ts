@@ -2,6 +2,8 @@ import { useGLTF } from '@react-three/drei'
 
 import { assetUrl } from '@/lib/assetUrl'
 
+import { retryLoads } from './loadRetry'
+
 /**
  * Where a space's model is loaded from, with an automatic fallback.
  *
@@ -47,6 +49,15 @@ const inflight = new Map<string, Promise<void>>()
  * inside one. Deliberately not named `use*`: it holds no state and is safe to
  * call anywhere in render, including conditionally.
  */
+/**
+ * Starts a space's model download — the same cache entry as `useGLTF(url)` — tried again after a
+ * dropped connection (`retryLoads`: an iPhone lost the model four minutes in, and the room with it).
+ */
+const preloadSpaceModel = (url: string) =>
+  useGLTF.preload(url, undefined, undefined, (loader) => {
+    retryLoads(loader)
+  })
+
 export const spaceGltfUrl = (path: string): string => {
   const hit = resolved.get(path)
   if (hit) return hit
@@ -54,9 +65,11 @@ export const spaceGltfUrl = (path: string): string => {
   const remote = assetUrl(path)
 
   // `assetUrl` already chose the local copy — the dev-only per-file override.
-  // Nothing to probe, and probing would defeat the point of the override.
+  // Nothing to probe, and probing would defeat the point of the override. Its download starts here
+  // too, so it is tried again the same way.
   if (remote === path) {
     resolved.set(path, path)
+    preloadSpaceModel(path)
     return path
   }
 
@@ -82,7 +95,7 @@ export const spaceGltfUrl = (path: string): string => {
       // by `useGLTF` in render then updates that Loader while the space renders — React's
       // "Cannot update a component (`Loader`) while rendering a different component". Same
       // cache entry as `useGLTF(url)`, so render finds it in flight.
-      useGLTF.preload(resolved.get(path)!)
+      preloadSpaceModel(resolved.get(path)!)
     })
     .finally(() => {
       inflight.delete(path)

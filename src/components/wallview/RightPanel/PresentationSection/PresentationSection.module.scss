@@ -1,0 +1,92 @@
+@use '@/styles/mixins' as *;
+
+// docs/lightbox/designs/lightbox.dc.html: the Lightbox card's settings and the four cards it
+// turns off.
+
+// A caption over a strip or the swatches (the wall view's field caption, Field.module.scss).
+.field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.caption {
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+// Depth (a 120px number) beside Edge (the rest of the row).
+.depthEdge {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+
+  > .field {
+    flex: 1 1 auto;
+  }
+}
+
+.depth {
+  flex: 0 0 120px;
+  min-width: 0;
+}
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+// Two classes: Button's bare reset would win over one.
+.swatches .swatch {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 0;
+  cursor: pointer;
+}
+
+.chip {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.name {
+  font-size: 10.5px;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.swatch.picked {
+  .chip {
+    box-shadow:
+      0 0 0 2px var(--color-white),
+      0 0 0 3.5px var(--color-dark-surface);
+  }
+
+  .name {
+    font-weight: var(--font-semibold);
+    color: var(--color-black);
+  }
+}
+
+// "A lightbox has its own box: …", between the Lightbox card and the four it turns off.
+.note {
+  margin: 0;
+  padding: 0 2px;
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+// Frame, Passepartout, Paper border and Support while the lightbox is on: shown off, grayed.
+.lockedRow {
+  opacity: 0.45;
+}

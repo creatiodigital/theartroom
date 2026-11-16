@@ -4,6 +4,7 @@ import type { NextRequest } from 'next/server'
 import { isAdminOrAbove, isSuperAdmin, requireAuth, requireOwnership } from '@/lib/authUtils'
 import { PUBLIC_ARTWORK_OMIT } from '@/lib/artworkFields'
 import { toPlacedRows } from '@/lib/exhibitionArtworkMapper'
+import { lightboxFieldsError, readLightbox } from '@/lib/lightbox'
 import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -183,6 +184,14 @@ export async function POST(request: NextRequest) {
         showSupport?: boolean
         hideShadow?: boolean
         showArtworkInformation?: boolean
+        // AR-183 Lightbox (checked below with lightboxFieldsError)
+        showLightbox?: boolean
+        lightboxBrightness?: number
+        lightboxLight?: string
+        lightboxDepth?: number
+        lightboxEdge?: string
+        lightboxMaterial?: string
+        lightboxFront?: string
         // Text styling (per-exhibition)
         fontFamily?: string
         fontSize?: number
@@ -268,6 +277,21 @@ export async function POST(request: NextRequest) {
           { status: 403 },
         )
       }
+    }
+
+    // AR-183: lightbox values in range, and only on image artworks (docs/lightbox, "Data").
+    const lightboxIds = positions.filter((p) => p.showLightbox === true).map((p) => p.artworkId)
+    const lightboxTypes =
+      lightboxIds.length === 0
+        ? []
+        : await prisma.artwork.findMany({
+            where: { id: { in: lightboxIds } },
+            select: { id: true, artworkType: true },
+          })
+    const typeById = new Map(lightboxTypes.map((a) => [a.id, a.artworkType]))
+    for (const pos of positions) {
+      const problem = lightboxFieldsError(pos, typeById.get(pos.artworkId))
+      if (problem) return NextResponse.json({ error: problem }, { status: 400 })
     }
 
     // Get current artwork IDs in this exhibition
@@ -357,6 +381,7 @@ export async function POST(request: NextRequest) {
             showSupport: pos.showSupport ?? false,
             hideShadow: pos.hideShadow ?? false,
             showArtworkInformation: pos.showArtworkInformation ?? false,
+            ...readLightbox(pos),
             // Text display properties
             fontFamily: pos.fontFamily ?? 'Montserrat',
             fontSize: pos.fontSize ?? 16,
@@ -439,6 +464,7 @@ export async function POST(request: NextRequest) {
             showSupport: pos.showSupport ?? false,
             hideShadow: pos.hideShadow ?? false,
             showArtworkInformation: pos.showArtworkInformation ?? false,
+            ...readLightbox(pos),
             // Text display properties
             fontFamily: pos.fontFamily ?? 'Montserrat',
             fontSize: pos.fontSize ?? 16,

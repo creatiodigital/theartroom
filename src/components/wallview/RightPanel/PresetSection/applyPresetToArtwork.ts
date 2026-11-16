@@ -2,12 +2,13 @@ import type { AppDispatch } from '@/redux/store'
 import { editArtwork, editArtisticImage, editArtisticText } from '@/redux/slices/artworkSlice'
 import { updateArtworkPosition } from '@/redux/slices/exhibitionSlice'
 import { convert2DTo3D } from '@/components/wallview/utils'
+import { LIGHTBOX_FIELDS, type TLightbox, readLightbox } from '@/lib/lightbox'
 import type { TArtwork, TArtworkPosition } from '@/types/artwork'
 import type { TDimensions } from '@/types/geometry'
 
 type PresetType = 'image' | 'text' | 'shape'
 
-type TPreset = {
+type TPreset = Partial<TLightbox> & {
   id: string
   name: string
   presetType: string
@@ -171,6 +172,12 @@ export function applyPresetToArtwork(
 
   // Shadow
   applyProp('hideShadow', preset.hideShadow)
+
+  // AR-183 Lightbox (images only): the preset's seven values, a preset from before reading as off.
+  if (presetType === 'image') {
+    const lightbox = readLightbox(preset)
+    for (const key of LIGHTBOX_FIELDS) applyProp(key, lightbox[key])
+  }
 
   // Text properties (for text presets)
   if (presetType === 'text') {

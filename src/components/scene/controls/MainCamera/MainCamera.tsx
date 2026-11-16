@@ -62,6 +62,8 @@ import {
   WALL_CLEARANCE,
   WALL_VIEW_FLOOR_GAP,
   WALL_VIEW_KEY_SPEED,
+  zoomDepth,
+  zoomShift,
   WALL_VIEW_UNKNOWN_RISE,
   artworkViewNearest,
   artworkViewPadding,
@@ -412,10 +414,13 @@ const MainCamera = () => {
   /** A phone turned in Artwork View: its new shape, and when it was last seen to change (s). */
   const reshaping = useRef<{ aspect: number; at: number } | null>(null)
 
-  // A tap on a work: stand in front of it, level, at eye height, squarely facing its wall, as close
-  // as frames all of it on this screen, and let the lens shift center it (no rising to a high work,
-  // no tilting down to a low one, so nothing floats or keystones). Already in Wall View, the eye
-  // keeps the height it rose or sank to over the wall, and frames the work from there.
+  // A tap on a work: stand in front of its middle, level, squarely facing its wall, as close as frames
+  // all of it on this screen — the eye risen or sunk to the work's middle, so it is seen head on, the
+  // frame alike on all four sides (AR-178, owner, 2026-11-15: from eye height the top bar's underside
+  // showed and the bottom's didn't, "it's weird"; until then the eye kept its height and a lens shift
+  // centered the work). Never tilting, so nothing keystones. Inside the eye's limits over the
+  // placeholder (`wallViewLimits`): a work hung beyond them, the lens shift centers the rest. Leaving
+  // Wall View floats the eye back down (`exitArtworkView`).
   const focusOn = (target: TFocusTarget) => {
     const { position, normal, width, height } = target
 
@@ -455,17 +460,22 @@ const MainCamera = () => {
     const roomLimit = behind ? behind.distance + 0.05 - WALL_CLEARANCE : Infinity
     const depth = viewingDistance(fitted, roomLimit, camera.aspect, nearest)
 
-    const eyeHeight = currentView() ? camera.position.y : cameraElevation
     const yawTo = yawOf(-n.x, -n.z)
     const right = rightOf(yawTo)
-    const spot = settleBeside(
-      new Vector3(center.x + n.x * depth, eyeHeight, center.z + n.z * depth),
-      new Vector3(right.x, 0, right.z),
-    )
     // The placeholder the work hangs on: the eye's four limits over it.
     const wallId = store.getState().exhibition.exhibitionArtworksById[target.artworkId]?.wallId
     const surface = wallId ? hangingSurface(wallId) : null
     const extent = surface ? wallExtent(surface, right) : null
+    const limits = extent ? wallViewLimits(extent) : null
+    const heights = limits?.height ?? {
+      min: FLOOR_Y + WALL_VIEW_FLOOR_GAP,
+      max: cameraElevation + WALL_VIEW_UNKNOWN_RISE,
+    }
+    const eyeHeight = clamp(center.y, heights.min, heights.max)
+    const spot = settleBeside(
+      new Vector3(center.x + n.x * depth, eyeHeight, center.z + n.z * depth),
+      new Vector3(right.x, 0, right.z),
+    )
 
     const turn = wrapAngle(yawTo - yaw.current)
     const distance = Math.hypot(spot.x - camera.position.x, spot.z - camera.position.z)
@@ -496,7 +506,7 @@ const MainCamera = () => {
         artworkId: target.artworkId,
         yaw: yawTo,
         depth,
-        limits: extent ? wallViewLimits(extent) : null,
+        limits,
       },
     }
     framed.current = { target, aspect: camera.aspect, moved: false }
@@ -1161,7 +1171,8 @@ const MainCamera = () => {
     }
 
     // In Wall View (Artwork View), every move travels over the wall, never turning: a finger or two,
-    // the mouse's drag, a swipe or a wheel (each a grab of the wall, px), or the keys. A pixel moves
+    // the mouse's drag, a swipe or a wheel (each a grab of the wall, px), or the keys along it (W / S
+    // and ↑ / ↓ zoom instead, below). A pixel moves
     // the eye the width a pixel spans on the wall at this distance, so the wall keeps (nearly,
     // `LOOK_GRAB_SCALE`) under the hand: a slide right brings the wall right, the eye steps left; a
     // slide down brings it down, the eye rises. Eased as every look is; a hand's move carries on,
@@ -1169,13 +1180,15 @@ const MainCamera = () => {
     // it the eye rises or sinks, inside the placeholder's four limits. Not while the glide to the
     // work is arriving.
     const wallStep = new Vector3()
+    // How far W / S or ↑ / ↓ step back from the wall this frame, once the walls let them (m).
+    let zoomBack = 0
     if (view && onWall) {
       const perPx = grabRate * view.depth
       const keys = wallMoveKeys(keysPressed)
       const keySpeed = WALL_VIEW_KEY_SPEED * 2 * view.depth * tanHalf
       const asked = {
         x: -panGrab.current.x * perPx + keys.x * keySpeed * dt,
-        y: panGrab.current.y * perPx + keys.y * keySpeed * dt,
+        y: panGrab.current.y * perPx,
       }
       const handOn =
         looking(touchGesture.current) ||
@@ -1229,6 +1242,30 @@ const MainCamera = () => {
         else moveVector.add(new Vector3(right.x * allowed.x, 0, right.z * allowed.x))
         wallStep.y = allowed.y
       }
+      // W / S and ↑ / ↓ zoom (`zoomDepth`): straight to the work, square to it, down to the closest
+      // Artwork View frames it — its own wall is still farther, so nothing stops it — or straight
+      // back, to `WALL_VIEW_FARTHEST`, as a walk: the room's walls stop it (below). The lens shift
+      // follows (`zoomShift`): the point framed stays in the middle of the screen.
+      const depth = zoomDepth(
+        view.depth,
+        keys.z,
+        dt,
+        artworkViewNearest(isPhone, !!framed.current?.target.group),
+      )
+      if (depth !== view.depth) {
+        if (framed.current) framed.current.moved = true
+        const toWork = forwardOf(view.yaw)
+        const nearer = view.depth - depth
+        if (nearer > 0) {
+          wallStep.x += toWork.x * nearer
+          wallStep.z += toWork.z * nearer
+          shift.current = zoomShift(shift.current, view.depth, depth)
+          view.depth = depth
+        } else {
+          zoomBack = -nearer
+          moveVector.add(new Vector3(toWork.x * nearer, 0, toWork.z * nearer))
+        }
+      }
     } else {
       panPending.current = { x: 0, y: 0 }
       panVelocity.current = { x: 0, y: 0 }
@@ -1248,6 +1285,10 @@ const MainCamera = () => {
         panVelocity.current = { x: 0, y: 0 }
       } else {
         cam.position.add(moveVector)
+        if (view && zoomBack > 0) {
+          shift.current = zoomShift(shift.current, view.depth, view.depth + zoomBack)
+          view.depth += zoomBack
+        }
       }
     }
     cam.position.add(wallStep)

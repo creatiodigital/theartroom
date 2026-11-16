@@ -1,7 +1,7 @@
 import type { ChangeEvent } from 'react'
 import { Vector3, Quaternion, Mesh, BufferGeometry, Box3 } from 'three'
 
-import { WALL_SCALE } from '@/components/wallview/constants'
+import { WALL_SCALE, getArtworkBorderPx } from '@/components/wallview/constants'
 import type { TArtwork, TArtworkPosition } from '@/types/artwork'
 import type { TDimensions } from '@/types/geometry'
 
@@ -32,20 +32,8 @@ export const getVisualBounds = (
   pos: TArtworkPosition,
   artwork: TArtwork | undefined,
 ): { x: number; y: number; width: number; height: number } => {
-  const scaleMul = WALL_SCALE / 100
-  const frameBorder =
-    artwork?.showFrame && artwork?.imageUrl && artwork?.frameSize?.value
-      ? artwork.frameSize.value * scaleMul
-      : 0
-  const ppBorder =
-    artwork?.showPassepartout && artwork?.imageUrl && artwork?.passepartoutSize?.value
-      ? artwork.passepartoutSize.value * scaleMul
-      : 0
-  const paperBorder =
-    artwork?.showPaperBorder && artwork?.imageUrl && artwork?.paperBorderSize?.value
-      ? artwork.paperBorderSize.value * scaleMul
-      : 0
-  const totalBorder = frameBorder + ppBorder + paperBorder
+  // Frame + passepartout + paper border, or a lightbox's edge (AR-183).
+  const totalBorder = getArtworkBorderPx(artwork)
 
   let w = pos.width2d + totalBorder * 2
   let h = pos.height2d + totalBorder * 2

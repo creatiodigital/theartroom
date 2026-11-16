@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 import { getEffectiveUserId } from '@/lib/authUtils'
+import { lightboxFieldsError, lightboxUpdateData } from '@/lib/lightbox'
 import prisma from '@/lib/prisma'
 
 // DELETE a preset
@@ -58,6 +59,9 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
+    const lightboxProblem = lightboxFieldsError(body, preset.presetType)
+    if (lightboxProblem) return NextResponse.json({ error: lightboxProblem }, { status: 400 })
+
     const updated = await prisma.artworkPreset.update({
       where: { id },
       data: {
@@ -108,6 +112,8 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         supportColor: body.supportColor ?? preset.supportColor,
         // Shadow
         hideShadow: body.hideShadow ?? preset.hideShadow,
+        // AR-183 Lightbox (a field left out keeps the preset's)
+        ...lightboxUpdateData(body),
         // Text styling
         fontFamily: body.fontFamily ?? preset.fontFamily,
         fontSize: body.fontSize != null ? Number(body.fontSize) : preset.fontSize,

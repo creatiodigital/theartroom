@@ -40,6 +40,7 @@ const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
     hiddenFromExhibition,
     hideShadow,
     showOnPage,
+    lightbox,
   } = useArtworkDetails(currentArtworkId!)
 
   const { handleEditArtisticImage } = useArtworkImageHandlers(currentArtworkId!)
@@ -70,6 +71,7 @@ const ArtisticImage = ({ disabled }: { disabled?: boolean }) => {
         showPaperBorder={showPaperBorder}
         paperBorderSize={paperBorderSize}
         hideShadow={hideShadow}
+        lightbox={lightbox}
         onEdit={handleEditArtisticImage}
         showShadowControl={false}
       />

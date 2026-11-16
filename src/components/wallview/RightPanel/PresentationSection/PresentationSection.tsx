@@ -4,8 +4,12 @@ import { ColorPicker } from '@/components/ui/ColorPicker'
 import { PanelCard, SliderRow, SwitchRow } from '@/components/editorChrome'
 import { PanelGroup, SelectField } from '@/components/wallview/chrome'
 import styles from '@/components/wallview/RightPanel/RightPanel.module.scss'
+import type { TLightbox } from '@/lib/lightbox'
 import { PASSEPARTOUT_THICKNESS } from '@/lib/passepartoutThickness'
 import type { TArtwork } from '@/types/artwork'
+
+import { LightboxCard } from './LightboxCard'
+import local from './PresentationSection.module.scss'
 
 // Today's options and values; the labels in sentence case.
 const FRAME_MATERIALS = [
@@ -42,6 +46,11 @@ type PresentationSectionProps = {
   showPaperBorder?: boolean
   paperBorderSize?: { label: string; value: number }
   hideShadow?: boolean
+  /**
+   * AR-183, images only: the Lightbox card first. While on, the four cards below show off and
+   * can't be changed; their own values stay as they are, so turning it off restores them.
+   */
+  lightbox?: TLightbox
   onEdit: <K extends keyof TArtwork>(property: K, value: TArtwork[K]) => void
   /** Whether to show the "Hide shadow" checkbox (default: true) */
   showShadowControl?: boolean
@@ -69,23 +78,39 @@ const PresentationSection = ({
   showPaperBorder,
   paperBorderSize,
   hideShadow,
+  lightbox,
   onEdit,
   showShadowControl = true,
 }: PresentationSectionProps) => {
+  // docs/lightbox: exclusive with Frame, Passepartout, Paper border and Support.
+  const locked = lightbox?.showLightbox === true
+  const lockedRow = locked ? local.lockedRow : undefined
+
   // wallview.md §3 "How it hangs" (designs/wall-view-panels.dc.html): one card per finish, its
   // switch first and its options inside while on, in the drawn order (Frame, Passepartout, Paper
-  // border, Support; before: Support first). Every value, range and handler is today's.
+  // border, Support; before: Support first). Every value, range and handler is today's. AR-183
+  // put the Lightbox card first (images only).
   return (
     <PanelGroup title="How it hangs" disabled={disabled}>
+      {lightbox && <LightboxCard lightbox={lightbox} onEdit={onEdit} disabled={disabled} />}
+      {locked && (
+        <p className={local.note}>
+          A lightbox has its own box: frame, passepartout, paper border and support are off while it
+          is on. Your settings for them are kept.
+        </p>
+      )}
+
       <PanelCard level="card">
-        <SwitchRow
-          title="Frame"
-          line="A picture frame, visible in the 3D room"
-          checked={showFrame!}
-          onChange={(e) => onEdit('showFrame', e.target.checked)}
-          disabled={disabled}
-        />
-        {showFrame && (
+        <div className={lockedRow}>
+          <SwitchRow
+            title="Frame"
+            line="A picture frame, visible in the 3D room"
+            checked={!locked && showFrame!}
+            onChange={(e) => onEdit('showFrame', e.target.checked)}
+            disabled={disabled || locked}
+          />
+        </div>
+        {showFrame && !locked && (
           <>
             <div className={styles.grid2}>
               <SelectField<string>
@@ -222,14 +247,16 @@ const PresentationSection = ({
       </PanelCard>
 
       <PanelCard level="card">
-        <SwitchRow
-          title="Passepartout"
-          line="A mat border between artwork and frame"
-          checked={showPassepartout!}
-          onChange={(e) => onEdit('showPassepartout', e.target.checked)}
-          disabled={disabled}
-        />
-        {showPassepartout && (
+        <div className={lockedRow}>
+          <SwitchRow
+            title="Passepartout"
+            line="A mat border between artwork and frame"
+            checked={!locked && showPassepartout!}
+            onChange={(e) => onEdit('showPassepartout', e.target.checked)}
+            disabled={disabled || locked}
+          />
+        </div>
+        {showPassepartout && !locked && (
           <>
             <ColorPicker
               variant="inline"
@@ -275,14 +302,16 @@ const PresentationSection = ({
       </PanelCard>
 
       <PanelCard level="card">
-        <SwitchRow
-          title="Paper border"
-          line="A white margin around the print"
-          checked={showPaperBorder ?? false}
-          onChange={(e) => onEdit('showPaperBorder', e.target.checked)}
-          disabled={disabled}
-        />
-        {showPaperBorder && (
+        <div className={lockedRow}>
+          <SwitchRow
+            title="Paper border"
+            line="A white margin around the print"
+            checked={!locked && (showPaperBorder ?? false)}
+            onChange={(e) => onEdit('showPaperBorder', e.target.checked)}
+            disabled={disabled || locked}
+          />
+        </div>
+        {showPaperBorder && !locked && (
           <SliderRow
             label="Size"
             aria-label="Paper border size"
@@ -303,14 +332,16 @@ const PresentationSection = ({
       </PanelCard>
 
       <PanelCard level="card">
-        <SwitchRow
-          title="Support"
-          line="Canvas or panel depth behind the work"
-          checked={showSupport!}
-          onChange={(e) => onEdit('showSupport', e.target.checked)}
-          disabled={disabled}
-        />
-        {showSupport && (
+        <div className={lockedRow}>
+          <SwitchRow
+            title="Support"
+            line="Canvas or panel depth behind the work"
+            checked={!locked && showSupport!}
+            onChange={(e) => onEdit('showSupport', e.target.checked)}
+            disabled={disabled || locked}
+          />
+        </div>
+        {showSupport && !locked && (
           <>
             <ColorPicker
               variant="inline"
