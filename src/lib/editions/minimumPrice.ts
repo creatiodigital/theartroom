@@ -31,7 +31,7 @@
  *     adds, and every one of them is zero on an unframed print.
  */
 import { getPrintMinSize } from '@/lib/print-providers/printspace/sizeBounds'
-import { TPS_PAPERS } from '@/lib/print-providers/printspace/data'
+import { openEditionFromConfig } from '@/lib/print-providers/printspace/fromConfig'
 import { getProviderQuote } from '@/lib/print-providers/quote'
 import type { ProviderId } from '@/lib/print-providers/types'
 import type { WizardConfig } from '@/lib/print-providers/types'
@@ -56,13 +56,6 @@ export type LiveVariant = VariantConfigInput & {
 
 const DEFAULT_PROVIDER: ProviderId = 'printspace'
 
-/**
- * `getPrintBaseCents` interpolates on AREA alone — paper does not change the
- * price — so the reference paper here only has to be a valid id, and which one
- * cannot affect the result. Taken from the catalog rather than hardcoded so it
- * can't go stale if the first paper is ever swapped.
- */
-const REFERENCE_PAPER = TPS_PAPERS[0]
 
 /**
  * Quote with NO country, which is what makes the result destination-free: the
@@ -126,22 +119,16 @@ export function minimumPriceForOpen(
   const min = getPrintMinSize({ width: originalWidth, height: originalHeight })
   if (!min) return null
 
-  const config: WizardConfig = {
-    values: {
-      printType: REFERENCE_PAPER.printType,
-      paper: REFERENCE_PAPER.id,
-      // Print-only zeroes the frame, glass, hanging and mount supplements —
-      // every one of those is something the buyer opts into.
-      format: 'print-only',
-    },
-    customSize: { widthCm: min.widthCm, heightCm: min.heightCm },
-    borders: { border: { allCm: 0 } },
-  }
+  // The ONE "From" configuration, shared with the configurator's opening state so the two prices
+  // cannot drift (fromConfig.ts). Print-only zeroes the frame, glass, hanging and mount
+  // supplements — every one of those is something the buyer opts into.
+  const config = openEditionFromConfig(min)
+  const size = config.customSize ?? min
 
   return {
     cents: artworkLineCents(config, printPriceCents, providerId),
-    widthCm: min.widthCm,
-    heightCm: min.heightCm,
+    widthCm: size.widthCm,
+    heightCm: size.heightCm,
     basis: 'smallest-print',
   }
 }

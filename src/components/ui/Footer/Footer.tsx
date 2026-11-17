@@ -10,6 +10,7 @@ import Logo from '@/icons/logo.svg'
 import PinterestIcon from '@/icons/pinterest.svg'
 
 import { Button } from '@/components/ui/Button'
+import { UnitsSwitch } from '@/components/ui/UnitsSwitch'
 
 import { openCookieSettings } from '@/lib/consent'
 import { CONTACT_EMAIL, SOCIAL_LINKS } from '@/lib/socialLinks'
@@ -62,6 +63,11 @@ export const Footer = () => {
               Cookie settings
             </Button>
           </nav>
+          {/* units.md: a line of its own, after the legal links, before the ©. */}
+          <div className={styles.units}>
+            <span>Sizes in</span>
+            <UnitsSwitch look="text" />
+          </div>
           <p className={styles.copyright}>&copy; {new Date().getFullYear()} The Art Room</p>
         </div>
       </div>

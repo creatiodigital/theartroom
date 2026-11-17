@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma'
 import type { SpecsSummary, WizardConfig } from '@/lib/print-providers'
 import { summarizeConfig } from '@/lib/print-providers'
 import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
+import { convertSpecRows } from '@/lib/print-providers/specs'
 import { bindEditionNumberToOrder } from '@/lib/editions/reserveEditionNumber'
 import { editionLabel } from '@/lib/editions/editionLabel'
 import { sendAdminCriticalAlert } from '@/lib/emails/adminCriticalAlert'
@@ -344,7 +345,8 @@ export async function createPrintOrderFromPaymentIntent(
     }
     const buyerSpecs = [
       { label: 'Edition', value: editionLabel(editionType, variantName) },
-      ...specs.map((row) => ({ label: row.label, value: row.value })),
+      // Both units, cm first: an email has no cm | in switch (units.md). Admin mail stays cm.
+      ...convertSpecRows(specs, 'both').map((row) => ({ label: row.label, value: row.value })),
     ]
     // Buyer-facing retail price for the item = artist + gallery + production
     // (NOT productionCents alone — that's the lab cost). Shipping + VAT are

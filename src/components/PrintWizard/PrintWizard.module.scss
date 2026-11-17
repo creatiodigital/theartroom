@@ -819,6 +819,7 @@
 // diagram draws a white sheet, and a tinted ground made the sheet read as a
 // layer floating on something instead of as the paper itself.
 .schemaStage {
+  position: relative;
   display: flex;
   justify-content: center;
   // `stretch` (the default) is deliberate: it hands .schemaWrapper a definite
@@ -842,8 +843,18 @@
     order: 3;
     min-height: 60vw;
     padding: var(--space-6);
+    // Room above the drawing for the cm | in switch in the corner.
+    padding-top: var(--space-12);
     border-bottom: 1px solid var(--color-border-light);
   }
+}
+
+// The cm | in switch, top-right of the drawing, 20 px in (units.md).
+.schemaUnits {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1;
 }
 
 // ── Right summary panel ──────────────────────────────────────

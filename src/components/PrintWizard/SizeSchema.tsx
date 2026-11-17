@@ -7,7 +7,8 @@ import {
   EDITION_NUMBER_FONT_SIZE_CM,
   editionLeftBearingEm,
 } from './editionNumberMetrics'
-import { formatCm } from '@/lib/print-providers/format'
+import { formatSize } from '@/lib/units/format'
+import { useUnits } from '@/lib/units/UnitsProvider'
 
 import styles from './PrintWizard.module.scss'
 
@@ -86,8 +87,9 @@ export const SizeSchema = ({
   const overallWidthCm = matWidthCm + effectiveFrame * 2
   const overallHeightCm = matHeightCm + effectiveFrame * 2
 
-  // Shared with every other surface that writes a length — see formatCm.
-  const formatDim = (cm: number) => `${formatCm(cm)} cm`
+  // The drawing's labels in the visitor's unit, written like every other size (units.md).
+  const { unit } = useUnits()
+  const formatDim = (cm: number) => formatSize(cm, unit)
 
   // Square viewBox so portrait and landscape renders get the same visual
   // budget. Scaling by the *longest* side means a 30×20 print looks the

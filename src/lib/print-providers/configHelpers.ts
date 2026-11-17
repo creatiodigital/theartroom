@@ -218,10 +218,17 @@ export function collectVisualHints(
  * Restrictions are applied per dimension. Pre-country: doesn't
  * consider availability.
  */
+/**
+ * The configuration a fresh configurator opens at: each dimension's default, then `start` laid
+ * over it where the catalog has that option and the artist allows it. An open edition passes
+ * `openEditionFromConfig` (unframed, the smallest size, no border), so the first price is the
+ * artwork page's "From" (owner, 2026-11-17). A URL-seeded entry passes nothing and keeps its seed.
+ */
 export function buildInitialConfig(
   catalog: Catalog,
   aspectRatio: number,
   restrictions?: PrintRestrictions | null,
+  start?: WizardConfig,
 ): WizardConfig {
   const values: Record<string, string> = {}
   let customSize: WizardConfig['customSize']
@@ -248,6 +255,25 @@ export function buildInitialConfig(
       }
     } else if (dim.kind === 'border') {
       borders = { ...(borders ?? {}), [dim.id]: { allCm: dim.defaultCm } }
+    }
+  }
+  if (!start) return { values, customSize, borders }
+
+  for (const dim of catalog.dimensions) {
+    if (dim.kind === 'enum') {
+      const id = start.values[dim.id]
+      if (id && dim.options.some((o) => o.id === id) && isOptionAllowed(id, dim.id, restrictions)) {
+        values[dim.id] = id
+      }
+    } else if (dim.kind === 'size' && dim.custom && start.customSize) {
+      const { minCm, maxCm, stepCm } = dim.custom
+      customSize = {
+        widthCm: clampCm(start.customSize.widthCm, minCm, maxCm, stepCm),
+        heightCm: clampCm(start.customSize.heightCm, minCm, maxCm, stepCm),
+      }
+    } else if (dim.kind === 'border' && start.borders?.[dim.id]) {
+      const allCm = clampCm(start.borders[dim.id].allCm, dim.minCm, dim.maxCm, dim.stepCm)
+      borders = { ...(borders ?? {}), [dim.id]: { allCm } }
     }
   }
   return { values, customSize, borders }

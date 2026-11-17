@@ -1,5 +1,6 @@
 'use client'
 
+import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
 import { useEffect, useState } from 'react'
 import { CheckCircle } from '@phosphor-icons/react'
 
@@ -7,7 +8,6 @@ import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 import { lineTotal } from '@/lib/cart/cartMath'
 import type { CartItem } from '@/lib/cart/types'
 import { editionLabel } from '@/lib/editions/editionLabel'
-import { formatEuro } from '@/lib/print-providers'
 
 import styles from './PrintWizard.module.scss'
 
@@ -87,7 +87,9 @@ export const CartAddedModal = ({ item, onClose, edited = false }: Props) => {
               {item.quantity > 1 ? ` · ${item.quantity}` : ''}
             </span>
           </span>
-          <span className={styles.cartAddedPrice}>{formatEuro(lineTotal(item).lineItemCents)}</span>
+          <span className={styles.cartAddedPrice}>
+            {formatDisplayPrice(lineTotal(item).lineItemCents)}
+          </span>
         </div>
       </div>
     </div>

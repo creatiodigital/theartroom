@@ -17,5 +17,7 @@ import { formatEuro } from '@/lib/print-providers'
  * Lives here rather than in a component because the artwork page's availability
  * card and any future surface must quote a price the same way.
  */
-export const formatDisplayPrice = (cents: number) =>
-  cents % 100 === 0 ? `€${(cents / 100).toLocaleString('es-ES')}` : formatEuro(cents)
+export const formatDisplayPrice = (cents: number) => {
+  const exact = formatEuro(cents)
+  return cents % 100 === 0 ? exact.replace(/\.00$/, '') : exact
+}

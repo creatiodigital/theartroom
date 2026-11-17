@@ -106,7 +106,17 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
       _count: { _all: true },
     })
     const remaining = new Map(counts.map((c) => [c.variantId, c._count._all]))
-    variants = artwork.limitedVariants.map((v) => toLimitedVariantView(v, remaining.get(v.id) ?? 0))
+    // The shown "N left" counts SOLD copies only, as the artwork page does (one count everywhere,
+    // owner 2026-11-17): a number held by an unfinished checkout never moves it.
+    const soldCounts = await prisma.editionNumber.groupBy({
+      by: ['variantId'],
+      where: { variantId: { in: artwork.limitedVariants.map((v) => v.id) }, state: 'sold' },
+      _count: { _all: true },
+    })
+    const sold = new Map(soldCounts.map((c) => [c.variantId, c._count._all]))
+    variants = artwork.limitedVariants.map((v) =>
+      toLimitedVariantView(v, remaining.get(v.id) ?? 0, sold.get(v.id) ?? 0),
+    )
   }
 
   return (

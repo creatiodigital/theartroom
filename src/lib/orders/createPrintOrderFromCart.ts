@@ -11,6 +11,7 @@ import { captureError } from '@/lib/observability/captureError'
 import type { SpecsSummary } from '@/lib/print-providers'
 import { summarizeConfig } from '@/lib/print-providers'
 import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
+import { convertSpecRows } from '@/lib/print-providers/specs'
 import prisma from '@/lib/prisma'
 import { logOrderEvent } from './logOrderEvent'
 
@@ -402,7 +403,8 @@ export async function createPrintOrderFromCart(
             it.variantId ? variantNameById.get(it.variantId) : undefined,
           ),
         },
-        ...(specsByLineId.get(it.lineId) ?? []).map((row) => ({
+        // Both units, cm first: an email has no cm | in switch (units.md). Admin mail stays cm.
+        ...convertSpecRows(specsByLineId.get(it.lineId) ?? [], 'both').map((row) => ({
           label: row.label,
           value: row.value,
         })),

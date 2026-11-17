@@ -1,5 +1,6 @@
 'use client'
 
+import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
 import type { ComponentProps, ReactNode } from 'react'
 import { useId, useState } from 'react'
 import c from 'classnames'
@@ -13,7 +14,8 @@ import { specLines, specShortLine } from '@/lib/cart/specLines'
 import type { CartItem } from '@/lib/cart/types'
 import type { CartTotals } from '@/lib/cart/validateCart'
 import { vatLabel } from '@/lib/checkout/vatLabel'
-import { formatEuro } from '@/lib/print-providers'
+import { convertSpecRows } from '@/lib/print-providers/specs'
+import { useUnits } from '@/lib/units/UnitsProvider'
 
 import styles from './CheckoutParts.module.scss'
 
@@ -57,45 +59,51 @@ export const OrderItems = ({
   items: CartItem[]
   /** lineId → "no longer available" message from the server revalidation. */
   errors?: Record<string, string>
-}) => (
-  <ul className={styles.items}>
-    {items.map((item) => {
-      const short = specShortLine(item.specsSummary)
-      const error = errors?.[item.lineId]
-      return (
-        <li key={item.lineId} className={styles.item}>
-          <ProtectedImage
-            src={item.thumbnailUrl}
-            alt={item.title}
-            width={0}
-            height={0}
-            wrapperClassName={styles.itemThumb}
-            className={styles.itemThumbImage}
-          />
-          <div className={styles.itemText}>
-            <span className={styles.itemTitle}>
-              <em>{item.title}</em>
-            </span>
-            <span className={styles.itemMeta}>
-              {item.artistName} · {editionShort(item)}
-            </span>
-            {(short || item.quantity > 1) && (
-              <span className={styles.itemSpec}>
-                {short}
-                {short && item.quantity > 1 && ' · '}
-                {item.quantity > 1 && (
-                  <span className={styles.nowrap}>Quantity {item.quantity}</span>
-                )}
+}) => {
+  // The lines' sizes in the visitor's unit; the stored rows stay cm (units.md).
+  const { unit } = useUnits()
+  return (
+    <ul className={styles.items}>
+      {items.map((item) => {
+        const short = specShortLine(convertSpecRows(item.specsSummary, unit))
+        const error = errors?.[item.lineId]
+        return (
+          <li key={item.lineId} className={styles.item}>
+            <ProtectedImage
+              src={item.thumbnailUrl}
+              alt={item.title}
+              width={0}
+              height={0}
+              wrapperClassName={styles.itemThumb}
+              className={styles.itemThumbImage}
+            />
+            <div className={styles.itemText}>
+              <span className={styles.itemTitle}>
+                <em>{item.title}</em>
               </span>
-            )}
-            {error && <span className={styles.itemError}>{error}</span>}
-          </div>
-          <span className={styles.itemPrice}>{formatEuro(lineTotal(item).lineItemCents)}</span>
-        </li>
-      )
-    })}
-  </ul>
-)
+              <span className={styles.itemMeta}>
+                {item.artistName} · {editionShort(item)}
+              </span>
+              {(short || item.quantity > 1) && (
+                <span className={styles.itemSpec}>
+                  {short}
+                  {short && item.quantity > 1 && ' · '}
+                  {item.quantity > 1 && (
+                    <span className={styles.nowrap}>Quantity {item.quantity}</span>
+                  )}
+                </span>
+              )}
+              {error && <span className={styles.itemError}>{error}</span>}
+            </div>
+            <span className={styles.itemPrice}>
+              {formatDisplayPrice(lineTotal(item).lineItemCents)}
+            </span>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
 
 /** Items, shipping, VAT and the total in serif. */
 export const Totals = ({
@@ -113,19 +121,19 @@ export const Totals = ({
   <dl className={styles.totals}>
     <div className={styles.totalRow}>
       <dt>Items</dt>
-      <dd>{formatEuro(totals.itemsPreTaxCents)}</dd>
+      <dd>{formatDisplayPrice(totals.itemsPreTaxCents)}</dd>
     </div>
     <div className={styles.totalRow}>
       <dt>Shipping</dt>
-      <dd>{formatEuro(totals.shippingCents)}</dd>
+      <dd>{formatDisplayPrice(totals.shippingCents)}</dd>
     </div>
     <div className={styles.totalRow}>
       <dt>{vatLabel(totals.vatRate)}</dt>
-      <dd>{formatEuro(totals.customerVatCents)}</dd>
+      <dd>{formatDisplayPrice(totals.customerVatCents)}</dd>
     </div>
     <div className={c(styles.totalRow, styles.grandTotal)}>
       <dt>{totalLabel}</dt>
-      <dd>{formatEuro(totals.totalCents)}</dd>
+      <dd>{formatDisplayPrice(totals.totalCents)}</dd>
     </div>
   </dl>
 )
@@ -158,6 +166,7 @@ export const OrderColumn = ({
   errors?: Record<string, string>
 }) => {
   const [open, setOpen] = useState(false)
+  const { unit } = useUnits()
   const titleId = useId()
   const bodyId = useId()
   const prints = cartCount(items)
@@ -182,7 +191,7 @@ export const OrderColumn = ({
           />
         </span>
         <span className={styles.orderBarAmount}>
-          {formatEuro(totals ? totals.totalCents : itemsCents)}
+          {formatDisplayPrice(totals ? totals.totalCents : itemsCents)}
         </span>
       </Button>
 
@@ -199,7 +208,7 @@ export const OrderColumn = ({
         <ul className={styles.orderRows}>
           {items.map((item) => {
             // The cart's lines, one subject each (owner, 2026-11-13: the same as the cart shows).
-            const lines = specLines(item.specsSummary)
+            const lines = specLines(convertSpecRows(item.specsSummary, unit))
             if (item.quantity > 1) lines.push(`Quantity ${item.quantity}`)
             const error = errors?.[item.lineId]
             return (
@@ -226,7 +235,7 @@ export const OrderColumn = ({
                   {error && <span className={styles.itemError}>{error}</span>}
                 </div>
                 <span className={styles.orderPrice}>
-                  {formatEuro(lineTotal(item).lineItemCents)}
+                  {formatDisplayPrice(lineTotal(item).lineItemCents)}
                 </span>
               </li>
             )
@@ -236,21 +245,21 @@ export const OrderColumn = ({
         <dl className={styles.orderFigures}>
           <div className={styles.orderFigure}>
             <dt>Items</dt>
-            <dd>{formatEuro(totals ? totals.itemsPreTaxCents : itemsCents)}</dd>
+            <dd>{formatDisplayPrice(totals ? totals.itemsPreTaxCents : itemsCents)}</dd>
           </div>
           {totals ? (
             <>
               <div className={styles.orderFigure}>
                 <dt>Shipping</dt>
-                <dd>{formatEuro(totals.shippingCents)}</dd>
+                <dd>{formatDisplayPrice(totals.shippingCents)}</dd>
               </div>
               <div className={styles.orderFigure}>
                 <dt>{vatLabel(totals.vatRate)}</dt>
-                <dd>{formatEuro(totals.customerVatCents)}</dd>
+                <dd>{formatDisplayPrice(totals.customerVatCents)}</dd>
               </div>
               <div className={c(styles.orderFigure, styles.orderTotal)}>
                 <dt>Total</dt>
-                <dd>{formatEuro(totals.totalCents)}</dd>
+                <dd>{formatDisplayPrice(totals.totalCents)}</dd>
               </div>
             </>
           ) : (

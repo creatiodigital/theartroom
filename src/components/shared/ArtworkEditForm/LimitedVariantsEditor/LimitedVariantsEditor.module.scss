@@ -116,6 +116,11 @@
   color: var(--color-text-secondary);
 }
 
+// The name's help line when the name looks like a size (units.md): a warning, not an error.
+.hintWarning {
+  color: var(--color-badge-warning-text);
+}
+
 // `Input size="bare"`: 44px at every width.
 .input {
   width: 100%;

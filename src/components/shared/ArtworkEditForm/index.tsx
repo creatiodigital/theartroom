@@ -1474,36 +1474,9 @@ export const ArtworkEditForm = ({
                 </div>
               )}
 
-              {/* Dimensions */}
-              {isImage && (
-                <div className={styles.field}>
-                  <label htmlFor="dimensions" className={styles.label}>
-                    Dimensions
-                  </label>
-                  <Input
-                    id="dimensions"
-                    type="text"
-                    size="bare"
-                    className={styles.short}
-                    inputClassName={styles.input}
-                    value={formData.dimensions}
-                    onChange={(e) => onFormChange('dimensions', e.target.value)}
-                    placeholder="e.g. 40 × 30 cm"
-                    aria-describedby="dimensions-help"
-                  />
-                  <div id="dimensions-help" className={styles.helpGroup}>
-                    <p className={styles.help}>
-                      A reference dimension shown on the public artwork page — most relevant for
-                      unique physical works (paintings, drawings, sculptures) where the size is
-                      fixed. For photography or editions sold as prints, list the original capture
-                      size; the actual print sizes are picked by the buyer in the print wizard.
-                    </p>
-                    <p className={styles.help}>
-                      Follow gallery convention: height × width (× depth for 3D works).
-                    </p>
-                  </div>
-                </div>
-              )}
+              {/* No Dimensions field (owner, 2026-11-17): every work is a print, and its size line is
+                  worked out from the file or the limited variants (`getArtworkSizes`). The stored
+                  `dimensions` stays in the form state, so a save sends it back untouched. */}
             </EditorPanel>
 
             {/* Text content - for text artworks (plain text only for 3D) */}

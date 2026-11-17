@@ -6,6 +6,8 @@ import c from 'classnames'
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 import { editionLabel } from '@/lib/editions/editionLabel'
 import { specLines } from '@/lib/cart/specLines'
+import { convertSpecRows } from '@/lib/print-providers/specs'
+import { useUnits } from '@/lib/units/UnitsProvider'
 import type { CartItem } from '@/lib/cart/types'
 
 import styles from './CartItemDetails.module.scss'
@@ -41,7 +43,9 @@ export const CartItemDetails = ({
   actions,
   aside,
 }: Props) => {
-  const lines = specLines(item.specsSummary)
+  // The stored rows stay cm; written here in the visitor's unit (units.md).
+  const { unit } = useUnits()
+  const lines = specLines(convertSpecRows(item.specsSummary, unit))
   return (
     <div
       className={c(styles.item, aside !== undefined && styles.withAside)}

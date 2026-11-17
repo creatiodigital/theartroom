@@ -95,12 +95,36 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
   const [introOpen, setIntroOpen] = useState(false)
   const dismissIntro = () => setIntroOpen(false)
 
-  // Re-resolved every render: it supplies the opening selection, and moves off
-  // an edition that sells out under a selection left sitting there before it
+  // One quote per variant, keyed by id. The picker needs a price on every card
+  // and an add commits several lines at once, so both read from here rather
+  // than re-quoting per render or per click.
+  const quotesByVariantId = useMemo(() => {
+    const quotes = new Map<string, Quote>()
+    for (const v of allVariants) {
+      quotes.set(
+        v.id,
+        getProviderQuote(catalog.providerId, {
+          config: variantToWizardConfig(v),
+          country,
+          artistPriceCents: v.priceCents ?? artwork.printPriceCents,
+        }),
+      )
+    }
+    return quotes
+  }, [allVariants, country, catalog.providerId, artwork.printPriceCents])
+
+  // Re-resolved every render: it supplies the opening selection — the cheapest
+  // edition on sale, at the price its card shows (owner, 2026-11-17) — and moves
+  // off an edition that sells out under a selection left sitting there before it
   // can reach the preview or the add.
   const selected = useMemo(
-    () => resolveSelectedVariant(selectedId, available),
-    [selectedId, available],
+    () =>
+      resolveSelectedVariant(
+        selectedId,
+        available,
+        (v) => quotesByVariantId.get(v.id)?.subtotalCents ?? Number.POSITIVE_INFINITY,
+      ),
+    [selectedId, available, quotesByVariantId],
   )
   // Already bought: the card stays selectable so it can be looked at again, but
   // the panel offers "Go to cart" in place of an add.
@@ -132,30 +156,19 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
     [config, country, catalog.providerId, selected?.priceCents, artwork.printPriceCents],
   )
 
-  // One quote per variant, keyed by id. The picker needs a price on every card
-  // and an add commits several lines at once, so both read from here rather
-  // than re-quoting per render or per click.
-  const quotesByVariantId = useMemo(() => {
-    const quotes = new Map<string, Quote>()
-    for (const v of allVariants) {
-      quotes.set(
-        v.id,
-        getProviderQuote(catalog.providerId, {
-          config: variantToWizardConfig(v),
-          country,
-          artistPriceCents: v.priceCents ?? artwork.printPriceCents,
-        }),
-      )
-    }
-    return quotes
-  }, [allVariants, country, catalog.providerId, artwork.printPriceCents])
-
+  // Cheapest on top (owner, 2026-11-17), so the card the wizard opens on is the first one; sold-out
+  // editions after those on sale (still listed, see above). Equal prices keep their listed order.
   const pickerItems: VariantPickerItem[] = useMemo(
     () =>
-      allVariants.map((v) => ({
-        ...v,
-        priceCents: quotesByVariantId.get(v.id)?.subtotalCents ?? 0,
-      })),
+      allVariants
+        .map((v) => ({
+          ...v,
+          priceCents: quotesByVariantId.get(v.id)?.subtotalCents ?? 0,
+        }))
+        .sort(
+          (a, b) =>
+            Number(a.remaining <= 0) - Number(b.remaining <= 0) || a.priceCents - b.priceCents,
+        ),
     [allVariants, quotesByVariantId],
   )
 
