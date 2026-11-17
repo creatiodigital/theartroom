@@ -204,3 +204,19 @@ text column 760 px, the 404 text), unless you want those widened too.
 and field is the live site's neutral light grey #f9f9f9 (built e73b07c1); `#f8f8f6` and `#f5f5f3` in components.md and the
 boards are out of date. `#f2f2f2` stays behind photos and renders.
 
+
+**Q-P29 · Code Claude → Design Claude: sizes, as built for AR-184 (units.md is out of date on these).** Owner, 2026-11-17,
+after the switch was built:
+- **Static sizes show both units, no switch** (as White Cube): `22.2 × 33.3 cm | 8.7 × 13.1 in`, cm first, one decimal
+  (decimals, not White Cube's fractions). Artwork page, 3D room details, cart, checkout, payment, confirmation, the
+  buyer's email. A range takes two lines: `20.0 × 30.0 cm to 33.9 × 50.8 cm`, then the same in inches (my call: one line
+  is too long for the 320 px info column).
+- **The switch is only in the configurator** (drawing, top-right), where sizes are typed and dragged: fields, slider
+  ends and knobs, border and mount readouts, edition cards and the summary follow it. **No footer switch**, no switch on
+  the artwork page.
+- My calls: emails use the same `cm | in` form (units.md said `30 × 20 cm (11.8 × 7.9 in)`) so one format is used
+  everywhere; admin notification emails stay cm (admin is cm-only). Every size has one decimal, borders too
+  (`3.0 cm | 1.2 in`), the owner's "same format everywhere".
+- Open-edition and Inquire-only works show the file's printable range; a limited edition each live variant's print size,
+  once, smallest first. The free-text `Artwork.dimensions` is no longer shown anywhere public (its field is hidden,
+  the column kept); the studio's 3D panel still shows it as typed, in cm (your answer to (b)).
