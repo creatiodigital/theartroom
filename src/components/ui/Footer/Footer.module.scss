@@ -138,30 +138,6 @@
   }
 }
 
-// The legal links on the left, "Sizes in" + the cm | in switch at the right end (units.md). Phones:
-// the switch on its own line under the two columns of links.
-.legalRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-4) var(--space-6);
-
-  @include media-down(md) {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-.units {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-}
-
 // Reads as one of the legal links. Two classes: Button's bare reset would win over one.
 .legal .cookieSettings {
   padding: 0;

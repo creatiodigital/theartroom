@@ -13,6 +13,8 @@ import {
   summarizeConfig,
 } from '@/lib/print-providers'
 
+import { useUnits } from '@/lib/units/UnitsProvider'
+
 import { SpecList } from '../print/SpecList/SpecList'
 import type { WizardArtwork } from './index'
 
@@ -80,6 +82,8 @@ export const SummaryPanel = ({
   onLearnMore,
   caveat,
 }: SummaryPanelProps) => {
+  // The summary follows the configurator's cm | in switch (units.md).
+  const { unit } = useUnits()
   const ctaLabel = isEditing ? 'Update cart' : 'Add to cart'
   const ctaBusyLabel = isEditing ? 'Updating…' : 'Adding…'
   // Local add-to-cart state. Once an item has been added we swap the
@@ -147,7 +151,7 @@ export const SummaryPanel = ({
           toggle; it now has the center column to itself, so the full
           configuration fits without hiding any of it behind a control. */}
       <div className={styles.summarySpecs}>
-        <SpecList specs={summarizeConfig(catalog, config)} collapsible={false} />
+        <SpecList specs={summarizeConfig(catalog, config)} collapsible={false} units={unit} />
       </div>
 
       {(() => {

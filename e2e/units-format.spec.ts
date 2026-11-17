@@ -37,8 +37,9 @@ test.describe('sizes in cm or inches', () => {
     ).toBe('11.8 × 7.9 in to 65.3 × 43.5 in')
   })
 
-  test('emails show cm first, inches after', () => {
-    expect(formatDimensionsBoth(20, 30)).toBe('30.0 × 20.0 cm (11.8 × 7.9 in)')
+  // Owner, 2026-11-17 (as White Cube): every static size shows both, cm first.
+  test('a static size shows both units, cm first', () => {
+    expect(formatDimensionsBoth(20, 30)).toBe('30.0 × 20.0 cm | 11.8 × 7.9 in')
   })
 
   test('legacy spec text', () => {
@@ -55,9 +56,9 @@ test.describe('sizes in cm or inches', () => {
     expect(convertCmText('Edition of 30', 'both')).toBe('Edition of 30')
   })
 
-  test('both units never nest parentheses', () => {
-    expect(convertCmText('Small (≈ 5.0 cm)', 'both')).toBe('Small (≈ 5.0 cm / 2.0 in)')
-    expect(convertCmText('30.0 × 20.0 cm', 'both')).toBe('30.0 × 20.0 cm (11.8 × 7.9 in)')
+  test('stored rows can be written in both units', () => {
+    expect(convertCmText('Small (≈ 5.0 cm)', 'both')).toBe('Small (≈ 5.0 cm | 2.0 in)')
+    expect(convertCmText('30.0 × 20.0 cm', 'both')).toBe('30.0 × 20.0 cm | 11.8 × 7.9 in')
   })
 
   test('a typed length is read in the chosen unit and kept in cm', () => {
@@ -81,7 +82,7 @@ test.describe('sizes in cm or inches', () => {
 })
 
 // Owner, 2026-11-17: an open edition (and an Inquire-only work) shows the range its file prints at;
-// a limited edition shows each live variant's print size, one per line.
+// a limited edition shows each live variant's print size, one per line; both units, no switch.
 test.describe('artwork sizes', () => {
   const file = (originalWidth: number | null, originalHeight: number | null) => ({
     originalWidth,
@@ -91,7 +92,11 @@ test.describe('artwork sizes', () => {
   test('an open edition shows the range its file prints at', () => {
     const sizes = getArtworkSizes({ editionType: 'open', ...file(6000, 4000), variants: [] })
     expect(sizes?.kind).toBe('range')
-    expect(artworkSizeLines(sizes, 'cm')).toEqual(['20.0 × 30.0 cm to 33.9 × 50.8 cm'])
+    // Two lines, cm first: a range in both units on one line is too long for the info column.
+    expect(artworkSizeLines(sizes)).toEqual([
+      '20.0 × 30.0 cm to 33.9 × 50.8 cm',
+      '7.9 × 11.8 in to 13.3 × 20.0 in',
+    ])
   })
 
   test('a limited edition shows each variant size once, smallest first', () => {
@@ -105,7 +110,10 @@ test.describe('artwork sizes', () => {
       ],
     })
     expect(sizes?.kind).toBe('fixed')
-    expect(artworkSizeLines(sizes, 'cm')).toEqual(['22.2 × 33.3 cm', '30.0 × 40.0 cm'])
+    expect(artworkSizeLines(sizes)).toEqual([
+      '22.2 × 33.3 cm | 8.7 × 13.1 in',
+      '30.0 × 40.0 cm | 11.8 × 15.7 in',
+    ])
   })
 
   test('a limited edition with no live variant falls back to the range', () => {
@@ -116,7 +124,7 @@ test.describe('artwork sizes', () => {
   test('no size line without pixels, or for a file too small to print', () => {
     expect(getArtworkSizes({ editionType: 'open', ...file(null, null), variants: [] })).toBeNull()
     expect(getArtworkSizes({ editionType: 'open', ...file(1000, 800), variants: [] })).toBeNull()
-    expect(artworkSizeLines(null, 'cm')).toEqual([])
+    expect(artworkSizeLines(null)).toEqual([])
   })
 })
 

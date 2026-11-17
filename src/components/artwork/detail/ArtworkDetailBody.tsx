@@ -11,10 +11,8 @@ import { Button } from '@/components/ui/Button'
 import { InquireSidebar } from '@/components/ui/InquireSidebar'
 import { Share } from '@/components/ui/Share'
 import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
-import { UnitsSwitch } from '@/components/ui/UnitsSwitch'
 import { artworkSizeLines, type ArtworkSizes } from '@/lib/editions/artworkSizes'
 import type { VariantEditionLineParts } from '@/lib/editions/variantEditionLines'
-import { useUnits } from '@/lib/units/UnitsProvider'
 import { ArtworkAvailabilityCard } from './ArtworkAvailabilityCard'
 import { SHOW_NEIGHBOUR_ARROWS } from './neighbourArrows'
 import { reportImageError } from '@/lib/observability/reportImageError'
@@ -129,8 +127,7 @@ export const ArtworkDetailBody = ({
   // Purchases kill switch (admin dashboard). The hook's cache is shared with
   // the artwork grids, so moving between a listing and a work doesn't re-read.
   const purchasesPaused = usePurchasesPaused()
-  const { unit } = useUnits()
-  const sizeLines = artworkSizeLines(artwork.sizes, unit)
+  const sizeLines = artworkSizeLines(artwork.sizes)
 
   const displayTitle = artwork.title || artwork.name || ''
   const displayAuthor = artwork.author || `${artist.name} ${artist.lastName}`.trim()
@@ -173,12 +170,11 @@ export const ArtworkDetailBody = ({
             {/* The work leads, and it is the <h1>: this page is about the artwork. */}
             {displayTitle && <h1 className={styles.title}>{displayTitle}</h1>}
             {artwork.year && <span className={styles.fact}>{artwork.year}</span>}
-            {/* units.md: the size, in the visitor's unit, with the cm | in switch 12 px after it. A
-                limited edition with several sizes lists one per line; the switch sits on the first. */}
-            {sizeLines.map((line, index) => (
-              <span key={line} className={c(styles.fact, index === 0 && styles.sizeLine)}>
+            {/* The size in both units, no switch (owner, 2026-11-17, as White Cube): a range on
+                two lines (cm, then in); a limited edition one "cm | in" line per size. */}
+            {sizeLines.map((line) => (
+              <span key={line} className={styles.fact}>
                 {line}
-                {index === 0 && <UnitsSwitch className={styles.sizeSwitch} />}
               </span>
             ))}
             {artwork.technique && technique}

@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { convertSpecRows, type SpecsSummary } from '@/lib/print-providers/specs'
-import { useUnits } from '@/lib/units/UnitsProvider'
+import type { Unit } from '@/lib/units/format'
 
 import styles from './SpecList.module.scss'
 
@@ -38,6 +38,9 @@ interface SpecListProps {
   /** False = always render every row, no toggle. For surfaces with the
    *  vertical room to show the full configuration at once. */
   collapsible?: boolean
+  /** How the sizes are written. Both units by default, cm first (a static list: the checkout's
+   *  order summary); the configurator passes its switch's unit (units.md). The rows stay cm. */
+  units?: Unit | 'both'
 }
 
 export const SpecList = ({
@@ -45,12 +48,11 @@ export const SpecList = ({
   className,
   visibleByDefault = 5,
   collapsible = true,
+  units = 'both',
 }: SpecListProps) => {
   const [expanded, setExpanded] = useState(false)
-  // The rows stay in cm (the cart line's snapshot); they are written in the visitor's unit here.
-  const { unit } = useUnits()
   if (specs.length === 0) return null
-  const rows = convertSpecRows(specs, unit)
+  const rows = convertSpecRows(specs, units)
 
   // Collapsing has to earn its place: the toggle is itself a row of chrome, so
   // hiding a single spec saves nothing and just adds a control. A limited

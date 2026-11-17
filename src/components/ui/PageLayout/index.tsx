@@ -14,8 +14,6 @@ type PageLayoutProps = {
   showHeader?: boolean
   /** Set to false to hide the footer */
   showFooter?: boolean
-  /** Set to false on a page with its own cm | in switch: one switch per page (units.md) */
-  showUnitsSwitch?: boolean
   /** Additional className for the content wrapper */
   className?: string
 }
@@ -25,7 +23,6 @@ export const PageLayout = ({
   loading = false,
   showHeader = true,
   showFooter = true,
-  showUnitsSwitch = true,
   className = '',
 }: PageLayoutProps) => {
   const contentClassName = [styles.content, className].filter(Boolean).join(' ')
@@ -36,7 +33,7 @@ export const PageLayout = ({
       <main id="main-content">
         <div className={contentClassName}>{loading ? <LoadingBar /> : children}</div>
       </main>
-      {showFooter && <Footer showUnitsSwitch={showUnitsSwitch} />}
+      {showFooter && <Footer />}
     </>
   )
 }

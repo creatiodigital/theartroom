@@ -10,7 +10,6 @@ import Logo from '@/icons/logo.svg'
 import PinterestIcon from '@/icons/pinterest.svg'
 
 import { Button } from '@/components/ui/Button'
-import { UnitsSwitch } from '@/components/ui/UnitsSwitch'
 
 import { openCookieSettings } from '@/lib/consent'
 import { CONTACT_EMAIL, SOCIAL_LINKS } from '@/lib/socialLinks'
@@ -23,17 +22,12 @@ const SOCIAL = [
   { label: 'Pinterest', href: SOCIAL_LINKS.pinterest, Icon: PinterestIcon },
 ] as const
 
-type FooterProps = {
-  /** False on a page with its own cm | in switch (the artwork page): one switch per page (units.md). */
-  showUnitsSwitch?: boolean
-}
-
 /**
  * The site footer (docs/public-redesign/home.md §8, owner 2026-11-11/13), the same on every screen,
  * all on the left with a hairline between each part: the wordmark, one line and the email; the
  * networks; the legal links (Cookie settings among them); the ©. No repeated page links.
  */
-export const Footer = ({ showUnitsSwitch = true }: FooterProps) => {
+export const Footer = () => {
   return (
     <footer className={styles.footer}>
       <div className={styles.inner}>
@@ -59,24 +53,15 @@ export const Footer = ({ showUnitsSwitch = true }: FooterProps) => {
           </ul>
         </div>
         <div className={styles.bottom}>
-          {/* units.md: "Sizes in" + the cm | in switch at the right end of the legal row. */}
-          <div className={styles.legalRow}>
-            <nav aria-label="Legal" className={styles.legal}>
-              <Link href="/terms-and-conditions">Terms and conditions</Link>
-              <Link href="/terms-of-sale">Online terms of sale</Link>
-              <Link href="/privacy-policy">Privacy policy</Link>
-              <Link href="/accessibility-policy">Accessibility policy</Link>
-              <Button variant="bare" className={styles.cookieSettings} onClick={openCookieSettings}>
-                Cookie settings
-              </Button>
-            </nav>
-            {showUnitsSwitch && (
-              <div className={styles.units}>
-                <span>Sizes in</span>
-                <UnitsSwitch />
-              </div>
-            )}
-          </div>
+          <nav aria-label="Legal" className={styles.legal}>
+            <Link href="/terms-and-conditions">Terms and conditions</Link>
+            <Link href="/terms-of-sale">Online terms of sale</Link>
+            <Link href="/privacy-policy">Privacy policy</Link>
+            <Link href="/accessibility-policy">Accessibility policy</Link>
+            <Button variant="bare" className={styles.cookieSettings} onClick={openCookieSettings}>
+              Cookie settings
+            </Button>
+          </nav>
           <p className={styles.copyright}>&copy; {new Date().getFullYear()} The Art Room</p>
         </div>
       </div>

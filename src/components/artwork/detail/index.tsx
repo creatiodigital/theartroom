@@ -42,8 +42,7 @@ export const ArtworkDetailPage = ({
   more = [],
 }: ArtworkDetailPageProps) => {
   return (
-    // The size line carries the cm | in switch, so the footer shows none (units.md: one per page).
-    <PageLayout showUnitsSwitch={false}>
+    <PageLayout>
       {/* The two columns, then what follows them (artwork.md "Below the work"). */}
       <div className={styles.standaloneContent}>
         <ArtworkDetailBody
