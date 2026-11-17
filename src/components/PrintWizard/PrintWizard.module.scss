@@ -7,6 +7,15 @@
   min-height: 100vh;
   background: var(--color-white);
   color: var(--color-text-primary);
+  // The site's gutter (Header.module.scss): --site-padding, at least centring the header's
+  // 1660px column on a very wide screen; 24px at tablet and phone widths. The header, the
+  // left panel's text and the summary's right edge all sit on it (owner, 2026-11-17: "make both
+  // headers the same"; the content below follows the rest of the site).
+  --wizard-gutter: max(var(--site-padding), (100vw - var(--header-max-width)) / 2);
+
+  @include media-down(lg) {
+    --wizard-gutter: var(--space-6);
+  }
 
   // At desktop widths the three panels are a fixed-height grid: the
   // center scene stays anchored, and the left/right panels scroll
@@ -45,25 +54,19 @@
   }
 }
 
+// The site header's measures (Header.module.scss `.headerInner`): the same height, and its divider
+// stops at the gutter instead of running to the screen's edges.
 .header {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: var(--space-4);
-  padding: var(--space-5) var(--space-6);
-  border-bottom: 1px solid var(--color-border-light);
+  margin: 0 var(--wizard-gutter);
+  padding: var(--space-7) 0;
+  border-bottom: 1px solid var(--color-border-default);
 
-  @include media-up(md) {
-    padding: var(--space-5) var(--space-8);
-  }
-
-  // Stacked layout (mobile/tablet): the panels below inset content by
-  // space-5, and the ghost close button (×) carries space-4 of its own side
-  // padding. Trim the header's right padding so the button's visible edge
-  // lands on the panels' right content edge (keeps the tap area intact).
-  // Declared after media-up(md) so it wins in the 768–1040px overlap.
-  @include media-down(laptop) {
-    padding-right: calc(var(--space-5) - var(--space-4));
+  @include media-down(lg) {
+    padding: var(--space-4) 0;
   }
 }
 
@@ -74,7 +77,14 @@
   grid-column: 3;
   display: flex;
   align-items: center;
-  gap: var(--space-5);
+  // Cart and × together: this plus the ×'s own side padding is the gap between the two marks.
+  gap: var(--space-1);
+  // The site header's row height: its nav links (26px); its 40px menu button at tablet and phone.
+  min-height: 26px;
+
+  @include media-down(lg) {
+    min-height: 40px;
+  }
 }
 
 .logoLink {
@@ -93,6 +103,9 @@
 .closeButton {
   display: flex;
   align-items: center;
+  // The ghost button keeps its padding as tap area; pulled back over it, the × itself ends on the
+  // header's right edge and the button adds no height (the site header's row height).
+  margin: calc(var(--space-2) * -1) calc(var(--space-4) * -1) calc(var(--space-2) * -1) 0;
   background: none;
   border: none;
   cursor: pointer;
@@ -107,7 +120,10 @@
 .body {
   flex: 1;
   display: grid;
-  grid-template-columns: 340px 1fr 360px;
+  // Content 300 / 320 px wide; the outer side's padding is the gutter, the inner side's space-5.
+  grid-template-columns:
+    calc(300px + var(--wizard-gutter) + var(--space-5)) 1fr
+    calc(320px + var(--wizard-gutter) + var(--space-5));
   // One row: the panels fill the height and scroll inside it (minmax(0, …): a plain 1fr row
   // grows with a tall step and the page scrolls instead). The edition badge's row went into the
   // summary panel's "What is an open edition?" row (order-flow.md).
@@ -115,7 +131,9 @@
   min-height: 0;
 
   @include media-down(wide) {
-    grid-template-columns: 300px 1fr 320px;
+    grid-template-columns:
+      calc(260px + var(--wizard-gutter) + var(--space-5)) 1fr
+      calc(280px + var(--wizard-gutter) + var(--space-5));
   }
 
   @include media-down(laptop) {
@@ -130,7 +148,7 @@
   // enough on screen for its option-helper tooltip (which extends below
   // and to the right of the focused option) to render without clipping
   // against the panel's overflow.
-  padding: var(--space-5) var(--space-5) var(--space-80);
+  padding: var(--space-5) var(--space-5) var(--space-80) var(--wizard-gutter);
   overflow-y: auto;
   border-right: 1px solid var(--color-border-light);
 
@@ -141,6 +159,9 @@
     // Page scrolls on mobile (no internal panel scroll), so the
     // desktop tooltip-clearance bottom padding becomes dead space.
     padding-bottom: var(--space-6);
+    // Stacked: inside the gutter like the header, so the divider stops short of the edges too.
+    margin: 0 var(--wizard-gutter);
+    padding-inline: 0;
   }
 }
 
@@ -844,6 +865,8 @@
     // content rather than a grid track, with a floor so it keeps presence.
     order: 3;
     min-height: 60vw;
+    // Inside the gutter, as the artwork page's render area is.
+    margin: 0 var(--wizard-gutter);
     padding: var(--space-6);
     border-bottom: 1px solid var(--color-border-light);
   }
@@ -853,7 +876,7 @@
 
 .summaryPanel {
   border-left: 1px solid var(--color-border-light);
-  padding: var(--space-5);
+  padding: var(--space-5) var(--wizard-gutter) var(--space-5) var(--space-5);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -864,6 +887,8 @@
     // No border-top here — .schemaStage's mobile border-bottom already
     // draws the boundary; having both produces a doubled line.
     order: 4;
+    margin: 0 var(--wizard-gutter);
+    padding-inline: 0;
   }
 }
 
@@ -1169,12 +1194,14 @@
   flex-direction: column;
   gap: var(--space-3);
   overflow-y: auto;
-  padding: var(--space-5) var(--space-5) var(--space-8);
+  padding: var(--space-5) var(--space-5) var(--space-8) var(--wizard-gutter);
   border-right: 1px solid var(--color-border-light);
 
   @include media-down(laptop) {
     border-right: none;
     border-bottom: 1px solid var(--color-border-light);
+    margin: 0 var(--wizard-gutter);
+    padding-inline: 0;
   }
 }
 
