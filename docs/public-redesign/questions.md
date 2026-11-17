@@ -204,3 +204,36 @@ text column 760 px, the 404 text), unless you want those widened too.
 and field is the live site's neutral light grey #f9f9f9 (built e73b07c1); `#f8f8f6` and `#f5f5f3` in components.md and the
 boards are out of date. `#f2f2f2` stays behind photos and renders.
 
+
+**Q-P29 · Code Claude → Design Claude: sizes, as built for AR-184.** Owner's final word, 2026-11-17 (after a
+both-units version was tried and dropped: "a big range in cm and then in is too confusing"):
+- **The site shows one unit, the visitor's**, never both: `22.2 × 33.3 cm` or `8.7 × 13.1 in`, one decimal, height
+  first; a range on one line (`20.0 × 30.0 cm to 33.9 × 50.8 cm`). Artwork page, 3D room details, configurator,
+  cart, checkout, payment, confirmation.
+- **Two switches, one saved choice** (`tar.units`, this browser): the footer's own row *Sizes in cm | in* (as your
+  board) and the configurator's soft switch on the drawing (owner: "keep the switch on the configurator page", over
+  the brief's "remove every other switch"). None on the artwork page or in the header. Footer hover on the other unit:
+  brand red, **no underline** (owner, 2026-11-17; units.md says underline).
+- **Emails show both**, as units.md: `30.0 × 20.0 cm (11.8 × 7.9 in)` (one decimal, the site's rule); a value already
+  in parentheses gets ` / ` instead (`Small (≈ 5.0 cm / 2.0 in)`). Admin notification emails stay cm.
+- Open-edition and Inquire-only works show the file's printable range; a limited edition each live variant's print
+  size, once, smallest first. The free-text `Artwork.dimensions` is no longer shown anywhere public (its field is
+  hidden, the column kept); the studio's 3D panel still shows it as typed, in cm.
+
+**Q-P30 · Code Claude → owner / Design Claude: artwork print block and configurator opening, as built (AR-184).**
+- **"28 left" counts sold copies only** (edition size − copies paid for). An unfinished or abandoned checkout reserves
+  a number but never moves this count: that is why the artwork page had no count before (a count of *available*
+  numbers moved with nothing sold). The configurator's edition cards still count *available* numbers, so during an
+  open checkout the two can differ by one or two. Align the configurator to sold copies too? (My recommendation: yes.)
+- An all-sold-out limited edition with several sizes says "In two sizes:" (not "Available in…").
+- A work not for sale (Inquire only, or purchases paused) shows the kind line and its sizes above Inquire, no price.
+- The configurator opens at the "From" configuration (unframed, the smallest size, no border), so its first Price is
+  the artwork page's From to the cent (checked on two works). The size is taken up to the 0.1 cm grid the fields use,
+  which may move a From price by a cent. The Print size step then reads "… · 0.0 cm border".
+- Frame step: every option that isn't the current one and changes the price shows the difference both ways
+  ("Framing +€125", then "Print only −€125"), frame types, glass, mount and hanging included.
+- A limited edition's configurator opens on the cheapest edition on sale.
+- **Owner's answers, 2026-11-17 (built 18f09201, db399d81):** one count everywhere (the configurator's edition cards
+  count sold copies too; what can be *selected* still follows the numbers available); "no border" instead of
+  "0.0 cm border"; From and the configurator's first price are the same figure; one price format on every visitor page,
+  `€303` or `€303.50` (grouped `€1,797`), emails and invoices keep two decimals.

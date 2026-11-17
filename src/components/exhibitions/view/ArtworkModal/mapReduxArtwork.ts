@@ -19,7 +19,6 @@ export function mapReduxArtwork(a: TArtwork): { artwork: Artwork; artist: Artist
       author: a.author ?? null,
       year: a.artworkYear ?? null,
       technique: a.technique ?? null,
-      dimensions: a.artworkDimensions ?? null,
       imageUrl: a.imageUrl ?? null,
       originalWidth: a.originalWidth ?? null,
       originalHeight: a.originalHeight ?? null,

@@ -1,17 +1,12 @@
 'use client'
 
+import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
 import { useEffect, useState } from 'react'
 import { CaretRight, Info } from '@phosphor-icons/react'
 
 import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal'
-import {
-  type Catalog,
-  type Quote,
-  type WizardConfig,
-  formatEuro,
-  summarizeConfig,
-} from '@/lib/print-providers'
+import { type Catalog, type Quote, type WizardConfig, summarizeConfig } from '@/lib/print-providers'
 
 import { SpecList } from '../print/SpecList/SpecList'
 import type { WizardArtwork } from './index'
@@ -161,7 +156,7 @@ export const SummaryPanel = ({
           <dl className={styles.priceList}>
             <div className={styles.priceRow}>
               <dt>Price</dt>
-              <dd>{artworkLine ? formatEuro(artworkLine.amountCents) : placeholder}</dd>
+              <dd>{artworkLine ? formatDisplayPrice(artworkLine.amountCents) : placeholder}</dd>
             </div>
             {/* Says out loud what "base" leaves out, at the point of decision
                 rather than a page later. Same sentence the cart uses. */}

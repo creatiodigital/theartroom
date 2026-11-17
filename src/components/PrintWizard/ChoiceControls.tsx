@@ -12,6 +12,7 @@ import {
   type WizardConfig,
   isOptionPickable,
 } from '@/lib/print-providers'
+import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
 
 import styles from './ChoiceControls.module.scss'
 
@@ -31,6 +32,20 @@ type ChoiceProps = {
   restrictions: PrintRestrictions | null
   optionsLocked: boolean
   onChange: (patch: Record<string, string>) => void
+  /** What choosing an option would add to (or take off) the price. When given, every option that
+   *  isn't the current one and changes the price says so after its label: "Framed +€220". */
+  priceDelta?: (patch: Record<string, string>) => number | null
+}
+
+/** "+€220" / "−€40", whole euros like the artwork page; nothing when the price doesn't move. */
+function DeltaText({ cents }: { cents: number | null }) {
+  if (!cents) return null
+  return (
+    <span className={styles.optionDelta}>
+      {cents > 0 ? '+' : '\u2212'}
+      {formatDisplayPrice(Math.abs(cents))}
+    </span>
+  )
 }
 
 export type ChoiceLook = 'segmented' | 'cards' | 'list' | 'chips'
@@ -95,7 +110,7 @@ function Radio({
 }
 
 export function EnumChoice(props: ChoiceProps & { look: ChoiceLook }) {
-  const { dim, config, optionsLocked, onChange, look } = props
+  const { dim, config, optionsLocked, onChange, look, priceDelta } = props
   const options = usePickable(props)
   const name = useId()
   const value = config.values[dim.id] ?? ''
@@ -131,6 +146,9 @@ export function EnumChoice(props: ChoiceProps & { look: ChoiceLook }) {
               <span className={styles.optionText}>
                 <span className={styles.optionLabel}>
                   {option.label}
+                  {!checked && priceDelta && (
+                    <DeltaText cents={priceDelta({ [dim.id]: option.id })} />
+                  )}
                   {look === 'cards' && checked && <Check size={14} weight="bold" aria-hidden />}
                 </span>
                 {look === 'list' && option.description && (

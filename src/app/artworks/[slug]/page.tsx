@@ -10,6 +10,7 @@ import { getGallerySelection } from '@/lib/queries/getGallerySelection'
 import { getMoreByArtist } from '@/lib/queries/getMoreByArtist'
 import { getPublicArtistByHandler } from '@/lib/queries/getPublicArtistByHandler'
 import { buildArtworkCommerce, COMMERCE_SELECT } from '@/lib/editions/artworkCommerce'
+import { getArtworkSizes } from '@/lib/editions/artworkSizes'
 import { LIVE_VARIANT_WHERE } from '@/lib/editions/printable'
 import prisma from '@/lib/prisma'
 import { getPrintPresentations } from '@/lib/printPresentation/getPrintPresentations'
@@ -32,7 +33,6 @@ const getArtwork = cache((slug: string) =>
       author: true,
       year: true,
       technique: true,
-      dimensions: true,
       description: true,
       imageUrl: true,
       originalWidth: true,
@@ -242,7 +242,12 @@ const ArtworkPage = async ({ params, searchParams }: ArtworkPageProps) => {
 
   return (
     <ArtworkDetailPage
-      artwork={{ ...artworkData, liveVariantCount: limitedVariants.length, availableNumberCount }}
+      artwork={{
+        ...artworkData,
+        liveVariantCount: limitedVariants.length,
+        availableNumberCount,
+        sizes: getArtworkSizes({ ...artworkData, variants: limitedVariants }),
+      }}
       artist={user}
       media={media}
       commerce={commerce}

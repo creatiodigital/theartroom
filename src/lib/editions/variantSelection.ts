@@ -59,7 +59,8 @@ export function cartedVariantIds(items: CartedLine[], artworkId: string): Set<st
  * The selected variant, re-resolved against what is on sale now.
  *
  * The stored id is a wish rather than a fact, so every render re-checks it and
- * falls back to the first edition on sale. That covers both the opening state,
+ * falls back to the CHEAPEST edition on sale (owner, 2026-11-17), or the first
+ * when no price is given or prices tie. That covers both the opening state,
  * where nothing has been clicked yet, and an edition selling out from under a
  * selection that has been sitting there — neither may leave the wizard with no
  * edition selected. Null only when there is nothing on sale at all.
@@ -67,7 +68,13 @@ export function cartedVariantIds(items: CartedLine[], artworkId: string): Set<st
 export function resolveSelectedVariant<T extends Selectable>(
   selectedId: string | null,
   available: readonly T[],
+  priceOf?: (variant: T) => number,
 ): T | null {
   const chosen = selectedId ? available.find((v) => v.id === selectedId) : undefined
-  return chosen ?? available[0] ?? null
+  if (chosen) return chosen
+  if (!priceOf) return available[0] ?? null
+  return available.reduce<T | null>(
+    (cheapest, v) => (cheapest === null || priceOf(v) < priceOf(cheapest) ? v : cheapest),
+    null,
+  )
 }

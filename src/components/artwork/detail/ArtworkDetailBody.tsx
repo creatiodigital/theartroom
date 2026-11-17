@@ -11,8 +11,9 @@ import { Button } from '@/components/ui/Button'
 import { InquireSidebar } from '@/components/ui/InquireSidebar'
 import { Share } from '@/components/ui/Share'
 import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
+import type { ArtworkSizes } from '@/lib/editions/artworkSizes'
 import type { VariantEditionLineParts } from '@/lib/editions/variantEditionLines'
-import { ArtworkAvailabilityCard } from './ArtworkAvailabilityCard'
+import { ArtworkAvailabilityCard, ArtworkPrintFacts } from './ArtworkAvailabilityCard'
 import { SHOW_NEIGHBOUR_ARROWS } from './neighbourArrows'
 import { reportImageError } from '@/lib/observability/reportImageError'
 import type { PresentationView } from '@/lib/printPresentation/record'
@@ -34,7 +35,9 @@ export type Artwork = {
   author?: string | null
   year?: string | null
   technique?: string | null
-  dimensions?: string | null
+  /** The size line, worked out on the server (`getArtworkSizes`): the file's range, or each live
+   *  variant's size. Undefined until known — the 3D room's first paint has no edition data. */
+  sizes?: ArtworkSizes | null
   description?: string | null
   imageUrl?: string | null
   originalWidth?: number | null
@@ -166,7 +169,8 @@ export const ArtworkDetailBody = ({
             {/* The work leads, and it is the <h1>: this page is about the artwork. */}
             {displayTitle && <h1 className={styles.title}>{displayTitle}</h1>}
             {artwork.year && <span className={styles.fact}>{artwork.year}</span>}
-            {artwork.dimensions && <span className={styles.fact}>{artwork.dimensions}</span>}
+            {/* The work only: its sizes are part of the print, below (units.md "Artwork page: the
+                print, its sizes and its price together"). */}
             {artwork.technique && technique}
           </div>
 
@@ -174,14 +178,16 @@ export const ArtworkDetailBody = ({
             {commerce && !purchasesPaused ? (
               <ArtworkAvailabilityCard
                 editionType={commerce.editionType}
+                sizes={artwork.sizes}
                 minPriceCents={commerce.minPriceCents}
                 editionLines={commerce.editionLines}
                 artworkSlug={artwork.slug}
                 inquire={inquireButton}
               />
             ) : (
-              // Not for sale (or purchases paused): enquiring is the only route forward.
-              inquireButton
+              // Not for sale (or purchases paused): the print's kind and sizes, then enquiring is
+              // the only route forward.
+              <ArtworkPrintFacts sizes={artwork.sizes} inquire={inquireButton} />
             )}
             <Share title={displayTitle || 'Artwork'} url={shareUrl} className={styles.share} />
           </div>

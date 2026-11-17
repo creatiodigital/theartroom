@@ -6,6 +6,7 @@ import { getArtworkMedia } from '@/lib/artwork/artworkMedia'
 import { getMoreByArtist } from '@/lib/queries/getMoreByArtist'
 import { isAdminOrAbove } from '@/lib/authUtils'
 import { buildArtworkCommerce, COMMERCE_SELECT } from '@/lib/editions/artworkCommerce'
+import { getArtworkSizes } from '@/lib/editions/artworkSizes'
 import { LIVE_VARIANT_WHERE } from '@/lib/editions/printable'
 import prisma from '@/lib/prisma'
 
@@ -23,7 +24,6 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
         author: true,
         year: true,
         technique: true,
-        dimensions: true,
         description: true,
         imageUrl: true,
         originalWidth: true,
@@ -102,7 +102,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
         author: artwork.author,
         year: artwork.year,
         technique: artwork.technique,
-        dimensions: artwork.dimensions,
+        sizes: getArtworkSizes({ ...artwork, variants: artwork.limitedVariants }),
         description: artwork.description,
         imageUrl: artwork.imageUrl,
         originalWidth: artwork.originalWidth,

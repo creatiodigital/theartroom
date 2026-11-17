@@ -47,22 +47,116 @@
   background: #3c8a4a;
 }
 
-.editions {
+.kindRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+// The footer's cm | in, at the footer's size and grey (UnitsSwitch "text" inherits them).
+.kindUnits {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.kind {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--public-print-kind);
+}
+
+// Open edition: "Smallest" / "Largest", the label grey, the size dark.
+.range {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px var(--space-4);
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+
+  dt {
+    color: var(--public-print-label);
+  }
+
+  dd {
+    margin: 0;
+    color: var(--public-dark);
+  }
+}
+
+.between {
+  margin: -6px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+// "From" small and grey: the price is the cheapest configuration.
+.from {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.next {
+  margin: -4px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+// Limited: one size (no count sentence), or "Available in two sizes:" and a row per edition.
+.single {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
+}
+
+.countLine {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.rows {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-// A <p> or <li>: size pinned.
-.editionLine {
+.row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
-  margin: 0;
+  gap: var(--space-4);
+  padding: 12px 0;
+
+  & + & {
+    border-top: 1px solid var(--color-gray-30);
+  }
+}
+
+.rowText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rowSize {
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--public-dark);
+}
+
+.rowMeta {
   font-size: 13px;
   line-height: 1.5;
   color: var(--color-text-secondary);
@@ -70,12 +164,24 @@
 
 .rowPrice {
   font-family: var(--font-serif), var(--font-serif-fallback);
-  font-size: 18px;
+  font-size: 24px;
+  line-height: 1;
   color: var(--public-text);
   white-space: nowrap;
 }
 
-// Black, 48 px, white caps 13 px, the bag. Through .card: outranks Button's own size rules.
+.rowSoldOut {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+// "Available" under the rows, on the left.
+.statusRow .status,
+.statusRow .statusSoldOut {
+  margin-left: 0;
+}
+
 .card .cta {
   width: 100%;
   min-height: 48px;
@@ -91,18 +197,9 @@
 }
 
 // #666, not the drawn #999 (Q-P12).
-.caveat,
-.phoneNote {
+.caveat {
   margin: 0;
   font-size: 12px;
   line-height: 1.5;
   color: var(--color-text-secondary);
-}
-
-.phoneNote {
-  display: none;
-
-  @include media-down(md) {
-    display: block;
-  }
 }

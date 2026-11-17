@@ -1,4 +1,4 @@
-import { formatCm } from '../format'
+import { formatDimensions } from '@/lib/units/format'
 /**
  * Per-artwork print size bounds. The buyer's size picker (and the
  * artist's print-eligibility display) both compute their min / max
@@ -86,8 +86,7 @@ export function getPrintMaxSize(meta: ImageMeta | null): PrintSize | null {
 }
 
 export function formatPrintSize(heightCm: number, widthCm: number): string {
-  // Match the size-input format exactly (0.1 cm step → always one
-  // decimal, including trailing .0 on whole-cm values), so the
-  // slider min/max labels read identically to the input fields.
-  return `${formatCm(heightCm)} × ${formatCm(widthCm)} cm`
+  // Always cm (the artist's editor and studio). Visitor surfaces that follow
+  // the cm / in switch call `formatDimensions` with the unit.
+  return formatDimensions(widthCm, heightCm, 'cm')
 }

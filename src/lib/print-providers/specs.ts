@@ -14,6 +14,7 @@
  * that isn't currently visible (e.g. frame moulding hides itself when
  * format = "print only").
  */
+import { convertCmText, type Unit } from '@/lib/units/format'
 import { formatCm, formatDualDimensions } from './format'
 import type { Catalog, Dimension, WizardConfig } from './types'
 import {
@@ -139,4 +140,13 @@ function renderDimensionValue(
 
 function formatDualSize(widthCm: number, heightCm: number): string {
   return formatDualDimensions(widthCm, heightCm)
+}
+
+/**
+ * The rows as a visitor reads them in their unit (docs/public-redesign/units.md). The rows
+ * themselves — the snapshot on a cart line and an order — stay in cm; this converts only for
+ * display, so carts and orders made before the switch convert too. `'both'` is for emails.
+ */
+export function convertSpecRows(rows: SpecsSummary, to: Unit | 'both'): SpecsSummary {
+  return rows.map((row) => ({ ...row, value: convertCmText(row.value, to) }))
 }

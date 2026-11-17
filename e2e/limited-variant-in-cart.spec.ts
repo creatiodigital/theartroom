@@ -41,8 +41,19 @@ test('an open-edition line marks nothing — it has no variant', () => {
 
 // On arrival, and on every refresh, the first card in the column is the one
 // selected: the preview and the panel beside it have nothing to show otherwise.
-test('the wizard opens on the first edition', () => {
+test('the wizard opens on the first edition when no price tells them apart', () => {
   expect(resolveSelectedVariant('', AVAILABLE)).toBe(SMALL)
+})
+
+// Owner, 2026-11-17: with more than one edition on sale, the configurator opens on the cheapest.
+test('the wizard opens on the cheapest edition on sale', () => {
+  const price = (v: { id: string }) => (v.id === 'v-large' ? 30000 : 45000)
+  expect(resolveSelectedVariant('', AVAILABLE, price)).toBe(LARGE)
+})
+
+test('a chosen edition stays chosen even when another is cheaper', () => {
+  const price = (v: { id: string }) => (v.id === 'v-large' ? 30000 : 45000)
+  expect(resolveSelectedVariant('v-small', AVAILABLE, price)).toBe(SMALL)
 })
 
 test('a chosen edition is the selected one', () => {

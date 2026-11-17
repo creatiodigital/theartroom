@@ -1,11 +1,11 @@
 'use client'
 
+import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
 import { useState } from 'react'
 import { PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
 
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
-import { formatEuro } from '@/lib/print-providers'
 
 import type { CheckoutArtwork } from '../PrintCheckout'
 import { OrderSummary } from '../OrderSummary'
@@ -168,13 +168,13 @@ export const PaymentForm = ({
         printSizeCm={customSize}
         country={country}
         priceLines={[
-          { label: 'Subtotal', value: formatEuro(subtotalCents) },
-          { label: vatLabel, value: formatEuro(customerVatCents) },
+          { label: 'Subtotal', value: formatDisplayPrice(subtotalCents) },
+          { label: vatLabel, value: formatDisplayPrice(customerVatCents) },
         ]}
-        total={{ label: 'Total', value: formatEuro(totalCents) }}
+        total={{ label: 'Total', value: formatDisplayPrice(totalCents) }}
         cta={{
           kind: 'submit',
-          label: submitting ? 'Processing…' : `Pay ${formatEuro(totalCents)}`,
+          label: submitting ? 'Processing…' : `Pay ${formatDisplayPrice(totalCents)}`,
           form: FORM_ID,
           disabled: !stripe || !elements || submitting,
         }}

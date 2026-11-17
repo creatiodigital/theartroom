@@ -222,3 +222,11 @@
     color: var(--public-text);
   }
 }
+
+// The price difference after an option's label (owner, 2026-11-17): "Framed +€220".
+.optionDelta {
+  margin-left: 6px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}

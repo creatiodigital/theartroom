@@ -31,10 +31,14 @@ export type LimitedVariantRow = {
   priceCents: number | null
 }
 
-/** @param remaining Edition numbers still available to buy. 0 = sold out. */
+/**
+ * @param remaining Edition numbers still available to buy. 0 = sold out.
+ * @param sold Copies sold (paid for): the shown "N left" is the edition size minus these.
+ */
 export function toLimitedVariantView(
   row: LimitedVariantRow,
   remaining: number,
+  sold = 0,
 ): LimitedVariantView {
   return {
     id: row.id,
@@ -52,5 +56,6 @@ export function toLimitedVariantView(
     editionSize: row.editionSize,
     priceCents: row.priceCents,
     remaining,
+    left: Math.max(0, row.editionSize - sold),
   }
 }

@@ -61,6 +61,13 @@ https://claude.ai/code/artifact/6d16f4cf-4c5c-4839-9cbd-65e8360d4772 (images are
 in `designs/` are copies; their images only load inside the canvas. A full copy of every board is in
 `docs/design-canvas/`.
 
+### Prices: no bait, no fright (owner, 2026-11-17)
+1. **Never make buyers think they are being baited.** Any price shown before the print wizard ("From €303") must be
+   the first price the wizard shows: an open edition opens **unframed (print only)**, smallest size, the reference
+   paper, no border — the exact configuration `minimumPriceForOpen` prices.
+2. **Never scare buyers with a high price as if it were the only choice.** Extras (frame, glass, mount) are opt-in
+   and show their difference ("Framed +€220"), never pre-selected.
+
 ### Square corners for visitors (owner, 2026-11-14)
 
 On the **public site and in the 3D room** (everything a visitor sees), **modals/windows and buttons have no rounded

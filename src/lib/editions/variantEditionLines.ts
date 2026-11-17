@@ -1,5 +1,7 @@
 import prisma from '@/lib/prisma'
 
+import { TPS_PAPERS } from '@/lib/print-providers/printspace'
+
 import { formatDisplayPrice } from './formatDisplayPrice'
 import { minimumPriceForLimited } from './minimumPrice'
 import { LIVE_VARIANT_WHERE } from './printable'
@@ -25,25 +27,39 @@ export type VariantEditionLine = {
   variantName: string
   /** This variant's edition size — never the artwork's. */
   editionSize: number
-  /** True once every copy has sold. The only per-variant state the row shows —
-   *  a count is deliberately absent, see below. */
+  /** Copies not yet PAID for: the edition size minus the sold copies. A copy held
+   *  by an unfinished checkout still counts as left, so an abandoned checkout never
+   *  moves it — only a sale does (see below). */
+  left: number
+  /** True once every copy has sold. */
   soldOut: boolean
   /** What this edition costs, excluding shipping and tax. Price is NOT common
    *  across a work's editions — each variant is its own size, paper and figure —
    *  so it belongs on the row, never as one number above them all. */
   priceCents: number | null
+  /** The print's size (not the sheet), for the size row (owner, 2026-11-17). */
+  widthCm: number
+  heightCm: number
+  /** Named on the row only when two editions share a size (units.md). */
+  paperId: string
 }
 
 /**
- * A line split into its parts, so a surface can lay them out as columns and set
- * the variant's name apart — it is the part a reader scans for, and the only
- * part that differs between rows.
+ * A line as the artwork page's print block lays it out (docs/public-redesign/units.md "Artwork
+ * page: the print, its sizes and its price together"): the size over "Medium · Edition of 30 · 28
+ * left", the price on the right. Plain data, so the client writes the size in the visitor's unit.
  */
 export type VariantEditionLineParts = {
-  /** The variant's own name, e.g. "50x40 Baryta". */
+  /** The variant's own name, e.g. "Medium". Visitors never see the word "variant". */
   name: string
-  /** "Edition of 50", or "Sold out" once every copy has gone. */
-  count: string
+  /** The paper's name, shown on the row only when two editions share a size. */
+  paper: string
+  widthCm: number
+  heightCm: number
+  editionSize: number
+  /** Copies not yet sold (see `VariantEditionLine.left`). */
+  left: number
+  soldOut: boolean
   /** "€312", or null when the variant carries no usable price. */
   price: string | null
 }
@@ -51,15 +67,22 @@ export type VariantEditionLineParts = {
 export function variantEditionLineParts(line: VariantEditionLine): VariantEditionLineParts {
   return {
     name: line.variantName,
-    count: line.soldOut ? 'Sold out' : `Edition of ${line.editionSize}`,
+    paper: TPS_PAPERS.find((paper) => paper.id === line.paperId)?.label ?? line.paperId,
+    widthCm: line.widthCm,
+    heightCm: line.heightCm,
+    editionSize: line.editionSize,
+    left: line.left,
+    soldOut: line.soldOut,
     price: line.priceCents === null ? null : formatDisplayPrice(line.priceCents),
   }
 }
 
 /**
- * One line per live variant: its name and its edition SIZE. No running count.
+ * One line per live variant, smallest print first: its size, name, edition size, copies left and
+ * price.
  *
- * Three counts were tried on this row and every one misled:
+ * "28 left" (owner, 2026-11-17) counts SOLD copies only: edition size minus the copies paid for.
+ * The counts tried before misled because they moved with checkouts, or read as a copy number:
  *
  *   lowest AVAILABLE — a number is reserved the moment a PaymentIntent exists,
  *     so an abandoned checkout consumed one and a live edition advanced from
@@ -71,9 +94,9 @@ export function variantEditionLineParts(line: VariantEditionLine): VariantEditio
  *     collector reads it as "this is copy 6", so the truest number was also the
  *     most misleading thing on the page.
  *
- * `X of Y` wants to mean an edition number. Since this row cannot honestly show
- * one, it shows the edition size instead and says nothing it cannot stand
- * behind. The buyer learns their own number when production starts.
+ * "N left" is neither: it is not a copy number, and with sold copies only, a
+ * reservation (an unfinished checkout) cannot move it. The buyer still learns their
+ * own number when production starts.
  */
 export async function getVariantEditionLines(artworkId: string): Promise<VariantEditionLine[]> {
   const variants = await prisma.limitedVariant.findMany({
@@ -97,15 +120,21 @@ export async function getVariantEditionLines(artworkId: string): Promise<Variant
     },
   })
 
-  return variants.map((v) => ({
+  const lines = variants.map((v) => ({
     variantName: v.name,
     editionSize: v.editionSize,
-    // Every copy gone. Counted rather than compared against the highest number
-    // sold, which a gap in the ledger would make wrong.
+    // Counted rather than compared against the highest number sold, which a gap in
+    // the ledger would make wrong.
+    left: Math.max(0, v.editionSize - v._count.editionNumbers),
     soldOut: v._count.editionNumbers >= v.editionSize,
+    widthCm: v.widthCm,
+    heightCm: v.heightCm,
+    paperId: v.paperId,
     // Priced by handing this variant ALONE to the same function that picks the
     // cheapest across all of them. Same arithmetic, so a row's figure and the
     // card's minimum cannot drift apart.
     priceCents: minimumPriceForLimited([v])?.cents ?? null,
   }))
+  // Smallest print first (units.md): the rows read as a run of sizes.
+  return lines.sort((a, b) => a.widthCm * a.heightCm - b.widthCm * b.heightCm)
 }

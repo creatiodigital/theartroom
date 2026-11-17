@@ -4,7 +4,8 @@ import { useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
-import type { SpecsSummary } from '@/lib/print-providers'
+import { convertSpecRows, type SpecsSummary } from '@/lib/print-providers/specs'
+import { useUnits } from '@/lib/units/UnitsProvider'
 
 import styles from './SpecList.module.scss'
 
@@ -46,14 +47,17 @@ export const SpecList = ({
   collapsible = true,
 }: SpecListProps) => {
   const [expanded, setExpanded] = useState(false)
+  // The rows stay in cm (the cart line's snapshot); they are written in the visitor's unit here.
+  const { unit } = useUnits()
   if (specs.length === 0) return null
+  const rows = convertSpecRows(specs, unit)
 
   // Collapsing has to earn its place: the toggle is itself a row of chrome, so
   // hiding a single spec saves nothing and just adds a control. A limited
   // edition produces exactly five rows against the cart's four-row budget,
   // which put a "Show all selected options" button there to hide one line.
-  const canCollapse = collapsible && specs.length - visibleByDefault >= MIN_HIDDEN_ROWS
-  const visible = expanded || !canCollapse ? specs : specs.slice(0, visibleByDefault)
+  const canCollapse = collapsible && rows.length - visibleByDefault >= MIN_HIDDEN_ROWS
+  const visible = expanded || !canCollapse ? rows : rows.slice(0, visibleByDefault)
 
   return (
     <div className={`${styles.wrapper}${className ? ` ${className}` : ''}`}>

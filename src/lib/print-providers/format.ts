@@ -6,6 +6,7 @@
  */
 
 import { formatMoneyCents } from '@/lib/money'
+import { formatDimensions } from '@/lib/units/format'
 
 export function formatEuro(cents: number): string {
   return formatMoneyCents(cents, 'eur')
@@ -13,9 +14,10 @@ export function formatEuro(cents: number): string {
 
 // Output follows art-gallery convention: height × width.
 // Args still take (wCm, hCm) so callers don't have to swap; the
-// function reorders internally for display.
+// function reorders internally for display. Always cm: visitor surfaces
+// that follow the cm / in switch call `formatDimensions` with the unit.
 export function formatDualDimensions(wCm: number, hCm: number): string {
-  return `${formatCm(hCm)} × ${formatCm(wCm)} cm`
+  return formatDimensions(wCm, hCm, 'cm')
 }
 
 // A fixed-sheet edition's print size is DERIVED from the sheet and stored at

@@ -1,5 +1,6 @@
 'use client'
 
+import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
 import { useState } from 'react'
 import { Minus, Plus, Trash } from '@phosphor-icons/react'
 
@@ -11,7 +12,6 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal'
 import { useCart } from '@/lib/cart/useCart'
 import { lineTotal } from '@/lib/cart/cartMath'
 import type { CartItem } from '@/lib/cart/types'
-import { formatEuro } from '@/lib/print-providers'
 
 import styles from './CartLine.module.scss'
 
@@ -85,7 +85,7 @@ export const CartLine = ({ item }: CartLineProps) => {
         }
         aside={
           <>
-            <span className={styles.price}>{formatEuro(lineItemCents)}</span>
+            <span className={styles.price}>{formatDisplayPrice(lineItemCents)}</span>
             <div className={styles.quantity}>
               <div className={styles.stepper}>
                 <Button

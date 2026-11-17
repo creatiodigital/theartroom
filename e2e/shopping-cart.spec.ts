@@ -45,23 +45,24 @@ test.describe('shopping cart — /cart page', () => {
     await expect(page.getByText('Giclée')).toBeVisible()
     await expect(page.getByText('Hahnemühle German Etching')).toBeVisible()
 
-    // €100.00 unit (qty 1) shows as both the line's Total Price and the Subtotal.
-    await expect(page.getByText('€100.00')).toHaveCount(2)
+    // €100 unit (qty 1) shows as both the line's Total Price and the Subtotal (whole euros on
+    // visitor pages, no ".00": owner 2026-11-17).
+    await expect(page.getByText('€100', { exact: true })).toHaveCount(2)
   })
 
   test('quantity stepper bumps the line total and subtotal', async ({ page }) => {
     await seedCart(page, [makeCartItem({ lineId: 'line-1' })])
     await page.goto('/cart')
 
-    await expect(page.getByText('€100.00')).toHaveCount(2)
+    await expect(page.getByText('€100', { exact: true })).toHaveCount(2)
 
     await page.getByRole('button', { name: 'Increase quantity' }).click()
-    // qty 2 → line + subtotal both €200.00, and the old €100.00 is gone.
-    await expect(page.getByText('€200.00')).toHaveCount(2)
-    await expect(page.getByText('€100.00')).toHaveCount(0)
+    // qty 2 → line + subtotal both €200, and the old €100 is gone.
+    await expect(page.getByText('€200', { exact: true })).toHaveCount(2)
+    await expect(page.getByText('€100', { exact: true })).toHaveCount(0)
 
     await page.getByRole('button', { name: 'Decrease quantity' }).click()
-    await expect(page.getByText('€100.00')).toHaveCount(2)
+    await expect(page.getByText('€100', { exact: true })).toHaveCount(2)
   })
 
   test('at quantity 1 the minus is a trash that confirms before removing', async ({ page }) => {
@@ -125,8 +126,9 @@ test.describe('shopping cart — /cart page', () => {
 
     await expect(page.getByRole('button', { name: /show all selected options/i })).toHaveCount(0)
     await expect(page.getByText('Giclée on Hahnemühle German Etching')).toBeVisible()
-    await expect(page.getByText('Print size: 30 × 20 cm')).toBeVisible()
-    await expect(page.getByText('Border: 3 cm')).toBeVisible()
+    // A line stored before the one-decimal rule is written to it on display (AR-184).
+    await expect(page.getByText('Print size: 30.0 × 20.0 cm')).toBeVisible()
+    await expect(page.getByText('Border: 3.0 cm')).toBeVisible()
     await expect(page.getByText('Museum glass')).toBeVisible()
   })
 
@@ -149,8 +151,8 @@ test.describe('shopping cart — /cart page', () => {
 
     await expect(page.getByText('Landscape and River')).toBeVisible()
     await expect(page.getByText('Green Door')).toBeVisible()
-    // Subtotal = €100.00 + €150.00.
-    await expect(page.getByText('€250.00')).toBeVisible()
+    // Subtotal = €100 + €150.
+    await expect(page.getByText('€250', { exact: true })).toBeVisible()
   })
 
   test('the header cart badge counts total units, not lines', async ({ page }) => {
