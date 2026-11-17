@@ -1219,12 +1219,9 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-
-  // Phones: more room under the line, so cm | in sit freer to tap (owner, 2026-11-17: ~10px, on a
-  // token; the scale has 8 and 12, and 12 gives the finger the room asked for).
-  @include media-down(md) {
-    margin-bottom: var(--space-3);
-  }
+  // Room under the line at every width, so cm | in sit freer to tap and click (owner, 2026-11-17:
+  // ~10px, on a token; the scale has 8 and 12, and 12 gives the room asked for).
+  margin-bottom: var(--space-3);
 }
 
 .panelTitle {
