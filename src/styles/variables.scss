@@ -103,10 +103,7 @@
   // (--color-surface-subtle), not the warm off-white the boards drew (owner, 2026-11-12).
   --public-off-white: var(--color-surface-subtle); // bands, panels, summary boxes
   --public-field: var(--color-surface-subtle); // field background
-  // The cm | in switch (units.md): the configurator's track and the outline of its chosen cell;
-  // the footer's chosen unit and its divider.
-  --public-switch-track: #efefec;
-  --public-switch-outline: #d6d6d2;
+  // The cm | in switch (units.md): the chosen unit and the divider.
   --public-units-chosen: var(--public-dark);
   --public-units-divider: #c8c8c4;
   // The artwork page's print block (units.md): sizes and the chosen unit; the kind line; labels.

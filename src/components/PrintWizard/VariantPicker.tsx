@@ -8,6 +8,8 @@ import type { LimitedVariantView } from '@/lib/editions/types'
 import { formatDimensions } from '@/lib/units/format'
 import { useUnits } from '@/lib/units/UnitsProvider'
 
+import { PanelHeading } from './PanelHeading'
+
 import styles from './PrintWizard.module.scss'
 
 export type VariantPickerItem = LimitedVariantView & { priceCents: number }
@@ -52,10 +54,10 @@ export const VariantPicker = ({
   const { unit } = useUnits()
   return (
     <div className={styles.variantPicker}>
-      <h2 className={styles.variantPickerTitle}>Choose your edition</h2>
-      <p className={styles.variantPickerIntro}>
-        Each edition has a fixed size and paper, set with the artist.
-      </p>
+      <PanelHeading
+        title="Choose your edition"
+        intro="Each edition has a fixed size and paper, set with the artist."
+      />
       {variants.map((v) => {
         const paperLabel = TPS_PAPERS.find((p) => p.id === v.paperId)?.label ?? v.paperId
         const techniqueLabel = TPS_PRINT_TYPES.find((t) => t.id === v.printTypeId)?.label

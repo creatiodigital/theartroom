@@ -11,8 +11,6 @@ import {
   getEffectiveSizeCm,
 } from '@/lib/print-providers'
 
-import { UnitsSwitch } from '@/components/ui/UnitsSwitch'
-
 import { SizeSchema } from './SizeSchema'
 
 import styles from './PrintWizard.module.scss'
@@ -73,9 +71,6 @@ export const SchemaStage = ({ catalog, config, imageUrl, editionLabel }: SchemaS
 
   return (
     <div className={styles.schemaStage}>
-      {/* The configurator's one cm | in switch (units.md "Where it is", item 2): the drawing's
-          top-right corner. The steps on the left and the summary follow it; they have none. */}
-      <UnitsSwitch className={styles.schemaUnits} />
       <SizeSchema
         printWidthCm={effectiveSize.widthCm}
         printHeightCm={effectiveSize.heightCm}

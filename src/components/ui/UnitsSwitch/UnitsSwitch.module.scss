@@ -1,49 +1,12 @@
-// docs/public-redesign/units.md "The switch": a light track with 2 px padding, two 30 × 22 px cells,
-// 12 px Lato, square corners. The chosen cell is white with a 1 px outline and bold dark text; the
-// other is muted on the track. Soft on purpose (owner, 2026-11-17: a grey word was "barely
-// noticeable", a black-outlined switch "too invasive").
-.track {
-  display: inline-flex;
-  flex-shrink: 0;
-  padding: 2px;
-  background: var(--public-switch-track);
-  font-family: var(--font-sans), var(--font-sans-fallback);
-  vertical-align: middle;
-}
-
-// `.track` raises these over Button's own `.bare` reset.
-.track .cell {
-  justify-content: center;
-  align-items: center;
-  width: 30px;
-  height: 22px;
-  font-size: 12px;
-  line-height: 1;
-  color: var(--public-muted);
-
-  &:focus-visible {
-    outline: 2px solid var(--public-text);
-    outline-offset: 1px;
-  }
-}
-
-.track .chosen {
-  background: var(--color-white);
-  color: var(--public-text);
-  font-weight: 700;
-  box-shadow: 0 0 0 1px var(--public-switch-outline);
-}
-
-// The footer's look (units.md "The switch: one, in the footer"): plain words in the row's own size
-// and grey, "cm | in", the chosen one bold and dark; the other brand red on hover or focus; the
-// divider light and not clickable.
-.text {
+// units.md "The switch": plain words in the row's own size and grey, "cm | in", the chosen one bold
+// and dark; the other brand red on hover or focus; the divider light and not clickable.
+.switch {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-.text .cell {
+.switch .cell {
   font-size: inherit;
   line-height: inherit;
   color: inherit;
@@ -60,7 +23,7 @@
   }
 }
 
-.text .chosen {
+.switch .chosen {
   font-weight: 700;
   color: var(--public-units-chosen);
 }

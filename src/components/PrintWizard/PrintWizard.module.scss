@@ -843,18 +843,8 @@
     order: 3;
     min-height: 60vw;
     padding: var(--space-6);
-    // Room above the drawing for the cm | in switch in the corner.
-    padding-top: var(--space-12);
     border-bottom: 1px solid var(--color-border-light);
   }
-}
-
-// The cm | in switch, top-right of the drawing, 20 px in (units.md).
-.schemaUnits {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  z-index: 1;
 }
 
 // ── Right summary panel ──────────────────────────────────────
@@ -1186,7 +1176,23 @@
   }
 }
 
-.variantPickerTitle {
+// ── The left panel's heading (both configurators) ──────────────
+// The title, cm | in at the right end of its line, then a line of what the panel is for.
+.panelHeading {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: var(--space-1);
+}
+
+.panelTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.panelTitle {
   margin: 0;
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: 15px;
@@ -1194,9 +1200,17 @@
   color: var(--public-text);
 }
 
+// The footer's plain cm | in, at the intro's size and grey (UnitsSwitch inherits them).
+.panelUnits {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
 // A <p>: size pinned (globals.scss gives every <p> 16–18px).
-.variantPickerIntro {
-  margin: -6px 0 var(--space-1);
+.panelIntro {
+  margin: 0;
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: 13px;
   line-height: 1.55;
