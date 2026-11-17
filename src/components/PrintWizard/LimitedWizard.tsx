@@ -156,13 +156,19 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
     [config, country, catalog.providerId, selected?.priceCents, artwork.printPriceCents],
   )
 
-
+  // Cheapest on top (owner, 2026-11-17), so the card the wizard opens on is the first one; sold-out
+  // editions after those on sale (still listed, see above). Equal prices keep their listed order.
   const pickerItems: VariantPickerItem[] = useMemo(
     () =>
-      allVariants.map((v) => ({
-        ...v,
-        priceCents: quotesByVariantId.get(v.id)?.subtotalCents ?? 0,
-      })),
+      allVariants
+        .map((v) => ({
+          ...v,
+          priceCents: quotesByVariantId.get(v.id)?.subtotalCents ?? 0,
+        }))
+        .sort(
+          (a, b) =>
+            Number(a.remaining <= 0) - Number(b.remaining <= 0) || a.priceCents - b.priceCents,
+        ),
     [allVariants, quotesByVariantId],
   )
 
