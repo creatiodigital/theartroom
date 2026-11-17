@@ -607,6 +607,7 @@ const BorderSlider = ({
       <span className={styles.stepFieldLabel}>{dim.label}</span>
       <p className={styles.sliderValue}>{displayed}</p>
       <Slider
+        touchRow
         min={dim.minCm}
         max={dim.maxCm}
         step={dim.stepCm}
@@ -914,6 +915,7 @@ const BorderDimensionSection = ({
       <div className={styles.stepField}>
         <p className={styles.sliderValue}>{displayed}</p>
         <Slider
+          touchRow
           min={dimension.minCm}
           max={dimension.maxCm}
           step={dimension.stepCm}

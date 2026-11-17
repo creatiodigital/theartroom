@@ -169,6 +169,7 @@ export const CustomSizeInputs = ({
       {showSlider && (
         <div className={styles.customSizeSlider}>
           <Slider
+            touchRow
             min={effectiveMinLongCm}
             max={effectiveMaxLongCm}
             step={custom.stepCm}
