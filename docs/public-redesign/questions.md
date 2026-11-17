@@ -219,3 +219,17 @@ both-units version was tried and dropped: "a big range in cm and then in is too 
 - Open-edition and Inquire-only works show the file's printable range; a limited edition each live variant's print
   size, once, smallest first. The free-text `Artwork.dimensions` is no longer shown anywhere public (its field is
   hidden, the column kept); the studio's 3D panel still shows it as typed, in cm.
+
+**Q-P30 · Code Claude → owner / Design Claude: artwork print block and configurator opening, as built (AR-184).**
+- **"28 left" counts sold copies only** (edition size − copies paid for). An unfinished or abandoned checkout reserves
+  a number but never moves this count: that is why the artwork page had no count before (a count of *available*
+  numbers moved with nothing sold). The configurator's edition cards still count *available* numbers, so during an
+  open checkout the two can differ by one or two. Align the configurator to sold copies too? (My recommendation: yes.)
+- An all-sold-out limited edition with several sizes says "In two sizes:" (not "Available in…").
+- A work not for sale (Inquire only, or purchases paused) shows the kind line and its sizes above Inquire, no price.
+- The configurator opens at the "From" configuration (unframed, the smallest size, no border), so its first Price is
+  the artwork page's From to the cent (checked on two works). The size is taken up to the 0.1 cm grid the fields use,
+  which may move a From price by a cent. The Print size step then reads "… · 0.0 cm border".
+- Frame step: every option that isn't the current one and changes the price shows the difference both ways
+  ("Framing +€125", then "Print only −€125"), frame types, glass, mount and hanging included.
+- A limited edition's configurator opens on the cheapest edition on sale.
