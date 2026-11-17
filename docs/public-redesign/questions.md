@@ -237,3 +237,14 @@ both-units version was tried and dropped: "a big range in cm and then in is too 
   count sold copies too; what can be *selected* still follows the numbers available); "no border" instead of
   "0.0 cm border"; From and the configurator's first price are the same figure; one price format on every visitor page,
   `€303` or `€303.50` (grouped `€1,797`), emails and invoices keep two decimals.
+
+**Q-P31 · Code Claude → Design Claude: two owner changes after AR-184 (2026-11-17), as built.**
+- **Artwork titles are never italic**, anywhere on the site: grids (Prints, artist, exhibition, selection), home
+  prints, the inquiry panel, the configurator's header, summary and intro, added-to-cart, cart and checkout. Titles
+  stay in serif where they were serif, upright, with no `<em>` or `<i>`. The boards and order-flow.md still say "serif
+  italics"; please bring them to upright. Italics that an author types inside a rich text (a description, an
+  exhibition text) are content and stay as written.
+- **The configurator's cm | in** is no longer on the drawing: it sits at the right end of the left panel's title, as
+  plain words like the footer's. Open editions get a title there too: *Configure your print*, then "Printed to order.
+  Choose the paper, the size and the frame; the price updates as you go." (limited: *Choose your edition*, unchanged).
+  The boxed (track) switch is gone from the code; units.md "Where it is", item 2, still describes it.
