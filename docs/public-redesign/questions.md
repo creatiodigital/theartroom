@@ -205,18 +205,16 @@ and field is the live site's neutral light grey #f9f9f9 (built e73b07c1); `#f8f8
 boards are out of date. `#f2f2f2` stays behind photos and renders.
 
 
-**Q-P29 · Code Claude → Design Claude: sizes, as built for AR-184 (units.md is out of date on these).** Owner, 2026-11-17,
-after the switch was built:
-- **Static sizes show both units, no switch** (as White Cube): `22.2 × 33.3 cm | 8.7 × 13.1 in`, cm first, one decimal
-  (decimals, not White Cube's fractions). Artwork page, 3D room details, cart, checkout, payment, confirmation, the
-  buyer's email. A range takes two lines: `20.0 × 30.0 cm to 33.9 × 50.8 cm`, then the same in inches (my call: one line
-  is too long for the 320 px info column).
-- **The switch is only in the configurator** (drawing, top-right), where sizes are typed and dragged: fields, slider
-  ends and knobs, border and mount readouts, edition cards and the summary follow it. **No footer switch**, no switch on
-  the artwork page.
-- My calls: emails use the same `cm | in` form (units.md said `30 × 20 cm (11.8 × 7.9 in)`) so one format is used
-  everywhere; admin notification emails stay cm (admin is cm-only). Every size has one decimal, borders too
-  (`3.0 cm | 1.2 in`), the owner's "same format everywhere".
-- Open-edition and Inquire-only works show the file's printable range; a limited edition each live variant's print size,
-  once, smallest first. The free-text `Artwork.dimensions` is no longer shown anywhere public (its field is hidden,
-  the column kept); the studio's 3D panel still shows it as typed, in cm (your answer to (b)).
+**Q-P29 · Code Claude → Design Claude: sizes, as built for AR-184.** Owner's final word, 2026-11-17 (after a
+both-units version was tried and dropped: "a big range in cm and then in is too confusing"):
+- **The site shows one unit, the visitor's**, never both: `22.2 × 33.3 cm` or `8.7 × 13.1 in`, one decimal, height
+  first; a range on one line (`20.0 × 30.0 cm to 33.9 × 50.8 cm`). Artwork page, 3D room details, configurator,
+  cart, checkout, payment, confirmation.
+- **Two switches, one saved choice** (`tar.units`, this browser): the footer's own row *Sizes in cm | in* (as your
+  board) and the configurator's soft switch on the drawing (owner: "keep the switch on the configurator page", over
+  the brief's "remove every other switch"). None on the artwork page or in the header.
+- **Emails show both**, as units.md: `30.0 × 20.0 cm (11.8 × 7.9 in)` (one decimal, the site's rule); a value already
+  in parentheses gets ` / ` instead (`Small (≈ 5.0 cm / 2.0 in)`). Admin notification emails stay cm.
+- Open-edition and Inquire-only works show the file's printable range; a limited edition each live variant's print
+  size, once, smallest first. The free-text `Artwork.dimensions` is no longer shown anywhere public (its field is
+  hidden, the column kept); the studio's 3D panel still shows it as typed, in cm.
