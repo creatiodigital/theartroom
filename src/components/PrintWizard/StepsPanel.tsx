@@ -72,6 +72,11 @@ const sizeText = (config: WizardConfig, unit: Unit) =>
   config.customSize
     ? formatDimensions(config.customSize.widthCm, config.customSize.heightCm, unit)
     : null
+/** "3.0 cm border", or "no border" at 0 (owner, 2026-11-17: not "0.0 cm border"). */
+const borderText = (config: WizardConfig, border: BorderDimension, unit: Unit) => {
+  const cm = config.borders?.[border.id]?.allCm ?? border.defaultCm
+  return cm > 0 ? `${formatSize(cm, unit)} border` : 'no border'
+}
 const joinParts = (...parts: (string | null | undefined)[]) =>
   parts.filter(Boolean).join(' · ') || null
 
@@ -434,10 +439,7 @@ const SizeAndBorderSection = ({
   return (
     <NumberedStep
       title={size.label}
-      summary={joinParts(
-        sizeText(config, unit),
-        `${formatSize(config.borders?.[border.id]?.allCm ?? border.defaultCm, unit)} border`,
-      )}
+      summary={joinParts(sizeText(config, unit), borderText(config, border, unit))}
       open={open}
       onToggle={onToggle}
     >

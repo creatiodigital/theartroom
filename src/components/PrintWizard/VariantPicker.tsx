@@ -1,7 +1,7 @@
 'use client'
 
+import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
 import { Icon } from '@/components/ui/Icon'
-import { formatEuro } from '@/lib/print-providers'
 import { TPS_PAPERS, TPS_PRINT_TYPES } from '@/lib/print-providers/printspace'
 import { isFixedSheet } from '@/lib/editions/sheetLayout'
 import type { LimitedVariantView } from '@/lib/editions/types'
@@ -81,7 +81,7 @@ export const VariantPicker = ({
             {/* order-flow.md: the name and the price on one line, then paper, sizes and stock. */}
             <span className={styles.variantCardHead}>
               <span className={styles.variantCardName}>{v.name}</span>
-              <span className={styles.variantCardPrice}>{formatEuro(v.priceCents)}</span>
+              <span className={styles.variantCardPrice}>{formatDisplayPrice(v.priceCents)}</span>
             </span>
             {(soldOut || inCart) && (
               <span className={styles.variantCardTag}>
@@ -110,7 +110,7 @@ export const VariantPicker = ({
             {/* "Edition of 30 · 29 left" (order-flow.md; questions Q-P4: the count is real data). */}
             <span className={styles.variantCardStock}>
               Edition of {v.editionSize}
-              {!soldOut && ` · ${v.remaining} left`}
+              {!soldOut && ` · ${v.left} left`}
             </span>
           </button>
         )

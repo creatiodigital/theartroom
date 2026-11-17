@@ -60,6 +60,11 @@ export type LimitedVariantView = {
   editionSize: number
   /** Artist's cut for this variant, in cents. */
   priceCents: number | null
-  /** Count of edition numbers still available to buy. 0 = sold out. */
+  /** Count of edition numbers still available to buy. 0 = sold out. Decides what can be SELECTED
+   *  (a number held by an unfinished checkout can't be sold twice). */
   remaining: number
+  /** Copies not yet sold: edition size − sold copies. The "N left" the visitor reads, the same
+   *  count as the artwork page (owner, 2026-11-17: "one count everywhere"); a reservation never
+   *  moves it. */
+  left: number
 }
