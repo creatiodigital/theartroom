@@ -49,6 +49,8 @@ interface StepsPanelProps {
   availability: AvailabilityCheck
   restrictions: PrintRestrictions | null
   recommendations: PrintRecommendations | null
+  /** What a choice would add to (or take off) the Price line; shown on the Frame step's options. */
+  priceDelta?: (patch: Record<string, string>) => number | null
 }
 
 /**
@@ -108,6 +110,7 @@ export const StepsPanel = ({
   availability,
   restrictions,
   recommendations,
+  priceDelta,
 }: StepsPanelProps) => {
   // Per-step open/closed state. Keyed by dimension id. Independent —
   // buyer can have any combination open at once. Country isn't picked
@@ -255,6 +258,7 @@ export const StepsPanel = ({
                     open={openSteps.has('frameGroup')}
                     onToggle={toggle('frameGroup')}
                     onChange={onChange}
+                    priceDelta={priceDelta}
                   />
                 )
               }
@@ -482,6 +486,7 @@ interface FrameSectionProps {
   open: boolean
   onToggle: (open: boolean) => void
   onChange: (patch: Record<string, string>) => void
+  priceDelta?: (patch: Record<string, string>) => number | null
 }
 
 const FrameSection = ({
@@ -501,6 +506,7 @@ const FrameSection = ({
   open,
   onToggle,
   onChange,
+  priceDelta,
 }: FrameSectionProps) => {
   const isFraming = config.values[format.id] === 'framing'
 
@@ -524,6 +530,7 @@ const FrameSection = ({
         restrictions={restrictions}
         optionsLocked={optionsLocked}
         onChange={onChange}
+        priceDelta={priceDelta}
       />
       {isFraming && (
         <>
@@ -536,6 +543,7 @@ const FrameSection = ({
             restrictions={restrictions}
             optionsLocked={optionsLocked}
             onChange={onChange}
+            priceDelta={priceDelta}
           />
           <MouldingChoice
             dim={moulding}
@@ -545,6 +553,7 @@ const FrameSection = ({
             restrictions={restrictions}
             optionsLocked={optionsLocked}
             onChange={onChange}
+            priceDelta={priceDelta}
           />
           {glass && isDimensionVisible(glass, config, catalog) && (
             <EnumChoice
@@ -556,6 +565,7 @@ const FrameSection = ({
               restrictions={restrictions}
               optionsLocked={optionsLocked}
               onChange={onChange}
+              priceDelta={priceDelta}
             />
           )}
           {windowMount && isDimensionVisible(windowMount, config, catalog) && (
@@ -568,6 +578,7 @@ const FrameSection = ({
               restrictions={restrictions}
               optionsLocked={optionsLocked}
               onChange={onChange}
+              priceDelta={priceDelta}
             />
           )}
           {windowMountSize && isDimensionVisible(windowMountSize, config, catalog) && (
@@ -581,6 +592,7 @@ const FrameSection = ({
                 restrictions={restrictions}
                 optionsLocked={optionsLocked}
                 onChange={onChange}
+                priceDelta={priceDelta}
               />
               <MountWidthCaption catalog={catalog} config={config} />
             </>
@@ -595,6 +607,7 @@ const FrameSection = ({
               restrictions={restrictions}
               optionsLocked={optionsLocked}
               onChange={onChange}
+              priceDelta={priceDelta}
             />
           )}
         </>

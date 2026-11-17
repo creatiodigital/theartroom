@@ -78,6 +78,46 @@ interface PrintWizardProps {
  * wizard; everything else gets the full configurable open-edition wizard.
  * The buyer never chooses — the artwork's `editionType` decides.
  */
+/**
+ * A choice applied to a configuration, with the cascades the configurator applies: a removed
+ * mount's size reset, a child option the new parent hides replaced. Shared by the choice itself and
+ * the price difference each option shows ahead of it, so the preview is what the total becomes.
+ */
+function applyChoice(
+  prev: WizardConfig,
+  patch: Record<string, string>,
+  catalog: Catalog,
+): WizardConfig {
+  const nextValues = { ...prev.values, ...patch }
+  // Picking 'None' for the passepartout color hides the mount-size
+  // input via cascade; reset the stored size so it doesn't re-appear
+  // (e.g. 4.5 cm sticking around) when the buyer later switches back
+  // to a colored mount.
+  let nextBorders = prev.borders
+  if (patch.windowMount === 'none' && prev.borders?.windowMountSize) {
+    nextBorders = { ...prev.borders, windowMountSize: { allCm: 0 } }
+  }
+  // Re-validate enum selections whose option-level visibleWhen
+  // depends on a value that just changed (e.g. moulding options
+  // cascade on frameType). Without this, switching the parent
+  // leaves a stale child id whose option is filtered out of the
+  // dropdown but still rendered in the summary panel.
+  const probe: WizardConfig = { ...prev, values: nextValues, borders: nextBorders }
+  for (const dim of catalog.dimensions) {
+    if (dim.kind !== 'enum') continue
+    const current = nextValues[dim.id]
+    if (!current) continue
+    const opt = dim.options.find((o) => o.id === current)
+    if (opt && isOptionVisible(opt, probe)) continue
+    const replacement =
+      dim.options.find((o) => o.isDefault && isOptionVisible(o, probe)) ??
+      dim.options.find((o) => isOptionVisible(o, probe))
+    if (replacement) nextValues[dim.id] = replacement.id
+    else delete nextValues[dim.id]
+  }
+  return { ...prev, values: nextValues, borders: nextBorders }
+}
+
 export const PrintWizard = (props: PrintWizardProps) => {
   if (props.artwork.editionType === 'limited') {
     return <LimitedWizard artwork={props.artwork} catalog={props.catalog} />
@@ -187,36 +227,7 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
   const dismissIntro = () => setIntroOpen(false)
 
   const updateConfig = (patch: Record<string, string>) => {
-    setConfig((prev) => {
-      const nextValues = { ...prev.values, ...patch }
-      // Picking 'None' for the passepartout color hides the mount-size
-      // input via cascade; reset the stored size so it doesn't re-appear
-      // (e.g. 4.5 cm sticking around) when the buyer later switches back
-      // to a colored mount.
-      let nextBorders = prev.borders
-      if (patch.windowMount === 'none' && prev.borders?.windowMountSize) {
-        nextBorders = { ...prev.borders, windowMountSize: { allCm: 0 } }
-      }
-      // Re-validate enum selections whose option-level visibleWhen
-      // depends on a value that just changed (e.g. moulding options
-      // cascade on frameType). Without this, switching the parent
-      // leaves a stale child id whose option is filtered out of the
-      // dropdown but still rendered in the summary panel.
-      const probe: WizardConfig = { ...prev, values: nextValues, borders: nextBorders }
-      for (const dim of catalog.dimensions) {
-        if (dim.kind !== 'enum') continue
-        const current = nextValues[dim.id]
-        if (!current) continue
-        const opt = dim.options.find((o) => o.id === current)
-        if (opt && isOptionVisible(opt, probe)) continue
-        const replacement =
-          dim.options.find((o) => o.isDefault && isOptionVisible(o, probe)) ??
-          dim.options.find((o) => isOptionVisible(o, probe))
-        if (replacement) nextValues[dim.id] = replacement.id
-        else delete nextValues[dim.id]
-      }
-      return { ...prev, values: nextValues, borders: nextBorders }
-    })
+    setConfig((prev) => applyChoice(prev, patch, catalog))
   }
 
   const updateCustomSize = (size: { widthCm: number; heightCm: number }) => {
@@ -266,6 +277,20 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
     [catalog.providerId, config, country, artwork.printPriceCents],
   )
   const quoteLoading = false
+
+  // What a choice would add to (or take off) the Price line — the artwork line, no shipping or
+  // VAT — shown on the Frame step's options (owner, 2026-11-17: "Print only" / "Framed +€220").
+  const artworkLineOf = (next: WizardConfig) =>
+    getProviderQuote(catalog.providerId, {
+      config: next,
+      country,
+      artistPriceCents: artwork.printPriceCents,
+    }).lines.find((line) => line.id === 'artwork')?.amountCents ?? null
+  const priceDelta = (patch: Record<string, string>): number | null => {
+    const now = quote.lines.find((line) => line.id === 'artwork')?.amountCents ?? null
+    const next = artworkLineOf(applyChoice(config, patch, catalog))
+    return now === null || next === null ? null : next - now
+  }
 
   const { addItem, removeItem, items } = useCart()
   // The line just added, shown in the "Added to your cart" toast (other-screens.md, Q-P19 b).
@@ -350,6 +375,7 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
           availability={availability}
           restrictions={restrictions}
           recommendations={recommendations}
+          priceDelta={priceDelta}
         />
         <SchemaStage catalog={catalog} config={config} imageUrl={artwork.imageUrl} />
         <SummaryPanel
