@@ -1,5 +1,9 @@
 .slider {
   width: 100%;
+  // The browser's 2px margin on a range input, on top of width 100%, made it 4px wider than its
+  // panel: the print configurator's steps panel (overflow-y: auto, so x scrolls too) then slid
+  // sideways under a finger dragging the knob on a phone.
+  margin: 0;
   height: 2px;
   -webkit-appearance: none;
   appearance: none;
