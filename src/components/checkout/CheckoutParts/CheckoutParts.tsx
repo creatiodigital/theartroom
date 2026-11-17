@@ -14,6 +14,8 @@ import type { CartItem } from '@/lib/cart/types'
 import type { CartTotals } from '@/lib/cart/validateCart'
 import { vatLabel } from '@/lib/checkout/vatLabel'
 import { formatEuro } from '@/lib/print-providers'
+import { convertSpecRows } from '@/lib/print-providers/specs'
+import { useUnits } from '@/lib/units/UnitsProvider'
 
 import styles from './CheckoutParts.module.scss'
 
@@ -57,45 +59,49 @@ export const OrderItems = ({
   items: CartItem[]
   /** lineId → "no longer available" message from the server revalidation. */
   errors?: Record<string, string>
-}) => (
-  <ul className={styles.items}>
-    {items.map((item) => {
-      const short = specShortLine(item.specsSummary)
-      const error = errors?.[item.lineId]
-      return (
-        <li key={item.lineId} className={styles.item}>
-          <ProtectedImage
-            src={item.thumbnailUrl}
-            alt={item.title}
-            width={0}
-            height={0}
-            wrapperClassName={styles.itemThumb}
-            className={styles.itemThumbImage}
-          />
-          <div className={styles.itemText}>
-            <span className={styles.itemTitle}>
-              <em>{item.title}</em>
-            </span>
-            <span className={styles.itemMeta}>
-              {item.artistName} · {editionShort(item)}
-            </span>
-            {(short || item.quantity > 1) && (
-              <span className={styles.itemSpec}>
-                {short}
-                {short && item.quantity > 1 && ' · '}
-                {item.quantity > 1 && (
-                  <span className={styles.nowrap}>Quantity {item.quantity}</span>
-                )}
+}) => {
+  // The lines' sizes in the visitor's unit; the stored rows stay cm (units.md).
+  const { unit } = useUnits()
+  return (
+    <ul className={styles.items}>
+      {items.map((item) => {
+        const short = specShortLine(convertSpecRows(item.specsSummary, unit))
+        const error = errors?.[item.lineId]
+        return (
+          <li key={item.lineId} className={styles.item}>
+            <ProtectedImage
+              src={item.thumbnailUrl}
+              alt={item.title}
+              width={0}
+              height={0}
+              wrapperClassName={styles.itemThumb}
+              className={styles.itemThumbImage}
+            />
+            <div className={styles.itemText}>
+              <span className={styles.itemTitle}>
+                <em>{item.title}</em>
               </span>
-            )}
-            {error && <span className={styles.itemError}>{error}</span>}
-          </div>
-          <span className={styles.itemPrice}>{formatEuro(lineTotal(item).lineItemCents)}</span>
-        </li>
-      )
-    })}
-  </ul>
-)
+              <span className={styles.itemMeta}>
+                {item.artistName} · {editionShort(item)}
+              </span>
+              {(short || item.quantity > 1) && (
+                <span className={styles.itemSpec}>
+                  {short}
+                  {short && item.quantity > 1 && ' · '}
+                  {item.quantity > 1 && (
+                    <span className={styles.nowrap}>Quantity {item.quantity}</span>
+                  )}
+                </span>
+              )}
+              {error && <span className={styles.itemError}>{error}</span>}
+            </div>
+            <span className={styles.itemPrice}>{formatEuro(lineTotal(item).lineItemCents)}</span>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
 
 /** Items, shipping, VAT and the total in serif. */
 export const Totals = ({
@@ -158,6 +164,7 @@ export const OrderColumn = ({
   errors?: Record<string, string>
 }) => {
   const [open, setOpen] = useState(false)
+  const { unit } = useUnits()
   const titleId = useId()
   const bodyId = useId()
   const prints = cartCount(items)
@@ -199,7 +206,7 @@ export const OrderColumn = ({
         <ul className={styles.orderRows}>
           {items.map((item) => {
             // The cart's lines, one subject each (owner, 2026-11-13: the same as the cart shows).
-            const lines = specLines(item.specsSummary)
+            const lines = specLines(convertSpecRows(item.specsSummary, unit))
             if (item.quantity > 1) lines.push(`Quantity ${item.quantity}`)
             const error = errors?.[item.lineId]
             return (

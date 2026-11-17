@@ -125,8 +125,9 @@ test.describe('shopping cart — /cart page', () => {
 
     await expect(page.getByRole('button', { name: /show all selected options/i })).toHaveCount(0)
     await expect(page.getByText('Giclée on Hahnemühle German Etching')).toBeVisible()
-    await expect(page.getByText('Print size: 30 × 20 cm')).toBeVisible()
-    await expect(page.getByText('Border: 3 cm')).toBeVisible()
+    // A line stored before the one-decimal rule is written to it on display (AR-184).
+    await expect(page.getByText('Print size: 30.0 × 20.0 cm')).toBeVisible()
+    await expect(page.getByText('Border: 3.0 cm')).toBeVisible()
     await expect(page.getByText('Museum glass')).toBeVisible()
   })
 
