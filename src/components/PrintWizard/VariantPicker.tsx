@@ -1,10 +1,12 @@
 'use client'
 
 import { Icon } from '@/components/ui/Icon'
-import { formatDualDimensions, formatEuro } from '@/lib/print-providers'
+import { formatEuro } from '@/lib/print-providers'
 import { TPS_PAPERS, TPS_PRINT_TYPES } from '@/lib/print-providers/printspace'
 import { isFixedSheet } from '@/lib/editions/sheetLayout'
 import type { LimitedVariantView } from '@/lib/editions/types'
+import { formatDimensions } from '@/lib/units/format'
+import { useUnits } from '@/lib/units/UnitsProvider'
 
 import styles from './PrintWizard.module.scss'
 
@@ -45,70 +47,74 @@ export const VariantPicker = ({
   selectedVariantId,
   onSelect,
   cartedVariantIds,
-}: Props) => (
-  <div className={styles.variantPicker}>
-    <h2 className={styles.variantPickerTitle}>Choose your edition</h2>
-    <p className={styles.variantPickerIntro}>
-      Each edition has a fixed size and paper, set with the artist.
-    </p>
-    {variants.map((v) => {
-      const paperLabel = TPS_PAPERS.find((p) => p.id === v.paperId)?.label ?? v.paperId
-      const techniqueLabel = TPS_PRINT_TYPES.find((t) => t.id === v.printTypeId)?.label
-      // White Cube–style medium line: "<technique> print on <paper>".
-      const medium = techniqueLabel ? `${techniqueLabel} print on ${paperLabel}` : paperLabel
-      const soldOut = v.remaining <= 0
-      const inCart = !soldOut && (cartedVariantIds?.has(v.id) ?? false)
-      const selected = v.id === selectedVariantId
-      return (
-        <button
-          key={v.id}
-          type="button"
-          className={`${styles.variantCard} ${selected ? styles.variantCardSelected : ''} ${
-            inCart || soldOut ? styles.variantCardInCart : ''
-          } ${soldOut ? styles.variantCardSoldOut : ''}`}
-          onClick={() => onSelect(v.id)}
-          // Sold out is the one state that genuinely cannot be selected: there
-          // is nothing to buy and nothing to preview buying. A carted variant
-          // stays live by contrast — see the note above.
-          disabled={soldOut}
-          aria-pressed={selected}
-        >
-          {/* order-flow.md: the name and the price on one line, then paper, sizes and stock. */}
-          <span className={styles.variantCardHead}>
-            <span className={styles.variantCardName}>{v.name}</span>
-            <span className={styles.variantCardPrice}>{formatEuro(v.priceCents)}</span>
-          </span>
-          {(soldOut || inCart) && (
-            <span className={styles.variantCardTag}>
-              {soldOut ? (
-                'Sold out'
-              ) : (
-                <>
-                  <Icon name="check-circle" size={13} />
-                  In your cart
-                </>
-              )}
+}: Props) => {
+  // The card's sizes in the visitor's unit; the variant's NAME stays as the artist wrote it (units.md).
+  const { unit } = useUnits()
+  return (
+    <div className={styles.variantPicker}>
+      <h2 className={styles.variantPickerTitle}>Choose your edition</h2>
+      <p className={styles.variantPickerIntro}>
+        Each edition has a fixed size and paper, set with the artist.
+      </p>
+      {variants.map((v) => {
+        const paperLabel = TPS_PAPERS.find((p) => p.id === v.paperId)?.label ?? v.paperId
+        const techniqueLabel = TPS_PRINT_TYPES.find((t) => t.id === v.printTypeId)?.label
+        // White Cube–style medium line: "<technique> print on <paper>".
+        const medium = techniqueLabel ? `${techniqueLabel} print on ${paperLabel}` : paperLabel
+        const soldOut = v.remaining <= 0
+        const inCart = !soldOut && (cartedVariantIds?.has(v.id) ?? false)
+        const selected = v.id === selectedVariantId
+        return (
+          <button
+            key={v.id}
+            type="button"
+            className={`${styles.variantCard} ${selected ? styles.variantCardSelected : ''} ${
+              inCart || soldOut ? styles.variantCardInCart : ''
+            } ${soldOut ? styles.variantCardSoldOut : ''}`}
+            onClick={() => onSelect(v.id)}
+            // Sold out is the one state that genuinely cannot be selected: there
+            // is nothing to buy and nothing to preview buying. A carted variant
+            // stays live by contrast — see the note above.
+            disabled={soldOut}
+            aria-pressed={selected}
+          >
+            {/* order-flow.md: the name and the price on one line, then paper, sizes and stock. */}
+            <span className={styles.variantCardHead}>
+              <span className={styles.variantCardName}>{v.name}</span>
+              <span className={styles.variantCardPrice}>{formatEuro(v.priceCents)}</span>
             </span>
-          )}
-          <span className={styles.variantCardMeta}>{medium}</span>
-          <span className={styles.variantCardMeta}>
-            {/* "sheet" and "print" are the two words for the two measurements,
+            {(soldOut || inCart) && (
+              <span className={styles.variantCardTag}>
+                {soldOut ? (
+                  'Sold out'
+                ) : (
+                  <>
+                    <Icon name="check-circle" size={13} />
+                    In your cart
+                  </>
+                )}
+              </span>
+            )}
+            <span className={styles.variantCardMeta}>{medium}</span>
+            <span className={styles.variantCardMeta}>
+              {/* "sheet" and "print" are the two words for the two measurements,
                 matching the summary panel's "Print size" row — the card used to
                 call the same figure the "image" while the panel called it the
                 print. "Unframed" is gone with them: the panel states the
                 framing, and every limited variant is print-only anyway, so it
                 was a constant on every card. */}
-            {isFixedSheet(v)
-              ? `${formatDualDimensions(v.widthCm, v.heightCm)} print · sheet ${formatDualDimensions(v.sheetWidthCm as number, v.sheetHeightCm as number)}`
-              : `${formatDualDimensions(v.widthCm, v.heightCm)} print`}
-          </span>
-          {/* "Edition of 30 · 29 left" (order-flow.md; questions Q-P4: the count is real data). */}
-          <span className={styles.variantCardStock}>
-            Edition of {v.editionSize}
-            {!soldOut && ` · ${v.remaining} left`}
-          </span>
-        </button>
-      )
-    })}
-  </div>
-)
+              {isFixedSheet(v)
+                ? `${formatDimensions(v.widthCm, v.heightCm, unit)} print · sheet ${formatDimensions(v.sheetWidthCm as number, v.sheetHeightCm as number, unit)}`
+                : `${formatDimensions(v.widthCm, v.heightCm, unit)} print`}
+            </span>
+            {/* "Edition of 30 · 29 left" (order-flow.md; questions Q-P4: the count is real data). */}
+            <span className={styles.variantCardStock}>
+              Edition of {v.editionSize}
+              {!soldOut && ` · ${v.remaining} left`}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}

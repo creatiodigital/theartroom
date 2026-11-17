@@ -11,6 +11,8 @@ import type { SelectOption } from '@/components/ui/SelectDropdown'
 import { EnumChoice, MouldingChoice } from './ChoiceControls'
 import { NumberedStep } from './NumberedStep'
 import { CustomSizeInputs } from './CustomSizeInputs'
+import { formatDimensions, formatSize, type Unit } from '@/lib/units/format'
+import { useUnits } from '@/lib/units/UnitsProvider'
 
 import {
   type AvailabilityCheck,
@@ -63,11 +65,10 @@ interface StepsPanelProps {
 // The closed steps' grey lines (order-flow.md): the current choice in words.
 const labelOf = (dim: EnumDimension, config: WizardConfig) =>
   dim.options.find((option) => option.id === config.values[dim.id])?.label ?? null
-const cmText = (value: number) => parseFloat(value.toFixed(1)).toString()
-/** "30 × 20 cm", height first (the site's H × W rule). */
-const sizeText = (config: WizardConfig) =>
+/** "30.0 × 20.0 cm", height first (the site's H × W rule), in the visitor's unit (units.md). */
+const sizeText = (config: WizardConfig, unit: Unit) =>
   config.customSize
-    ? `${cmText(config.customSize.heightCm)} × ${cmText(config.customSize.widthCm)} cm`
+    ? formatDimensions(config.customSize.widthCm, config.customSize.heightCm, unit)
     : null
 const joinParts = (...parts: (string | null | undefined)[]) =>
   parts.filter(Boolean).join(' · ') || null
@@ -425,12 +426,13 @@ const SizeAndBorderSection = ({
   onCustomSizeChange,
   onBorderChange,
 }: SizeAndBorderSectionProps) => {
+  const { unit } = useUnits()
   return (
     <NumberedStep
       title={size.label}
       summary={joinParts(
-        sizeText(config),
-        `${cmText(config.borders?.[border.id]?.allCm ?? border.defaultCm)} cm border`,
+        sizeText(config, unit),
+        `${formatSize(config.borders?.[border.id]?.allCm ?? border.defaultCm, unit)} border`,
       )}
       open={open}
       onToggle={onToggle}
@@ -443,6 +445,7 @@ const SizeAndBorderSection = ({
           customSize={config.customSize}
           disabled={optionsLocked}
           onChange={onCustomSizeChange}
+          unit={unit}
         />
       </div>
       <BorderSlider
@@ -611,13 +614,14 @@ const BorderSlider = ({
   optionsLocked: boolean
   onBorderChange: (dimensionId: string, allCm: number) => void
 }) => {
+  const { unit } = useUnits()
   const value = config.borders?.[dim.id]?.allCm ?? dim.defaultCm
-  const decimals = dim.stepCm >= 1 ? 0 : Math.ceil(-Math.log10(dim.stepCm))
-  const displayed = parseFloat(value.toFixed(decimals)).toString()
+  // Same steps underneath, in cm; the readout in the visitor's unit (units.md).
+  const displayed = formatSize(value, unit)
   return (
     <div className={styles.stepField}>
       <span className={styles.stepFieldLabel}>{dim.label}</span>
-      <p className={styles.sliderValue}>{displayed} cm</p>
+      <p className={styles.sliderValue}>{displayed}</p>
       <Slider
         min={dim.minCm}
         max={dim.maxCm}
@@ -626,6 +630,7 @@ const BorderSlider = ({
         disabled={optionsLocked}
         onChange={(v) => onBorderChange(dim.id, clampCm(v, dim.minCm, dim.maxCm, dim.stepCm))}
         aria-label={dim.label}
+        aria-valuetext={displayed}
       />
       {dim.helpText && <p className={styles.destinationHelp}>{dim.helpText}</p>}
     </div>
@@ -636,11 +641,12 @@ const BorderSlider = ({
 // the print size (TPS cuts the mat proportionally), so we surface
 // the resolved width the buyer will actually get.
 const MountWidthCaption = ({ catalog, config }: { catalog: Catalog; config: WizardConfig }) => {
+  const { unit } = useUnits()
   const matCm = getEffectiveMatCm(catalog, config)
   if (matCm <= 0) return null
   return (
     <p className={styles.destinationHelp}>
-      ≈ {parseFloat(matCm.toFixed(1))} cm on each side, scaled to your print size.
+      ≈ {formatSize(matCm, unit)} on each side, scaled to your print size.
     </p>
   )
 }
@@ -827,6 +833,7 @@ const SizeDimensionSection = ({
   onChange,
   onCustomSizeChange,
 }: SizeSectionProps) => {
+  const { unit } = useUnits()
   const filtered = useMemo(() => {
     return dimension.options
       .filter((o) => o.printEligible)
@@ -867,7 +874,7 @@ const SizeDimensionSection = ({
   return (
     <NumberedStep
       title={dimension.label}
-      summary={sizeText(config)}
+      summary={sizeText(config, unit)}
       open={open}
       onToggle={onToggle}
     >
@@ -880,6 +887,7 @@ const SizeDimensionSection = ({
             customSize={config.customSize}
             disabled={optionsLocked}
             onChange={onCustomSizeChange}
+            unit={unit}
           />
         ) : (
           <SelectDropdown<string>
@@ -913,19 +921,19 @@ const BorderDimensionSection = ({
   onToggle,
   onBorderChange,
 }: BorderSectionProps) => {
+  const { unit } = useUnits()
   const value = config.borders?.[dimension.id]?.allCm ?? dimension.defaultCm
-  const decimals = dimension.stepCm >= 1 ? 0 : Math.ceil(-Math.log10(dimension.stepCm))
-  // Strip trailing zeros so 0 → "0", 1.0 → "1", 0.3 stays "0.3".
-  const displayed = parseFloat(value.toFixed(decimals)).toString()
+  // One decimal, in the visitor's unit, like every size (units.md); the steps stay in cm.
+  const displayed = formatSize(value, unit)
   return (
     <NumberedStep
       title={dimension.label}
-      summary={`${displayed} cm`}
+      summary={displayed}
       open={open}
       onToggle={onToggle}
     >
       <div className={styles.stepField}>
-        <p className={styles.sliderValue}>{displayed} cm</p>
+        <p className={styles.sliderValue}>{displayed}</p>
         <Slider
           min={dimension.minCm}
           max={dimension.maxCm}
@@ -939,6 +947,7 @@ const BorderDimensionSection = ({
             )
           }
           aria-label={dimension.label}
+          aria-valuetext={displayed}
         />
         {dimension.helpText && <p className={styles.destinationHelp}>{dimension.helpText}</p>}
       </div>
