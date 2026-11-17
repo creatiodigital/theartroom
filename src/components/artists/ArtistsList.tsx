@@ -23,7 +23,7 @@ export function ArtistsList({ artists }: { artists: ArtistRowData[] }) {
   const visible = paged ? matches.slice(0, shown) : matches
 
   return (
-    <div className={styles.listArea}>
+    <div>
       {artists.length >= ARTISTS_SEARCH_FROM && (
         <ListSearch value={query} onChange={setQuery} placeholder="Search by artist name" />
       )}

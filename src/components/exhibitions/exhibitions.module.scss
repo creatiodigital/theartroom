@@ -6,9 +6,9 @@
   margin: 0 auto;
 }
 
+// Wider screens: no padding of its own; the last row's 28 px and the page's own 48 px make 76 px
+// under the last exhibition (owner, 2026-11-17: the 120 px here left 196 px of white).
 .groups {
-  padding-bottom: 120px;
-
   // Phones: with the page's own 48 px, 72 px under the last exhibition (owner, 2026-11-13: it was
   // 164 px).
   @include media-down(md) {

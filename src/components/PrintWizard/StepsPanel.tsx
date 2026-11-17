@@ -54,17 +54,6 @@ interface StepsPanelProps {
   priceDelta?: (patch: Record<string, string>) => number | null
 }
 
-/**
- * Key of the section that renders FIRST, so it can start open. The panel is a
- * column of collapsed headers otherwise, which reads as an empty sidebar rather
- * than as a form waiting to be filled — and the first decision is one every
- * buyer makes, so nothing is gained by hiding it.
- *
- * Mirrors the grouping in the render below: grouped sections answer to a
- * synthetic key, ungrouped ones to their dimension id. Falls back to the bare
- * id when a group's parts are missing, which is the same section the render
- * would produce.
- */
 // The closed steps' grey lines (order-flow.md): the current choice in words.
 const labelOf = (dim: EnumDimension, config: WizardConfig) =>
   dim.options.find((option) => option.id === config.values[dim.id])?.label ?? null
@@ -80,30 +69,6 @@ const borderText = (config: WizardConfig, border: BorderDimension, unit: Unit) =
 }
 const joinParts = (...parts: (string | null | undefined)[]) =>
   parts.filter(Boolean).join(' · ') || null
-
-function firstSectionKey(catalog: Catalog): string | null {
-  const first = catalog.dimensions[0]
-  if (!first) return null
-
-  const byId = new Map(catalog.dimensions.map((d) => [d.id, d]))
-  const kindOf = (id: string) => byId.get(id)?.kind
-
-  if (first.id === 'printType' && first.kind === 'enum' && kindOf('paper') === 'enum') {
-    return 'printAndPaper'
-  }
-  if (first.id === 'size' && first.kind === 'size' && kindOf('border') === 'border') {
-    return 'sizeAndBorder'
-  }
-  if (
-    first.id === 'format' &&
-    first.kind === 'enum' &&
-    kindOf('frameType') === 'enum' &&
-    kindOf('moulding') === 'enum'
-  ) {
-    return 'frameGroup'
-  }
-  return first.id
-}
 
 export const StepsPanel = ({
   catalog,
@@ -122,10 +87,9 @@ export const StepsPanel = ({
   // buyer can have any combination open at once. Country isn't picked
   // here any more (lives on the checkout step), so every section
   // available is for the print configuration itself.
-  const [openSteps, setOpenSteps] = useState<Set<string>>(() => {
-    const first = firstSectionKey(catalog)
-    return new Set(first ? [first] : [])
-  })
+  // Every section starts closed, at every width (owner, 2026-11-17): each closed header's grey line
+  // already says the current choice.
+  const [openSteps, setOpenSteps] = useState<Set<string>>(() => new Set())
   const toggle = (key: string) => (open: boolean) => {
     setOpenSteps((prev) => {
       const next = new Set(prev)
