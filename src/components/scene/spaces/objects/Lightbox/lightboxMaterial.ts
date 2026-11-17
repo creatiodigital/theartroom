@@ -12,14 +12,15 @@ import {
   ROOM_CAMERA,
 } from '@/components/scene/spaces/objects/Display/artworkFile'
 
-import { LIGHTBOX_ALPHA, LIGHTBOX_FEED_MAX, LIGHTBOX_FILM } from './lightboxLook'
+import { LIGHTBOX_ALPHA, LIGHTBOX_FEED_MAX, LIGHTBOX_FILM, LIGHTBOX_GLOSS } from './lightboxLook'
 
 /**
  * AR-183 — a lightbox's front: the image IS the light (docs/lightbox §1). No light of the room
- * falls on it; its color is the film × the light's color × its brightness, so blacks stay black
- * (a multiply, never an add). Matte: only that. Glossy: plus the faint reflection of the room a
- * glazed front gives back (the room's captured environment and the lamps' highlights, ~4 %
- * head-on: a black dielectric's specular, `outgoingLight` with no diffuse).
+ * falls on it — no lamp lights it or glints on it (tuning round 2: "lightboxes are not spot-lit");
+ * its color is the film in the light's color, so blacks stay black (a multiply, never an add).
+ * Matte: only that. Glossy: plus an acrylic face's soft sheen — the room's captured environment
+ * only, blurred (`LIGHTBOX_GLOSS`), never the lamps' highlights (`reflectedLight.indirectSpecular`,
+ * not `outgoingLight`: those were sharp white dots over the picture).
  *
  * Built on MeshStandardMaterial for the glossy front's reflections; its diffuse is black and its
  * `map` is only the image's texture (and the cover crop `vMapUv` carries). The bake's art-bounce
@@ -40,7 +41,7 @@ import { LIGHTBOX_ALPHA, LIGHTBOX_FEED_MAX, LIGHTBOX_FILM } from './lightboxLook
 export type LightboxUniforms = {
   lbTint: { value: Vector3 }
   lbGain: { value: number }
-  /** The film's saturation and contrast (`lightboxFilm`). */
+  /** The film's saturation and its mid-tone curve's power (`lightboxFilm`). */
   lbFilm: { value: Vector2 }
   lbFeed: { value: number }
 }
@@ -77,8 +78,9 @@ float lightboxLeakAxis( float pos, float halfSize ) {
 	return clamp( ( min( d + 0.5 * w, ${glslFloat(FILM.leakM)} ) - lo ) / max( film, 1e-7 ), 0.0, 1.0 );
 }
 
-// The film's character: more vivid than a print — saturation up, the darks deepened with white
-// kept white — a soft fall-off to the corners, a bright line where it meets the box.
+// The film's character: more vivid than a print — saturation up, the mid-tones lifted by a power
+// that keeps black at black and white at white — a soft fall-off to the corners, a bright line
+// where it meets the box.
 vec3 lightboxFilm( vec3 c, vec2 uv ) {
 	float luma = dot( c, vec3( 0.2126, 0.7152, 0.0722 ) );
 	c = max( vec3( 0.0 ), vec3( luma ) + ( c - vec3( luma ) ) * lbFilm.x );
@@ -90,11 +92,11 @@ vec3 lightboxFilm( vec3 c, vec2 uv ) {
 }
 
 // What the screen can show of it: unchanged up to 0.9, then rolled off towards white (Khronos PBR
-// Neutral's highlight compression, started later): whites stay white, never clip, and the
-// brightest parts burn towards white as a light's do — the color lives in the mid-tones.
+// Neutral's highlight compression, started later): whites stay white, never clip, and a little
+// of a bright color's hue goes (0.15): near-whites keep their texture (0.8 burned them out).
 vec3 lightboxShoulder( vec3 color ) {
 	const float start = 0.9;
-	const float desaturation = 0.8;
+	const float desaturation = 0.15;
 	float peak = max( color.r, max( color.g, color.b ) );
 	if ( peak < start ) return color;
 	float d = 1.0 - start;
@@ -113,7 +115,7 @@ ${decode ? 'lbTexel = sRGBTransferEOTF( lbTexel );' : ''}
 const LIGHTBOX_OUT = ({ glossy, baked }: LightboxShaderOptions) => /* glsl */ `
 #include <opaque_fragment>
 vec3 lbLight = lightboxFilm( lbTexel.rgb, vLbUv ) * lbTint * lbGain;
-vec3 lbReflect = ${glossy ? 'outgoingLight' : 'vec3( 0.0 )'};
+vec3 lbReflect = ${glossy ? 'reflectedLight.indirectSpecular' : 'vec3( 0.0 )'};
 ${
   baked
     ? `vec3 lbShown = lightboxShoulder( lbLight ) + lbReflect * roomExposure * roomWhiteBalance;
@@ -141,8 +143,8 @@ export const createLightboxMaterial = (
     map,
     color: 0x000000,
     metalness: 0,
-    roughness: options.glossy ? 0.06 : 1,
-    envMapIntensity: options.glossy ? 1 : 0,
+    roughness: options.glossy ? LIGHTBOX_GLOSS.roughness : 1,
+    envMapIntensity: options.glossy ? LIGHTBOX_GLOSS.reflect : 0,
     side: FrontSide,
   })
   material.userData.lightbox = uniforms

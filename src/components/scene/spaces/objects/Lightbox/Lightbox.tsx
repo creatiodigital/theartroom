@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useState } from 'react'
+import { useContext, useLayoutEffect, useMemo, useState } from 'react'
 import { useThree } from '@react-three/fiber'
 import {
   AddEquation,
@@ -27,17 +27,21 @@ import { WOOD_TILE_M } from '@/components/scene/spaces/objects/Frame/Frame'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
 import type { TLightbox, TLightboxMaterial } from '@/lib/lightbox'
 
+import { LightboxImageMeanContext, imageMeanColor, meanHue, type Rgb } from './imageMean'
 import {
   LIGHTBOX_FEED_MAX,
   LIGHTBOX_REFLECT,
   LIGHTBOX_RIM_SIDES,
+  LIGHTBOX_SPILL,
   LIGHTBOX_TINT,
   LIGHTBOX_WASH,
+  LIT_WALL,
   TODAY_LOOK_FRONT,
   lightboxBloomFeed,
   lightboxBox,
   lightboxFilm,
   lightboxGain,
+  lightboxImageTint,
   lightboxPanel,
 } from './lightboxLook'
 import { createLightboxMaterial, isEncodedMap } from './lightboxMaterial'
@@ -179,20 +183,26 @@ const LightboxSurfaceMaterial = ({
     [gl],
   )
 
+  // The image's average color, once its texture has loaded: the wash and the spill take its hue.
+  const reportMean = useContext(LightboxImageMeanContext)
   useLayoutEffect(() => {
     material.map = map
-  }, [material, map])
+    reportMean(imageMeanColor(map.image))
+  }, [material, map, reportMean])
 
   const { lightboxBrightness: brightness, lightboxLight: light } = lightbox
   useLayoutEffect(() => {
     const uniforms = material.userData.lightbox
-    uniforms.lbTint.value.set(...LIGHTBOX_TINT[light])
-    // The bake's emitter reads the panel's light (`lightboxEmitters`).
+    // The light's color, lightly, on the picture; in full on what its light falls on.
+    uniforms.lbTint.value.set(...lightboxImageTint(light))
+    // The bake's emitter reads the panel's light, in the light's own color (`lightboxEmitters`).
     material.userData.lightboxPanel = lightboxPanel(brightness)
-    const gain = lightboxGain(brightness)
-    uniforms.lbGain.value = options.baked ? gain : gain * TODAY_LOOK_FRONT
+    material.userData.lightboxColor = LIGHTBOX_TINT[light]
+    // The baked look lifts the mid-tones (`lightboxFilm`), never scales the picture: on screen a
+    // print's whites are already the screen's.
+    uniforms.lbGain.value = options.baked ? 1 : lightboxGain(brightness) * TODAY_LOOK_FRONT
     const film = lightboxFilm(brightness)
-    uniforms.lbFilm.value.set(film.saturation, film.contrast)
+    uniforms.lbFilm.value.set(film.saturation, film.power)
     uniforms.lbFeed.value =
       options.baked && hdr
         ? Math.min(
@@ -213,7 +223,11 @@ void main() {
 }
 `
 
-/** The light on the wall round the box (`LIGHTBOX_WASH`): alike on all four sides, fading out. */
+/**
+ * The light on the wall round the box (`LIGHTBOX_WASH`): alike on all four sides, falling off as a
+ * light's glow does — steeply near the box, a long soft tail — and faded to nothing at `uReach`
+ * (no edge: a smoothstep's plateau read as a plate on a dim wall).
+ */
 const WASH_FRAGMENT = /* glsl */ `
 uniform vec2 uBox;
 uniform vec2 uPlane;
@@ -224,8 +238,9 @@ void main() {
 	vec2 pos = ( vUv - 0.5 ) * uPlane;
 	vec2 d = abs( pos ) - uBox * 0.5;
 	if ( d.x < 0.0 && d.y < 0.0 ) discard;
-	float glow = 1.0 - smoothstep( 0.0, uReach, length( max( d, 0.0 ) ) );
-	gl_FragColor = vec4( uColor * glow * glow, 0.0 );
+	float dist = length( max( d, 0.0 ) ) / uReach;
+	float glow = exp( -1.5 * dist ) * ( 1.0 - smoothstep( 0.6, 1.0, dist ) );
+	gl_FragColor = vec4( uColor * glow, 0.0 );
 }
 `
 
@@ -234,17 +249,19 @@ type LightboxWashProps = {
   width: number
   height: number
   lightbox: TLightbox
+  /** The image's average color (`imageMeanColor`; null until read: white). */
+  mean: Rgb | null
 }
 
 /**
- * The light on the wall round the box (docs/lightbox §5, tuning round 1: `LIGHTBOX_WASH`): the
- * wall there that much lighter, in the light's color — a multiply of what the wall shows, so a
- * dark wall and a white one both read +20 % at Bright. Light only (the alpha under it, the wall's,
+ * The light on the wall round the box (docs/lightbox §5, tuning rounds 1–2: `LIGHTBOX_WASH`): the
+ * wall there that much lighter, in the image's hue × the light's color — a multiply of what the
+ * wall shows, so a dark wall and a white one both read +14 % at Bright. Light only (the alpha under it, the wall's,
  * is kept); never a real-time light. On a plane over the box and the wall around it, the box's
  * own area left out.
  */
-export function LightboxWash({ width, height, lightbox }: LightboxWashProps) {
-  const reach = LIGHTBOX_WASH.reach(width, height)
+export function LightboxWash({ width, height, lightbox, mean }: LightboxWashProps) {
+  const reach = LIGHTBOX_WASH.reach(lightbox.lightboxBrightness, width, height)
   const plane: [number, number] = [width + reach * 2, height + reach * 2]
   const [uniforms] = useState(() => ({
     uBox: { value: new Vector2() },
@@ -259,8 +276,9 @@ export function LightboxWash({ width, height, lightbox }: LightboxWashProps) {
     uniforms.uReach.value = reach
     uniforms.uColor.value
       .setRGB(...LIGHTBOX_TINT[light])
+      .multiply(new Color().setRGB(...meanHue(mean, LIGHTBOX_WASH.colorShare)))
       .multiplyScalar(LIGHTBOX_WASH.atEdge(brightness))
-  }, [uniforms, width, height, reach, brightness, light])
+  }, [uniforms, width, height, reach, brightness, light, mean])
 
   return (
     <mesh position={[0, 0, 0.0015]} renderOrder={0}>
@@ -333,15 +351,38 @@ type LightboxRimProps = {
   /** Where the film sits (m from the wall). */
   filmZ: number
   lightbox: TLightbox
+  /** The image's average color (`imageMeanColor`; null until read: white). */
+  mean: Rgb | null
 }
 
 /**
- * The box catching its own light (tuning round 1, docs/lightbox): the rebate's sides around the
+ * The spill (`LIGHTBOX_SPILL`): light added on the edge's front, from the image's border outwards,
+ * fading out over `uReach`; the image itself (inside `uInner`) is left as it is.
+ */
+const SPILL_FRAGMENT = /* glsl */ `
+uniform vec2 uInner;
+uniform vec2 uPlane;
+uniform vec3 uColor;
+uniform float uReach;
+varying vec2 vUv;
+void main() {
+	vec2 pos = ( vUv - 0.5 ) * uPlane;
+	vec2 d = abs( pos ) - uInner * 0.5;
+	if ( d.x < 0.0 && d.y < 0.0 ) discard;
+	float glow = 1.0 - smoothstep( 0.0, uReach, length( max( d, 0.0 ) ) );
+	gl_FragColor = vec4( uColor * glow * glow, 0.0 );
+}
+`
+
+/**
+ * The box catching its own light (tuning rounds 1–2, docs/lightbox): the rebate's sides around the
  * film glow in the light's color — × the panel's light and what the box's material gives back
  * (`LIGHTBOX_REFLECT`, `LIGHTBOX_RIM_SIDES`), in the room's units: past the camera's exposure as any
- * surface (faint on black, bright on white and silver). Edge to edge there is no rebate.
+ * surface (faint on black, bright on white and silver) — and the image's light spills over the
+ * edge's inner lip (`LIGHTBOX_SPILL`), in the image's hue × the light's color, whatever the edge is
+ * made of. Edge to edge there is no rebate and no lip.
  */
-export function LightboxRim({ width, height, filmZ, lightbox }: LightboxRimProps) {
+export function LightboxRim({ width, height, filmZ, lightbox, mean }: LightboxRimProps) {
   const baked = useBakedLook().baked
   const { edge, depth } = lightboxBox(lightbox)
   const panel = baked
@@ -352,8 +393,23 @@ export function LightboxRim({ width, height, filmZ, lightbox }: LightboxRimProps
     .multiply(new Color().setRGB(...LIGHTBOX_REFLECT[lightbox.lightboxMaterial]))
     .multiplyScalar(panel)
   const [sides] = useState(() => ({ uColor: { value: new Color() } }))
+  const spillReach = Math.min(edge, LIGHTBOX_SPILL.reachM(lightbox.lightboxBrightness))
+  const spillPlane: [number, number] = [width + spillReach * 2, height + spillReach * 2]
+  const [spill] = useState(() => ({
+    uInner: { value: new Vector2() },
+    uPlane: { value: new Vector2() },
+    uColor: { value: new Color() },
+    uReach: { value: 0 },
+  }))
   useLayoutEffect(() => {
     sides.uColor.value.copy(light).multiplyScalar(LIGHTBOX_RIM_SIDES)
+    spill.uInner.value.set(width, height)
+    spill.uPlane.value.set(...spillPlane)
+    spill.uReach.value = spillReach
+    spill.uColor.value
+      .setRGB(...LIGHTBOX_TINT[lightbox.lightboxLight])
+      .multiply(new Color().setRGB(...meanHue(mean, 1)))
+      .multiplyScalar(LIT_WALL * LIGHTBOX_SPILL.atEdge(lightbox.lightboxBrightness))
   })
   const geometry = useMemo(
     () => (edge > 0 && depth > filmZ ? rebateGeometry(width, height, filmZ, depth) : null),
@@ -363,13 +419,33 @@ export function LightboxRim({ width, height, filmZ, lightbox }: LightboxRimProps
   if (!geometry) return null
 
   return (
-    <mesh geometry={geometry}>
-      <shaderMaterial
-        side={DoubleSide}
-        uniforms={sides}
-        vertexShader={SIDES_VERTEX}
-        fragmentShader={SIDES_FRAGMENT}
-      />
-    </mesh>
+    <>
+      <mesh geometry={geometry}>
+        <shaderMaterial
+          side={DoubleSide}
+          uniforms={sides}
+          vertexShader={SIDES_VERTEX}
+          fragmentShader={SIDES_FRAGMENT}
+        />
+      </mesh>
+      {spillReach > 0 && (
+        <mesh position={[0, 0, depth + 0.0003]}>
+          <planeGeometry args={spillPlane} />
+          <shaderMaterial
+            transparent
+            depthWrite={false}
+            blending={CustomBlending}
+            blendEquation={AddEquation}
+            blendSrc={OneFactor}
+            blendDst={OneFactor}
+            blendSrcAlpha={ZeroFactor}
+            blendDstAlpha={OneFactor}
+            uniforms={spill}
+            vertexShader={WASH_VERTEX}
+            fragmentShader={SPILL_FRAGMENT}
+          />
+        </mesh>
+      )}
+    </>
   )
 }

@@ -127,3 +127,27 @@ is lamps-only (threshold × `lampGlowScale` 8), the fallback wash is hidden once
    visible from across the room.
 6. **Check** in the same room: a print next to the lightbox (they must look clearly different), Soft and Bright,
    black and oak, and one dim room. Send screenshots before committing the tuning.
+
+## Tuning round 2 (owner review in prod, 2026-11-16)
+Owner: *"it looks okay-ish… if I add the shiny version, the image suffers a bit; if I add the matte version, we
+really don't know this is a lightbox."* Screenshots: matte reads as a lit print; glossy shows **sharp white dots**
+(lamp reflections) over the picture; at Bright/cool the **whites burn out** (the paper texture of the background is
+lost) and the image goes cold and flat.
+
+What makes a real lightbox read, and what to change:
+1. **Glossy = a soft sheen, never sparkles.** Real acrylic fronts show a broad, soft reflection, not pin-point lamp
+   highlights. Glossy front: rough reflection (roughness ≈ 0.3), strength ≈ 6–8 %, **no specular point lights**
+   (lamps excluded from its highlights), only the soft environment: a faint gradient that slides as you walk. With that,
+   make **Glossy the default** front (it is the strongest cue); Matte stays as an option.
+2. **Keep the highlights' detail.** The lift must not clip: lift mid-tones (≈ +15 % Soft → +35 % Bright), roll the top
+   20 % into white with a soft shoulder so near-whites keep their texture. Let the **bloom** carry the "too bright to
+   look at" feeling, not clipped pixels. Light colour tints only lightly (Cool must not turn the picture blue-grey).
+3. **Light spills over the edge.** A thin, soft glow crossing the box's inner lip (from the image onto the edge),
+   strongest at Bright: the image's light visibly reaching the frame, not stopping at a hard line.
+4. **A softer, wider halo, not a rim.** Halo on the wall: lower peak, wider fall-off (≈ 30–50 cm at Bright), tinted
+   by the image's average colour × light colour, so a warm picture gives a warm wash.
+5. **No lamp light on the front.** Lightboxes are not spot-lit in galleries; lamps aimed at a lightbox must not add
+   light or reflections to its front (its look is its own light). The wall around keeps the room's light.
+6. Note for artists (help line under the Lightbox switch): *"Reads best on walls with softer lamp light around it."*
+7. Check again with the same 4 views (matte silver, print next to it, glossy oak, cool oak) + one dim wall. Screenshots
+   before committing.

@@ -62,7 +62,9 @@ export const LIGHTBOX_DEFAULTS: TLightbox = {
   lightboxDepth: 6,
   lightboxEdge: 'thin',
   lightboxMaterial: 'alu-black',
-  lightboxFront: 'matte',
+  // Tuning round 2 (owner, 2026-11-16): a glossy front's soft sheen is the strongest sign of a
+  // lightbox; Matte stays a choice.
+  lightboxFront: 'glossy',
 }
 
 /** The seven columns, in schema order. */
