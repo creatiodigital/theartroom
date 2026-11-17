@@ -212,7 +212,8 @@ both-units version was tried and dropped: "a big range in cm and then in is too 
   cart, checkout, payment, confirmation.
 - **Two switches, one saved choice** (`tar.units`, this browser): the footer's own row *Sizes in cm | in* (as your
   board) and the configurator's soft switch on the drawing (owner: "keep the switch on the configurator page", over
-  the brief's "remove every other switch"). None on the artwork page or in the header.
+  the brief's "remove every other switch"). None on the artwork page or in the header. Footer hover on the other unit:
+  brand red, **no underline** (owner, 2026-11-17; units.md says underline).
 - **Emails show both**, as units.md: `30.0 × 20.0 cm (11.8 × 7.9 in)` (one decimal, the site's rule); a value already
   in parentheses gets ` / ` instead (`Small (≈ 5.0 cm / 2.0 in)`). Admin notification emails stay cm.
 - Open-edition and Inquire-only works show the file's printable range; a limited edition each live variant's print
