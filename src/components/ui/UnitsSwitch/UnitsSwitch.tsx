@@ -17,7 +17,7 @@ const ARROWS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']
  * The cm | in choice (docs/public-redesign/units.md, designs/units-switch.dc.html). Two places, one
  * saved choice (`useUnits`, kept in this browser):
  * - `text` — the footer's own row, "Sizes in cm | in": plain words, the chosen one bold, a light
- *   divider; the other turns brand red and underlined on hover / focus.
+ *   divider; the other turns brand red on hover / focus (no underline).
  * - `track` — the print configurator's, in the drawing's corner (it has no footer): the soft track
  *   with a white chosen cell.
  * A radio group either way: arrow keys move between the two, Enter or Space chooses (they are

@@ -35,8 +35,8 @@
 }
 
 // The footer's look (units.md "The switch: one, in the footer"): plain words in the row's own size
-// and grey, "cm | in", the chosen one bold and dark; the other brand red and underlined on hover or
-// focus; the divider light and not clickable.
+// and grey, "cm | in", the chosen one bold and dark; the other brand red on hover or focus; the
+// divider light and not clickable.
 .text {
   display: inline-flex;
   align-items: center;
@@ -48,10 +48,10 @@
   line-height: inherit;
   color: inherit;
 
+  // Brand red, no underline (owner, 2026-11-17).
   &:not(.chosen):hover,
   &:not(.chosen):focus-visible {
     color: var(--color-brand);
-    text-decoration: underline;
   }
 
   &:focus-visible {
