@@ -1,4 +1,8 @@
 .slider {
+  // The dot, and its hit area in the touch row (mobile-sliders.md: a 12px dot, a 32px target). The
+  // touch row reads both to put the value under the finger.
+  --slider-thumb: var(--space-3);
+  --slider-thumb-hit: var(--space-8);
   width: 100%;
   // The browser's 2px margin on a range input, on top of width 100%, made it 4px wider than its
   // panel: the print configurator's steps panel (overflow-y: auto, so x scrolls too) then slid
@@ -15,8 +19,8 @@
   &::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 12px;
-    height: 12px;
+    width: var(--slider-thumb);
+    height: var(--slider-thumb);
     background: var(--color-text-primary);
     border: none;
     border-radius: 50%;
@@ -24,8 +28,8 @@
   }
 
   &::-moz-range-thumb {
-    width: 12px;
-    height: 12px;
+    width: var(--slider-thumb);
+    height: var(--slider-thumb);
     background: var(--color-text-primary);
     border: none;
     border-radius: 50%;
@@ -36,4 +40,37 @@
     cursor: not-allowed;
     opacity: 0.5;
   }
+}
+
+// ── The touch row (`touchRow`, docs/public-redesign/mobile-sliders.md) ──────────────────────────
+// Takes the input's place in the layout exactly: an inline-block like the input (same line box in
+// a block parent), a plain block as a flex item. Nothing around the slider moves.
+.touchRow {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+// The input underneath keeps focus, arrow keys and aria-valuetext; the pointer goes to the row.
+.inTouchRow {
+  display: block;
+  pointer-events: none;
+}
+
+// The invisible row over the whole track, taller than the dot (Apple's 44px minimum, on the 48 token):
+// a finger can start anywhere on it, far from the screen's back-swipe edge. touch-action: none here
+// only, so the page doesn't scroll or pan while sliding; it still scrolls everywhere else.
+.touchArea {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: var(--space-12);
+  transform: translateY(-50%);
+  touch-action: none;
+  cursor: pointer;
+}
+
+.touchRowDisabled .touchArea {
+  cursor: not-allowed;
 }

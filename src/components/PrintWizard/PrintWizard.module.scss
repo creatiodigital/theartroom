@@ -150,6 +150,9 @@
   // against the panel's overflow.
   padding: var(--space-5) var(--space-5) var(--space-80) var(--wizard-gutter);
   overflow-y: auto;
+  // Nothing in the panel can pan sideways under a finger (mobile-sliders.md); with overflow-y auto
+  // the browser computes this to hidden, which no touch can scroll.
+  overflow-x: clip;
   border-right: 1px solid var(--color-border-light);
 
   @include media-down(laptop) {
