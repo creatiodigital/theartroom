@@ -233,3 +233,7 @@ both-units version was tried and dropped: "a big range in cm and then in is too 
 - Frame step: every option that isn't the current one and changes the price shows the difference both ways
   ("Framing +€125", then "Print only −€125"), frame types, glass, mount and hanging included.
 - A limited edition's configurator opens on the cheapest edition on sale.
+- **Owner's answers, 2026-11-17 (built 18f09201, db399d81):** one count everywhere (the configurator's edition cards
+  count sold copies too; what can be *selected* still follows the numbers available); "no border" instead of
+  "0.0 cm border"; From and the configurator's first price are the same figure; one price format on every visitor page,
+  `€303` or `€303.50` (grouped `€1,797`), emails and invoices keep two decimals.
