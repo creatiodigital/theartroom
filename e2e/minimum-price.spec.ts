@@ -7,6 +7,10 @@ import {
   withVat,
   type LiveVariant,
 } from '@/lib/editions/minimumPrice'
+import { buildInitialConfig } from '@/lib/print-providers/configHelpers'
+import { buildPrintspaceCatalog, getPrintMinSize } from '@/lib/print-providers/printspace'
+import { openEditionFromConfig } from '@/lib/print-providers/printspace/fromConfig'
+import { getProviderQuote } from '@/lib/print-providers/quote'
 
 /**
  * The number behind a price on a prints card.
@@ -155,4 +159,38 @@ test.describe('minimumPriceForArtwork', () => {
 test('withVat is a separate presentation step, not baked into the number', async () => {
   expect(withVat(10000, 0.21)).toBe(12100)
   expect(withVat(10000, 0)).toBe(10000)
+})
+
+// Owner, 2026-11-17: "350 on the artwork page → open the wizard → 570" scared buyers. A fresh
+// configurator opens at exactly what "From €…" prices: unframed, the smallest size, no border.
+test.describe('the configurator opens at the From price', () => {
+  for (const [name, file] of [
+    ['3:2 landscape', LANDSCAPE],
+    ['2:3 portrait', PORTRAIT],
+    // 3:4 — the smallest long edge is 26.666… cm, off the configurator's 0.1 cm grid.
+    ['3:4 portrait', { originalWidth: 3000, originalHeight: 4000 }],
+  ] as const) {
+    test(`its first price is the artwork page's, ${name}`, () => {
+      const artistPriceCents = 20000
+      const catalog = buildPrintspaceCatalog({
+        imageWidthPx: file.originalWidth,
+        imageHeightPx: file.originalHeight,
+      })
+      const smallest = getPrintMinSize({ width: file.originalWidth, height: file.originalHeight })!
+      const config = buildInitialConfig(
+        catalog,
+        file.originalWidth / file.originalHeight,
+        null,
+        openEditionFromConfig(smallest),
+      )
+      expect(config.values.format).toBe('print-only')
+      expect(config.borders?.border?.allCm).toBe(0)
+
+      const first = getProviderQuote('printspace', { config, country: '', artistPriceCents })
+        .lines.find((line) => line.id === 'artwork')!.amountCents
+      const from = minimumPriceForOpen({ ...file, printPriceCents: artistPriceCents })!
+      expect(first).toBe(from.cents)
+      expect(config.customSize).toEqual({ widthCm: from.widthCm, heightCm: from.heightCm })
+    })
+  }
 })

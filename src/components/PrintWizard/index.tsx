@@ -26,7 +26,8 @@ import {
   isOptionVisible,
   summarizeConfig,
 } from '@/lib/print-providers'
-import { getPrintLongEdgeBounds } from '@/lib/print-providers/printspace'
+import { getPrintLongEdgeBounds, getPrintMinSize } from '@/lib/print-providers/printspace'
+import { openEditionFromConfig } from '@/lib/print-providers/printspace/fromConfig'
 import { getProviderQuote } from '@/lib/print-providers/quote'
 
 import type { LimitedVariantView } from '@/lib/editions/types'
@@ -140,8 +141,23 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
     urlSeed.borders !== undefined
 
   const [config, setConfig] = useState<WizardConfig>(() => {
+    if (!hasSeed) {
+      // A fresh entry opens at exactly what the artwork page's "From €…" prices: unframed, the
+      // smallest printable size, no border (owner, 2026-11-17; one config, fromConfig.ts).
+      const smallest = getPrintMinSize(
+        artwork.originalWidthPx > 0 && artwork.originalHeightPx > 0
+          ? { width: artwork.originalWidthPx, height: artwork.originalHeightPx }
+          : null,
+      )
+      return buildInitialConfig(
+        catalog,
+        aspectRatio,
+        restrictions,
+        smallest ? openEditionFromConfig(smallest) : undefined,
+      )
+    }
+    // A URL-seeded entry (back from the cart, a shared link) keeps its seed over the defaults.
     const fresh = buildInitialConfig(catalog, aspectRatio, restrictions)
-    if (!hasSeed) return fresh
     return {
       ...fresh,
       values: { ...fresh.values, ...urlSeed.values },
