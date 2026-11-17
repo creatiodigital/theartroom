@@ -1,5 +1,6 @@
 'use client'
 
+import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
 import { Lock } from '@phosphor-icons/react'
 
 import { CartLine } from '@/components/cart/CartLine'
@@ -11,7 +12,6 @@ import { PageLayout } from '@/components/ui/PageLayout'
 import { cartCount, cartSubtotal, hasLimitedItems } from '@/lib/cart/cartMath'
 import { LIMITED_NOT_RESERVED_NOTICE } from '@/lib/cart/notices'
 import { useCart } from '@/lib/cart/useCart'
-import { formatEuro } from '@/lib/print-providers'
 
 import styles from './CartPage.module.scss'
 
@@ -75,7 +75,7 @@ export const CartPage = () => {
               <span className={styles.subtotalLabel}>
                 Subtotal · {prints} {prints === 1 ? 'print' : 'prints'}
               </span>
-              <span className={styles.subtotalValue}>{formatEuro(subtotalCents)}</span>
+              <span className={styles.subtotalValue}>{formatDisplayPrice(subtotalCents)}</span>
             </div>
             <p className={styles.note}>Shipping and taxes are calculated at checkout.</p>
             <Button

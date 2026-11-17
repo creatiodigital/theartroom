@@ -1,5 +1,6 @@
 'use client'
 
+import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
 import { useMemo, useState } from 'react'
 import { ArrowLeft, Lock } from '@phosphor-icons/react'
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
@@ -8,7 +9,6 @@ import { loadStripe, type Stripe } from '@stripe/stripe-js'
 import { ArrowButton, CheckoutButton } from '@/components/checkout/CheckoutParts'
 import type { CartTotals } from '@/lib/cart/validateCart'
 import { STRIPE_APPEARANCE } from '@/lib/checkout/stripeAppearance'
-import { formatEuro } from '@/lib/print-providers'
 import type { ShippingAddress } from '@/components/checkout/PrintCheckout/createPaymentIntent'
 
 import styles from './CartPayment.module.scss'
@@ -170,7 +170,7 @@ const CartPaymentForm = ({ totals, address, onSuccess, onBack }: CartPaymentForm
         <CheckoutButton
           type="submit"
           disabled={!stripe || !elements || submitting}
-          label={submitting ? 'Processing…' : `Pay ${formatEuro(totals.totalCents)}`}
+          label={submitting ? 'Processing…' : `Pay ${formatDisplayPrice(totals.totalCents)}`}
           iconLeft={<Lock size={16} weight="light" aria-hidden />}
           className={styles.payButton}
         />

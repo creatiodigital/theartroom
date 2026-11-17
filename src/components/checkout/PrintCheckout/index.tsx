@@ -1,5 +1,6 @@
 'use client'
 
+import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -17,7 +18,6 @@ import {
   type Quote,
   type SpecsSummary,
   type WizardConfig,
-  formatEuro,
 } from '@/lib/print-providers'
 import { getCountryName } from '@/lib/print-providers/dialCodes'
 import { getProviderQuote } from '@/lib/print-providers/quote'
@@ -541,15 +541,15 @@ export const PrintCheckout = ({
             const placeholder = quoteLoading ? '…' : '—'
             const vatLabel = quote?.taxLabel ?? 'VAT'
             const vatValue =
-              quote && quote.taxCents > 0 ? formatEuro(quote.taxCents) : country ? '—' : '—'
+              quote && quote.taxCents > 0 ? formatDisplayPrice(quote.taxCents) : country ? '—' : '—'
             return [
               {
                 label: 'Artwork',
-                value: artworkLine ? formatEuro(artworkLine.amountCents) : placeholder,
+                value: artworkLine ? formatDisplayPrice(artworkLine.amountCents) : placeholder,
               },
               {
                 label: 'Shipping',
-                value: shippingLine ? formatEuro(shippingLine.amountCents) : '—',
+                value: shippingLine ? formatDisplayPrice(shippingLine.amountCents) : '—',
                 muted: true,
               },
               {
@@ -561,7 +561,7 @@ export const PrintCheckout = ({
           })()}
           total={{
             label: country ? 'Total' : 'Total (before taxes)',
-            value: quote ? formatEuro(quote.totalCents) : '—',
+            value: quote ? formatDisplayPrice(quote.totalCents) : '—',
           }}
           notes={[quoteError, submitError].filter((n): n is string => Boolean(n))}
           cta={{

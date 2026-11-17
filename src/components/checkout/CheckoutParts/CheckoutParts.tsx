@@ -1,5 +1,6 @@
 'use client'
 
+import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
 import type { ComponentProps, ReactNode } from 'react'
 import { useId, useState } from 'react'
 import c from 'classnames'
@@ -13,7 +14,6 @@ import { specLines, specShortLine } from '@/lib/cart/specLines'
 import type { CartItem } from '@/lib/cart/types'
 import type { CartTotals } from '@/lib/cart/validateCart'
 import { vatLabel } from '@/lib/checkout/vatLabel'
-import { formatEuro } from '@/lib/print-providers'
 import { convertSpecRows } from '@/lib/print-providers/specs'
 import { useUnits } from '@/lib/units/UnitsProvider'
 
@@ -95,7 +95,9 @@ export const OrderItems = ({
               )}
               {error && <span className={styles.itemError}>{error}</span>}
             </div>
-            <span className={styles.itemPrice}>{formatEuro(lineTotal(item).lineItemCents)}</span>
+            <span className={styles.itemPrice}>
+              {formatDisplayPrice(lineTotal(item).lineItemCents)}
+            </span>
           </li>
         )
       })}
@@ -119,19 +121,19 @@ export const Totals = ({
   <dl className={styles.totals}>
     <div className={styles.totalRow}>
       <dt>Items</dt>
-      <dd>{formatEuro(totals.itemsPreTaxCents)}</dd>
+      <dd>{formatDisplayPrice(totals.itemsPreTaxCents)}</dd>
     </div>
     <div className={styles.totalRow}>
       <dt>Shipping</dt>
-      <dd>{formatEuro(totals.shippingCents)}</dd>
+      <dd>{formatDisplayPrice(totals.shippingCents)}</dd>
     </div>
     <div className={styles.totalRow}>
       <dt>{vatLabel(totals.vatRate)}</dt>
-      <dd>{formatEuro(totals.customerVatCents)}</dd>
+      <dd>{formatDisplayPrice(totals.customerVatCents)}</dd>
     </div>
     <div className={c(styles.totalRow, styles.grandTotal)}>
       <dt>{totalLabel}</dt>
-      <dd>{formatEuro(totals.totalCents)}</dd>
+      <dd>{formatDisplayPrice(totals.totalCents)}</dd>
     </div>
   </dl>
 )
@@ -189,7 +191,7 @@ export const OrderColumn = ({
           />
         </span>
         <span className={styles.orderBarAmount}>
-          {formatEuro(totals ? totals.totalCents : itemsCents)}
+          {formatDisplayPrice(totals ? totals.totalCents : itemsCents)}
         </span>
       </Button>
 
@@ -233,7 +235,7 @@ export const OrderColumn = ({
                   {error && <span className={styles.itemError}>{error}</span>}
                 </div>
                 <span className={styles.orderPrice}>
-                  {formatEuro(lineTotal(item).lineItemCents)}
+                  {formatDisplayPrice(lineTotal(item).lineItemCents)}
                 </span>
               </li>
             )
@@ -243,21 +245,21 @@ export const OrderColumn = ({
         <dl className={styles.orderFigures}>
           <div className={styles.orderFigure}>
             <dt>Items</dt>
-            <dd>{formatEuro(totals ? totals.itemsPreTaxCents : itemsCents)}</dd>
+            <dd>{formatDisplayPrice(totals ? totals.itemsPreTaxCents : itemsCents)}</dd>
           </div>
           {totals ? (
             <>
               <div className={styles.orderFigure}>
                 <dt>Shipping</dt>
-                <dd>{formatEuro(totals.shippingCents)}</dd>
+                <dd>{formatDisplayPrice(totals.shippingCents)}</dd>
               </div>
               <div className={styles.orderFigure}>
                 <dt>{vatLabel(totals.vatRate)}</dt>
-                <dd>{formatEuro(totals.customerVatCents)}</dd>
+                <dd>{formatDisplayPrice(totals.customerVatCents)}</dd>
               </div>
               <div className={c(styles.orderFigure, styles.orderTotal)}>
                 <dt>Total</dt>
-                <dd>{formatEuro(totals.totalCents)}</dd>
+                <dd>{formatDisplayPrice(totals.totalCents)}</dd>
               </div>
             </>
           ) : (
