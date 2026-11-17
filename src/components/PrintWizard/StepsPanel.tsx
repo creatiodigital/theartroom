@@ -10,6 +10,7 @@ import type { SelectOption } from '@/components/ui/SelectDropdown'
 
 import { EnumChoice, MouldingChoice } from './ChoiceControls'
 import { NumberedStep } from './NumberedStep'
+import { PanelHeading } from './PanelHeading'
 import { CustomSizeInputs } from './CustomSizeInputs'
 import { formatDimensions, formatSize, type Unit } from '@/lib/units/format'
 import { useUnits } from '@/lib/units/UnitsProvider'
@@ -142,6 +143,10 @@ export const StepsPanel = ({
 
   return (
     <aside className={styles.stepsPanel}>
+      <PanelHeading
+        title="Configure your print"
+        intro="Printed to order. Choose the paper, the size and the frame; the price updates as you go."
+      />
       {(() => {
         // The catalog bundles a few dimensions that are read as one decision:
         //   - printType + paper       (paper is filtered by process)
@@ -941,12 +946,7 @@ const BorderDimensionSection = ({
   // One decimal, in the visitor's unit, like every size (units.md); the steps stay in cm.
   const displayed = formatSize(value, unit)
   return (
-    <NumberedStep
-      title={dimension.label}
-      summary={displayed}
-      open={open}
-      onToggle={onToggle}
-    >
+    <NumberedStep title={dimension.label} summary={displayed} open={open} onToggle={onToggle}>
       <div className={styles.stepField}>
         <p className={styles.sliderValue}>{displayed}</p>
         <Slider

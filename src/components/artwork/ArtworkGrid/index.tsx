@@ -179,9 +179,7 @@ export const ArtworkGrid = ({
                   docs/public-redesign/components.md "ArtworkCard". The artist is
                   named only on a grid of several artists (Prints). */}
               <div className={styles.caption}>
-                <h3 className={styles.title}>
-                  <em>{artwork.title || artwork.name}</em>
-                </h3>
+                <h3 className={styles.title}>{artwork.title || artwork.name}</h3>
                 {showArtist && (
                   <span className={styles.artist}>
                     {/* Per-card first: it is the only value that is right on a

@@ -14,22 +14,14 @@ const UNITS: Unit[] = ['cm', 'in']
 const ARROWS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']
 
 /**
- * The cm | in choice (docs/public-redesign/units.md, designs/units-switch.dc.html). Two places, one
- * saved choice (`useUnits`, kept in this browser):
- * - `text` — the footer's own row, "Sizes in cm | in": plain words, the chosen one bold, a light
- *   divider; the other turns brand red on hover / focus (no underline).
- * - `track` — the print configurator's, in the drawing's corner (it has no footer): the soft track
- *   with a white chosen cell.
- * A radio group either way: arrow keys move between the two, Enter or Space chooses (they are
- * buttons); Tab lands on the chosen one.
+ * The cm | in choice (docs/public-redesign/units.md): plain words, "cm | in", the chosen one bold, a
+ * light divider; the other turns brand red on hover / focus (no underline). It takes the size and
+ * grey of where it sits. Every copy (the footer's, the artwork page's print line, the configurators'
+ * left panel) sets one saved choice (`useUnits`, kept in this browser).
+ * A radio group: arrow keys move between the two, Enter or Space chooses (they are buttons); Tab
+ * lands on the chosen one.
  */
-export function UnitsSwitch({
-  look = 'track',
-  className,
-}: {
-  look?: 'track' | 'text'
-  className?: string
-}) {
+export function UnitsSwitch({ className }: { className?: string }) {
   const { unit, setUnit } = useUnits()
   const groupRef = useRef<HTMLDivElement>(null)
 
@@ -49,12 +41,12 @@ export function UnitsSwitch({
       ref={groupRef}
       role="radiogroup"
       aria-label="Units"
-      className={c(look === 'text' ? styles.text : styles.track, className)}
+      className={c(styles.switch, className)}
       onKeyDown={moveFocus}
     >
       {UNITS.map((option, index) => (
         <Fragment key={option}>
-          {look === 'text' && index > 0 && (
+          {index > 0 && (
             <span className={styles.divider} aria-hidden="true">
               |
             </span>

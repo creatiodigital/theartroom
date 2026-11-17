@@ -44,6 +44,11 @@
 .logo {
   width: var(--logo-width);
   height: auto;
+  // 1px of air above and below: the letters reach the svg's bottom edge, and while the link fades
+  // (hover; a tap on iPhone leaves it there) Safari draws the logo clipped to its box and dropped
+  // the letters' last pixel row (owner, 2026-11-17, seen on a real iPhone; reproduced in the
+  // simulator). The header's row is taller than the logo, so nothing moves.
+  padding-block: 1px;
   color: var(--color-brand);
   overflow: visible;
 }

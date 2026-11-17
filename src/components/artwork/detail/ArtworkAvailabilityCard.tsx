@@ -51,7 +51,9 @@ const sizeOf = (line: VariantEditionLineParts, unit: Unit) =>
 
 /** "Edition of 30 · 28 left", or "Edition of 30" once sold out (the price says Sold out). */
 const stockText = (line: VariantEditionLineParts) =>
-  line.soldOut ? `Edition of ${line.editionSize}` : `Edition of ${line.editionSize} · ${line.left} left`
+  line.soldOut
+    ? `Edition of ${line.editionSize}`
+    : `Edition of ${line.editionSize} · ${line.left} left`
 
 export const ArtworkAvailabilityCard = ({
   editionType,
@@ -140,7 +142,7 @@ export const ArtworkAvailabilityCard = ({
 const KindLine = ({ kind }: { kind: string }) => (
   <div className={styles.kindRow}>
     <p className={styles.kind}>{kind}</p>
-    <UnitsSwitch look="text" className={styles.kindUnits} />
+    <UnitsSwitch className={styles.kindUnits} />
   </div>
 )
 

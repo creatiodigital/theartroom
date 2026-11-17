@@ -66,7 +66,7 @@ export const Footer = () => {
           {/* units.md: a line of its own, after the legal links, before the ©. */}
           <div className={styles.units}>
             <span>Sizes in</span>
-            <UnitsSwitch look="text" />
+            <UnitsSwitch />
           </div>
           <p className={styles.copyright}>&copy; {new Date().getFullYear()} The Art Room</p>
         </div>

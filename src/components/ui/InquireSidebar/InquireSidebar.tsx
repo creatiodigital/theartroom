@@ -212,7 +212,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
           </div>
           <div className={styles.workText}>
             <span className={styles.workTitle}>
-              <em>{artwork.title}</em>
+              {artwork.title}
               {artwork.year && `, ${artwork.year}`}
             </span>
             <span className={styles.workArtist}>{artwork.artistName}</span>
