@@ -23,12 +23,17 @@ const SOCIAL = [
   { label: 'Pinterest', href: SOCIAL_LINKS.pinterest, Icon: PinterestIcon },
 ] as const
 
+type FooterProps = {
+  /** False on a page with its own cm | in switch (the artwork page): one switch per page (units.md). */
+  showUnitsSwitch?: boolean
+}
+
 /**
  * The site footer (docs/public-redesign/home.md §8, owner 2026-11-11/13), the same on every screen,
  * all on the left with a hairline between each part: the wordmark, one line and the email; the
  * networks; the legal links (Cookie settings among them); the ©. No repeated page links.
  */
-export const Footer = () => {
+export const Footer = ({ showUnitsSwitch = true }: FooterProps) => {
   return (
     <footer className={styles.footer}>
       <div className={styles.inner}>
@@ -65,10 +70,12 @@ export const Footer = () => {
                 Cookie settings
               </Button>
             </nav>
-            <div className={styles.units}>
-              <span>Sizes in</span>
-              <UnitsSwitch />
-            </div>
+            {showUnitsSwitch && (
+              <div className={styles.units}>
+                <span>Sizes in</span>
+                <UnitsSwitch />
+              </div>
+            )}
           </div>
           <p className={styles.copyright}>&copy; {new Date().getFullYear()} The Art Room</p>
         </div>

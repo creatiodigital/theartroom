@@ -181,6 +181,17 @@ a.artist:hover {
   color: var(--color-text-secondary);
 }
 
+// The size line with the cm | in switch after it, centred on the text (units.md).
+.sizeLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.sizeSwitch {
+  margin-left: 12px;
+}
+
 // The technique's lines (camera, lens, ISO…), as entered, 8 px under the size. Through .info
 // .identity: outranks RichText's own compact rules whatever the stylesheet order (the room
 // overlay loads them in another order than the page).

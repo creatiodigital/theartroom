@@ -11,7 +11,10 @@ import { Button } from '@/components/ui/Button'
 import { InquireSidebar } from '@/components/ui/InquireSidebar'
 import { Share } from '@/components/ui/Share'
 import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
+import { UnitsSwitch } from '@/components/ui/UnitsSwitch'
+import { artworkSizeLines, type ArtworkSizes } from '@/lib/editions/artworkSizes'
 import type { VariantEditionLineParts } from '@/lib/editions/variantEditionLines'
+import { useUnits } from '@/lib/units/UnitsProvider'
 import { ArtworkAvailabilityCard } from './ArtworkAvailabilityCard'
 import { SHOW_NEIGHBOUR_ARROWS } from './neighbourArrows'
 import { reportImageError } from '@/lib/observability/reportImageError'
@@ -34,7 +37,9 @@ export type Artwork = {
   author?: string | null
   year?: string | null
   technique?: string | null
-  dimensions?: string | null
+  /** The size line, worked out on the server (`getArtworkSizes`): the file's range, or each live
+   *  variant's size. Undefined until known — the 3D room's first paint has no edition data. */
+  sizes?: ArtworkSizes | null
   description?: string | null
   imageUrl?: string | null
   originalWidth?: number | null
@@ -124,6 +129,8 @@ export const ArtworkDetailBody = ({
   // Purchases kill switch (admin dashboard). The hook's cache is shared with
   // the artwork grids, so moving between a listing and a work doesn't re-read.
   const purchasesPaused = usePurchasesPaused()
+  const { unit } = useUnits()
+  const sizeLines = artworkSizeLines(artwork.sizes, unit)
 
   const displayTitle = artwork.title || artwork.name || ''
   const displayAuthor = artwork.author || `${artist.name} ${artist.lastName}`.trim()
@@ -166,7 +173,14 @@ export const ArtworkDetailBody = ({
             {/* The work leads, and it is the <h1>: this page is about the artwork. */}
             {displayTitle && <h1 className={styles.title}>{displayTitle}</h1>}
             {artwork.year && <span className={styles.fact}>{artwork.year}</span>}
-            {artwork.dimensions && <span className={styles.fact}>{artwork.dimensions}</span>}
+            {/* units.md: the size, in the visitor's unit, with the cm | in switch 12 px after it. A
+                limited edition with several sizes lists one per line; the switch sits on the first. */}
+            {sizeLines.map((line, index) => (
+              <span key={line} className={c(styles.fact, index === 0 && styles.sizeLine)}>
+                {line}
+                {index === 0 && <UnitsSwitch className={styles.sizeSwitch} />}
+              </span>
+            ))}
             {artwork.technique && technique}
           </div>
 
