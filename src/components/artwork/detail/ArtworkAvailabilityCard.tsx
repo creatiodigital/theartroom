@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react'
 
 import { Button } from '@/components/ui/Button'
+import { UnitsSwitch } from '@/components/ui/UnitsSwitch'
 import type { ArtworkSizes } from '@/lib/editions/artworkSizes'
 import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
 import type { VariantEditionLineParts } from '@/lib/editions/variantEditionLines'
@@ -74,7 +75,7 @@ export const ArtworkAvailabilityCard = ({
 
   return (
     <div className={styles.card}>
-      <p className={styles.kind}>{isLimited ? 'Limited edition print' : 'Open edition print'}</p>
+      <KindLine kind={isLimited ? 'Limited edition print' : 'Open edition print'} />
 
       {!isLimited && (
         <>
@@ -133,6 +134,15 @@ export const ArtworkAvailabilityCard = ({
     </div>
   )
 }
+
+/** The kind of print, with the cm | in choice at the right end of its line (owner, 2026-11-17: the
+ *  footer's plain words, without "Sizes in"); the same saved choice as the footer's. */
+const KindLine = ({ kind }: { kind: string }) => (
+  <div className={styles.kindRow}>
+    <p className={styles.kind}>{kind}</p>
+    <UnitsSwitch look="text" className={styles.kindUnits} />
+  </div>
+)
 
 /** Smallest / Largest, then "or any size in between." Nothing when the file has no range. */
 const OpenRange = ({ sizes, unit }: { sizes?: ArtworkSizes | null; unit: Unit }) => {
@@ -210,9 +220,7 @@ export const ArtworkPrintFacts = ({
   const fixed = sizes?.kind === 'fixed' ? sizes.sizes : null
   return (
     <div className={styles.card}>
-      {sizes && (
-        <p className={styles.kind}>{fixed ? 'Limited edition print' : 'Open edition print'}</p>
-      )}
+      {sizes && <KindLine kind={fixed ? 'Limited edition print' : 'Open edition print'} />}
       {fixed ? (
         <div className={styles.single}>
           {fixed.map((size) => (

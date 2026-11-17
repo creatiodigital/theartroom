@@ -47,6 +47,20 @@
   background: #3c8a4a;
 }
 
+.kindRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+// The footer's cm | in, at the footer's size and grey (UnitsSwitch "text" inherits them).
+.kindUnits {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
 .kind {
   margin: 0;
   font-size: 12px;
