@@ -8,6 +8,7 @@ import {
   parseLengthInput,
 } from '../src/lib/units/format'
 import { convertSpecRows } from '../src/lib/print-providers/specs'
+import { artworkSizeLines, getArtworkSizes } from '../src/lib/editions/artworkSizes'
 
 // docs/public-redesign/units.md: one decimal always, height first, "×", the unit once at the end;
 // inches = cm ÷ 2.54 rounded to 0.1.
@@ -75,5 +76,45 @@ test.describe('sizes in cm or inches', () => {
     )
     expect(rows[0].value).toBe('11.8 × 7.9 in')
     expect(rows[1].value).toBe('Hahnemühle German Etching')
+  })
+})
+
+// Owner, 2026-11-17: an open edition (and an Inquire-only work) shows the range its file prints at;
+// a limited edition shows each live variant's print size, one per line.
+test.describe('artwork sizes', () => {
+  const file = (originalWidth: number | null, originalHeight: number | null) => ({
+    originalWidth,
+    originalHeight,
+  })
+
+  test('an open edition shows the range its file prints at', () => {
+    const sizes = getArtworkSizes({ editionType: 'open', ...file(6000, 4000), variants: [] })
+    expect(sizes?.kind).toBe('range')
+    expect(artworkSizeLines(sizes, 'cm')).toEqual(['20.0 × 30.0 cm to 33.9 × 50.8 cm'])
+  })
+
+  test('a limited edition shows each variant size once, smallest first', () => {
+    const sizes = getArtworkSizes({
+      editionType: 'limited',
+      ...file(6000, 4000),
+      variants: [
+        { widthCm: 40, heightCm: 30 },
+        { widthCm: 33.3, heightCm: 22.2 },
+        { widthCm: 33.3, heightCm: 22.2 },
+      ],
+    })
+    expect(sizes?.kind).toBe('fixed')
+    expect(artworkSizeLines(sizes, 'cm')).toEqual(['22.2 × 33.3 cm', '30.0 × 40.0 cm'])
+  })
+
+  test('a limited edition with no live variant falls back to the range', () => {
+    const sizes = getArtworkSizes({ editionType: 'limited', ...file(6000, 4000), variants: [] })
+    expect(sizes?.kind).toBe('range')
+  })
+
+  test('no size line without pixels, or for a file too small to print', () => {
+    expect(getArtworkSizes({ editionType: 'open', ...file(null, null), variants: [] })).toBeNull()
+    expect(getArtworkSizes({ editionType: 'open', ...file(1000, 800), variants: [] })).toBeNull()
+    expect(artworkSizeLines(null, 'cm')).toEqual([])
   })
 })
