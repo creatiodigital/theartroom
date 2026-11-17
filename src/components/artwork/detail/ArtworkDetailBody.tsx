@@ -11,10 +11,9 @@ import { Button } from '@/components/ui/Button'
 import { InquireSidebar } from '@/components/ui/InquireSidebar'
 import { Share } from '@/components/ui/Share'
 import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
-import { artworkSizeLines, type ArtworkSizes } from '@/lib/editions/artworkSizes'
+import type { ArtworkSizes } from '@/lib/editions/artworkSizes'
 import type { VariantEditionLineParts } from '@/lib/editions/variantEditionLines'
-import { useUnits } from '@/lib/units/UnitsProvider'
-import { ArtworkAvailabilityCard } from './ArtworkAvailabilityCard'
+import { ArtworkAvailabilityCard, ArtworkPrintFacts } from './ArtworkAvailabilityCard'
 import { SHOW_NEIGHBOUR_ARROWS } from './neighbourArrows'
 import { reportImageError } from '@/lib/observability/reportImageError'
 import type { PresentationView } from '@/lib/printPresentation/record'
@@ -128,9 +127,6 @@ export const ArtworkDetailBody = ({
   // Purchases kill switch (admin dashboard). The hook's cache is shared with
   // the artwork grids, so moving between a listing and a work doesn't re-read.
   const purchasesPaused = usePurchasesPaused()
-  // The visitor's unit, chosen in the footer (units.md); no switch on this page.
-  const { unit } = useUnits()
-  const sizeLines = artworkSizeLines(artwork.sizes, unit)
 
   const displayTitle = artwork.title || artwork.name || ''
   const displayAuthor = artwork.author || `${artist.name} ${artist.lastName}`.trim()
@@ -173,13 +169,8 @@ export const ArtworkDetailBody = ({
             {/* The work leads, and it is the <h1>: this page is about the artwork. */}
             {displayTitle && <h1 className={styles.title}>{displayTitle}</h1>}
             {artwork.year && <span className={styles.fact}>{artwork.year}</span>}
-            {/* The size in the visitor's unit: a range on one line, or a limited edition's sizes one
-                per line (owner, 2026-11-17: never both units on the site). */}
-            {sizeLines.map((line) => (
-              <span key={line} className={styles.fact}>
-                {line}
-              </span>
-            ))}
+            {/* The work only: its sizes are part of the print, below (units.md "Artwork page: the
+                print, its sizes and its price together"). */}
             {artwork.technique && technique}
           </div>
 
@@ -187,14 +178,16 @@ export const ArtworkDetailBody = ({
             {commerce && !purchasesPaused ? (
               <ArtworkAvailabilityCard
                 editionType={commerce.editionType}
+                sizes={artwork.sizes}
                 minPriceCents={commerce.minPriceCents}
                 editionLines={commerce.editionLines}
                 artworkSlug={artwork.slug}
                 inquire={inquireButton}
               />
             ) : (
-              // Not for sale (or purchases paused): enquiring is the only route forward.
-              inquireButton
+              // Not for sale (or purchases paused): the print's kind and sizes, then enquiring is
+              // the only route forward.
+              <ArtworkPrintFacts sizes={artwork.sizes} inquire={inquireButton} />
             )}
             <Share title={displayTitle || 'Artwork'} url={shareUrl} className={styles.share} />
           </div>

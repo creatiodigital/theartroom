@@ -8,7 +8,7 @@ import {
   parseLengthInput,
 } from '../src/lib/units/format'
 import { convertSpecRows } from '../src/lib/print-providers/specs'
-import { artworkSizeLines, getArtworkSizes } from '../src/lib/editions/artworkSizes'
+import { getArtworkSizes } from '../src/lib/editions/artworkSizes'
 import { nameLooksLikeSize } from '../src/lib/editions/variantName'
 
 // docs/public-redesign/units.md: one decimal always, height first, "×", the unit once at the end;
@@ -91,10 +91,9 @@ test.describe('artwork sizes', () => {
 
   test('an open edition shows the range its file prints at', () => {
     const sizes = getArtworkSizes({ editionType: 'open', ...file(6000, 4000), variants: [] })
-    expect(sizes?.kind).toBe('range')
-    // One line, in the visitor's unit only (owner, 2026-11-17: never both on the site).
-    expect(artworkSizeLines(sizes, 'cm')).toEqual(['20.0 × 30.0 cm to 33.9 × 50.8 cm'])
-    expect(artworkSizeLines(sizes, 'in')).toEqual(['7.9 × 11.8 in to 13.3 × 20.0 in'])
+    if (sizes?.kind !== 'range') throw new Error('expected a range')
+    expect(formatDimensionsRange(sizes.min, sizes.max, 'cm')).toBe('20.0 × 30.0 cm to 33.9 × 50.8 cm')
+    expect(formatDimensionsRange(sizes.min, sizes.max, 'in')).toBe('7.9 × 11.8 in to 13.3 × 20.0 in')
   })
 
   test('a limited edition shows each variant size once, smallest first', () => {
@@ -107,9 +106,11 @@ test.describe('artwork sizes', () => {
         { widthCm: 33.3, heightCm: 22.2 },
       ],
     })
-    expect(sizes?.kind).toBe('fixed')
-    expect(artworkSizeLines(sizes, 'cm')).toEqual(['22.2 × 33.3 cm', '30.0 × 40.0 cm'])
-    expect(artworkSizeLines(sizes, 'in')).toEqual(['8.7 × 13.1 in', '11.8 × 15.7 in'])
+    if (sizes?.kind !== 'fixed') throw new Error('expected fixed sizes')
+    const text = (unit: 'cm' | 'in') =>
+      sizes.sizes.map((size) => formatDimensions(size.widthCm, size.heightCm, unit))
+    expect(text('cm')).toEqual(['22.2 × 33.3 cm', '30.0 × 40.0 cm'])
+    expect(text('in')).toEqual(['8.7 × 13.1 in', '11.8 × 15.7 in'])
   })
 
   test('a limited edition with no live variant falls back to the range', () => {
@@ -120,7 +121,6 @@ test.describe('artwork sizes', () => {
   test('no size line without pixels, or for a file too small to print', () => {
     expect(getArtworkSizes({ editionType: 'open', ...file(null, null), variants: [] })).toBeNull()
     expect(getArtworkSizes({ editionType: 'open', ...file(1000, 800), variants: [] })).toBeNull()
-    expect(artworkSizeLines(null, 'cm')).toEqual([])
   })
 })
 

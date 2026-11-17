@@ -3,7 +3,7 @@ import {
   getPrintMinSize,
   type PrintSize,
 } from '@/lib/print-providers/printspace/sizeBounds'
-import { formatDimensions, formatDimensionsRange, type Unit } from '@/lib/units/format'
+import { formatDimensions } from '@/lib/units/format'
 
 /**
  * The size line of an artwork, worked out — never typed (owner, 2026-11-17: every work is a print;
@@ -53,14 +53,4 @@ export function getArtworkSizes({
   const min = getPrintMinSize(meta)
   const max = getPrintMaxSize(meta)
   return min && max ? { kind: 'range', min, max } : null
-}
-
-/**
- * The size line(s) as written on the page, in the visitor's unit only (owner, 2026-11-17: never
- * both on the site): a range on one line; a limited edition one line per size.
- */
-export function artworkSizeLines(sizes: ArtworkSizes | null | undefined, unit: Unit): string[] {
-  if (!sizes) return []
-  if (sizes.kind === 'range') return [formatDimensionsRange(sizes.min, sizes.max, unit)]
-  return sizes.sizes.map((size) => formatDimensions(size.widthCm, size.heightCm, unit))
 }

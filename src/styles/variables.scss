@@ -107,8 +107,12 @@
   // the footer's chosen unit and its divider.
   --public-switch-track: #efefec;
   --public-switch-outline: #d6d6d2;
-  --public-units-chosen: #2b2b2b;
+  --public-units-chosen: var(--public-dark);
   --public-units-divider: #c8c8c4;
+  // The artwork page's print block (units.md): sizes and the chosen unit; the kind line; labels.
+  --public-dark: #2b2b2b;
+  --public-print-kind: #3a3a3a;
+  --public-print-label: #8a8a8a;
 
   // Panels
   --color-surface-elevated: var(--color-gray-15);
