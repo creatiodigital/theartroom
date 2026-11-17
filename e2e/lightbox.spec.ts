@@ -18,6 +18,8 @@ import {
   LIGHTBOX_ALPHA,
   LIGHTBOX_FEED_MAX,
   LIGHTBOX_HALO,
+  LIGHTBOX_GLOSS,
+  LIGHTBOX_SPILL,
   LIGHTBOX_WASH,
   TODAY_LOOK_FRONT,
   lightboxAlphaFeed,
@@ -26,6 +28,7 @@ import {
   lightboxFeedAlpha,
   lightboxFilm,
   lightboxGain,
+  lightboxImageTint,
   lightboxPanel,
 } from '../src/components/scene/spaces/objects/Lightbox/lightboxLook'
 import { BLOOM_THRESHOLD } from '../src/components/scene/spaces/objects/Effects/bloomIntensity'
@@ -48,7 +51,7 @@ test.describe('lightbox values', () => {
       lightboxDepth: 6,
       lightboxEdge: 'thin',
       lightboxMaterial: 'alu-black',
-      lightboxFront: 'matte',
+      lightboxFront: 'glossy',
     })
   })
 
@@ -296,14 +299,24 @@ test.describe('a lightbox in the bake', () => {
     }
   })
 
-  test('the light: image lifted and more vivid, panel 10–20× a lit wall, +20 % on the wall round it', () => {
-    // On screen: Soft ×1.1, Bright ×1.8 (owner, 2026-11-15).
-    expect(lightboxGain(0)).toBeCloseTo(1.1, 6)
-    expect(lightboxGain(1)).toBeCloseTo(1.8, 6)
+  test('the light: mid-tones lifted, whites kept, the panel 10–20× a lit wall', () => {
+    // Middle gray lifted 15 % at Soft, 35 % at Bright; black stays black, white stays white.
+    const lifted = (b: number, c: number) => c ** lightboxFilm(b).power
+    expect(lifted(0, 0.18) / 0.18).toBeCloseTo(1.15, 3)
+    expect(lifted(1, 0.18) / 0.18).toBeCloseTo(1.35, 3)
+    for (const b of [0, 0.5, 1]) {
+      expect(lifted(b, 0)).toBe(0)
+      expect(lifted(b, 1)).toBe(1)
+      // Near-whites keep their texture: 0.9 and 0.95 stay apart, below white.
+      expect(lifted(b, 0.95) - lifted(b, 0.9)).toBeGreaterThan(0.03)
+    }
     // More vivid than a print, more so at Bright.
     expect(lightboxFilm(0).saturation).toBeGreaterThan(1)
     expect(lightboxFilm(1).saturation).toBeGreaterThan(lightboxFilm(0).saturation)
-    expect(lightboxFilm(1).contrast).toBeGreaterThan(lightboxFilm(0).contrast)
+    // The light's color only lightly on the picture: Cool never turns it blue-grey.
+    expect(Math.max(...lightboxImageTint('cool'))).toBeLessThan(1.25)
+    expect(Math.min(...lightboxImageTint('warm'))).toBeGreaterThan(0.85)
+    expect(lightboxImageTint('neutral')).toEqual([1, 1, 1])
     // Today's look: Soft's whites under the glow's threshold, Bright's just past it.
     expect(lightboxGain(0) * TODAY_LOOK_FRONT).toBeLessThan(BLOOM_THRESHOLD)
     expect(lightboxGain(1) * TODAY_LOOK_FRONT).toBeGreaterThan(BLOOM_THRESHOLD)
@@ -311,10 +324,20 @@ test.describe('a lightbox in the bake', () => {
     const litWall = (0.8 * 2.81) / Math.PI
     expect(lightboxPanel(0) / litWall).toBeCloseTo(10, 6)
     expect(lightboxPanel(1) / litWall).toBeCloseTo(20, 6)
-    // The wall at the box's edge: +10 % at Soft, +20 % at Bright; out to ~15 cm (very subtle).
-    expect(LIGHTBOX_WASH.atEdge(0)).toBeCloseTo(0.1, 6)
-    expect(LIGHTBOX_WASH.atEdge(1)).toBeCloseTo(0.2, 6)
-    expect(LIGHTBOX_WASH.reach(0.1, 0.1)).toBeGreaterThanOrEqual(0.12)
-    expect(LIGHTBOX_WASH.reach(1, 1)).toBeLessThanOrEqual(0.16)
+  })
+
+  test('glossy is a soft sheen; the halo soft and wide; the light spills over the lip', () => {
+    // Rough, ~7 % head on (a dielectric's 4 % × reflect): a sheen, never a sparkle.
+    expect(LIGHTBOX_GLOSS.roughness).toBeGreaterThanOrEqual(0.25)
+    expect(0.04 * LIGHTBOX_GLOSS.reflect).toBeGreaterThanOrEqual(0.06)
+    expect(0.04 * LIGHTBOX_GLOSS.reflect).toBeLessThanOrEqual(0.08)
+    // The wash: a low peak, 30–50 cm out at Bright for a 50 cm work, less far at Soft.
+    expect(LIGHTBOX_WASH.atEdge(1)).toBeLessThanOrEqual(0.15)
+    expect(LIGHTBOX_WASH.reach(1, 0.5, 0.5)).toBeGreaterThanOrEqual(0.3)
+    expect(LIGHTBOX_WASH.reach(1, 0.5, 0.5)).toBeLessThanOrEqual(0.5)
+    expect(LIGHTBOX_WASH.reach(0, 0.5, 0.5)).toBeLessThan(LIGHTBOX_WASH.reach(1, 0.5, 0.5))
+    // The spill: thin (≤ 1 cm), strongest at Bright.
+    expect(LIGHTBOX_SPILL.reachM(1)).toBeLessThanOrEqual(0.01)
+    expect(LIGHTBOX_SPILL.atEdge(1)).toBeGreaterThan(LIGHTBOX_SPILL.atEdge(0))
   })
 })

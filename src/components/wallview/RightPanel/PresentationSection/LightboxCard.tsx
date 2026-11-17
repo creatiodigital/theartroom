@@ -72,6 +72,8 @@ export function LightboxCard({ lightbox, onEdit, disabled }: LightboxCardProps) 
       />
       {on && (
         <>
+          {/* Tuning round 2 (docs/lightbox): a lightbox's light reads against a quieter wall. */}
+          <p className={styles.note}>Reads best on walls with softer lamp light around it.</p>
           <SliderRow
             label="Brightness"
             value={`${Math.round(lightbox.lightboxBrightness * 100)}%`}

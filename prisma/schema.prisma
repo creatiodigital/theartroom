@@ -114,7 +114,7 @@ model ArtworkPreset {
   lightboxDepth      Float   @default(6) // cm, 3..15
   lightboxEdge       String  @default("thin") // none | thin | wide
   lightboxMaterial   String  @default("alu-black") // alu-black | alu-silver | white | oak | walnut
-  lightboxFront      String  @default("matte") // matte | glossy
+  lightboxFront      String  @default("glossy") // matte | glossy (glossy by default since tuning round 2)
 
   // Text styling (used when presetType = "text")
   fontFamily            String  @default("Montserrat")
@@ -883,7 +883,7 @@ model ExhibitionArtwork {
   lightboxDepth      Float   @default(6) // cm, 3..15
   lightboxEdge       String  @default("thin") // none | thin | wide
   lightboxMaterial   String  @default("alu-black") // alu-black | alu-silver | white | oak | walnut
-  lightboxFront      String  @default("matte") // matte | glossy
+  lightboxFront      String  @default("glossy") // matte | glossy (glossy by default since tuning round 2)
 
   // Text styling (per-exhibition customization)
   fontFamily            String  @default("Montserrat")

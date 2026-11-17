@@ -33,6 +33,10 @@ import {
   lightboxBakeKey,
   lightboxBox,
 } from '@/components/scene/spaces/objects/Lightbox/lightboxLook'
+import {
+  LightboxImageMeanContext,
+  type Rgb,
+} from '@/components/scene/spaces/objects/Lightbox/imageMean'
 import { LIGHTBOX_BAKE_KEY } from '@/components/scene/bake/lightboxEmitters'
 import { getArtworkBorderCm } from '@/components/wallview/constants'
 import { type TLightbox, isLightbox, readLightbox } from '@/lib/lightbox'
@@ -999,6 +1003,9 @@ const Display = ({ artwork }: DisplayProps) => {
     lightbox && position && quaternion
       ? lightboxBakeKey(position, quaternion, width || 1, height || 1, lightbox)
       : null
+  // The lightbox's image's average color, reported by its front once loaded: the wash on the wall
+  // and the spill over the edge take its hue (tuning round 2).
+  const [lightboxMean, setLightboxMean] = useState<Rgb | null>(null)
   // Read by the bake (`lightboxEmitters`): the key it records the front under.
   const displayData = useMemo(
     () => (lightboxKey ? { [LIGHTBOX_BAKE_KEY]: lightboxKey } : {}),
@@ -1514,13 +1521,15 @@ const Display = ({ artwork }: DisplayProps) => {
           )}
 
           {imageUrl && (
-            <ArtworkImage
-              url={imageUrl}
-              width={planeWidth}
-              height={planeHeight}
-              artworkId={artwork.id}
-              lightbox={lightbox}
-            />
+            <LightboxImageMeanContext.Provider value={setLightboxMean}>
+              <ArtworkImage
+                url={imageUrl}
+                width={planeWidth}
+                height={planeHeight}
+                artworkId={artwork.id}
+                lightbox={lightbox}
+              />
+            </LightboxImageMeanContext.Provider>
           )}
         </group>
       </group>
@@ -1559,8 +1568,19 @@ const Display = ({ artwork }: DisplayProps) => {
             lightbox={lightbox}
             wood={lightboxWood ? woodTextures : null}
           />
-          <LightboxRim width={planeWidth} height={planeHeight} filmZ={imageZ} lightbox={lightbox} />
-          <LightboxWash width={totalWidth} height={totalHeight} lightbox={lightbox} />
+          <LightboxRim
+            width={planeWidth}
+            height={planeHeight}
+            filmZ={imageZ}
+            lightbox={lightbox}
+            mean={lightboxMean}
+          />
+          <LightboxWash
+            width={totalWidth}
+            height={totalHeight}
+            lightbox={lightbox}
+            mean={lightboxMean}
+          />
         </>
       )}
 
