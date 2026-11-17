@@ -9,6 +9,7 @@ import {
 } from '../src/lib/units/format'
 import { convertSpecRows } from '../src/lib/print-providers/specs'
 import { artworkSizeLines, getArtworkSizes } from '../src/lib/editions/artworkSizes'
+import { nameLooksLikeSize } from '../src/lib/editions/variantName'
 
 // docs/public-redesign/units.md: one decimal always, height first, "×", the unit once at the end;
 // inches = cm ÷ 2.54 rounded to 0.1.
@@ -117,4 +118,14 @@ test.describe('artwork sizes', () => {
     expect(getArtworkSizes({ editionType: 'open', ...file(1000, 800), variants: [] })).toBeNull()
     expect(artworkSizeLines(null, 'cm')).toEqual([])
   })
+})
+
+// units.md "Variant names: words, not sizes": a size in a name can't follow the switch.
+test('a variant name that looks like a size is flagged', () => {
+  for (const name of ['S1 22 x 33', '22×33', '40 cm', 'Large 16 in']) {
+    expect(nameLooksLikeSize(name), name).toBe(true)
+  }
+  for (const name of ['Small', 'Medium', 'Large', 'Edition I', 'Baryta 2']) {
+    expect(nameLooksLikeSize(name), name).toBe(false)
+  }
 })

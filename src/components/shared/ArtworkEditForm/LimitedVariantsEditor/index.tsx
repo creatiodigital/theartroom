@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { formatCm } from '@/lib/print-providers/format'
 import { ArrowClockwise, CaretDown, Plus } from '@phosphor-icons/react'
+import c from 'classnames'
 
 import { Callout } from '@/components/admin/ui/Callout'
 import { StatusPill } from '@/components/admin/ui/StatusPill'
@@ -24,6 +25,7 @@ import {
 } from '@/lib/editions/sheetLayout'
 import { buildTpsRecipe, formatTpsRecipe } from '@/lib/editions/tpsRecipe'
 import { estimateVariantMarginCents } from '@/lib/editions/variantMargin'
+import { nameLooksLikeSize } from '@/lib/editions/variantName'
 import { TPS_PAPERS, TPS_SIZE_BOUNDS, MIN_SHORT_EDGE_CM } from '@/lib/print-providers/printspace'
 import type { PrintLongEdgeBounds } from '@/lib/print-providers/printspace'
 import { LockNote } from '../LockNote'
@@ -641,10 +643,22 @@ export const LimitedVariantsEditor = ({
                         // surface joins it fresh, so a rename never rewrites a
                         // record. The physical fields below stay frozen.
                         disabled={false}
-                        placeholder="e.g. Small"
+                        placeholder="e.g. Small, Medium, Large"
                         invalid={!!errFor('name')}
                         onChange={(e) => update(index, { name: e.target.value })}
+                        aria-describedby={`variant-${key}-name-help`}
                       />
+                      {/* units.md "Variant names: words, not sizes": a size in the name is shown as
+                          typed, in one unit, beside the real size. A hint, never a block: saving works. */}
+                      <span
+                        id={`variant-${key}-name-help`}
+                        className={c(
+                          styles.hint,
+                          nameLooksLikeSize(variant.name) && styles.hintWarning,
+                        )}
+                      >
+                        The size is shown next to the name. Don&apos;t write it in the name.
+                      </span>
                       {isLive && (
                         <span className={styles.hint}>
                           You can rename this variant at any time — it updates everywhere it is
