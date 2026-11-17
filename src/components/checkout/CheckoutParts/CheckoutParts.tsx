@@ -15,6 +15,7 @@ import type { CartTotals } from '@/lib/cart/validateCart'
 import { vatLabel } from '@/lib/checkout/vatLabel'
 import { formatEuro } from '@/lib/print-providers'
 import { convertSpecRows } from '@/lib/print-providers/specs'
+import { useUnits } from '@/lib/units/UnitsProvider'
 
 import styles from './CheckoutParts.module.scss'
 
@@ -59,10 +60,12 @@ export const OrderItems = ({
   /** lineId → "no longer available" message from the server revalidation. */
   errors?: Record<string, string>
 }) => {
+  // The lines' sizes in the visitor's unit; the stored rows stay cm (units.md).
+  const { unit } = useUnits()
   return (
     <ul className={styles.items}>
       {items.map((item) => {
-        const short = specShortLine(convertSpecRows(item.specsSummary, 'both'))
+        const short = specShortLine(convertSpecRows(item.specsSummary, unit))
         const error = errors?.[item.lineId]
         return (
           <li key={item.lineId} className={styles.item}>
@@ -161,6 +164,7 @@ export const OrderColumn = ({
   errors?: Record<string, string>
 }) => {
   const [open, setOpen] = useState(false)
+  const { unit } = useUnits()
   const titleId = useId()
   const bodyId = useId()
   const prints = cartCount(items)
@@ -202,7 +206,7 @@ export const OrderColumn = ({
         <ul className={styles.orderRows}>
           {items.map((item) => {
             // The cart's lines, one subject each (owner, 2026-11-13: the same as the cart shows).
-            const lines = specLines(convertSpecRows(item.specsSummary, 'both'))
+            const lines = specLines(convertSpecRows(item.specsSummary, unit))
             if (item.quantity > 1) lines.push(`Quantity ${item.quantity}`)
             const error = errors?.[item.lineId]
             return (

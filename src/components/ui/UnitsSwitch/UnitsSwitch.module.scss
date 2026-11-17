@@ -33,3 +33,38 @@
   font-weight: 700;
   box-shadow: 0 0 0 1px var(--public-switch-outline);
 }
+
+// The footer's look (units.md "The switch: one, in the footer"): plain words in the row's own size
+// and grey, "cm | in", the chosen one bold and dark; the other brand red and underlined on hover or
+// focus; the divider light and not clickable.
+.text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.text .cell {
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+
+  &:not(.chosen):hover,
+  &:not(.chosen):focus-visible {
+    color: var(--color-brand);
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 1px solid currentColor;
+    outline-offset: 2px;
+  }
+}
+
+.text .chosen {
+  font-weight: 700;
+  color: var(--public-units-chosen);
+}
+
+.divider {
+  color: var(--public-units-divider);
+}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, type KeyboardEvent } from 'react'
+import { Fragment, useRef, type KeyboardEvent } from 'react'
 
 import c from 'classnames'
 
@@ -14,12 +14,22 @@ const UNITS: Unit[] = ['cm', 'in']
 const ARROWS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']
 
 /**
- * The soft cm | in switch (docs/public-redesign/units.md, designs/units-switch.dc.html): one style
- * wherever it sits — after the artwork's size line, in the corner of the configurator's drawing,
- * at the end of the footer's legal row. A radio group: arrow keys move between the two cells,
- * Enter or Space chooses (the cells are buttons); Tab lands on the chosen one.
+ * The cm | in choice (docs/public-redesign/units.md, designs/units-switch.dc.html). Two places, one
+ * saved choice (`useUnits`, kept in this browser):
+ * - `text` — the footer's own row, "Sizes in cm | in": plain words, the chosen one bold, a light
+ *   divider; the other turns brand red and underlined on hover / focus.
+ * - `track` — the print configurator's, in the drawing's corner (it has no footer): the soft track
+ *   with a white chosen cell.
+ * A radio group either way: arrow keys move between the two, Enter or Space chooses (they are
+ * buttons); Tab lands on the chosen one.
  */
-export function UnitsSwitch({ className }: { className?: string }) {
+export function UnitsSwitch({
+  look = 'track',
+  className,
+}: {
+  look?: 'track' | 'text'
+  className?: string
+}) {
   const { unit, setUnit } = useUnits()
   const groupRef = useRef<HTMLDivElement>(null)
 
@@ -39,21 +49,27 @@ export function UnitsSwitch({ className }: { className?: string }) {
       ref={groupRef}
       role="radiogroup"
       aria-label="Units"
-      className={c(styles.track, className)}
+      className={c(look === 'text' ? styles.text : styles.track, className)}
       onKeyDown={moveFocus}
     >
-      {UNITS.map((option) => (
-        <Button
-          key={option}
-          variant="bare"
-          role="radio"
-          aria-checked={unit === option}
-          tabIndex={unit === option ? 0 : -1}
-          className={c(styles.cell, unit === option && styles.chosen)}
-          onClick={() => setUnit(option)}
-        >
-          {option}
-        </Button>
+      {UNITS.map((option, index) => (
+        <Fragment key={option}>
+          {look === 'text' && index > 0 && (
+            <span className={styles.divider} aria-hidden="true">
+              |
+            </span>
+          )}
+          <Button
+            variant="bare"
+            role="radio"
+            aria-checked={unit === option}
+            tabIndex={unit === option ? 0 : -1}
+            className={c(styles.cell, unit === option && styles.chosen)}
+            onClick={() => setUnit(option)}
+          >
+            {option}
+          </Button>
+        </Fragment>
       ))}
     </div>
   )

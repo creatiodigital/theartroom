@@ -13,6 +13,7 @@ import { Share } from '@/components/ui/Share'
 import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
 import { artworkSizeLines, type ArtworkSizes } from '@/lib/editions/artworkSizes'
 import type { VariantEditionLineParts } from '@/lib/editions/variantEditionLines'
+import { useUnits } from '@/lib/units/UnitsProvider'
 import { ArtworkAvailabilityCard } from './ArtworkAvailabilityCard'
 import { SHOW_NEIGHBOUR_ARROWS } from './neighbourArrows'
 import { reportImageError } from '@/lib/observability/reportImageError'
@@ -127,7 +128,9 @@ export const ArtworkDetailBody = ({
   // Purchases kill switch (admin dashboard). The hook's cache is shared with
   // the artwork grids, so moving between a listing and a work doesn't re-read.
   const purchasesPaused = usePurchasesPaused()
-  const sizeLines = artworkSizeLines(artwork.sizes)
+  // The visitor's unit, chosen in the footer (units.md); no switch on this page.
+  const { unit } = useUnits()
+  const sizeLines = artworkSizeLines(artwork.sizes, unit)
 
   const displayTitle = artwork.title || artwork.name || ''
   const displayAuthor = artwork.author || `${artist.name} ${artist.lastName}`.trim()
@@ -170,8 +173,8 @@ export const ArtworkDetailBody = ({
             {/* The work leads, and it is the <h1>: this page is about the artwork. */}
             {displayTitle && <h1 className={styles.title}>{displayTitle}</h1>}
             {artwork.year && <span className={styles.fact}>{artwork.year}</span>}
-            {/* The size in both units, no switch (owner, 2026-11-17, as White Cube): a range on
-                two lines (cm, then in); a limited edition one "cm | in" line per size. */}
+            {/* The size in the visitor's unit: a range on one line, or a limited edition's sizes one
+                per line (owner, 2026-11-17: never both units on the site). */}
             {sizeLines.map((line) => (
               <span key={line} className={styles.fact}>
                 {line}
