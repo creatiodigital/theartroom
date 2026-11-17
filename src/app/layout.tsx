@@ -24,6 +24,7 @@ import { CookieBanner } from '@/components/ui/CookieBanner'
 import { NavigationProgressBar } from '@/components/ui/NavigationProgressBar'
 import { VersionGuard } from '@/components/observability/VersionGuard'
 import { CartProvider } from '@/lib/cart/useCart'
+import { UnitsProvider } from '@/lib/units/UnitsProvider'
 import { SOCIAL_LINKS } from '@/lib/socialLinks'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
@@ -99,9 +100,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <AuthProvider>
           <StoreProvider>
             <CartProvider>
-              <ImageProtection />
-              <header></header>
-              {children}
+              <UnitsProvider>
+                <ImageProtection />
+                <header></header>
+                {children}
+              </UnitsProvider>
             </CartProvider>
           </StoreProvider>
         </AuthProvider>

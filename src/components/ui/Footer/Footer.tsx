@@ -10,6 +10,7 @@ import Logo from '@/icons/logo.svg'
 import PinterestIcon from '@/icons/pinterest.svg'
 
 import { Button } from '@/components/ui/Button'
+import { UnitsSwitch } from '@/components/ui/UnitsSwitch'
 
 import { openCookieSettings } from '@/lib/consent'
 import { CONTACT_EMAIL, SOCIAL_LINKS } from '@/lib/socialLinks'
@@ -53,15 +54,22 @@ export const Footer = () => {
           </ul>
         </div>
         <div className={styles.bottom}>
-          <nav aria-label="Legal" className={styles.legal}>
-            <Link href="/terms-and-conditions">Terms and conditions</Link>
-            <Link href="/terms-of-sale">Online terms of sale</Link>
-            <Link href="/privacy-policy">Privacy policy</Link>
-            <Link href="/accessibility-policy">Accessibility policy</Link>
-            <Button variant="bare" className={styles.cookieSettings} onClick={openCookieSettings}>
-              Cookie settings
-            </Button>
-          </nav>
+          {/* units.md: "Sizes in" + the cm | in switch at the right end of the legal row. */}
+          <div className={styles.legalRow}>
+            <nav aria-label="Legal" className={styles.legal}>
+              <Link href="/terms-and-conditions">Terms and conditions</Link>
+              <Link href="/terms-of-sale">Online terms of sale</Link>
+              <Link href="/privacy-policy">Privacy policy</Link>
+              <Link href="/accessibility-policy">Accessibility policy</Link>
+              <Button variant="bare" className={styles.cookieSettings} onClick={openCookieSettings}>
+                Cookie settings
+              </Button>
+            </nav>
+            <div className={styles.units}>
+              <span>Sizes in</span>
+              <UnitsSwitch />
+            </div>
+          </div>
           <p className={styles.copyright}>&copy; {new Date().getFullYear()} The Art Room</p>
         </div>
       </div>
