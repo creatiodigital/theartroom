@@ -55,12 +55,21 @@ export const CustomSizeInputs = ({
   const [widthInput, setWidthInput] = useState<string>(fieldText(widthCm, stepCmForInit))
   const [heightInput, setHeightInput] = useState<string>(fieldText(heightCm, stepCmForInit))
   const [editing, setEditing] = useState<'width' | 'height' | null>(null)
+  // The unit the fields are currently written in, to notice the configurator's switch changing it.
+  const [fieldsUnit, setFieldsUnit] = useState<Unit>(unit)
 
   if (!custom) return null
 
-  // Sync local input with external customSize updates when the user
-  // isn't actively typing in either field.
-  if (editing === null) {
+  if (unit !== fieldsUnit) {
+    // The unit changed, maybe with a field still focused (on iPhone a tap on the switch leaves it
+    // focused). Re-write both from the stored cm, so the next keystroke is read in the unit it is
+    // shown in; `editing` is left alone so typing carries on normally.
+    setFieldsUnit(unit)
+    setWidthInput(fieldText(widthCm, custom.stepCm))
+    setHeightInput(fieldText(heightCm, custom.stepCm))
+  } else if (editing === null) {
+    // Sync local input with external customSize updates when the user
+    // isn't actively typing in either field.
     const wStr = fieldText(widthCm, custom.stepCm)
     const hStr = fieldText(heightCm, custom.stepCm)
     if (wStr !== widthInput) setWidthInput(wStr)
