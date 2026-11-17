@@ -58,6 +58,9 @@
   background: none;
   border: none;
   padding: var(--space-2);
+  // Pulled back over its padding (kept as tap area) so the icon ends on the header's right edge,
+  // as the cart does when it is the last thing on the row (owner, 2026-11-17).
+  margin-right: calc(var(--space-2) * -1);
   cursor: pointer;
   color: var(--color-text-primary);
 
@@ -122,6 +125,8 @@
   background: none;
   border: none;
   padding: var(--space-2);
+  // On the same spot as the menu button it replaces: the × ends on the header's right edge.
+  margin-right: calc(var(--space-2) * -1);
   cursor: pointer;
   color: var(--color-text-primary);
 }
