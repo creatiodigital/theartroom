@@ -78,9 +78,7 @@ export const OrderItems = ({
               className={styles.itemThumbImage}
             />
             <div className={styles.itemText}>
-              <span className={styles.itemTitle}>
-                <em>{item.title}</em>
-              </span>
+              <span className={styles.itemTitle}>{item.title}</span>
               <span className={styles.itemMeta}>
                 {item.artistName} · {editionShort(item)}
               </span>
@@ -222,7 +220,7 @@ export const OrderColumn = ({
                   className={styles.orderThumbImage}
                 />
                 <div className={styles.orderText}>
-                  <em className={styles.orderItemTitle}>{item.title}</em>
+                  <span className={styles.orderItemTitle}>{item.title}</span>
                   <span className={styles.orderArtist}>{item.artistName}</span>
                   <span className={styles.orderEdition}>{editionLabel(item)}</span>
                   {lines.length > 0 && (

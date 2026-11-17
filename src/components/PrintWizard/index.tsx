@@ -347,9 +347,10 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
         <Link href="/" aria-label="The Art Room" className={styles.logoLink}>
           <Logo className={styles.logo} aria-hidden />
         </Link>
-        {/* order-flow.md: "Order a print · Title, Artist", the title in serif italics. */}
+        {/* order-flow.md: "Order a print · Title, Artist", the title in serif (never italic, owner 2026-11-17). */}
         <p className={styles.headerTitle}>
-          Order a print · <em>{artwork.title}</em>, {artwork.artistName}
+          Order a print · <span className={styles.headerWork}>{artwork.title}</span>,{' '}
+          {artwork.artistName}
         </p>
         <div className={styles.headerActions}>
           <CartIcon />

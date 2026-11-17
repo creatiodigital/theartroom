@@ -24,6 +24,12 @@
 }
 
 // The top bar's centre (order-flow.md): "Order a print · Title, Artist". A <p>: size pinned.
+// The title in serif and upright (owner, 2026-11-17: artwork titles are never italic).
+.headerWork {
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 17px;
+}
+
 .headerTitle {
   min-width: 0;
   margin: 0;
@@ -33,11 +39,6 @@
   font-size: 15px;
   line-height: 1.4;
   color: var(--public-text);
-
-  em {
-    font-family: var(--font-serif), var(--font-serif-fallback);
-    font-size: 17px;
-  }
 
   @include media-down(md) {
     display: none;
@@ -376,12 +377,13 @@
   font-size: 15px;
   line-height: 1.5;
   color: var(--public-secondary);
+}
 
-  em {
-    font-family: var(--font-serif), var(--font-serif-fallback);
-    font-size: 17px;
-    color: var(--public-text);
-  }
+// The work's title, in serif and upright (owner, 2026-11-17: artwork titles are never italic).
+.introWorkTitle {
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: 17px;
+  color: var(--public-text);
 }
 
 .detailSections {
@@ -430,7 +432,7 @@
 }
 
 // "Added to your cart" (other-screens.md, Q-P19 b): a square public card, the check and the
-// title, then the item row (thumbnail on the render-wall grey, serif italic title, artist,
+// title, then the item row (thumbnail on the render-wall grey, serif title, artist,
 // edition in small caps, the price in serif).
 .cartAddedCard {
   display: flex;
@@ -866,7 +868,7 @@
 }
 
 // order-flow.md, designs/order-configure-*.dc.html (right panel): the edition in small caps, the
-// title in serif italics, the artist; the choices between hairlines; the price in serif 30.
+// title in serif (upright), the artist; the choices between hairlines; the price in serif 30.
 .summaryHeader {
   display: flex;
   flex-direction: column;

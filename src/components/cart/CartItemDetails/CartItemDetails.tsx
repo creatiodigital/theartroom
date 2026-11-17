@@ -31,7 +31,7 @@ type Props = {
 
 /**
  * One cart item as the order flow draws it (docs/public-redesign/order-flow.md "Cart",
- * designs/cart.dc.html, checkout-2-review.dc.html): the thumbnail, the title in serif italics,
+ * designs/cart.dc.html, checkout-2-review.dc.html): the thumbnail, the title in serif (upright),
  * the artist, the edition in small caps and the choices as short lines (`specLines`). Shared by
  * the cart and the checkout so the two never drift; each supplies its own controls.
  */
@@ -63,9 +63,7 @@ export const CartItemDetails = ({
       />
 
       <div className={styles.details}>
-        <p className={styles.title}>
-          <em>{item.title}</em>
-        </p>
+        <p className={styles.title}>{item.title}</p>
         <span className={styles.artist}>{item.artistName}</span>
 
         {showEditionTag && (

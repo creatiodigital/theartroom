@@ -80,7 +80,7 @@ export const CartAddedModal = ({ item, onClose, edited = false }: Props) => {
             className={styles.cartAddedThumbImage}
           />
           <span className={styles.cartAddedText}>
-            <em className={styles.cartAddedWork}>{item.title}</em>
+            <span className={styles.cartAddedWork}>{item.title}</span>
             <span className={styles.cartAddedArtist}>{item.artistName}</span>
             <span className={styles.cartAddedEdition}>
               {editionLabel(item.editionType, item.editionName)}

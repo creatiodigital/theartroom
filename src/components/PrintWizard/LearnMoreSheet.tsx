@@ -26,7 +26,7 @@ export const LearnMoreSheet = ({
       {editionType === 'limited' ? 'Limited edition' : 'Open edition'}
     </h2>
     <p className={styles.introWork}>
-      <em>{title}</em>, {artistName}
+      <span className={styles.introWorkTitle}>{title}</span>, {artistName}
     </p>
     <div className={styles.detailSections}>
       <h3 className={styles.detailSubhead}>Terms of sale</h3>

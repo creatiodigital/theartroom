@@ -131,9 +131,7 @@ export const SummaryPanel = ({
         <span className={styles.summaryEdition}>
           {editionType === 'limited' ? 'Limited edition' : 'Open edition'}
         </span>
-        <h2 className={styles.summaryTitle}>
-          <em>{artwork.title}</em>
-        </h2>
+        <h2 className={styles.summaryTitle}>{artwork.title}</h2>
         <span className={styles.summaryArtist}>{artwork.artistName}</span>
       </div>
 

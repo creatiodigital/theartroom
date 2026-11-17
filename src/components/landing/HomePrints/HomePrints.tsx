@@ -152,7 +152,7 @@ export const HomePrints = ({ slides }: { slides: HomePrintSlide[] }) => {
                 aria-hidden={i !== index}
               >
                 <span className={styles.work}>
-                  <i>{workTitle(slide)}</i>
+                  {workTitle(slide)}
                   {slide.year ? `, ${slide.year}` : ''}
                 </span>
                 {/* The artist alone: no edition wording here (owner, 2026-11-14). */}
