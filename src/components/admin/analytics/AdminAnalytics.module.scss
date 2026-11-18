@@ -1,0 +1,89 @@
+@use '@/styles/mixins' as *;
+
+// /admin/analytics, from the admin's own pieces (README "Look and feel"); built ahead of a design
+// (questions.md, Q-AN1).
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+  transition: opacity 0.2s ease;
+
+  @include media-up(tablet) {
+    gap: var(--space-6);
+  }
+}
+
+// While another period or split loads, the page keeps its frame, dimmed (dataviz: no flash).
+.pending {
+  opacity: 0.55;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+
+  @include media-up(tablet) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @include media-up(xl) {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.pair {
+  display: grid;
+  gap: var(--space-5);
+
+  @include media-up(xl) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-6);
+  }
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4) var(--space-5);
+  margin: 0;
+
+  @include media-up(tablet) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+
+  dt {
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+  }
+
+  dd {
+    margin: 0;
+    font-size: var(--text-lg);
+    font-weight: var(--font-bold);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-black);
+  }
+}
+
+.note {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}

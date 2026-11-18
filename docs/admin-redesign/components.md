@@ -551,3 +551,15 @@ like the real Pause switch). Logic and dialogs unchanged.
   panels' `useState(false)` ("Saved" for `SAVED_MOMENT_MS` = 3000, as the admin save bars; Q158), on
   `savedMomentTimer(onEnd, ms?, timers?)`. `dashboardSlice`: `showArtworkPanel` closes the eight tool panels and each tool
   panel's `show` closes the Artwork panel (one at a time). The toolbar `nav` carries `data-panel-overlay`.
+
+### Analytics (Q-AN1, built ahead of a design)
+- **Built** · `analytics/LineChart.tsx` · `{ dates: string[] ('YYYY-MM-DD'); series: { key; label; color; values: number[] }[];
+  unit; label }`. Measures its width (ResizeObserver), 4 round gridlines, 2–6 date labels by width, crosshair + one
+  tooltip on hover / focus (arrows, Home / End), legend with totals, a `sr-only` table of every value.
+- **Built** · `analytics/FunnelChart.tsx` · `{ steps: FunnelStep[]; segments: { label; color }[]; periodLabel }`. One row
+  per step (text · bar · numbers; bar under the text below 900 px), bar length = people ÷ first step, split by segment
+  with a 2 px gap; tooltip per segment on hover / focus; legend.
+- `analytics/format.ts`: `segmentColor`, `formatNumber`, `formatPercent`, `formatDay`, `formatDuration`, `formatChange`,
+  `checkoutErrorLabel`, `roomErrorLabel`, `pageLabel`. Data: `lib/analytics/ga4Report.ts` (`fetchAnalyticsReport`),
+  shape in `lib/analytics/reportShape.ts` (client-safe), page data + cache in `app/admin/analytics/report.ts`.
+- Tokens: `--admin-series-1…3`, `--admin-series-other`.

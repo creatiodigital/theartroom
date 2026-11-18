@@ -1,4 +1,4 @@
-import { BetaAnalyticsDataClient } from '@google-analytics/data'
+import { BetaAnalyticsDataClient, type protos } from '@google-analytics/data'
 
 // Thin adapter over the GA4 Data API. Server-only: credentials come from
 // GA_SERVICE_ACCOUNT_KEY (full service-account JSON, one line) and
@@ -50,6 +50,25 @@ function getClient(config: Ga4Config): BetaAnalyticsDataClient {
     credentials: { client_email: config.clientEmail, private_key: config.privateKey },
   })
   return client
+}
+
+export type Ga4ReportRequest = protos.google.analytics.data.v1beta.IRunReportRequest
+export type Ga4Report = protos.google.analytics.data.v1beta.IRunReportResponse
+
+/**
+ * Runs report requests against the property, five per batch (the API's limit), batches in
+ * parallel. Reports come back in the order asked. Throws when not configured or on API failure.
+ */
+export async function runGa4Reports(requests: Ga4ReportRequest[]): Promise<Ga4Report[]> {
+  const config = getConfig()
+  if (!config) throw new Error('GA4 is not configured')
+  const property = `properties/${config.propertyId}`
+  const batches: Ga4ReportRequest[][] = []
+  for (let i = 0; i < requests.length; i += 5) batches.push(requests.slice(i, i + 5))
+  const responses = await Promise.all(
+    batches.map((batch) => getClient(config).batchRunReports({ property, requests: batch })),
+  )
+  return responses.flatMap(([response]) => response.reports ?? [])
 }
 
 /** Exact /artworks/<slug> pages only — wizard/checkout subroutes excluded. */

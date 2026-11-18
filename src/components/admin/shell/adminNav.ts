@@ -1,5 +1,6 @@
 import {
   Article,
+  ChartLine,
   ChatCircle,
   Code,
   Door,
@@ -43,6 +44,8 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
   {
     label: 'Sales',
     items: [
+      // GA4: visitors, the way to an order, the 3D room (owner, 2026-11-18; questions.md Q-AN1).
+      { label: 'Analytics', href: '/admin/analytics', icon: ChartLine },
       { label: 'Orders', href: '/admin/orders', icon: ShoppingBag, showsOrdersBadge: true },
       { label: 'Edition sales', href: '/admin/edition-sales', icon: ListNumbers },
       { label: 'Gift orders', href: '/admin/gift-orders', icon: Gift },

@@ -1,0 +1,146 @@
+// The Analytics page's line chart (dataviz: thin lines, recessive grid, text in text colours).
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.legendLabel {
+  color: var(--color-text-primary);
+}
+
+.legendValue {
+  font-weight: var(--font-semibold);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-black);
+}
+
+// A short stroke of the series colour: legends and tooltips key lines with lines, not boxes.
+.lineKey {
+  flex-shrink: 0;
+  width: var(--space-4);
+  height: calc(var(--space-1) / 2);
+  border-radius: var(--radius-full);
+}
+
+.frame {
+  position: relative;
+  min-width: 0;
+  border-radius: var(--radius-sm);
+
+  &:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 2px;
+  }
+}
+
+.svg {
+  display: block;
+  overflow: visible;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+}
+
+.grid {
+  stroke: var(--color-gray-20);
+  stroke-width: 1;
+}
+
+.baseline {
+  stroke: var(--color-border-default);
+  stroke-width: 1;
+}
+
+.yLabel {
+  font-size: var(--text-xs);
+  fill: var(--color-text-secondary);
+  text-anchor: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.xLabel {
+  font-size: var(--text-xs);
+  fill: var(--color-text-secondary);
+  text-anchor: middle;
+}
+
+.line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.crosshair {
+  stroke: var(--color-text-secondary);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+// The day's points, ringed with the panel colour so they lift off the lines (dataviz 2px ring).
+.dot {
+  stroke: var(--color-white);
+  stroke-width: 2;
+}
+
+.hitArea {
+  fill: transparent;
+  cursor: crosshair;
+}
+
+.tooltip {
+  position: absolute;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 8rem;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-white);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--admin-menu-shadow);
+  pointer-events: none;
+  font-size: var(--text-xs);
+}
+
+.tooltipDate {
+  font-weight: var(--font-semibold);
+  color: var(--color-black);
+}
+
+.tooltipRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+// Values lead, labels follow (dataviz interaction).
+.tooltipValue {
+  min-width: 2ch;
+  font-weight: var(--font-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-black);
+}
+
+.tooltipLabel {
+  color: var(--color-text-secondary);
+}

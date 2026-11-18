@@ -1298,3 +1298,19 @@ kept). If a shared pager is wanted, it can replace it.
 Also from the step 4 review: start the two-column layout at **1100 px** (below that, one column). The
 money panel adding up artist / gallery / production across lines is fine (display only, approved).
 
+
+---
+
+**Q-AN1 (Code Claude, 2026-11-18): Admin › Sales › Analytics, built ahead of a design.** The owner asked for "real
+segmentation data, not boxes" in the admin and chose to have it built now; please design / review it.
+- Route `/admin/analytics`, menu item **Analytics** (Phosphor `ChartLine`) first under Sales.
+- Filters on top, scoping every panel: Period (7 / 30 / 90 days) and Split visitors by (Device / Country / Source /
+  New or returning), in the URL (`?range=&split=`).
+- Panels, top to bottom: six `StatCard`s (Visitors, Visits, Engaged visits, Saw an artwork, Opened the configurator,
+  Orders, each vs the period before); Visits per day (line chart, one line per segment); The way to an order (funnel,
+  stacked by segment); What stops buyers (checkout errors, `BarList`) beside 3D room (facts + visitors by segment);
+  Artworks beside Where visitors come from (`BarList` tables); Where visits start; a footnote.
+- Deviation from "quiet by default": the two charts use colour for segments (new tokens `--admin-series-1…3`, the
+  dataviz reference palette's first three slots, checked as a set for colour-blind separation; "Other" =
+  `--admin-series-other`, gray). Everything else stays grayscale.
+- Open: does the funnel belong on the Dashboard too (a smaller version)? Should the page get its own design for phones?
