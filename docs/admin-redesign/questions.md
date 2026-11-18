@@ -1314,3 +1314,18 @@ segmentation data, not boxes" in the admin and chose to have it built now; pleas
   dataviz reference palette's first three slots, checked as a set for colour-blind separation; "Other" =
   `--admin-series-other`, gray). Everything else stays grayscale.
 - Open: does the funnel belong on the Dashboard too (a smaller version)? Should the page get its own design for phones?
+
+---
+
+**Q-PR1 (Code Claude, 2026-11-18): Sales › Pricing, built from `pricing.md`.** Points the boards don't answer, each
+built the conservative way; please confirm or adjust.
+- Never saved yet (no "Last changed" date): the status line reads **"Not changed yet."**
+- The setting couldn't be read: a red `Callout` above the card, "The saved commission couldn’t be read. Prices are using
+  25% until it can. Reload the page before changing it." (the site keeps pricing at the last value read, else 25).
+- An invalid number (empty, over 100, two decimals): Save stays on once the text changes; pressing it shows "Enter a
+  number from 0 to 100, with one decimal at most." under the row (the app's form rule: silent until submit). The
+  example keeps the last valid figure meanwhile. A comma works as the decimal point ("27,5").
+- Phone: no board; the card stacks (field, Save, status line wrap), 44 px field and button, 16 px card padding.
+- The card title uses the boards' 18 px / 600 heading, not `Panel`'s caps title, so the card is page-local, not `Panel`.
+- Typed the same value with a trailing zero ("30.0" for a saved 30): Save resets the field to "30" without asking.
+
