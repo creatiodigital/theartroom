@@ -53,9 +53,11 @@ type Artwork = {
 }
 
 interface ArtworkGridProps {
-  /** Name the artist on each card: only on a grid of several artists (Prints). */
+  /** Name the artist on each card: Prints, exhibition and artist pages (owner, 2026-11-18: the same
+   *  card everywhere); not "More by the artist", whose heading already names them. */
   showArtist?: boolean
-  /** Add the edition to the year line, "2026 · Limited edition" (Prints, prints.md §4). */
+  /** Add the edition to the year line, "2026 · Limited edition" (Prints, exhibition and artist
+   *  pages, as showArtist). */
   showEdition?: boolean
   artworks: Artwork[]
   artistName?: string
@@ -176,9 +178,9 @@ export const ArtworkGrid = ({
               )}
             </div>
             <div className={styles.info}>
-              {/* The caption left, Order print on its right (under it on phones):
-                  docs/public-redesign/components.md "ArtworkCard". The artist is
-                  named only on a grid of several artists (Prints). */}
+              {/* The caption left, Order print on its right: docs/public-redesign/components.md
+                  "ArtworkCard". Artist and edition on Prints, exhibition and artist grids (owner,
+                  2026-11-18: the same card everywhere). */}
               <div className={styles.caption}>
                 <h3 className={styles.title}>{artwork.title || artwork.name}</h3>
                 {showArtist && (

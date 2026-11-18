@@ -119,6 +119,8 @@ export const ArtistProfilePage = ({
               artworks={artworks}
               artistName={artistFullName}
               artistHandler={artist.handler}
+              showArtist
+              showEdition
               flushBottom
             />
           </section>
