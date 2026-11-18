@@ -1,3 +1,4 @@
+import { PageNotFoundEvent } from '@/components/analytics'
 import { ArrowLink } from '@/components/ui/ArrowLink'
 import { PageLayout } from '@/components/ui/PageLayout'
 import { StatusPage } from '@/components/ui/StatusPage'
@@ -6,6 +7,7 @@ import { StatusPage } from '@/components/ui/StatusPage'
 export default function NotFound() {
   return (
     <PageLayout>
+      <PageNotFoundEvent />
       <StatusPage
         label="Page not found"
         title="This page doesn’t exist."

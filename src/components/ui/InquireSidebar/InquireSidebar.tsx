@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { FormField } from '@/components/ui/FormField'
 import { Input } from '@/components/ui/Input'
 import { useFormValidation } from '@/hooks/useFormValidation'
+import { track } from '@/lib/analytics/track'
 import type { PresentationView } from '@/lib/printPresentation/record'
 import { email, minLength, name, phone, type Validator } from '@/lib/validation'
 
@@ -117,7 +118,10 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
 
       setSubmitStatus('success')
       resetForm()
+      // GA4's recommended lead event: an enquiry about a work reached us.
+      track('generate_lead', { item_id: artwork.slug, lead_type: 'inquire' })
     } catch (error) {
+      track('inquire_error', { item_id: artwork.slug })
       console.error('Error submitting inquiry:', error)
       setSubmitStatus('error')
     }

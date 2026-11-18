@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { CaretLeft, CaretRight } from '@phosphor-icons/react'
 
@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/Button'
 import { InquireSidebar } from '@/components/ui/InquireSidebar'
 import { Share } from '@/components/ui/Share'
 import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
+import { artworkToGa, CURRENCY, euros } from '@/lib/analytics/events'
+import { track } from '@/lib/analytics/track'
 import type { ArtworkSizes } from '@/lib/editions/artworkSizes'
 import type { VariantEditionLineParts } from '@/lib/editions/variantEditionLines'
 import { ArtworkAvailabilityCard, ArtworkPrintFacts } from './ArtworkAvailabilityCard'
@@ -141,11 +143,37 @@ export const ArtworkDetailBody = ({
   const shareUrl =
     typeof window !== 'undefined' ? `${window.location.origin}/artworks/${artwork.slug}` : ''
 
+  // GA4 view_item: a work shown with a print on offer, once per work, on the page or in the room's
+  // details (where the offer arrives after a fetch). Works not for sale send nothing here.
+  const forSale = !!commerce && !purchasesPaused
+  const reportedSlug = useRef<string | null>(null)
+  useEffect(() => {
+    if (!forSale || !commerce || reportedSlug.current === artwork.slug) return
+    reportedSlug.current = artwork.slug
+    track('view_item', {
+      currency: CURRENCY,
+      value: commerce.minPriceCents ? euros(commerce.minPriceCents) : undefined,
+      surface,
+      items: [
+        artworkToGa({
+          slug: artwork.slug,
+          title: displayTitle,
+          artistName: displayAuthor,
+          editionType: commerce.editionType,
+          priceCents: commerce.minPriceCents,
+        }),
+      ],
+    })
+  }, [forSale, commerce, artwork.slug, displayTitle, displayAuthor, surface])
+
   const inquireButton = (
     <Button
       variant="secondary"
       label="Inquire"
-      onClick={() => setIsInquireOpen(true)}
+      onClick={() => {
+        track('inquire_open', { item_id: artwork.slug, surface, for_sale: forSale })
+        setIsInquireOpen(true)
+      }}
       className={styles.inquire}
     />
   )

@@ -9,6 +9,8 @@ import { ArrowButton, CheckoutButton, OrderColumn } from '@/components/checkout/
 import { EmptyCart } from '@/components/cart/EmptyCart'
 import { PageIntro } from '@/components/ui/PageIntro'
 import { PageLayout } from '@/components/ui/PageLayout'
+import { CURRENCY, cartItemToGa, euros, trackCartEvent } from '@/lib/analytics/events'
+import { track } from '@/lib/analytics/track'
 import { cartCount } from '@/lib/cart/cartMath'
 import type { CartItem } from '@/lib/cart/types'
 import { useCart } from '@/lib/cart/useCart'
@@ -70,7 +72,7 @@ export const CartCheckout = ({
   supportedCountries,
   addressAutocomplete = false,
 }: CartCheckoutProps) => {
-  const { items, clear, removeItem } = useCart()
+  const { items, clear, removeItem, hydrated } = useCart()
 
   // Becomes true the moment payment is authorized (no-redirect path) or a 3DS
   // return is verified. Suppresses the empty-cart view after clear() empties
@@ -122,6 +124,7 @@ export const CartCheckout = ({
       if (!result.ok) {
         // Auth failed / unknown PI — drop the buyer back to the address step
         // with a retry message rather than a false success.
+        track('checkout_error', { step: 'payment_return', reason: 'verify_failed' })
         setRestoringOrder(false)
         setPayError('Payment could not be completed. Please try again.')
         window.history.replaceState(null, '', '/checkout')
@@ -136,6 +139,25 @@ export const CartCheckout = ({
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // GA4 begin_checkout: once, when the address step first shows a loaded cart. Not on a return
+  // from Stripe (3DS / PayPal) or a reload of the confirmation: those carry ?payment_intent.
+  const beganCheckoutRef = useRef(false)
+  useEffect(() => {
+    if (!hydrated || beganCheckoutRef.current || items.length === 0) return
+    beganCheckoutRef.current = true
+    if (new URLSearchParams(window.location.search).has('payment_intent')) return
+    trackCartEvent('begin_checkout', items)
+  }, [hydrated, items])
+
+  /** The order's money as GA4 ecommerce params (value = items before VAT, like the cart). */
+  const orderParams = (orderTotals: CartTotals) => ({
+    currency: CURRENCY,
+    value: euros(orderTotals.itemsPreTaxCents),
+    shipping: euros(orderTotals.shippingCents),
+    tax: euros(orderTotals.customerVatCents),
+    items: items.map((item, index) => cartItemToGa(item, index)),
+  })
 
   // After a successful payment the cart is emptied — but we must keep showing
   // the confirmation, not the "empty cart" view. paidRef gates that, and
@@ -170,6 +192,12 @@ export const CartCheckout = ({
         }
         setLineErrors(byLine)
         setOrderError(order)
+        track('checkout_error', {
+          step: 'address',
+          reason: order ?? 'item_unavailable',
+          failed_lines: Object.keys(byLine).length,
+          ship_country: submitted.countryCode,
+        })
         // Stay on the address step with the cart context visible so the
         // buyer can fix/remove the offending line; do NOT advance.
         return
@@ -177,6 +205,10 @@ export const CartCheckout = ({
       setAddress(submitted)
       setTotals(result.totals)
       setStep('review')
+      track('add_shipping_info', {
+        ...orderParams(result.totals),
+        ship_country: submitted.countryCode,
+      })
     } finally {
       setSubmitting(false)
     }
@@ -222,6 +254,12 @@ export const CartCheckout = ({
         // continue with the rest. The message names the edition, so the cart
         // changing under them is explained rather than mysterious.
         if (result.soldOutLineId) await removeItem(result.soldOutLineId)
+        track('checkout_error', {
+          step: 'review',
+          reason: result.error,
+          sold_out: !!result.soldOutLineId,
+          ship_country: address.countryCode,
+        })
         setPayError(result.error)
         setStep('address')
         return
@@ -230,7 +268,9 @@ export const CartCheckout = ({
       setPaymentIntentId(result.paymentIntentId)
       setTotals(result.totals)
       setStep('payment')
+      track('payment_step_view', { ...orderParams(result.totals), ship_country: address.countryCode })
     } catch {
+      track('checkout_error', { step: 'review', reason: 'payment_unavailable' })
       setPayError('Payment is not available right now. Please try again later.')
     } finally {
       setSubmitting(false)

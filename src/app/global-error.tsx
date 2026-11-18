@@ -3,6 +3,8 @@
 import * as Sentry from '@sentry/nextjs'
 import { useEffect } from 'react'
 
+import { track } from '@/lib/analytics/track'
+
 /**
  * Global error boundary that wraps the entire HTML document.
  * This catches errors that happen outside of the root layout,
@@ -17,6 +19,12 @@ export default function RootError({
 }) {
   useEffect(() => {
     Sentry.captureException(error)
+    // GA4 `exception` (fatal: the whole layout failed). GA may still be loaded from before.
+    track('exception', {
+      description: error.digest ? `digest:${error.digest}` : error.name,
+      fatal: true,
+      page_path: window.location.pathname,
+    })
   }, [error])
 
   // other-screens.md "Error": the error page's words and look, but without the layout (this replaces

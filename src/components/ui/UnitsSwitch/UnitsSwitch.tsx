@@ -5,6 +5,8 @@ import { Fragment, useRef, type KeyboardEvent } from 'react'
 import c from 'classnames'
 
 import { Button } from '@/components/ui/Button'
+import { pageArea } from '@/lib/analytics/events'
+import { track } from '@/lib/analytics/track'
 import type { Unit } from '@/lib/units/format'
 import { useUnits } from '@/lib/units/UnitsProvider'
 
@@ -57,7 +59,12 @@ export function UnitsSwitch({ className }: { className?: string }) {
             aria-checked={unit === option}
             tabIndex={unit === option ? 0 : -1}
             className={c(styles.cell, unit === option && styles.chosen)}
-            onClick={() => setUnit(option)}
+            onClick={() => {
+              if (option !== unit) {
+                track('units_change', { unit: option, area: pageArea(window.location.pathname) })
+              }
+              setUnit(option)
+            }}
           >
             {option}
           </Button>

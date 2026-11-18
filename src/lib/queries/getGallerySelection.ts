@@ -171,7 +171,7 @@ export async function getGallerySelectionForAdmin(): Promise<AdminSelectionRow[]
  */
 export type HomePrintSlide = Pick<
   GallerySelectionCard,
-  'id' | 'slug' | 'name' | 'title' | 'year' | 'imageUrl' | 'originalWidth' | 'originalHeight'
+  'id' | 'slug' | 'name' | 'title' | 'year' | 'imageUrl' | 'originalWidth' | 'originalHeight' | 'sale'
 > & {
   artistName: string
   presentation: PresentationView
@@ -203,6 +203,7 @@ export async function getHomePrints(): Promise<HomePrintSlide[]> {
         originalWidth: c.originalWidth,
         originalHeight: c.originalHeight,
         artistName: c.artistName,
+        sale: c.sale,
         presentation,
       },
     ]

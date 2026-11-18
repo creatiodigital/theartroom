@@ -25,7 +25,12 @@
  */
 import type { Prisma } from '@/generated/prisma'
 
-import { minimumPriceForLimited, minimumPriceForOpen, type LiveVariant } from './minimumPrice'
+import {
+  maximumPriceForLimited,
+  minimumPriceForLimited,
+  minimumPriceForOpen,
+  type LiveVariant,
+} from './minimumPrice'
 import { isArtworkPurchasable, LIVE_VARIANT_WHERE } from './printable'
 
 export type ArtworkSale = {
@@ -39,6 +44,10 @@ export type ArtworkSale = {
    *  cheapest price with some other variant's edition would let the two
    *  describe different objects. `null` for open editions and when sold out. */
   variantName?: string | null
+  /** A limited edition whose editions in stock differ in price: the dearest of them, so the card
+   *  reads as a range ("€232–€444", White Cube's way). Absent for open editions and when every
+   *  edition in stock costs the same. */
+  maxPriceCents?: number
 }
 
 /**
@@ -80,6 +89,7 @@ export function resolveArtworkSale(
       return { editionType: 'limited', minPriceCents: null, variantName: null }
 
     const cheapest = minimumPriceForLimited(inStock)
+    const dearest = maximumPriceForLimited(inStock)
     // In-stock but unquotable (no variant carries a price). Not sold out —
     // saying so would invent a history — so show nothing.
     return cheapest
@@ -87,6 +97,7 @@ export function resolveArtworkSale(
           editionType: 'limited',
           minPriceCents: cheapest.cents,
           variantName: cheapest.basis === 'variant' ? cheapest.variantName : null,
+          ...(dearest !== null && dearest > cheapest.cents && { maxPriceCents: dearest }),
         }
       : null
   }

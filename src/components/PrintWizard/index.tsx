@@ -12,6 +12,7 @@ import { clearPrintSession } from '@/components/checkout/clearPrintSession'
 import { consumePrintReturnUrl } from '@/components/checkout/printReturnUrl'
 import Logo from '@/icons/logo.svg'
 
+import { trackCartEvent } from '@/lib/analytics/events'
 import { buildCartItem } from '@/lib/cart/buildCartItem'
 import { hasMatchingCartLine } from '@/lib/cart/cartMath'
 import { useCart } from '@/lib/cart/useCart'
@@ -37,6 +38,7 @@ import { CartAddedModal, type AddedLine } from './CartAddedModal'
 import { SchemaStage } from './SchemaStage'
 import { StepsPanel } from './StepsPanel'
 import { SummaryPanel } from './SummaryPanel'
+import { useWizardAnalytics } from './useWizardAnalytics'
 import { LearnMoreSheet } from './LearnMoreSheet'
 
 import styles from './PrintWizard.module.scss'
@@ -227,14 +229,17 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
   const dismissIntro = () => setIntroOpen(false)
 
   const updateConfig = (patch: Record<string, string>) => {
+    report.choice(patch)
     setConfig((prev) => applyChoice(prev, patch, catalog))
   }
 
   const updateCustomSize = (size: { widthCm: number; heightCm: number }) => {
+    report.size(size)
     setConfig((prev) => ({ ...prev, customSize: size }))
   }
 
   const updateBorder = (dimensionId: string, allCm: number) => {
+    report.border(dimensionId, allCm)
     setConfig((prev) => ({
       ...prev,
       borders: { ...(prev.borders ?? {}), [dimensionId]: { allCm } },
@@ -277,6 +282,13 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
     [catalog.providerId, config, country, artwork.printPriceCents],
   )
   const quoteLoading = false
+
+  // GA4: the wizard opening (at the price it opens on) and the buyer's changes.
+  const report = useWizardAnalytics(
+    { slug: artwork.slug, editionType: 'open' },
+    quote.lines.find((line) => line.id === 'artwork')?.amountCents ?? null,
+    searchParams.get('editLineId') !== null,
+  )
 
   // What a choice would add to (or take off) the Price line — the artwork line, no shipping or
   // VAT — shown on the Frame step's options (owner, 2026-11-17: "Print only" / "Framed +€220").
@@ -338,6 +350,7 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
       quantity,
     }
     await addItem(added)
+    trackCartEvent('add_to_cart', [added], { edit: editLineId !== null })
     setCartAdded(added)
   }
 
@@ -391,7 +404,10 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
           isEditing={editLineId !== null}
           isDuplicate={isDuplicate}
           editionType="open"
-          onLearnMore={() => setIntroOpen(true)}
+          onLearnMore={() => {
+            report.learnMore()
+            setIntroOpen(true)
+          }}
         />
       </main>
 

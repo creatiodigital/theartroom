@@ -7,6 +7,8 @@ import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-
 import { loadStripe, type Stripe } from '@stripe/stripe-js'
 
 import { ArrowButton, CheckoutButton } from '@/components/checkout/CheckoutParts'
+import { CURRENCY, euros } from '@/lib/analytics/events'
+import { track } from '@/lib/analytics/track'
 import type { CartTotals } from '@/lib/cart/validateCart'
 import { STRIPE_APPEARANCE } from '@/lib/checkout/stripeAppearance'
 import type { ShippingAddress } from '@/components/checkout/PrintCheckout/createPaymentIntent'
@@ -83,6 +85,8 @@ const CartPaymentForm = ({ totals, address, onSuccess, onBack }: CartPaymentForm
 
     setSubmitting(true)
     setError(null)
+    // GA4 add_payment_info: the buyer pressed Pay (the method itself is inside Stripe's iframe).
+    track('add_payment_info', { currency: CURRENCY, value: euros(totals.itemsPreTaxCents) })
 
     // `redirect: 'if_required'` keeps the success path inside this
     // in-component step machine (no route round-trip): on a no-redirect
@@ -122,6 +126,11 @@ const CartPaymentForm = ({ totals, address, onSuccess, onBack }: CartPaymentForm
     })
 
     if (stripeError) {
+      // Stripe's codes only (card_declined, insufficient_funds…), never card details.
+      track('checkout_error', {
+        step: 'payment',
+        reason: stripeError.decline_code ?? stripeError.code ?? stripeError.type,
+      })
       setError(stripeError.message ?? 'Payment failed. Please try again.')
       setSubmitting(false)
       return
@@ -142,6 +151,7 @@ const CartPaymentForm = ({ totals, address, onSuccess, onBack }: CartPaymentForm
 
     // Any other terminal state (e.g. requires_payment_method after a soft
     // decline) — surface a retry message and keep the buyer on this step.
+    track('checkout_error', { step: 'payment', reason: paymentIntent?.status ?? 'no_payment_intent' })
     setError('Payment could not be completed. Please try again.')
     setSubmitting(false)
   }
