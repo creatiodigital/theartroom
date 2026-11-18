@@ -23,6 +23,7 @@
  * and this stays directly testable — same split as `deleteLimitedVariant`.
  */
 import prisma from '@/lib/prisma'
+import { getGalleryCommissionRate } from '@/lib/settings'
 
 import { estimateVariantMarginCents } from './variantMargin'
 
@@ -85,6 +86,7 @@ export async function updateVariantNameAndPrice(args: {
     sheetWidthCm: variant.sheetWidthCm,
     sheetHeightCm: variant.sheetHeightCm,
     artistPriceCents: priceCents,
+    galleryRate: await getGalleryCommissionRate(),
   })
   if (margin && margin.marginCents <= 0) {
     const euros = (c: number) => (c / 100).toFixed(2)

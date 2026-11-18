@@ -15,7 +15,7 @@
  *   - Dry run unless --apply. It prints the DB's project ref so you know which DB it read.
  *   - --apply / --undo also need --ref=<that project ref>: a wrong DB refuses to run.
  *   - Skips a price that would land below the floor (default €50), and a limited variant whose
- *     new price no longer covers its own paper (the admin's margin rule, at the live rate).
+ *     new price no longer covers its own paper (the admin's margin rule, at the DB's commission setting).
  *   - Writes every old price to out/price-snapshots/ (gitignored) BEFORE writing anything.
  *   - ONE discount per DB: --apply refuses while a snapshot for this DB exists that hasn't been
  *     undone (a second run would take another €50 off — it did, on dev, in testing).
@@ -36,7 +36,7 @@ import path from 'node:path'
 import { Prisma } from '@/generated/prisma/client'
 import { estimateVariantMarginCents } from '@/lib/editions/variantMargin'
 import prisma from '@/lib/prisma'
-import { TPS_GALLERY_MARKUP_RATE } from '@/lib/print-providers/printspace/pricing'
+import { getGalleryCommissionRate } from '@/lib/settings'
 
 type Row = {
   table: 'Artwork' | 'LimitedVariant'
@@ -96,7 +96,8 @@ async function undo(file: string) {
 }
 
 async function main() {
-  console.log(`DB project ref: ${dbRef ?? 'UNKNOWN'} · gallery rate in this code: ${TPS_GALLERY_MARKUP_RATE * 100}%`)
+  const galleryRate = await getGalleryCommissionRate()
+  console.log(`DB project ref: ${dbRef ?? 'UNKNOWN'} · gallery commission setting: ${galleryRate * 100}%`)
 
   const undoFile = arg('undo')
   if (undoFile) return undo(undoFile)
@@ -150,7 +151,7 @@ async function main() {
       const oldCents = v.priceCents!
       const newCents = oldCents - amountCents
       const label = `${base} · "${v.name}" ${cm(v.widthCm)}×${cm(v.heightCm)}`
-      const margin = estimateVariantMarginCents({ ...v, artistPriceCents: newCents })
+      const margin = estimateVariantMarginCents({ ...v, artistPriceCents: newCents, galleryRate })
       if (newCents < floorCents) skipped.push(`${label}: ${euros(oldCents)} would go below ${euros(floorCents)}`)
       else if (margin && margin.marginCents <= 0)
         skipped.push(`${label}: at ${euros(newCents)} it no longer covers its paper (${euros(margin.absorbedCents)})`)

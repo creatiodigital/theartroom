@@ -73,6 +73,9 @@ interface PrintWizardProps {
   /** Soft recommendations — surfaces a check-circle on the matching
    *  paper option in the picker. Paper-only for now. */
   recommendations: PrintRecommendations | null
+  /** The gallery's commission rate (Admin › Sales › Pricing), read by the page for this request.
+   *  The wizard prices with it; the payment intent re-prices with the setting as it is then. */
+  galleryRate: number
 }
 
 /**
@@ -122,12 +125,24 @@ function applyChoice(
 
 export const PrintWizard = (props: PrintWizardProps) => {
   if (props.artwork.editionType === 'limited') {
-    return <LimitedWizard artwork={props.artwork} catalog={props.catalog} />
+    return (
+      <LimitedWizard
+        artwork={props.artwork}
+        catalog={props.catalog}
+        galleryRate={props.galleryRate}
+      />
+    )
   }
   return <OpenWizard {...props} />
 }
 
-const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWizardProps) => {
+const OpenWizard = ({
+  artwork,
+  catalog,
+  restrictions,
+  recommendations,
+  galleryRate,
+}: PrintWizardProps) => {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -278,8 +293,9 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
         config,
         country,
         artistPriceCents: artwork.printPriceCents,
+        galleryRate,
       }),
-    [catalog.providerId, config, country, artwork.printPriceCents],
+    [catalog.providerId, config, country, artwork.printPriceCents, galleryRate],
   )
   const quoteLoading = false
 
@@ -297,6 +313,7 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
       config: next,
       country,
       artistPriceCents: artwork.printPriceCents,
+      galleryRate,
     }).lines.find((line) => line.id === 'artwork')?.amountCents ?? null
   const priceDelta = (patch: Record<string, string>): number | null => {
     const now = quote.lines.find((line) => line.id === 'artwork')?.amountCents ?? null
@@ -345,6 +362,7 @@ const OpenWizard = ({ artwork, catalog, restrictions, recommendations }: PrintWi
         config,
         quote,
         artistCents: artwork.printPriceCents,
+        galleryRate,
         specsSummary: summarizeConfig(catalog, config),
       }),
       quantity,

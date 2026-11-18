@@ -10,8 +10,10 @@ import {
 import { buildInitialConfig } from '@/lib/print-providers/configHelpers'
 import { buildPrintspaceCatalog, getPrintMinSize } from '@/lib/print-providers/printspace'
 import { openEditionFromConfig } from '@/lib/print-providers/printspace/fromConfig'
-import { TPS_GALLERY_MARKUP_RATE } from '@/lib/print-providers/printspace/pricing'
+import { galleryCommissionCents } from '@/lib/galleryCommission'
 import { getProviderQuote } from '@/lib/print-providers/quote'
+
+import { TEST_GALLERY_RATE } from './gallery-commission-helpers'
 
 /**
  * The number behind a price on a prints card.
@@ -22,7 +24,8 @@ import { getProviderQuote } from '@/lib/print-providers/quote'
  * loose it is useless: measured on real data it read €140 against a genuine
  * minimum of €311. These lock the number to something buyable.
  *
- * Pure functions over the pricing model — no browser, no database.
+ * Pure functions over the pricing model — no browser, no database — at a fixed test commission
+ * (TEST_GALLERY_RATE), so the owner's setting in admin can't change what they assert.
  */
 
 // 3:2 landscape, big enough to print well past the minimum size.
@@ -45,45 +48,51 @@ const variant = (over: Partial<LiveVariant> = {}): LiveVariant => ({
 
 test.describe('minimumPriceForLimited', () => {
   test('picks the CHEAPEST variant, not the first', async () => {
-    const res = minimumPriceForLimited([
-      variant({ name: 'Medium', widthCm: 45, heightCm: 30, priceCents: 20000 }),
-      variant({ name: 'Small', priceCents: 10000 }),
-    ])
+    const res = minimumPriceForLimited(
+      [
+        variant({ name: 'Medium', widthCm: 45, heightCm: 30, priceCents: 20000 }),
+        variant({ name: 'Small', priceCents: 10000 }),
+      ],
+      TEST_GALLERY_RATE,
+    )
     expect(res?.basis).toBe('variant')
     if (res?.basis === 'variant') expect(res.variantName).toBe('Small')
   })
 
   test('is well above artist + gallery — the shortcut that looks right and is not', async () => {
-    const res = minimumPriceForLimited([variant({ priceCents: 10000 })])
+    const res = minimumPriceForLimited([variant({ priceCents: 10000 })], TEST_GALLERY_RATE)
     // artist €100 + the gallery cut. The real floor adds the print itself and
     // the COA/letter, so anything at or below artist + gallery would be unbuyable.
-    expect(res!.cents).toBeGreaterThan(Math.round(10000 * (1 + TPS_GALLERY_MARKUP_RATE)))
+    expect(res!.cents).toBeGreaterThan(10000 + galleryCommissionCents(10000, TEST_GALLERY_RATE))
   })
 
   test('returns null when nothing is on sale — the SOLD signal', async () => {
-    expect(minimumPriceForLimited([])).toBeNull()
+    expect(minimumPriceForLimited([], TEST_GALLERY_RATE)).toBeNull()
   })
 
   test('ignores a variant with no price rather than treating it as free', async () => {
-    expect(minimumPriceForLimited([variant({ priceCents: null })])).toBeNull()
+    expect(minimumPriceForLimited([variant({ priceCents: null })], TEST_GALLERY_RATE)).toBeNull()
   })
 
   test('a dearer artist cut always costs the buyer more', async () => {
-    const cheap = minimumPriceForLimited([variant({ priceCents: 10000 })])!
-    const dear = minimumPriceForLimited([variant({ priceCents: 20000 })])!
+    const cheap = minimumPriceForLimited([variant({ priceCents: 10000 })], TEST_GALLERY_RATE)!
+    const dear = minimumPriceForLimited([variant({ priceCents: 20000 })], TEST_GALLERY_RATE)!
     expect(dear.cents).toBeGreaterThan(cheap.cents)
   })
 
   test('a bigger print of the same edition costs more', async () => {
-    const small = minimumPriceForLimited([variant({ widthCm: 30, heightCm: 20 })])!
-    const big = minimumPriceForLimited([variant({ widthCm: 90, heightCm: 60 })])!
+    const small = minimumPriceForLimited(
+      [variant({ widthCm: 30, heightCm: 20 })],
+      TEST_GALLERY_RATE,
+    )!
+    const big = minimumPriceForLimited([variant({ widthCm: 90, heightCm: 60 })], TEST_GALLERY_RATE)!
     expect(big.cents).toBeGreaterThan(small.cents)
   })
 })
 
 test.describe('minimumPriceForOpen', () => {
   test('prices the SMALLEST printable size, short edge 20cm, ratio preserved', async () => {
-    const res = minimumPriceForOpen({ ...LANDSCAPE, printPriceCents: 20000 })
+    const res = minimumPriceForOpen({ ...LANDSCAPE, printPriceCents: 20000 }, TEST_GALLERY_RATE)
     expect(res?.basis).toBe('smallest-print')
     // 3:2 landscape → 20cm short edge, 30cm long edge. Not a square 20x20.
     expect(Math.min(res!.widthCm, res!.heightCm)).toBeCloseTo(20, 1)
@@ -91,36 +100,45 @@ test.describe('minimumPriceForOpen', () => {
   })
 
   test('follows the artwork orientation', async () => {
-    const res = minimumPriceForOpen({ ...PORTRAIT, printPriceCents: 20000 })
+    const res = minimumPriceForOpen({ ...PORTRAIT, printPriceCents: 20000 }, TEST_GALLERY_RATE)
     expect(res!.heightCm).toBeGreaterThan(res!.widthCm)
     expect(res!.widthCm).toBeCloseTo(20, 1)
   })
 
   test('is a genuine floor: any larger size costs more', async () => {
-    const floor = minimumPriceForOpen({ ...LANDSCAPE, printPriceCents: 20000 })!
+    const floor = minimumPriceForOpen({ ...LANDSCAPE, printPriceCents: 20000 }, TEST_GALLERY_RATE)!
     // Same artist cut, but priced as a limited variant twice the size.
-    const bigger = minimumPriceForLimited([
-      variant({ widthCm: floor.widthCm * 2, heightCm: floor.heightCm * 2, priceCents: 20000 }),
-    ])!
+    const bigger = minimumPriceForLimited(
+      [variant({ widthCm: floor.widthCm * 2, heightCm: floor.heightCm * 2, priceCents: 20000 })],
+      TEST_GALLERY_RATE,
+    )!
     expect(bigger.cents).toBeGreaterThan(floor.cents)
   })
 
   test('is well above artist + gallery', async () => {
-    const res = minimumPriceForOpen({ ...LANDSCAPE, printPriceCents: 20000 })!
+    const res = minimumPriceForOpen({ ...LANDSCAPE, printPriceCents: 20000 }, TEST_GALLERY_RATE)!
     // €200 + the gallery cut
-    expect(res.cents).toBeGreaterThan(Math.round(20000 * (1 + TPS_GALLERY_MARKUP_RATE)))
+    expect(res.cents).toBeGreaterThan(20000 + galleryCommissionCents(20000, TEST_GALLERY_RATE))
   })
 
   test('returns null without a price or without dimensions', async () => {
-    expect(minimumPriceForOpen({ ...LANDSCAPE, printPriceCents: null })).toBeNull()
     expect(
-      minimumPriceForOpen({ printPriceCents: 20000, originalWidth: null, originalHeight: null }),
+      minimumPriceForOpen({ ...LANDSCAPE, printPriceCents: null }, TEST_GALLERY_RATE),
+    ).toBeNull()
+    expect(
+      minimumPriceForOpen(
+        { printPriceCents: 20000, originalWidth: null, originalHeight: null },
+        TEST_GALLERY_RATE,
+      ),
     ).toBeNull()
   })
 
   test('returns null for an image too small to print at all', async () => {
     expect(
-      minimumPriceForOpen({ printPriceCents: 20000, originalWidth: 50, originalHeight: 50 }),
+      minimumPriceForOpen(
+        { printPriceCents: 20000, originalWidth: 50, originalHeight: 50 },
+        TEST_GALLERY_RATE,
+      ),
     ).toBeNull()
   })
 })
@@ -129,10 +147,12 @@ test.describe('minimumPriceForArtwork', () => {
   const base = { ...LANDSCAPE, printEnabled: true, printPriceCents: 20000 }
 
   test('dispatches on edition type', async () => {
-    const open = minimumPriceForArtwork({ ...base, editionType: 'open' })
+    const open = minimumPriceForArtwork({ ...base, editionType: 'open' }, TEST_GALLERY_RATE)
     expect(open?.basis).toBe('smallest-print')
 
-    const limited = minimumPriceForArtwork({ ...base, editionType: 'limited' }, [variant()])
+    const limited = minimumPriceForArtwork({ ...base, editionType: 'limited' }, TEST_GALLERY_RATE, [
+      variant(),
+    ])
     expect(limited?.basis).toBe('variant')
   })
 
@@ -140,21 +160,30 @@ test.describe('minimumPriceForArtwork', () => {
     // Limited editions have no artwork price; a stale one must not leak in.
     const withStalePrice = minimumPriceForArtwork(
       { ...base, editionType: 'limited', printPriceCents: 999999 },
+      TEST_GALLERY_RATE,
       [variant({ priceCents: 10000 })],
     )
     const withoutIt = minimumPriceForArtwork(
       { ...base, editionType: 'limited', printPriceCents: null },
+      TEST_GALLERY_RATE,
       [variant({ priceCents: 10000 })],
     )
     expect(withStalePrice!.cents).toBe(withoutIt!.cents)
   })
 
   test('print sales off means no price at all', async () => {
-    expect(minimumPriceForArtwork({ ...base, editionType: 'open', printEnabled: false })).toBeNull()
+    expect(
+      minimumPriceForArtwork(
+        { ...base, editionType: 'open', printEnabled: false },
+        TEST_GALLERY_RATE,
+      ),
+    ).toBeNull()
   })
 
   test('a limited edition with no live variants is null, whatever the artwork says', async () => {
-    expect(minimumPriceForArtwork({ ...base, editionType: 'limited' }, [])).toBeNull()
+    expect(
+      minimumPriceForArtwork({ ...base, editionType: 'limited' }, TEST_GALLERY_RATE, []),
+    ).toBeNull()
   })
 })
 
@@ -188,9 +217,16 @@ test.describe('the configurator opens at the From price', () => {
       expect(config.values.format).toBe('print-only')
       expect(config.borders?.border?.allCm).toBe(0)
 
-      const first = getProviderQuote('printspace', { config, country: '', artistPriceCents })
-        .lines.find((line) => line.id === 'artwork')!.amountCents
-      const from = minimumPriceForOpen({ ...file, printPriceCents: artistPriceCents })!
+      const first = getProviderQuote('printspace', {
+        config,
+        country: '',
+        artistPriceCents,
+        galleryRate: TEST_GALLERY_RATE,
+      }).lines.find((line) => line.id === 'artwork')!.amountCents
+      const from = minimumPriceForOpen(
+        { ...file, printPriceCents: artistPriceCents },
+        TEST_GALLERY_RATE,
+      )!
       expect(first).toBe(from.cents)
       expect(config.customSize).toEqual({ widthCm: from.widthCm, heightCm: from.heightCm })
     })

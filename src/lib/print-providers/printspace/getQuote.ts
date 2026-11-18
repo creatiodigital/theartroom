@@ -1,10 +1,11 @@
+import { galleryCommissionCents } from '@/lib/galleryCommission'
+
 import type { GetQuoteInput, Quote, QuoteLine } from '../types'
 import { getMountPresetWidthCm } from './data'
 import type { TpsFrameTypeId, TpsGlassId, TpsHangingId } from './data'
 import {
   TPS_COA_LETTER_SUPPLEMENT_CENTS,
   TPS_FREE_PRINT_DELIVERY_FROM_CENTS,
-  TPS_GALLERY_MARKUP_RATE,
   TPS_HANGING_SUPPLEMENT_CENTS,
   getFrameShippingCents,
   getFrameSupplementCents,
@@ -31,7 +32,7 @@ import {
  *   total    = subtotal + tax
  */
 export function getPrintspaceQuote(input: GetQuoteInput): Quote {
-  const { config, country, artistPriceCents } = input
+  const { config, country, artistPriceCents, galleryRate } = input
 
   // Effective size — TPS sells custom sizes only, but `customSize`
   // may be absent on a brand-new wizard render. Fall back to a
@@ -78,8 +79,8 @@ export function getPrintspaceQuote(input: GetQuoteInput): Quote {
     ? getMountBoardSupplementCents(mountWidthCm, Math.max(widthCm, heightCm))
     : 0
 
-  // Gallery markup on the artist's price.
-  const galleryCents = Math.round(artistPriceCents * TPS_GALLERY_MARKUP_RATE)
+  // The gallery's commission on top of the artist's price (the owner's setting, passed in).
+  const galleryCents = galleryCommissionCents(artistPriceCents, galleryRate)
 
   // Wizard summary lumps artwork + production into a single "Artwork"
   // line and shows shipping separately when a destination is set.

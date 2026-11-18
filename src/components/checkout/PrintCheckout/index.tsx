@@ -59,6 +59,9 @@ interface PrintCheckoutProps {
   supportedCountries: string[]
   /** Pre-filled country (e.g. when the buyer comes back from payment). */
   initialCountry: string
+  /** The gallery's commission rate (Admin › Sales › Pricing), read by the page for this request.
+   *  The wizard prices with it; the payment intent re-prices with the setting as it is then. */
+  galleryRate: number
 }
 
 type AddressForm = {
@@ -90,6 +93,7 @@ export const PrintCheckout = ({
   providerId,
   supportedCountries,
   initialCountry,
+  galleryRate,
 }: PrintCheckoutProps) => {
   const router = useRouter()
   const [country, setCountry] = useState<string>(initialCountry)
@@ -220,8 +224,9 @@ export const PrintCheckout = ({
       config: handoff.config,
       country,
       artistPriceCents: artwork.printPriceCents,
+      galleryRate,
     })
-  }, [handoff, country, artwork.printPriceCents])
+  }, [handoff, country, artwork.printPriceCents, galleryRate])
   const quoteLoading = false
 
   // Persist the picked country back into the wizard handoff stash so

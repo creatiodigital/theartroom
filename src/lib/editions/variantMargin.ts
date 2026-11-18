@@ -12,14 +12,12 @@
  * case) and the per-order COA + letter cost. It exists to catch a
  * configuration mistake, not to be an accounting figure.
  */
-import {
-  getPrintBaseCents,
-  TPS_GALLERY_MARKUP_RATE,
-} from '@/lib/print-providers/printspace/pricing'
+import { galleryCommissionCents } from '@/lib/galleryCommission'
+import { getPrintBaseCents } from '@/lib/print-providers/printspace/pricing'
 import { buildTpsRecipe } from '@/lib/editions/tpsRecipe'
 
 export type VariantMargin = {
-  /** What the gallery charges on top of the artist's cut. */
+  /** What the gallery charges on top of the artist's cut (its commission). */
   galleryCutCents: number
   /** Sheet cost minus the image cost the buyer was charged for. */
   absorbedCents: number
@@ -34,6 +32,8 @@ export function estimateVariantMarginCents(args: {
   sheetWidthCm?: number | null
   sheetHeightCm?: number | null
   artistPriceCents: number
+  /** The gallery's commission rate (the owner's setting): servers read it, the editor fetches it. */
+  galleryRate: number
 }): VariantMargin | null {
   const recipe = buildTpsRecipe({ ...args, paperLabel: '' })
   if (!recipe || !Number.isFinite(args.artistPriceCents) || args.artistPriceCents <= 0) {
@@ -43,7 +43,7 @@ export function estimateVariantMarginCents(args: {
   const imageCents = getPrintBaseCents(args.widthCm, args.heightCm)
   const sheetCents = getPrintBaseCents(recipe.sheetWidthCm, recipe.sheetHeightCm)
   const absorbedCents = Math.max(0, sheetCents - imageCents)
-  const galleryCutCents = Math.round(args.artistPriceCents * TPS_GALLERY_MARKUP_RATE)
+  const galleryCutCents = galleryCommissionCents(args.artistPriceCents, args.galleryRate)
 
   return {
     galleryCutCents,

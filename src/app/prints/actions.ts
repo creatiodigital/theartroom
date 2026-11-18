@@ -10,7 +10,7 @@ import {
 import { SALE_SELECT, saleFromRow } from '@/lib/editions/artworkSale'
 import { purchasableArtworkWhere } from '@/lib/editions/printable'
 import prisma from '@/lib/prisma'
-import { getPurchasesPaused } from '@/lib/settings'
+import { getGalleryCommissionRate, getPurchasesPaused } from '@/lib/settings'
 
 /**
  * Public read of the purchases kill switch — client purchase surfaces
@@ -141,7 +141,7 @@ export async function getPrintsCatalogPage({
     : []
   const where = buildPrintsWhere(safeArtistId, safeEdition, safeSearch, safeExcludeIds)
 
-  const [rows, totalCount] = await Promise.all([
+  const [rows, totalCount, galleryRate] = await Promise.all([
     prisma.artwork.findMany({
       where,
       select: PRINT_SELECT,
@@ -152,6 +152,7 @@ export async function getPrintsCatalogPage({
       take: PRINTS_PAGE_SIZE,
     }),
     prisma.artwork.count({ where }),
+    getGalleryCommissionRate(),
   ])
 
   // The client expects createdAt as a serializable ISO string. The pricing
@@ -159,14 +160,17 @@ export async function getPrintsCatalogPage({
   // only needs the resolved sale, and the artist's cut is not public.
   const items = rows.map((row) => {
     const { printEnabled, printPriceCents, limitedVariants, ...rest } = row
-    const sale = saleFromRow({
-      editionType: rest.editionType,
-      originalWidth: rest.originalWidth,
-      originalHeight: rest.originalHeight,
-      printEnabled,
-      printPriceCents,
-      limitedVariants,
-    })
+    const sale = saleFromRow(
+      {
+        editionType: rest.editionType,
+        originalWidth: rest.originalWidth,
+        originalHeight: rest.originalHeight,
+        printEnabled,
+        printPriceCents,
+        limitedVariants,
+      },
+      galleryRate,
+    )
     return {
       ...rest,
       createdAt: row.createdAt.toISOString(),

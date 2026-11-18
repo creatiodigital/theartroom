@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test'
 import { validateVariantInput } from '../src/lib/editions/validateVariant'
 import { computeSheetLayout } from '../src/lib/editions/sheetLayout'
 import { estimateVariantMarginCents } from '../src/lib/editions/variantMargin'
-import { TPS_GALLERY_MARKUP_RATE } from '../src/lib/print-providers/printspace/pricing'
+
+import { TEST_GALLERY_RATE } from './gallery-commission-helpers'
 
 // A 3:2 landscape file, large enough to print at these sizes at 300 DPI.
 const ARTWORK_3_2 = { widthPx: 7200, heightPx: 4800 }
@@ -22,6 +23,7 @@ test('accepts a valid fixed-sheet variant', () => {
     variant: { ...baseVariant, sheetWidthCm: 50, sheetHeightCm: 40 },
     artwork: ARTWORK_3_2,
     siblingSizes: [],
+    galleryRate: TEST_GALLERY_RATE,
   })
   expect(res.ok).toBe(true)
 })
@@ -32,6 +34,7 @@ test('rejects a fixed sheet whose derived image disagrees with the stored size',
     variant: { ...baseVariant, widthCm: 30, heightCm: 20, sheetWidthCm: 50, sheetHeightCm: 40 },
     artwork: ARTWORK_3_2,
     siblingSizes: [],
+    galleryRate: TEST_GALLERY_RATE,
   })
   expect(res.ok).toBe(false)
   if (!res.ok) expect(res.error).toContain('derived')
@@ -54,6 +57,7 @@ test('rejects a sheet narrower than the TPS reference width', () => {
     },
     artwork: ARTWORK_3_2,
     siblingSizes: [],
+    galleryRate: TEST_GALLERY_RATE,
   })
   expect(res.ok).toBe(false)
   if (!res.ok) expect(res.error).toContain('40 cm')
@@ -68,6 +72,7 @@ test('rejects a border above a quarter of the shortest sheet side', () => {
     variant: { ...baseVariant, borderCm: 7, sheetWidthCm: 40, sheetHeightCm: 20 },
     artwork: ARTWORK_3_2,
     siblingSizes: [],
+    galleryRate: TEST_GALLERY_RATE,
   })
   expect(res.ok).toBe(false)
   if (!res.ok) expect(res.error).toContain('5.0 cm')
@@ -78,6 +83,7 @@ test('rejects only one sheet dimension being set', () => {
     variant: { ...baseVariant, sheetWidthCm: 50, sheetHeightCm: null },
     artwork: ARTWORK_3_2,
     siblingSizes: [],
+    galleryRate: TEST_GALLERY_RATE,
   })
   expect(res.ok).toBe(false)
   if (!res.ok) expect(res.error).toContain('both')
@@ -88,6 +94,7 @@ test('adaptive variants are unaffected', () => {
     variant: { ...baseVariant, widthCm: 45, heightCm: 30 },
     artwork: ARTWORK_3_2,
     siblingSizes: [],
+    galleryRate: TEST_GALLERY_RATE,
   })
   expect(res.ok).toBe(true)
 })
@@ -150,24 +157,25 @@ test('rejects a fixed sheet that costs more to produce than the variant earns', 
       borderCm: 3,
       sheetWidthCm: 150,
       sheetHeightCm: 44,
-      // Low price -> gallery cut (price * TPS_GALLERY_MARKUP_RATE) is
+      // Low price -> gallery cut (price * TEST_GALLERY_RATE) is
       // nowhere near enough to cover the sheet-vs-image cost gap.
       priceCents: 500,
     },
     artwork: ARTWORK_3_2,
     siblingSizes: [],
+    galleryRate: TEST_GALLERY_RATE,
   })
   expect(res.ok).toBe(false)
   if (!res.ok) expect(res.error).toContain('costs more to produce')
 })
 
 // Mirror case: same oversized sheet, but a price whose gallery cut
-// (priceCents * TPS_GALLERY_MARKUP_RATE) clears the absorbed cost —
+// (priceCents * TEST_GALLERY_RATE) clears the absorbed cost —
 // proves the gate discriminates on margin, not on sheet size alone.
 test('the same oversized sheet passes once the price covers the absorbed cost', () => {
   const priceCents = 30000
-  // Sanity: the cut clears the sheet-vs-image gap with room to spare at any
-  // rate we've used (25% → €75 against a ~€48 gap).
+  // Sanity: at the test rate the cut clears the sheet-vs-image gap with room
+  // to spare (25% → €75 against a ~€48 gap).
   const { absorbedCents } = estimateVariantMarginCents({
     widthCm: bigSheetLayout.imageWidthCm,
     heightCm: bigSheetLayout.imageHeightCm,
@@ -175,8 +183,9 @@ test('the same oversized sheet passes once the price covers the absorbed cost', 
     sheetWidthCm: 150,
     sheetHeightCm: 44,
     artistPriceCents: priceCents,
+    galleryRate: TEST_GALLERY_RATE,
   })!
-  expect(priceCents * TPS_GALLERY_MARKUP_RATE).toBeGreaterThan(absorbedCents)
+  expect(priceCents * TEST_GALLERY_RATE).toBeGreaterThan(absorbedCents)
   const res = validateVariantInput({
     variant: {
       ...baseVariant,
@@ -189,6 +198,7 @@ test('the same oversized sheet passes once the price covers the absorbed cost', 
     },
     artwork: ARTWORK_3_2,
     siblingSizes: [],
+    galleryRate: TEST_GALLERY_RATE,
   })
   expect(res.ok).toBe(true)
 })

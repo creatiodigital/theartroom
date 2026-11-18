@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test'
 import { estimateVariantMarginCents } from '../src/lib/editions/variantMargin'
-import { TPS_GALLERY_MARKUP_RATE } from '../src/lib/print-providers/printspace/pricing'
+import { galleryCommissionCents } from '../src/lib/galleryCommission'
+
+import { TEST_GALLERY_RATE } from './gallery-commission-helpers'
 
 test('the artist’s real variant leaves a healthy margin', () => {
   const m = estimateVariantMarginCents({
@@ -10,8 +12,9 @@ test('the artist’s real variant leaves a healthy margin', () => {
     sheetWidthCm: 50,
     sheetHeightCm: 40,
     artistPriceCents: 10000,
+    galleryRate: TEST_GALLERY_RATE,
   })!
-  expect(m.galleryCutCents).toBe(Math.round(10000 * TPS_GALLERY_MARKUP_RATE))
+  expect(m.galleryCutCents).toBe(galleryCommissionCents(10000, TEST_GALLERY_RATE))
   expect(m.absorbedCents).toBeGreaterThan(0)
   expect(m.marginCents).toBeGreaterThan(0)
 })
@@ -24,6 +27,7 @@ test('a wildly oversized sheet goes negative', () => {
     sheetWidthCm: 100,
     sheetHeightCm: 70,
     artistPriceCents: 10000,
+    galleryRate: TEST_GALLERY_RATE,
   })!
   expect(m.marginCents).toBeLessThan(0)
 })
@@ -34,6 +38,7 @@ test('an adaptive variant absorbs only the border ring', () => {
     heightCm: 40,
     borderCm: 3,
     artistPriceCents: 10000,
+    galleryRate: TEST_GALLERY_RATE,
   })!
   expect(m.absorbedCents).toBeGreaterThan(0)
   expect(m.marginCents).toBeGreaterThan(0)

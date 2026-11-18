@@ -4,8 +4,9 @@ import { formatEuro } from '@/lib/print-providers'
  * Whole euros on a buyer-facing surface — a gallery quotes 450, not 449.67.
  *
  * Production costs are ceilinged to the euro, so this figure arrives whole
- * whenever the gallery cut (TPS_GALLERY_MARKUP_RATE of the artist price) is
- * whole too, and the bare number is the exact one the buyer pays.
+ * whenever the gallery's commission (the owner's setting, Admin › Sales ›
+ * Pricing) on the artist price is whole too, and the bare number is the exact
+ * one the buyer pays.
  *
  * When it doesn't — at 25% an artist price like €150 makes the cut €37.50 — we
  * print the cents rather than hide them. `Math.round` used to round DOWN here,

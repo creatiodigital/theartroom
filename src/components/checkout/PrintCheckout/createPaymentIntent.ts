@@ -10,10 +10,11 @@ import {
   findConfigRestrictionClash,
 } from '@/lib/print-providers'
 import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
-import { getVatRate, TPS_GALLERY_MARKUP_RATE } from '@/lib/print-providers/printspace/pricing'
+import { galleryCommissionCents } from '@/lib/galleryCommission'
+import { getVatRate } from '@/lib/print-providers/printspace/pricing'
 import { getProviderQuote } from '@/lib/print-providers/quote'
 import type { PrintRestrictions } from '@/lib/print-providers/types'
-import { getPurchasesPaused } from '@/lib/settings'
+import { getGalleryCommissionRate, getPurchasesPaused } from '@/lib/settings'
 import { variantToWizardConfig } from '@/lib/editions/variantToWizardConfig'
 import {
   reserveNextEditionNumber,
@@ -281,12 +282,16 @@ export async function createPaymentIntent(
   // Limited editions use the chosen variant's price; open editions use the
   // single artwork price. Both are guaranteed non-null by the checks above.
   const artistCents = isLimited ? pinnedVariant!.priceCents! : artwork.printPriceCents!
-  const galleryCents = Math.round(artistCents * TPS_GALLERY_MARKUP_RATE)
+  // The owner's commission as it is NOW (Admin › Sales › Pricing): this is the price the buyer is
+  // charged, whatever the page showed when it loaded.
+  const galleryRate = await getGalleryCommissionRate()
+  const galleryCents = galleryCommissionCents(artistCents, galleryRate)
 
   const quote = getProviderQuote(providerId, {
     config: effectiveConfig,
     country: address.countryCode,
     artistPriceCents: artistCents,
+    galleryRate,
   })
 
   // Provider Quote.lines layout: [{id:'artwork', amount}, {id:'shipping', amount}]

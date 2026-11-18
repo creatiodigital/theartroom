@@ -3,6 +3,7 @@ import { cache } from 'react'
 import type { Prisma } from '@/generated/prisma'
 import { SALE_SELECT, saleFromRow, type ArtworkSale } from '@/lib/editions/artworkSale'
 import prisma from '@/lib/prisma'
+import { getGalleryCommissionRate } from '@/lib/settings'
 import {
   getPrintPresentations,
   type PresentationView,
@@ -147,6 +148,7 @@ export type PublicExhibition = {
 function toPublicArtwork(
   row: PublicArtworkRow,
   presentation: PresentationView | null,
+  galleryRate: number,
 ): PublicExhibitionArtwork {
   return {
     id: row.id,
@@ -160,7 +162,7 @@ function toPublicArtwork(
     imageUrl: row.imageUrl,
     originalWidth: row.originalWidth,
     originalHeight: row.originalHeight,
-    sale: saleFromRow(row),
+    sale: saleFromRow(row, galleryRate),
     presentation,
   }
 }
@@ -219,11 +221,14 @@ async function loadPublicExhibition(url: string): Promise<PublicExhibition | nul
 
   // Sections split the page; the flattened groups are the one display order the
   // artwork page's previous/next arrows also walk.
-  const presentations = await getPrintPresentations(ordered.map((ea) => ea.artwork.id))
+  const [presentations, galleryRate] = await Promise.all([
+    getPrintPresentations(ordered.map((ea) => ea.artwork.id)),
+    getGalleryCommissionRate(),
+  ])
   const groups = groupBySection(
     ordered.map((ea) => ({
       sectionId: ea.sectionId,
-      artwork: toPublicArtwork(ea.artwork, presentations[ea.artwork.id] ?? null),
+      artwork: toPublicArtwork(ea.artwork, presentations[ea.artwork.id] ?? null, galleryRate),
     })),
     exhibition.sections,
   )
