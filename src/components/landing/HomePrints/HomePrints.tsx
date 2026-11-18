@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import c from 'classnames'
+import Link from 'next/link'
 
 import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
 import { ArrowLink } from '@/components/ui/ArrowLink'
@@ -15,6 +16,9 @@ import styles from './HomePrints.module.scss'
 const ROTATE_MS = 6000
 
 const workTitle = (slide: HomePrintSlide) => slide.title || slide.name
+
+/** The work's page: its price, its editions and "Order a print". */
+const artworkHref = (slide: HomePrintSlide) => `/artworks/${slide.slug}`
 
 /** Each slide's margin, as a share of the stage's width (`.slide { margin: 6% }`). */
 const SLIDE_MARGIN = 0.06
@@ -103,32 +107,41 @@ export const HomePrints = ({ slides }: { slides: HomePrintSlide[] }) => {
                 aria-hidden={i !== index}
               >
                 {mounted.has(i) && slide.imageUrl && (
-                  <PrintPresentation
-                    view={slide.presentation}
-                    size="large"
-                    crop
-                    renderClassName={styles.render}
+                  // The print opens its artwork page, where it can be ordered (owner, 2026-11-18).
+                  // Only the slide on show takes clicks or focus: the others sit in the same cell.
+                  <Link
+                    href={artworkHref(slide)}
+                    className={styles.slideLink}
+                    tabIndex={i === index ? undefined : -1}
+                    aria-label={`${title}, ${slide.artistName}`}
                   >
-                    {(placement) =>
-                      placement === 'window' ? (
-                        <ProtectedImage
-                          src={slide.imageUrl!}
-                          alt={`${title}, ${slide.artistName}, as a print`}
-                          fill
-                          sizes="(max-width: 768px) 90vw, 600px"
-                        />
-                      ) : (
-                        <ProtectedImage
-                          src={slide.imageUrl!}
-                          alt={`${title}, ${slide.artistName}`}
-                          width={slide.originalWidth ?? 1200}
-                          height={slide.originalHeight ?? 900}
-                          className={styles.plain}
-                          sizes="(max-width: 768px) 90vw, 600px"
-                        />
-                      )
-                    }
-                  </PrintPresentation>
+                    <PrintPresentation
+                      view={slide.presentation}
+                      size="large"
+                      crop
+                      renderClassName={styles.render}
+                    >
+                      {(placement) =>
+                        placement === 'window' ? (
+                          <ProtectedImage
+                            src={slide.imageUrl!}
+                            alt={`${title}, ${slide.artistName}, as a print`}
+                            fill
+                            sizes="(max-width: 768px) 90vw, 600px"
+                          />
+                        ) : (
+                          <ProtectedImage
+                            src={slide.imageUrl!}
+                            alt={`${title}, ${slide.artistName}`}
+                            width={slide.originalWidth ?? 1200}
+                            height={slide.originalHeight ?? 900}
+                            className={styles.plain}
+                            sizes="(max-width: 768px) 90vw, 600px"
+                          />
+                        )
+                      }
+                    </PrintPresentation>
+                  </Link>
                 )}
               </div>
             )
@@ -152,10 +165,14 @@ export const HomePrints = ({ slides }: { slides: HomePrintSlide[] }) => {
                 className={c(styles.caption, i === index && styles.current)}
                 aria-hidden={i !== index}
               >
-                <span className={styles.work}>
+                <Link
+                  href={artworkHref(slide)}
+                  className={styles.work}
+                  tabIndex={i === index ? undefined : -1}
+                >
                   {workTitle(slide)}
                   {slide.year ? `, ${slide.year}` : ''}
-                </span>
+                </Link>
                 <span className={styles.artist}>{slide.artistName}</span>
                 {/* The edition and the price under the artist, as the grids' cards (owner,
                     2026-11-18). Every slide is on sale: getHomePrints keeps no other. */}
