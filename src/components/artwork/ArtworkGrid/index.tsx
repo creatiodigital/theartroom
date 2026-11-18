@@ -201,14 +201,10 @@ export const ArtworkGrid = ({
                 })()}
                 {/* The price under the caption (owner, 2026-11-18, White Cube's card): the lowest a
                     print of this work costs, never VAT or shipping. Open = the smallest size,
-                    unframed; limited = the cheapest edition still in stock. "From" whenever more
-                    than one price stands behind it, the bare figure when there is one (owner's
-                    pick, 2026-11-18). The artwork page shows the same figure. */}
+                    unframed; limited = the cheapest edition still in stock. A bare figure, never
+                    "From" (owner, 2026-11-18, again after trying it). */}
                 {sale?.minPriceCents != null && (
-                  <p className={styles.price}>
-                    {sale.editionType === 'open' || sale.priceVaries ? 'From ' : ''}
-                    {formatDisplayPrice(sale.minPriceCents)}
-                  </p>
+                  <p className={styles.price}>{formatDisplayPrice(sale.minPriceCents)}</p>
                 )}
               </div>
               {sale && (
