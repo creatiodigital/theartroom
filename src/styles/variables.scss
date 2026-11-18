@@ -182,6 +182,13 @@
   --admin-chart-3: #a3a3a3;
   --admin-chart-4: var(--color-gray-65);
   --admin-chart-5: #e6e6e6;
+  // Analytics charts (/admin/analytics): one hue per segment, always in this order; "Other" stays
+  // gray. The dataviz reference palette's first three slots: checked as a set for colour-blind
+  // separation on white (owner asked for charts he can read at a glance, 2026-11-18).
+  --admin-series-1: #2a78d6;
+  --admin-series-2: #eb6834;
+  --admin-series-3: #1baf7a;
+  --admin-series-other: #a3a3a3;
 
   // Artist studio (artist.md §0): the light variant of the admin shell. Studio-only.
   --studio-content-max-width: 1080px; // lists: Home, Artworks, the artwork editor
