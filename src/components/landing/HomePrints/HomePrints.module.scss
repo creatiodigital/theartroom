@@ -60,10 +60,22 @@
   container-type: size;
   opacity: 0;
   transition: opacity 1.2s ease;
+  // Every slide sits in the same cell: only the one on show takes the pointer.
+  pointer-events: none;
 
   &.current {
     opacity: 1;
+    pointer-events: auto;
   }
+}
+
+// The print is a link to its artwork page; it centres the print as the slide did.
+.slideLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 
 .render {
@@ -153,9 +165,11 @@
   gap: 2px;
   opacity: 0;
   transition: opacity 1.2s ease;
+  pointer-events: none;
 
   &.current {
     opacity: 1;
+    pointer-events: auto;
   }
 }
 
@@ -164,6 +178,14 @@
   font-size: 22px;
   line-height: 1.3;
   color: var(--public-text);
+  // A link to the work's page: the caption's look, underlined on hover.
+  text-decoration: none;
+  align-self: flex-start;
+
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: var(--space-1);
+  }
 
   @include media-down(md) {
     font-size: 17px;
@@ -179,6 +201,16 @@
   @include media-down(md) {
     font-size: 14px;
   }
+}
+
+// The price, as the grids' cards (owner, 2026-11-18): a little apart from the lines above it.
+.price {
+  margin-top: var(--space-2);
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: var(--text-md);
+  font-weight: var(--font-medium);
+  line-height: 1.4;
+  color: var(--public-text);
 }
 
 .link {

@@ -15,6 +15,7 @@ import { ArtworkTechnique } from '@/components/artwork/detail/ArtworkRichText'
 import type { ArtworkMediaItem } from '@/lib/artwork/artworkMediaTypes'
 import type { PublicArtistArtwork } from '@/lib/queries/getPublicArtistByHandler'
 import { Button } from '@/components/ui/Button'
+import { track } from '@/lib/analytics/track'
 import type { PresentationView } from '@/lib/printPresentation/record'
 import { closeArtworkModal } from '@/redux/slices/dashboardSlice'
 import type { RootState } from '@/redux/store'
@@ -52,12 +53,19 @@ export const ArtworkModal = ({ presentation }: ArtworkModalProps) => {
     if (!slug) return
     let canceled = false
     setFetched(null)
+    // GA4: a work's details opened in the room (its print offer, if any, sends view_item).
+    track('room_artwork_details', { item_id: slug })
+    // A failed fetch leaves the details without their print offer: worth knowing it happens.
+    const failed = (reason: string) => track('room_error', { reason, item_id: slug })
     fetch(`/api/artworks/by-slug/${slug}`)
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => {
+        if (!r.ok) failed(`details_http_${r.status}`)
+        return r.ok ? r.json() : null
+      })
       .then((data: FetchedDetail | null) => {
         if (!canceled && data) setFetched(data)
       })
-      .catch(() => {})
+      .catch(() => failed('details_fetch_failed'))
     return () => {
       canceled = true
     }

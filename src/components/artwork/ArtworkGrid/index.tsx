@@ -9,6 +9,7 @@ import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 import { Text } from '@/components/ui/Typography'
 import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
 import type { ArtworkSale } from '@/lib/editions/artworkSale'
+import { editionTypeLabel, salePriceLabel } from '@/lib/editions/salePriceLabel'
 import type { PresentationView } from '@/lib/printPresentation/record'
 
 import styles from './ArtworkGrid.module.scss'
@@ -52,9 +53,11 @@ type Artwork = {
 }
 
 interface ArtworkGridProps {
-  /** Name the artist on each card: only on a grid of several artists (Prints). */
+  /** Name the artist on each card: Prints, exhibition and artist pages (owner, 2026-11-18: the same
+   *  card everywhere); not "More by the artist", whose heading already names them. */
   showArtist?: boolean
-  /** Add the edition to the year line, "2026 · Limited edition" (Prints, prints.md §4). */
+  /** Add the edition to the year line, "2026 · Limited edition" (Prints, exhibition and artist
+   *  pages, as showArtist). */
   showEdition?: boolean
   artworks: Artwork[]
   artistName?: string
@@ -130,6 +133,7 @@ export const ArtworkGrid = ({
         const w = artwork.originalWidth ?? FALLBACK_WIDTH
         const h = artwork.originalHeight ?? FALLBACK_HEIGHT
         const sale = purchasesPaused ? null : artwork.sale
+        const price = sale ? salePriceLabel(sale) : null
         return (
           <div key={artwork.id} className={styles.card}>
             <div className={styles.imageWrapper}>
@@ -175,9 +179,9 @@ export const ArtworkGrid = ({
               )}
             </div>
             <div className={styles.info}>
-              {/* The caption left, Order print on its right (under it on phones):
-                  docs/public-redesign/components.md "ArtworkCard". The artist is
-                  named only on a grid of several artists (Prints). */}
+              {/* The caption left, Order print on its right: docs/public-redesign/components.md
+                  "ArtworkCard". Artist and edition on Prints, exhibition and artist grids (owner,
+                  2026-11-18: the same card everywhere). */}
               <div className={styles.caption}>
                 <h3 className={styles.title}>{artwork.title || artwork.name}</h3>
                 {showArtist && (
@@ -190,14 +194,13 @@ export const ArtworkGrid = ({
                 )}
                 {(() => {
                   const edition =
-                    showEdition && artwork.sale
-                      ? artwork.sale.editionType === 'limited'
-                        ? 'Limited edition'
-                        : 'Open edition'
-                      : null
+                    showEdition && artwork.sale ? editionTypeLabel(artwork.sale) : null
                   const line = [artwork.year, edition].filter(Boolean).join(' · ')
                   return line ? <p className={styles.year}>{line}</p> : null
                 })()}
+                {/* The price under the caption (owner, 2026-11-18, White Cube's card): see
+                    salePriceLabel. */}
+                {price && <p className={styles.price}>{price}</p>}
               </div>
               {sale && (
                 <div className={styles.orderAction}>

@@ -27,6 +27,9 @@ type CartContextValue = {
   setQuantity: (lineId: string, quantity: number) => Promise<number>
   clear: () => Promise<void>
   count: number
+  /** False until the stored cart has been read (first client effect): until then `items` is `[]`
+   *  even for a full cart, so anything that reports on the cart waits for it. */
+  hydrated: boolean
 }
 
 const CartContext = createContext<CartContextValue | null>(null)
@@ -116,8 +119,8 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   const count = useMemo(() => cartCount(items), [items])
 
   const value = useMemo<CartContextValue>(
-    () => ({ items, addItem, removeItem, setQuantity, clear, count }),
-    [items, addItem, removeItem, setQuantity, clear, count],
+    () => ({ items, addItem, removeItem, setQuantity, clear, count, hydrated }),
+    [items, addItem, removeItem, setQuantity, clear, count, hydrated],
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>

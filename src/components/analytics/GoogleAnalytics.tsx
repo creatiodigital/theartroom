@@ -1,5 +1,7 @@
 import Script from 'next/script'
 
+import { INTERNAL_TRAFFIC_KEY } from '@/lib/analytics/track'
+
 /**
  * Loads Google Analytics 4 with Consent Mode v2.
  *
@@ -12,6 +14,12 @@ import Script from 'next/script'
  *   the ad_* signals stay denied permanently.
  * - On startup we replay any previously stored consent so returning visitors
  *   who already accepted are measured immediately.
+ * - Internal traffic: a browser that has been signed in (admin, artist, curator;
+ *   see InternalTrafficMarker) or opened any page with `?ar_internal=1` sends
+ *   `traffic_type: internal` on every hit; `?ar_internal=0` clears it. GA4's
+ *   "Internal Traffic" data filter drops those hits once it is Active.
+ * - Custom events fired before this script ran wait in `window.__arEvents`
+ *   (src/lib/analytics/track.ts) and are sent right after `config`.
  */
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
 // Deployed build the client booted. Sent as a GA4 param so any metric can be
@@ -39,13 +47,34 @@ export const GoogleAnalytics = () => {
               ad_personalization: 'denied',
               analytics_storage: 'denied'
             });
+            var internal = false;
             try {
               var stored = JSON.parse(window.localStorage.getItem('cookie-consent'));
               if (stored && stored.analytics === true) {
                 gtag('consent', 'update', { analytics_storage: 'granted' });
               }
             } catch (e) {}
-            gtag('config', '${GA_MEASUREMENT_ID}', { app_version: '${BUILD_ID}' });
+            try {
+              var mark = window.location.search.match(/[?&]ar_internal=([01])/);
+              if (mark) {
+                if (mark[1] === '1') window.localStorage.setItem('${INTERNAL_TRAFFIC_KEY}', '1');
+                else window.localStorage.removeItem('${INTERNAL_TRAFFIC_KEY}');
+              }
+              internal = window.localStorage.getItem('${INTERNAL_TRAFFIC_KEY}') === '1';
+            } catch (e) {}
+            var config = { app_version: '${BUILD_ID}' };
+            if (internal) config.traffic_type = 'internal';
+            // Back from 3D Secure or PayPal, Stripe adds the payment's client secret to the URL
+            // until the checkout tidies it: never send that to Google.
+            var here = window.location.href;
+            var safe = here
+              .replace(/([?&])(payment_intent_client_secret|setup_intent_client_secret)=[^&#]*&?/g, '$1')
+              .replace(/[?&](#|$)/, '$1');
+            if (safe !== here) config.page_location = safe;
+            gtag('config', '${GA_MEASUREMENT_ID}', config);
+            var queued = window.__arEvents || [];
+            window.__arEvents = [];
+            for (var i = 0; i < queued.length; i++) gtag('event', queued[i][0], queued[i][1]);
           `,
         }}
       />

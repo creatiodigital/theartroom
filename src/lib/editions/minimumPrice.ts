@@ -96,6 +96,23 @@ export function minimumPriceForLimited(
 }
 
 /**
+ * The dearest ON-SALE variant of a limited edition, in cents (the same artwork line as
+ * `minimumPriceForLimited`, so the two make an honest range: "€232–€444"). Null when none is priced.
+ */
+export function maximumPriceForLimited(
+  liveVariants: LiveVariant[],
+  providerId: ProviderId = DEFAULT_PROVIDER,
+): number | null {
+  let most: number | null = null
+  for (const v of liveVariants) {
+    if (v.priceCents == null) continue
+    const cents = artworkLineCents(variantToWizardConfig(v), v.priceCents, providerId)
+    if (most === null || cents > most) most = cents
+  }
+  return most
+}
+
+/**
  * Cheapest configuration of an OPEN edition: the smallest printable size,
  * unframed, with no border. The smallest size is fixed by the file's
  * resolution — the short edge bottoms out at MIN_SHORT_EDGE_CM and the long

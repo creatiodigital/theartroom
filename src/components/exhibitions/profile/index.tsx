@@ -132,6 +132,8 @@ export const ExhibitionProfilePage = ({
                   artworks={group.artworks}
                   artistName={artistName}
                   exhibitionSlug={exhibitionSlug}
+                  showArtist
+                  showEdition
                   flushBottom
                 />
               </section>

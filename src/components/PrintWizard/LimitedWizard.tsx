@@ -12,6 +12,7 @@ import { clearPrintSession } from '@/components/checkout/clearPrintSession'
 import { consumePrintReturnUrl } from '@/components/checkout/printReturnUrl'
 import Logo from '@/icons/logo.svg'
 
+import { trackCartEvent } from '@/lib/analytics/events'
 import { buildCartItem } from '@/lib/cart/buildCartItem'
 import { useCart } from '@/lib/cart/useCart'
 import { type Catalog, type Quote, summarizeConfig } from '@/lib/print-providers'
@@ -27,6 +28,7 @@ import { SchemaStage } from './SchemaStage'
 import { SummaryPanel } from './SummaryPanel'
 import { LearnMoreSheet } from './LearnMoreSheet'
 import { VariantPicker, type VariantPickerItem } from './VariantPicker'
+import { useWizardAnalytics } from './useWizardAnalytics'
 import type { WizardArtwork } from './index'
 
 import styles from './PrintWizard.module.scss'
@@ -156,6 +158,12 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
     [config, country, catalog.providerId, selected?.priceCents, artwork.printPriceCents],
   )
 
+  // GA4: the wizard opening (at the edition it opens on) and the editions the buyer picks.
+  const report = useWizardAnalytics(
+    { slug: artwork.slug, editionType: 'limited' },
+    quote?.lines.find((line) => line.id === 'artwork')?.amountCents ?? null,
+  )
+
   // Cheapest on top (owner, 2026-11-17), so the card the wizard opens on is the first one; sold-out
   // editions after those on sale (still listed, see above). Equal prices keep their listed order.
   const pickerItems: VariantPickerItem[] = useMemo(
@@ -195,7 +203,7 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
     // when payment starts. Re-throw on failure so the panel does not flip to
     // its "added" state.
     try {
-      await addItem({
+      const added = {
         ...buildCartItem({
           artwork: {
             id: artwork.id,
@@ -214,7 +222,9 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
           specsSummary: summarizeConfig(catalog, config),
         }),
         quantity: 1,
-      })
+      }
+      await addItem(added)
+      trackCartEvent('add_to_cart', [added])
       // Straight to the cart. A limited edition is one numbered copy of one
       // work — nobody arrives here to browse on, and offering "Continue
       // shopping" beside "Go to cart" made walking away look like an ordinary
@@ -266,7 +276,11 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
             <VariantPicker
               variants={pickerItems}
               selectedVariantId={selected?.id ?? ''}
-              onSelect={setSelectedId}
+              onSelect={(id) => {
+                setSelectedId(id)
+                const picked = allVariants.find((v) => v.id === id)
+                if (picked) report.choice({ edition: picked.name })
+              }}
               cartedVariantIds={cartedIds}
             />
             {/* The diagram is the reason to select at all. Nothing chosen
@@ -295,7 +309,10 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
                 addError={addError}
                 isDuplicate={selectedInCart}
                 editionType="limited"
-                onLearnMore={() => setIntroOpen(true)}
+                onLearnMore={() => {
+                  report.learnMore()
+                  setIntroOpen(true)
+                }}
                 caveat="Not reserved until you pay: another collector may take it first."
               />
             )}

@@ -17,7 +17,7 @@ import {
   wallFont8,
 } from '@/app/fonts'
 import StoreProvider from '@/app/storeProvider'
-import { GoogleAnalytics } from '@/components/analytics'
+import { EmailLinkTracker, GoogleAnalytics, InternalTrafficMarker } from '@/components/analytics'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { ImageProtection } from '@/components/providers/ImageProtection'
 import { CookieBanner } from '@/components/ui/CookieBanner'
@@ -98,6 +98,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         </a>
         <NavigationProgressBar />
         <AuthProvider>
+          <InternalTrafficMarker />
           <StoreProvider>
             <CartProvider>
               <UnitsProvider>
@@ -112,6 +113,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <SpeedInsights />
         <CookieBanner />
         <GoogleAnalytics />
+        <EmailLinkTracker />
         <VersionGuard />
       </body>
     </html>

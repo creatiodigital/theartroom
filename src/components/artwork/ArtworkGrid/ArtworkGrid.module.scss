@@ -163,6 +163,17 @@
   color: var(--color-text-secondary);
 }
 
+// The price under the caption, a little apart from it (White Cube's card, owner 2026-11-18). A <p>,
+// so size and line height are pinned.
+.price {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: var(--text-md);
+  font-weight: var(--font-medium);
+  line-height: 1.4;
+  color: var(--public-text);
+}
+
 .orderAction {
   flex-shrink: 0;
 }

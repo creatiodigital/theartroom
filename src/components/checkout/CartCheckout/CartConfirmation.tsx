@@ -10,6 +10,7 @@ import {
   Totals,
 } from '@/components/checkout/CheckoutParts'
 import { ArrowLink } from '@/components/ui/ArrowLink'
+import { CURRENCY, cartItemToGa, euros, trackOnce } from '@/lib/analytics/events'
 import type { CartItem } from '@/lib/cart/types'
 import type { DisplayAddress, DisplayTotals } from '@/lib/orders/confirmationSummary'
 import { ensureOrderAction } from '@/lib/orders/ensureOrderAction'
@@ -127,22 +128,49 @@ export const CartConfirmation = ({ paymentIntentId, summary }: CartConfirmationP
   // The order as the server read it, once the payment is verified: the panel on every path.
   const [orderSummary, setOrderSummary] = useState<PlacedOrderSummary | null>(null)
 
+  // GA4 purchase, once per order (a reload re-runs the check below). The order reference is the
+  // transaction id, which GA4 also de-duplicates on. Value = items before VAT, as in the cart.
+  const reportOrder = (ok: boolean, ref: string | null, placed: PlacedOrderSummary | null) => {
+    if (!ok) {
+      trackOnce(`order-failed:${paymentIntentId}`, 'checkout_error', {
+        step: 'confirmation',
+        reason: 'order_not_finalized',
+      })
+      return
+    }
+    const transactionId = ref ?? paymentIntentId
+    trackOnce(`purchase:${transactionId}`, 'purchase', {
+      transaction_id: transactionId,
+      currency: CURRENCY,
+      value: placed ? euros(placed.totals.itemsPreTaxCents) : undefined,
+      shipping: placed ? euros(placed.totals.shippingCents) : undefined,
+      tax: placed ? euros(placed.totals.customerVatCents) : undefined,
+      ship_country: placed?.address.countryCode,
+      items: placed?.items.map((item, index) => cartItemToGa(item, index)),
+    })
+  }
+
   useEffect(() => {
     let active = true
     ensureOrderAction(paymentIntentId)
       .then((res) => {
         if (!active) return
+        reportOrder(res.ok, res.orderRef ?? null, res.summary ?? summary ?? null)
         setStatus(res.ok ? 'confirmed' : 'failed')
         if (res.orderRef) setOrderRef(res.orderRef)
         setHasLimitedEdition(res.hasLimitedEdition === true)
         if (res.summary) setOrderSummary(res.summary)
       })
       .catch(() => {
-        if (active) setStatus('failed')
+        if (!active) return
+        reportOrder(false, null, null)
+        setStatus('failed')
       })
     return () => {
       active = false
     }
+    // `summary` is what the page held when payment went through; it doesn't change after.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentIntentId])
 
   // Ask for unboxing images once the order is actually confirmed — never on

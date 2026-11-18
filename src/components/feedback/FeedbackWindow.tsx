@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 
 import { Button } from '@/components/ui/Button'
+import { track } from '@/lib/analytics/track'
 import Modal from '@/components/ui/Modal/Modal'
 
 import styles from './FeedbackWindow.module.scss'
@@ -80,6 +81,7 @@ export const FeedbackWindow = ({ source, exhibitionId, onClose }: FeedbackWindow
         }),
       })
       if (res.ok) {
+        track('feedback_submit', { source })
         setSent(true)
         return
       }
