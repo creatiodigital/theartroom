@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
+
 import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
 import { Lock } from '@phosphor-icons/react'
 
@@ -11,12 +13,22 @@ import { PageIntro } from '@/components/ui/PageIntro'
 import { PageLayout } from '@/components/ui/PageLayout'
 import { cartCount, cartSubtotal, hasLimitedItems } from '@/lib/cart/cartMath'
 import { LIMITED_NOT_RESERVED_NOTICE } from '@/lib/cart/notices'
+import { trackCartEvent } from '@/lib/analytics/events'
 import { useCart } from '@/lib/cart/useCart'
 
 import styles from './CartPage.module.scss'
 
 export const CartPage = () => {
-  const { items } = useCart()
+  const { items, hydrated } = useCart()
+
+  // GA4 view_cart, once per visit to the page and only after the stored cart has loaded (an empty
+  // cart is reported too, with value 0: it says the visitor looked for one).
+  const reportedRef = useRef(false)
+  useEffect(() => {
+    if (!hydrated || reportedRef.current) return
+    reportedRef.current = true
+    trackCartEvent('view_cart', items)
+  }, [hydrated, items])
 
   // Nothing in this cart is reserved. A limited edition can sell out while it
   // sits here, so say so once — plainly, with no clock and no countdown.

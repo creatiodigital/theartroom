@@ -10,7 +10,8 @@ import { Input } from '@/components/ui/Input'
 import { SelectDropdown, type SelectOption } from '@/components/ui/SelectDropdown'
 import { useFormValidation } from '@/hooks/useFormValidation'
 import { COUNTRY_NAMES, getCountryName } from '@/lib/print-providers/dialCodes'
-import { shippingValidators, type ShippingFieldName } from '@/lib/validation'
+import { track } from '@/lib/analytics/track'
+import { shippingValidators, validateFields, type ShippingFieldName } from '@/lib/validation'
 import type { LookupFailure } from '@/lib/checkout/addressLookup'
 import type { MappedAddress } from '@/lib/checkout/placeToAddress'
 import type { ShippingAddress } from '@/components/checkout/PrintCheckout/createPaymentIntent'
@@ -211,7 +212,12 @@ export const AddressForm = ({
       city,
       postalCode,
     }
-    if (!validateAll(fieldValues)) return
+    if (!validateAll(fieldValues)) {
+      // Which fields stop buyers (names only, never what they typed).
+      const failed = Object.keys(validateFields(fieldValues, shippingValidators))
+      track('checkout_error', { step: 'address', reason: 'invalid_fields', fields: failed.join(',') })
+      return
+    }
 
     onSubmit({
       fullName: fullName.trim(),

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { ArrowLink } from '@/components/ui/ArrowLink'
 import { Button } from '@/components/ui/Button'
 
+import { track } from '@/lib/analytics/track'
 import { getConsent, setConsent, OPEN_COOKIE_SETTINGS_EVENT } from '@/lib/consent'
 
 import styles from './CookieBanner.module.scss'
@@ -24,6 +25,9 @@ export const CookieBanner = () => {
 
   const decide = (analytics: boolean) => {
     setConsent(analytics)
+    // After the consent update, so an Accept is already measured in full. A Decline goes as a
+    // cookieless ping, like everything else from that visitor.
+    track('consent_choice', { choice: analytics ? 'accept' : 'decline' })
     setVisible(false)
   }
 

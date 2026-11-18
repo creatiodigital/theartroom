@@ -4,6 +4,7 @@ import * as Sentry from '@sentry/nextjs'
 import { useEffect } from 'react'
 
 import { ArrowLink } from '@/components/ui/ArrowLink'
+import { track } from '@/lib/analytics/track'
 import { Button } from '@/components/ui/Button'
 import { PageLayout } from '@/components/ui/PageLayout'
 import { StatusPage, statusPageStyles } from '@/components/ui/StatusPage'
@@ -17,6 +18,13 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     Sentry.captureException(error)
+    // GA4's recommended `exception`: the digest (server errors) or the error's name, never its
+    // message, which can carry anything. Sentry has the detail.
+    track('exception', {
+      description: error.digest ? `digest:${error.digest}` : error.name,
+      fatal: false,
+      page_path: window.location.pathname,
+    })
   }, [error])
 
   // other-screens.md "Error": the normal header and footer, the same look as the 404.

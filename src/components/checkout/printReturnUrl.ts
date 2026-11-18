@@ -22,6 +22,16 @@ export function setPrintReturnUrl(slug: string, path: string): void {
   }
 }
 
+/** Read the remembered return page without clearing it (analytics: where the wizard was opened from). */
+export function peekPrintReturnUrl(slug: string): string | null {
+  if (typeof sessionStorage === 'undefined') return null
+  try {
+    return sessionStorage.getItem(keyFor(slug))
+  } catch {
+    return null
+  }
+}
+
 /** Read and clear the remembered return page for this artwork. Null when none was recorded. */
 export function consumePrintReturnUrl(slug: string): string | null {
   if (typeof sessionStorage === 'undefined') return null

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal'
 import { useCart } from '@/lib/cart/useCart'
 import { lineTotal } from '@/lib/cart/cartMath'
+import { trackCartEvent } from '@/lib/analytics/events'
 import type { CartItem } from '@/lib/cart/types'
 
 import styles from './CartLine.module.scss'
@@ -123,6 +124,7 @@ export const CartLine = ({ item }: CartLineProps) => {
           confirmLabel="Remove"
           destructive
           onConfirm={() => {
+            trackCartEvent('remove_from_cart', [item])
             removeItem(item.lineId)
             setConfirmingRemove(false)
           }}

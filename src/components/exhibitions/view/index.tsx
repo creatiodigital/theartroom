@@ -81,6 +81,8 @@ import { BakeActions, BakeAdminBar } from './BakeAdmin/BakeAdmin'
 import { ExitWallViewButton } from './RoomControls/ExitWallViewButton'
 import { RoomMenu } from './RoomControls/RoomMenu'
 import { TouchControlsGuide } from './TouchControlsGuide/TouchControlsGuide'
+import { useRoomAnalytics } from './useRoomAnalytics'
+import { track } from '@/lib/analytics/track'
 import styles from './ExhibitionView.module.scss'
 import { getConsent, CONSENT_CHANGE_EVENT } from '@/lib/consent'
 import { readRoomLanguageChoice, roomLanguageOnEntry, secondLanguageOf } from '@/lib/roomLanguage'
@@ -993,6 +995,17 @@ export const ExhibitionViewPage = ({
   // AR-161: a stored bake's files download with the room's, not after it (`preloadStoredBake`) —
   // only where the room will be shown (never without WebGL).
   const webglAvailable = useWebGLAvailable()
+  // GA4 (docs/analytics/README.md): the visit's load, failures, works looked at and its end.
+  useRoomAnalytics({
+    enabled: mode === 'visit' && !previewToken,
+    exhibition: exhibitionSlug,
+    openedAt,
+    revealed: roomRevealed,
+    webglAvailable,
+    loadError: !!error,
+    notFound: !exhibition && !isApiLoading && !error,
+    isTouch,
+  })
   const preloadBake = exhibition ? shownStoredBake(exhibition.spaceId, roomBake) : null
   useEffect(() => {
     if (preloadBake && webglAvailable !== false) preloadStoredBake(preloadBake)
@@ -1206,10 +1219,34 @@ export const ExhibitionViewPage = ({
   const roomMenu = (sound: boolean) => (
     <RoomMenu
       sound={sound}
-      onHelp={helpShown ? () => helpRef.current?.open() : undefined}
-      onLeave={leaveExhibition}
-      onAbout={aboutShown ? () => setAboutOpen(true) : undefined}
-      onFeedback={feedbackShown ? () => setFeedbackOpen(true) : undefined}
+      onHelp={
+        helpShown
+          ? () => {
+              track('room_menu', { action: 'help', exhibition: exhibitionSlug })
+              helpRef.current?.open()
+            }
+          : undefined
+      }
+      onLeave={() => {
+        track('room_menu', { action: 'leave', exhibition: exhibitionSlug })
+        leaveExhibition()
+      }}
+      onAbout={
+        aboutShown
+          ? () => {
+              track('room_menu', { action: 'about', exhibition: exhibitionSlug })
+              setAboutOpen(true)
+            }
+          : undefined
+      }
+      onFeedback={
+        feedbackShown
+          ? () => {
+              track('room_menu', { action: 'feedback', exhibition: exhibitionSlug })
+              setFeedbackOpen(true)
+            }
+          : undefined
+      }
       onButtonPress={closeRoomWindows}
       languageSwitch={!!visitorLanguage}
     />
