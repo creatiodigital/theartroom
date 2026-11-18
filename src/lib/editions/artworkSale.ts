@@ -39,6 +39,10 @@ export type ArtworkSale = {
    *  cheapest price with some other variant's edition would let the two
    *  describe different objects. `null` for open editions and when sold out. */
   variantName?: string | null
+  /** More than one price behind the card, so `minPriceCents` is where it starts ("From €303"):
+   *  every open edition (sizes, frames), and a limited edition with two or more priced
+   *  editions still in stock. False = the one price there is ("€445"). */
+  priceVaries?: boolean
 }
 
 /**
@@ -87,6 +91,7 @@ export function resolveArtworkSale(
           editionType: 'limited',
           minPriceCents: cheapest.cents,
           variantName: cheapest.basis === 'variant' ? cheapest.variantName : null,
+          priceVaries: inStock.filter((v) => v.priceCents != null).length > 1,
         }
       : null
   }
@@ -95,7 +100,7 @@ export function resolveArtworkSale(
   // one — no pixel dimensions, so no printable size — shows nothing rather than
   // falling through to the sold-out badge.
   const smallest = minimumPriceForOpen(artwork)
-  return smallest ? { editionType: 'open', minPriceCents: smallest.cents } : null
+  return smallest ? { editionType: 'open', minPriceCents: smallest.cents, priceVaries: true } : null
 }
 
 /**

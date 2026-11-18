@@ -9,6 +9,7 @@ import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 import { Text } from '@/components/ui/Typography'
 import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
 import type { ArtworkSale } from '@/lib/editions/artworkSale'
+import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
 import type { PresentationView } from '@/lib/printPresentation/record'
 
 import styles from './ArtworkGrid.module.scss'
@@ -198,6 +199,17 @@ export const ArtworkGrid = ({
                   const line = [artwork.year, edition].filter(Boolean).join(' · ')
                   return line ? <p className={styles.year}>{line}</p> : null
                 })()}
+                {/* The price under the caption (owner, 2026-11-18, White Cube's card): the lowest a
+                    print of this work costs, never VAT or shipping. Open = the smallest size,
+                    unframed; limited = the cheapest edition still in stock. "From" whenever more
+                    than one price stands behind it, the bare figure when there is one (owner's
+                    pick, 2026-11-18). The artwork page shows the same figure. */}
+                {sale?.minPriceCents != null && (
+                  <p className={styles.price}>
+                    {sale.editionType === 'open' || sale.priceVaries ? 'From ' : ''}
+                    {formatDisplayPrice(sale.minPriceCents)}
+                  </p>
+                )}
               </div>
               {sale && (
                 <div className={styles.orderAction}>
