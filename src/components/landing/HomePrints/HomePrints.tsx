@@ -6,6 +6,7 @@ import c from 'classnames'
 import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
 import { ArrowLink } from '@/components/ui/ArrowLink'
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
+import { editionTypeLabel, salePriceLabel } from '@/lib/editions/salePriceLabel'
 import type { HomePrintSlide } from '@/lib/queries/getGallerySelection'
 
 import styles from './HomePrints.module.scss'
@@ -155,8 +156,11 @@ export const HomePrints = ({ slides }: { slides: HomePrintSlide[] }) => {
                   {workTitle(slide)}
                   {slide.year ? `, ${slide.year}` : ''}
                 </span>
-                {/* The artist alone: no edition wording here (owner, 2026-11-14). */}
                 <span className={styles.artist}>{slide.artistName}</span>
+                {/* The edition and the price under the artist, as the grids' cards (owner,
+                    2026-11-18). Every slide is on sale: getHomePrints keeps no other. */}
+                <span className={styles.artist}>{editionTypeLabel(slide.sale)}</span>
+                <span className={styles.price}>{salePriceLabel(slide.sale)}</span>
               </div>
             ))}
           </div>

@@ -181,6 +181,16 @@
   }
 }
 
+// The price, as the grids' cards (owner, 2026-11-18): a little apart from the lines above it.
+.price {
+  margin-top: var(--space-2);
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: var(--text-md);
+  font-weight: var(--font-medium);
+  line-height: 1.4;
+  color: var(--public-text);
+}
+
 .link {
   font-size: 16px;
 

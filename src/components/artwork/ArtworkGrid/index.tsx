@@ -9,7 +9,7 @@ import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 import { Text } from '@/components/ui/Typography'
 import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
 import type { ArtworkSale } from '@/lib/editions/artworkSale'
-import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
+import { editionTypeLabel, salePriceLabel } from '@/lib/editions/salePriceLabel'
 import type { PresentationView } from '@/lib/printPresentation/record'
 
 import styles from './ArtworkGrid.module.scss'
@@ -133,6 +133,7 @@ export const ArtworkGrid = ({
         const w = artwork.originalWidth ?? FALLBACK_WIDTH
         const h = artwork.originalHeight ?? FALLBACK_HEIGHT
         const sale = purchasesPaused ? null : artwork.sale
+        const price = sale ? salePriceLabel(sale) : null
         return (
           <div key={artwork.id} className={styles.card}>
             <div className={styles.imageWrapper}>
@@ -193,24 +194,13 @@ export const ArtworkGrid = ({
                 )}
                 {(() => {
                   const edition =
-                    showEdition && artwork.sale
-                      ? artwork.sale.editionType === 'limited'
-                        ? 'Limited edition'
-                        : 'Open edition'
-                      : null
+                    showEdition && artwork.sale ? editionTypeLabel(artwork.sale) : null
                   const line = [artwork.year, edition].filter(Boolean).join(' · ')
                   return line ? <p className={styles.year}>{line}</p> : null
                 })()}
-                {/* The price under the caption (owner, 2026-11-18, White Cube's card): the lowest a
-                    print of this work costs, never VAT or shipping. Open = the smallest size,
-                    unframed; limited = the cheapest edition still in stock, as a range up to the
-                    dearest one when they differ ("€232–€444", as White Cube). Never "From" (owner). */}
-                {sale?.minPriceCents != null && (
-                  <p className={styles.price}>
-                    {formatDisplayPrice(sale.minPriceCents)}
-                    {sale.maxPriceCents != null && `–${formatDisplayPrice(sale.maxPriceCents)}`}
-                  </p>
-                )}
+                {/* The price under the caption (owner, 2026-11-18, White Cube's card): see
+                    salePriceLabel. */}
+                {price && <p className={styles.price}>{price}</p>}
               </div>
               {sale && (
                 <div className={styles.orderAction}>
