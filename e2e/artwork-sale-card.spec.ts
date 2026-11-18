@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 
 import { resolveArtworkSale, type SaleVariant } from '@/lib/editions/artworkSale'
 import { LIVE_VARIANT_WHERE } from '@/lib/editions/printable'
+import { salePriceLabel } from '@/lib/editions/salePriceLabel'
 import prisma from '@/lib/prisma'
 import { getPublicArtistByHandler } from '@/lib/queries/getPublicArtistByHandler'
 import { getPublicExhibitionByUrl } from '@/lib/queries/getPublicExhibitionByUrl'
@@ -254,12 +255,10 @@ test.describe('the exhibition page carries the sale block', () => {
  * /visit), so there is no WebGL here.
  */
 test.describe('the grid renders the sale block', () => {
-  // A card's whole job is to make someone curious enough to click. It carries
-  // artist, title, year and — when the work is buyable — one button. Every
-  // technical fact (technique, dimensions, edition, paper, price) now lives on
-  // the artwork page, where it answers a question the visitor has actually
-  // asked by arriving.
-  test('a selling card shows artist, title and the CTA — and no technical detail', async ({
+  // The card states what the work costs (owner, 2026-11-18, White Cube's card): title, artist,
+  // year · edition, the price, and Order print. Technical detail (dimensions, paper, technique)
+  // still lives on the artwork page only.
+  test('a selling card shows title, artist, edition, its price and the CTA — no dimensions', async ({
     page,
   }) => {
     const fx = await setupLimitedFixture(3)
@@ -287,9 +286,13 @@ test.describe('the grid renders the sale block', () => {
 
       const card = cta.locator('xpath=../../..')
       await expect(card).toContainText(title)
-      await expect(card, 'no edition tag on a listing card').not.toContainText('Limited Edition')
+      await expect(card, 'the edition on the year line').toContainText('Limited edition')
+      // The figure the site computes for this work (the cheapest edition in stock, or the range).
+      const sale = await expectedSaleFor(fx.artworkId)
+      const price = sale ? salePriceLabel(sale) : null
+      expect(price, 'the fixture edition is on sale, so it has a price').not.toBeNull()
+      await expect(card, 'the price on the card').toContainText(price!)
       await expect(card, 'no dimensions on a listing card').not.toContainText(dims)
-      await expect(card, 'no price on a listing card').not.toContainText('€')
     } finally {
       await teardownLimitedFixture(fx)
     }
