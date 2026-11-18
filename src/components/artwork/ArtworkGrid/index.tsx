@@ -201,10 +201,13 @@ export const ArtworkGrid = ({
                 })()}
                 {/* The price under the caption (owner, 2026-11-18, White Cube's card): the lowest a
                     print of this work costs, never VAT or shipping. Open = the smallest size,
-                    unframed; limited = the cheapest edition still in stock. A bare figure, never
-                    "From" (owner, 2026-11-18, again after trying it). */}
+                    unframed; limited = the cheapest edition still in stock, as a range up to the
+                    dearest one when they differ ("€232–€444", as White Cube). Never "From" (owner). */}
                 {sale?.minPriceCents != null && (
-                  <p className={styles.price}>{formatDisplayPrice(sale.minPriceCents)}</p>
+                  <p className={styles.price}>
+                    {formatDisplayPrice(sale.minPriceCents)}
+                    {sale.maxPriceCents != null && `–${formatDisplayPrice(sale.maxPriceCents)}`}
+                  </p>
                 )}
               </div>
               {sale && (
