@@ -10,6 +10,7 @@ import {
 import { buildInitialConfig } from '@/lib/print-providers/configHelpers'
 import { buildPrintspaceCatalog, getPrintMinSize } from '@/lib/print-providers/printspace'
 import { openEditionFromConfig } from '@/lib/print-providers/printspace/fromConfig'
+import { TPS_GALLERY_MARKUP_RATE } from '@/lib/print-providers/printspace/pricing'
 import { getProviderQuote } from '@/lib/print-providers/quote'
 
 /**
@@ -54,9 +55,9 @@ test.describe('minimumPriceForLimited', () => {
 
   test('is well above artist + gallery — the shortcut that looks right and is not', async () => {
     const res = minimumPriceForLimited([variant({ priceCents: 10000 })])
-    // artist €100 + 40% gallery = €140. The real floor adds the print itself
-    // and the COA/letter, so anything at or below €140 would be unbuyable.
-    expect(res!.cents).toBeGreaterThan(14000)
+    // artist €100 + the gallery cut. The real floor adds the print itself and
+    // the COA/letter, so anything at or below artist + gallery would be unbuyable.
+    expect(res!.cents).toBeGreaterThan(Math.round(10000 * (1 + TPS_GALLERY_MARKUP_RATE)))
   })
 
   test('returns null when nothing is on sale — the SOLD signal', async () => {
@@ -106,7 +107,8 @@ test.describe('minimumPriceForOpen', () => {
 
   test('is well above artist + gallery', async () => {
     const res = minimumPriceForOpen({ ...LANDSCAPE, printPriceCents: 20000 })!
-    expect(res.cents).toBeGreaterThan(28000) // €200 + 40% = €280
+    // €200 + the gallery cut
+    expect(res.cents).toBeGreaterThan(Math.round(20000 * (1 + TPS_GALLERY_MARKUP_RATE)))
   })
 
   test('returns null without a price or without dimensions', async () => {

@@ -12,7 +12,7 @@
  *
  * What this returns is the quote's ARTWORK LINE:
  *
- *     artist + gallery(40%) + print base(size) + COA/gallery letter
+ *     artist + gallery(TPS_GALLERY_MARKUP_RATE) + print base(size) + COA/gallery letter
  *
  * excluding shipping and VAT, both of which depend on the buyer's destination
  * and so cannot be known on a listing. Excluding shipping is an ordinary shop

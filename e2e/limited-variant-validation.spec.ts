@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { validateVariantInput } from '../src/lib/editions/validateVariant'
 import { computeSheetLayout } from '../src/lib/editions/sheetLayout'
+import { estimateVariantMarginCents } from '../src/lib/editions/variantMargin'
 import { TPS_GALLERY_MARKUP_RATE } from '../src/lib/print-providers/printspace/pricing'
 
 // A 3:2 landscape file, large enough to print at these sizes at 300 DPI.
@@ -164,8 +165,18 @@ test('rejects a fixed sheet that costs more to produce than the variant earns', 
 // (priceCents * TPS_GALLERY_MARKUP_RATE) clears the absorbed cost —
 // proves the gate discriminates on margin, not on sheet size alone.
 test('the same oversized sheet passes once the price covers the absorbed cost', () => {
-  const priceCents = 20000
-  expect(priceCents * TPS_GALLERY_MARKUP_RATE).toBeGreaterThan(6000) // sanity: cut clears the gap
+  const priceCents = 30000
+  // Sanity: the cut clears the sheet-vs-image gap with room to spare at any
+  // rate we've used (25% → €75 against a ~€48 gap).
+  const { absorbedCents } = estimateVariantMarginCents({
+    widthCm: bigSheetLayout.imageWidthCm,
+    heightCm: bigSheetLayout.imageHeightCm,
+    borderCm: 3,
+    sheetWidthCm: 150,
+    sheetHeightCm: 44,
+    artistPriceCents: priceCents,
+  })!
+  expect(priceCents * TPS_GALLERY_MARKUP_RATE).toBeGreaterThan(absorbedCents)
   const res = validateVariantInput({
     variant: {
       ...baseVariant,

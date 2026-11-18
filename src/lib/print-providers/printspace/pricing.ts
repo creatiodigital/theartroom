@@ -171,8 +171,9 @@ const FRAME_SUPPLEMENT_CENTS: Record<TpsFrameTypeId, readonly SizeTier<number>[]
  * "Artwork" line — but the cents they carry surface there, and a gallery
  * quoting €443.67 reads like a spreadsheet rather than a price. Keeping every
  * production input at whole euros means the artwork line lands on whole euros
- * too, provided the artist price is set so its 40% cut is also whole
- * (multiples of €2.50; in practice we price in fives).
+ * too, provided the artist price is set so its gallery cut
+ * (TPS_GALLERY_MARKUP_RATE) is also whole: at 25% that means multiples of €4,
+ * so €20 steps when pricing in fives.
  *
  * Always UP, never nearest: like the anchor tables themselves, the variance
  * lands in the gallery's favour rather than the buyer's.
@@ -605,8 +606,9 @@ export const TPS_SUPPORTED_COUNTRIES: string[] = [
 // ── Gallery commission ──────────────────────────────────────────
 
 // The gallery's markup on the artist's price: gallery cut = artist price ×
-// this rate. 40% per the artist↔gallery contract (was 0.45).
-export const TPS_GALLERY_MARKUP_RATE = 0.4
+// this rate. 25% from 2026-11-18 (AR-186), agreed with the artists to get the
+// first sales moving; to rise again once buyers come. Was 0.45, then 0.4.
+export const TPS_GALLERY_MARKUP_RATE = 0.25
 
 export const HOME_VAT_RATE = 0.21 // Spain; gallery is a Spanish seller (B2C, pre-OSS)
 
