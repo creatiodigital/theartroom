@@ -1,13 +1,15 @@
 @use '@/styles/mixins' as *;
 
+// docs/public-redesign/readable-text.md rule 2: the label on top and the text under it, the label on
+// the left only from xl, where a full measure still fits beside it.
 .section {
   display: grid;
-  grid-template-columns: 360px minmax(0, 1fr);
-  gap: 56px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
 
-  @include media-down(lg) {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-4);
+  @include media-up(xl) {
+    grid-template-columns: 360px minmax(0, 1fr);
+    gap: var(--space-14);
   }
 }
 
@@ -23,35 +25,22 @@
   color: var(--color-text-secondary);
 }
 
+// One column at the reading measure, left-aligned in the text area (rule 1).
 .text {
-  max-width: 760px;
+  max-width: var(--measure);
   min-width: 0;
 }
 
-// variant="columns": the artist page. The label in the left third, the text across the right two
-// thirds (the photo's width above it) in two columns; stacked below lg, full width; one column on
-// phones.
+// variant="columns": the exhibition and artist pages. From xl the label in the left third, the text
+// in the right two thirds (the artist photo's width above it); stacked below xl.
 .columns {
-  grid-template-columns: minmax(0, 1fr) 66.67%;
-  gap: var(--space-8);
-
-  @include media-down(lg) {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-4);
+  @include media-up(xl) {
+    grid-template-columns: minmax(0, 1fr) 66.67%;
+    gap: var(--space-8);
   }
+}
 
-  .text {
-    max-width: none;
-    column-count: 2;
-    column-gap: 56px;
-
-    @include media-down(md) {
-      column-count: 1;
-    }
-
-    // The first paragraph starts each column level (no top margin pushing the left one down).
-    > * > :first-child {
-      margin-top: 0;
-    }
-  }
+// A short text in two columns where each can be --measure-min wide; one column otherwise (rule 3).
+.short .text {
+  @include short-text-columns;
 }

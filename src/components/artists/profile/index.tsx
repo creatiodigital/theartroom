@@ -8,6 +8,7 @@ import { PageLayout } from '@/components/ui/PageLayout'
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { TextSection } from '@/components/ui/TextSection'
+import { isShortRichText } from '@/lib/textUtils'
 import type {
   PublicArtistArtwork,
   PublicArtistExhibition,
@@ -76,7 +77,12 @@ export const ArtistProfilePage = ({
           </div>
         </section>
 
-        <TextSection label="About the artist" variant="columns" className={styles.about}>
+        <TextSection
+          label="About the artist"
+          variant="columns"
+          short={isShortRichText(artist.biography)}
+          className={styles.about}
+        >
           {artist.biography ? biography : <p className={styles.empty}>No biography yet.</p>}
         </TextSection>
 

@@ -58,8 +58,9 @@
   }
 }
 
+// The reading measure (readable-text.md).
 .text {
-  max-width: 720px;
+  max-width: var(--measure);
   min-width: 0;
 }
 

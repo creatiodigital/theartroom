@@ -113,18 +113,18 @@
   }
 }
 
-// As TextSection's `columns` (About the exhibition): the label in the left third, the rest across
-// the right two thirds; one column on phones, the label first.
+// As TextSection's `columns` (About the exhibition): from xl the label in the left third, the rest
+// across the right two thirds; the label on top below xl (readable-text.md rule 2).
 .artistSection {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 66.67%;
-  gap: var(--space-8);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
   align-items: start;
   padding: 72px 0 96px;
 
-  @include media-down(lg) {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-4);
+  @include media-up(xl) {
+    grid-template-columns: minmax(0, 1fr) 66.67%;
+    gap: var(--space-8);
   }
 
   @include media-down(md) {
@@ -154,19 +154,14 @@
   }
 }
 
-// Two columns, as About the exhibition's text (TextSection `columns`); one on phones. The first
-// paragraph starts each column level.
+// As About the exhibition's text (TextSection `columns`, readable-text.md): one column at the
+// reading measure; two only for a short bio, where each can be --measure-min wide.
 .artistBio {
-  column-count: 2;
-  column-gap: 56px;
+  max-width: var(--measure);
+}
 
-  @include media-down(md) {
-    column-count: 1;
-  }
-
-  > * > :first-child {
-    margin-top: 0;
-  }
+.artistBioShort {
+  @include short-text-columns;
 }
 
 .artistView {

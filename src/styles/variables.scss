@@ -294,6 +294,12 @@
   --header-max-width: 1660px;
   --content-max-width: 1660px;
 
+  // The reading measure for body text (docs/public-redesign/readable-text.md): a column at most
+  // 34em wide (≈ 74 characters of Lato 17) and never under 22em (≈ 46). In em, so it resolves
+  // against the font size of the box that uses it.
+  --measure: 34em;
+  --measure-min: 22em;
+
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-full: 9999px;

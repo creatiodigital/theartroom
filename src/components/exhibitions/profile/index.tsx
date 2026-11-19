@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import c from 'classnames'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -11,7 +12,7 @@ import { PageLayout } from '@/components/ui/PageLayout'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Share } from '@/components/ui/Share'
 import { TextSection } from '@/components/ui/TextSection'
-import { isRichTextEmpty } from '@/lib/textUtils'
+import { isRichTextEmpty, isShortRichText } from '@/lib/textUtils'
 import { isSafeImageSrc } from '@/lib/imageSafety'
 import type { PublicExhibition } from '@/lib/queries/getPublicExhibitionByUrl'
 
@@ -111,7 +112,12 @@ export const ExhibitionProfilePage = ({
         </section>
 
         {!isRichTextEmpty(exhibition.description) && (
-          <TextSection label="About the exhibition" variant="columns" className={styles.about}>
+          <TextSection
+            label="About the exhibition"
+            variant="columns"
+            short={isShortRichText(exhibition.description)}
+            className={styles.about}
+          >
             {description}
           </TextSection>
         )}
@@ -160,7 +166,16 @@ export const ExhibitionProfilePage = ({
             <h3 className={styles.artistName}>
               <Link href={artistHref}>{artistName}</Link>
             </h3>
-            {artistBiography && <div className={styles.artistBio}>{artistBiography}</div>}
+            {artistBiography && (
+              <div
+                className={c(
+                  styles.artistBio,
+                  isShortRichText(exhibition.user.biography) && styles.artistBioShort,
+                )}
+              >
+                {artistBiography}
+              </div>
+            )}
             <ArrowLink href={artistHref} className={styles.artistView}>
               View artist
             </ArrowLink>

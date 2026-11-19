@@ -150,6 +150,29 @@ $room-button-z: 998;
   }
 }
 
+// A short text (isShortRichText, under ~1,500 characters) in two columns, each at least
+// --measure-min and at most --measure wide: the browser drops to one column where two don't fit
+// (docs/public-redesign/readable-text.md rule 3). Long texts never get this: one column.
+@mixin short-text-columns {
+  // The box's width with no breakpoint: under the two-column threshold (two --measure-min and the
+  // gap) the middle term is negative, so the clamp gives one --measure, the single column's limit;
+  // over it the term is huge, so two measures and the gap. max-width keeps it inside its cell.
+  width: clamp(
+    var(--measure),
+    (100% - (2 * var(--measure-min) + var(--space-14))) * 1000,
+    2 * var(--measure) + var(--space-14)
+  );
+  max-width: 100%;
+  column-width: var(--measure-min);
+  column-count: 2;
+  column-gap: var(--space-14);
+
+  // The first paragraph starts each column level (no top margin pushing the left one down).
+  > * > :first-child {
+    margin-top: 0;
+  }
+}
+
 // Back-compat alias: existing call sites use breakpoint() as mobile-first.
 @mixin breakpoint($name) {
   @include media-up($name) {
