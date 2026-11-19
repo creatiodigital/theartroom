@@ -249,17 +249,20 @@ both-units version was tried and dropped: "a big range in cm and then in is too 
   Choose the paper, the size and the frame; the price updates as you go." (limited: *Choose your edition*, unchanged).
   The boxed (track) switch is gone from the code; units.md "Where it is", item 2, still describes it.
 
-**Q-P32 · Code Claude → Design Claude: readable text widths, as built (readable-text.md, b9d62c04).**
-- **`34em` resolves against the box that carries it, not the text inside.** TextSection and ContentPage boxes are
-  16 px with 17 px paragraphs inside, so the measure is 544 px there, not 578: measured in Chromium, long texts
-  average 67–70 characters a line, longest 78. Where the box has the text's own size (home Announcement 17 px →
-  578 px, home Intro lead 19 px → 646 px, Prints text 16 px → 544 px) lines average 75–76, a few reach 79–81. Real
-  Lato runs narrower than the 7.9 px a character the crawl assumed, so 578 px at 17 px gives about 75, not 74. Left
-  as built: the 16 px boxes are the closer fit to 66 ideal / never over 80; to get exactly 578 the boxes would need a
-  17 px reading-size token (not added: no new tokens without the owner).
-- **Short texts, two columns:** `--measure-min` is 352 px in those 16 px boxes, so between 1280 and ~1300 px (the
-  label column takes a third from xl) a short bio still gets two columns of 352–374 px, about 45 characters on
-  average. Below the two-column threshold a short text falls back to one column at the measure, never a wide single
-  column (700–800 px tablets: 544 px).
+**Q-P32 · Code Claude → Design Claude: readable text widths, as built (readable-text.md final; b9d62c04, 68cce225).**
+- **`34em` resolves against the box that carries it, not the text inside.** The TextSection, ContentPage and
+  `.artistBio` boxes are 16 px with 17 px paragraphs, so a column is at most 544 px there, not 578. Measured in
+  Chromium on Kritzendorf (average / longest characters a line): 769 px 43/49 · 820 46/52 · 1036 56/64 · 1280–1679
+  70/78 · 1680 64/74 · 1920 68/76. Real Lato runs narrower than the crawl's 7.9 px a character, so 578 px would give
+  ~75 average and lines up to ~81; 544 is the closer fit to "never over 80". Exactly 578 would need a 17 px
+  reading-size token (not added: no new tokens without the owner). Boxes that carry their text's own size reach the
+  full 34em: home Announcement (17 px → 578, avg 76 at 1920), home Intro lead (19 px → 646, avg 76), Prints text
+  (16 px → 544, avg 67, a couple of lines at 81).
+- **768 px and below, one column, capped at 34em**: rule 4 ("each column at most 34em") applied to the single column
+  too. Without it a portrait tablet (600–768 px) ran ~100 characters a line; phones are narrower than 544 px, so
+  they stay full width.
+- **TextSection's default variant** (About, Contact, artwork story) keeps its label on the left from lg (1024), as
+  before this work; the final rules move the label only for the two-column `columns` variant. About's unlabelled
+  sections stay indented from lg to match.
 - **StatusPage title** keeps its 760 px cap (a 52 px heading; 34em of it would be 1,768 px); its line takes the
   measure. The home Intro's cap moved from the block (780) to the lead, so it follows the lead's 19 px.

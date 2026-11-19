@@ -17,12 +17,20 @@ Measured on the live site (Lato 17 px / 1.75, real paragraph): 380 px ≈ 47 cha
 - **Max: `34em`** (578 px at 17 px ≈ 74 characters). In `em`, so it follows the font size.
 - **Min: `22em`** (374 px ≈ 46 characters). No text column is ever narrower, except on phones, where the screen is
   the limit (390 px phone: ~350 px at 16 px ≈ 47 characters).
-1. **Long texts: always one column**, `max-width: 34em`, left-aligned in the text area.
-2. **The label sits on the left only from 1280 px (xl)**; below 1280 it sits on top (today: below 1024) and the text
-   keeps its 34em column.
-3. **Two columns only for short texts**: under ~1,500 characters (both columns fit on one screen), with
-   `column-width: 22em; column-count: 2; column-gap: 56px`, so the browser drops to one column when each can't be 22em.
-4. Phones: one column, full width (unchanged).
+**Final (owner 2026-11-19, after comparing with Marian Goodman's exhibition pages)** — replaces the earlier rules:
+Marian Goodman (measured): label/buttons on top, the text across the full width in **two columns**
+(1036 px: ~54 characters a column; 1440: ~75; 1920: ~88, uncapped; one column on phones/tablets). We take the same
+idea and cap the columns at the conventions.
+**Owner (10:40): "They go 1 column ONLY at 768 px or less… then two columns, and on really big screens: title
+to the left | 1 column | 1 column."** So:
+1. **Big screens, from 1680 px**: label on the left | column | column, in the right two thirds (aligned with the hero
+   image).
+2. **769–1679 px**: label on top, text across the **full width**, **two columns** (gap 56 px; 40 px below 1024 px).
+3. **768 px and below**: one column, full width.
+4. Each column at most 34em: `column-count: 2; column-gap: 56px; max-width: calc(2 * 34em + 56px)`.
+Line lengths: 1920 ≈ 72 · 1680 ≈ 61 · 1440 ≈ 74 · 1280 ≈ 72 · 1036 ≈ 56 · 820 ≈ 45 · just above 768 ≈ 42.
+(Why 1680 and not 1440: at 1440 the label column would squeeze the two columns to ~51 characters; with the label on
+top they get ~74.)
 5. Headings inside the text (h2/h3) follow the same column width.
 
 ## Where
