@@ -14,11 +14,10 @@
     height: 600px;
   }
 
-  // 720 px up to 1920 px wide, then it grows with the width (37.5vw = 720 at 1920), so very wide
-  // screens keep the 1920 shape (8:3) instead of a thin band (owner, 2026-11-19); at most 80% of the
-  // window's height, never under 720.
+  // As Marian Goodman's (owner, 2026-11-19): half the width (2:1), never taller than the window, at
+  // most 900 px. 1440 × 900 keeps its 720; 1920 and wider get 900.
   @include breakpoint(lg) {
-    height: clamp(720px, 37.5vw, 80svh);
+    height: min(50vw, 100svh, 900px);
   }
 }
 
