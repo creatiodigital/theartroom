@@ -2,6 +2,7 @@ import { cache } from 'react'
 
 import { SALE_SELECT, saleFromRow, type ArtworkSale } from '@/lib/editions/artworkSale'
 import prisma from '@/lib/prisma'
+import { getGalleryCommissionRate } from '@/lib/settings'
 import {
   getPrintPresentations,
   type PresentationView,
@@ -104,7 +105,10 @@ export const getPublicArtistByHandler = cache(async function getPublicArtistByHa
   })
 
   if (!artist) return null
-  const presentations = await getPrintPresentations(artist.artworks.map((a) => a.id))
+  const [presentations, galleryRate] = await Promise.all([
+    getPrintPresentations(artist.artworks.map((a) => a.id)),
+    getGalleryCommissionRate(),
+  ])
 
   return {
     ...artist,
@@ -116,14 +120,17 @@ export const getPublicArtistByHandler = cache(async function getPublicArtistByHa
       return {
         ...artwork,
         presentation: presentations[artwork.id] ?? null,
-        sale: saleFromRow({
-          editionType,
-          printEnabled,
-          printPriceCents,
-          originalWidth: artwork.originalWidth,
-          originalHeight: artwork.originalHeight,
-          limitedVariants,
-        }),
+        sale: saleFromRow(
+          {
+            editionType,
+            printEnabled,
+            printPriceCents,
+            originalWidth: artwork.originalWidth,
+            originalHeight: artwork.originalHeight,
+            limitedVariants,
+          },
+          galleryRate,
+        ),
       }
     }),
   }

@@ -1,5 +1,6 @@
 import { SALE_SELECT, saleFromRow, type ArtworkSale } from '@/lib/editions/artworkSale'
 import prisma from '@/lib/prisma'
+import { getGalleryCommissionRate } from '@/lib/settings'
 import {
   getPrintPresentations,
   type PresentationView,
@@ -104,7 +105,10 @@ const orderedRows = (list: CuratedList = 'prints') =>
  * GallerySelectionCard` predicate in `getGallerySelection` below then fails to
  * compile in both directions, since neither type is assignable to the other.
  */
-function toCard(row: Awaited<ReturnType<typeof orderedRows>>[number]['artwork']): {
+function toCard(
+  row: Awaited<ReturnType<typeof orderedRows>>[number]['artwork'],
+  galleryRate: number,
+): {
   card: AdminSelectionRow['artwork']
   artistName: string
 } {
@@ -120,14 +124,17 @@ function toCard(row: Awaited<ReturnType<typeof orderedRows>>[number]['artwork'])
       // An unpublished artist's works are not for sale (checkout refuses them),
       // so the page hides them and the admin list says why.
       sale: user.published
-        ? saleFromRow({
-            editionType,
-            printEnabled,
-            printPriceCents,
-            originalWidth: rest.originalWidth,
-            originalHeight: rest.originalHeight,
-            limitedVariants,
-          })
+        ? saleFromRow(
+            {
+              editionType,
+              printEnabled,
+              printPriceCents,
+              originalWidth: rest.originalWidth,
+              originalHeight: rest.originalHeight,
+              limitedVariants,
+            },
+            galleryRate,
+          )
         : null,
     },
     artistName,
@@ -137,23 +144,23 @@ function toCard(row: Awaited<ReturnType<typeof orderedRows>>[number]['artwork'])
 /** What /prints renders: selected works that are currently selling — sold-out
  *  editions included, shown and marked. */
 export async function getGallerySelection(): Promise<GallerySelectionCard[]> {
-  const rows = await orderedRows()
+  const [rows, galleryRate] = await Promise.all([orderedRows(), getGalleryCommissionRate()])
   // `sale != null`, NOT `minPriceCents != null`. A sold-out edition stays on the
   // page — ArtworkGrid renders it as "Sold out" instead of a CTA — because a page
   // where editions have gone is the signal that editions move. Only work that is
   // not for sale at all (prints off, unpriced, every variant paused) is hidden:
   // no story there, and the CTA would be a dead end.
   const cards = rows
-    .map((row) => toCard(row.artwork).card)
+    .map((row) => toCard(row.artwork, galleryRate).card)
     .filter((c): c is GallerySelectionCard => c.sale != null)
   const presentations = await getPrintPresentations(cards.map((c) => c.id))
   return cards.map((c) => ({ ...c, presentation: presentations[c.id] ?? null }))
 }
 
 const adminRows = async (list: CuratedList): Promise<AdminSelectionRow[]> => {
-  const rows = await orderedRows(list)
+  const [rows, galleryRate] = await Promise.all([orderedRows(list), getGalleryCommissionRate()])
   return rows.map((row) => {
-    const { card, artistName } = toCard(row.artwork)
+    const { card, artistName } = toCard(row.artwork, galleryRate)
     const status: SelectionStatus =
       card.sale == null ? 'not-for-sale' : card.sale.minPriceCents == null ? 'sold-out' : 'live'
     return { selectionId: row.id, order: row.order, status, artwork: card, artistName }
@@ -171,7 +178,15 @@ export async function getGallerySelectionForAdmin(): Promise<AdminSelectionRow[]
  */
 export type HomePrintSlide = Pick<
   GallerySelectionCard,
-  'id' | 'slug' | 'name' | 'title' | 'year' | 'imageUrl' | 'originalWidth' | 'originalHeight' | 'sale'
+  | 'id'
+  | 'slug'
+  | 'name'
+  | 'title'
+  | 'year'
+  | 'imageUrl'
+  | 'originalWidth'
+  | 'originalHeight'
+  | 'sale'
 > & {
   artistName: string
   presentation: PresentationView
@@ -184,9 +199,9 @@ export type HomePrintSlide = Pick<
  * §5: skipped until rendered). FAILS QUIET: no list, no section.
  */
 export async function getHomePrints(): Promise<HomePrintSlide[]> {
-  const rows = await orderedRows('home')
+  const [rows, galleryRate] = await Promise.all([orderedRows('home'), getGalleryCommissionRate()])
   const cards = rows
-    .map((row) => toCard(row.artwork).card)
+    .map((row) => toCard(row.artwork, galleryRate).card)
     .filter((c): c is GallerySelectionCard => c.sale?.minPriceCents != null)
   const presentations = await getPrintPresentations(cards.map((c) => c.id))
   return cards.flatMap((c) => {

@@ -1,3 +1,5 @@
+import { getGalleryCommissionRate } from '@/lib/settings'
+
 import { SALE_SELECT, saleFromRow, type SaleRow } from './artworkSale'
 import { getVariantEditionLines, variantEditionLineParts } from './variantEditionLines'
 import type { VariantEditionLineParts } from './variantEditionLines'
@@ -29,12 +31,15 @@ export async function buildArtworkCommerce(
   artworkId: string,
   row: SaleRow,
 ): Promise<ArtworkCommercePayload | null> {
-  const sale = saleFromRow(row)
+  // The owner's commission, once for the card and every edition line, so they agree.
+  const galleryRate = await getGalleryCommissionRate()
+  const sale = saleFromRow(row, galleryRate)
   if (!sale) return null
 
   // Only limited editions have variants to enumerate; an open edition is a
   // continuous range with no copy numbers at all.
-  const lines = sale.editionType === 'limited' ? await getVariantEditionLines(artworkId) : []
+  const lines =
+    sale.editionType === 'limited' ? await getVariantEditionLines(artworkId, galleryRate) : []
 
   return {
     editionType: sale.editionType,

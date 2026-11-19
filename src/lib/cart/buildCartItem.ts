@@ -1,5 +1,5 @@
 import type { ProviderId, Quote, SpecsSummary, WizardConfig } from '@/lib/print-providers'
-import { TPS_GALLERY_MARKUP_RATE } from '@/lib/print-providers/printspace/pricing'
+import { galleryCommissionCents } from '@/lib/galleryCommission'
 import type { CartItem } from './types'
 
 type ArtworkMeta = {
@@ -21,6 +21,8 @@ type BuildCartItemInput = {
   quote: Quote
   /** Artist's share in cents (printPriceCents or variant.priceCents). */
   artistCents: number
+  /** The gallery's commission rate the quote was priced with (the wizard's page passes it). */
+  galleryRate: number
   specsSummary: SpecsSummary
 }
 
@@ -40,10 +42,11 @@ export function buildCartItem(input: BuildCartItemInput): Omit<CartItem, 'lineId
     config,
     quote,
     artistCents,
+    galleryRate,
     specsSummary,
   } = input
 
-  const galleryCents = Math.round(artistCents * TPS_GALLERY_MARKUP_RATE)
+  const galleryCents = galleryCommissionCents(artistCents, galleryRate)
   const artworkLineCents = quote.lines.find((l) => l.id === 'artwork')?.amountCents ?? 0
   const productionCents = Math.max(0, artworkLineCents - artistCents - galleryCents)
 

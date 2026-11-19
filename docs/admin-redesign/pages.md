@@ -1185,5 +1185,14 @@ The wheel over the toolbar scrolls it (no longer walks the room); every Save pan
   (admins only, checked again on the page), All · Home page · 3D rooms in the URL (`?from=`), 50 a page (Q165), messages
   as plain text with their line breaks; Delete asks first (`DELETE /api/admin/feedback/[id]`: admin, same origin, 404
   when gone). Spec `e2e/admin-feedback.spec.ts`. Look: `/admin/feedback`, desktop and phone.
+- **P1 · Sales › Pricing (2026-11-18, on AR-186):** menu item **Pricing** (Phosphor `Percent`) after Payouts;
+  `/admin/pricing` read on the server (admins only, checked again on the page). The commission is
+  `SiteSettings.galleryCommissionPct` (default 25) + `galleryCommissionChangedAt` / `galleryCommissionChangedById`;
+  `getGalleryCommission()` in `lib/settings.ts` falls back to the last value read, else 25, never 0. Every price takes
+  it as an input (`galleryRate`): quote, From prices, grids, cart line, cart re-price, payment intent, margin check;
+  servers read it once per request, the wizard / checkout get it from their page, the variant editor fetches it.
+  `TPS_GALLERY_MARKUP_RATE` is gone. Save asks first (`AdminConfirmModal`, no icon), then a green `FeedbackBar`.
+  Deviations and open points: Q-PR1. Spec `e2e/gallery-commission.spec.ts`. Look: `/admin/pricing`, desktop and phone.
 
 | F1 | **Gallery › Feedback** (owner 2026-11-14): new menu item and page `/admin/feedback`, a table of every visitor feedback, newest first, filter Home page / 3D rooms, delete each one (asks first). No schema change. | `feedback-list.md` · `designs/admin-feedback-*.dc.html` | — | Built | See Built notes (F1). Pager: Q165. |
+| P1 | **Sales › Pricing** (owner 2026-11-18): new menu item and page `/admin/pricing`, the gallery commission as a setting (no longer hardcoded), Save asks first. Schema: 3 new `SiteSettings` columns. | `pricing.md` · `designs/admin-pricing*.dc.html` | — | Built | See Built notes (P1). Open points: Q-PR1. |

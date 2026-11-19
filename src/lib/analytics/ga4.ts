@@ -55,20 +55,44 @@ function getClient(config: Ga4Config): BetaAnalyticsDataClient {
 export type Ga4ReportRequest = protos.google.analytics.data.v1beta.IRunReportRequest
 export type Ga4Report = protos.google.analytics.data.v1beta.IRunReportResponse
 
+// gRPC codes GA4 answers when it is busy rather than wrong: RESOURCE_EXHAUSTED (8, e.g. more
+// than 10 requests in flight for the property), UNAVAILABLE (14), DEADLINE_EXCEEDED (4).
+const RETRYABLE_CODES = new Set([4, 8, 14])
+const RETRY_AFTER_MS = 1500
+
+/** The gRPC status code of a Data API error, if it has one. */
+export const ga4ErrorCode = (error: unknown): number | undefined =>
+  typeof error === 'object' &&
+  error !== null &&
+  typeof (error as { code?: unknown }).code === 'number'
+    ? (error as { code: number }).code
+    : undefined
+
 /**
- * Runs report requests against the property, five per batch (the API's limit), batches in
- * parallel. Reports come back in the order asked. Throws when not configured or on API failure.
+ * Runs report requests against the property, five per batch (the API's limit), ONE BATCH AT A
+ * TIME: the property allows 10 requests in flight, and parallel batches on a cold server went over
+ * it (2026-11-18, "Could not load analytics"). A busy answer is retried once. Reports come back in
+ * the order asked. Throws when not configured or on any other API failure.
  */
 export async function runGa4Reports(requests: Ga4ReportRequest[]): Promise<Ga4Report[]> {
   const config = getConfig()
   if (!config) throw new Error('GA4 is not configured')
   const property = `properties/${config.propertyId}`
-  const batches: Ga4ReportRequest[][] = []
-  for (let i = 0; i < requests.length; i += 5) batches.push(requests.slice(i, i + 5))
-  const responses = await Promise.all(
-    batches.map((batch) => getClient(config).batchRunReports({ property, requests: batch })),
-  )
-  return responses.flatMap(([response]) => response.reports ?? [])
+  const reports: Ga4Report[] = []
+  for (let i = 0; i < requests.length; i += 5) {
+    const batch = requests.slice(i, i + 5)
+    const run = () => getClient(config).batchRunReports({ property, requests: batch })
+    let response
+    try {
+      ;[response] = await run()
+    } catch (error) {
+      if (!RETRYABLE_CODES.has(ga4ErrorCode(error) ?? -1)) throw error
+      await new Promise((resolve) => setTimeout(resolve, RETRY_AFTER_MS))
+      ;[response] = await run()
+    }
+    reports.push(...(response.reports ?? []))
+  }
+  return reports
 }
 
 /** Exact /artworks/<slug> pages only — wizard/checkout subroutes excluded. */

@@ -70,6 +70,8 @@ export type SaleArtwork = {
 
 export function resolveArtworkSale(
   artwork: SaleArtwork,
+  /** The gallery's commission rate, read once per request by the loader (getGalleryCommissionRate). */
+  galleryRate: number,
   liveVariants: SaleVariant[] = [],
 ): ArtworkSale | null {
   const purchasable = isArtworkPurchasable({
@@ -88,8 +90,8 @@ export function resolveArtworkSale(
     if (inStock.length === 0)
       return { editionType: 'limited', minPriceCents: null, variantName: null }
 
-    const cheapest = minimumPriceForLimited(inStock)
-    const dearest = maximumPriceForLimited(inStock)
+    const cheapest = minimumPriceForLimited(inStock, galleryRate)
+    const dearest = maximumPriceForLimited(inStock, galleryRate)
     // In-stock but unquotable (no variant carries a price). Not sold out —
     // saying so would invent a history — so show nothing.
     return cheapest
@@ -105,7 +107,7 @@ export function resolveArtworkSale(
   // Open editions are printed on demand and never sell out, so an unquotable
   // one — no pixel dimensions, so no printable size — shows nothing rather than
   // falling through to the sold-out badge.
-  const smallest = minimumPriceForOpen(artwork)
+  const smallest = minimumPriceForOpen(artwork, galleryRate)
   return smallest ? { editionType: 'open', minPriceCents: smallest.cents } : null
 }
 
@@ -147,16 +149,18 @@ export type SaleRow = SaleArtwork & {
 }
 
 /**
- * Resolve a row selected with `SALE_SELECT`.
+ * Resolve a row selected with `SALE_SELECT`, at the commission rate the loader read once for its
+ * whole query (never per row).
  *
  * Callers must NOT pass the row's pricing inputs on to the client:
  * `printPriceCents` is the ARTIST's cut, not a buyer-facing figure, and the
  * card only ever needs the resolved number.
  */
-export function saleFromRow(row: SaleRow): ArtworkSale | null {
+export function saleFromRow(row: SaleRow, galleryRate: number): ArtworkSale | null {
   const { limitedVariants, ...artwork } = row
   return resolveArtworkSale(
     artwork,
+    galleryRate,
     limitedVariants.map((v) => ({ ...v, hasAvailableNumber: v.editionNumbers.length > 0 })),
   )
 }

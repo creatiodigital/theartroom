@@ -12,7 +12,10 @@
  *
  * What this returns is the quote's ARTWORK LINE:
  *
- *     artist + gallery(40%) + print base(size) + COA/gallery letter
+ *     artist + gallery commission + print base(size) + COA/gallery letter
+ *
+ * The commission is the owner's setting, so every function here takes its rate (`galleryRate`,
+ * read once per request on the server) rather than knowing a number.
  *
  * excluding shipping and VAT, both of which depend on the buyer's destination
  * and so cannot be known on a listing. Excluding shipping is an ordinary shop
@@ -61,8 +64,14 @@ const DEFAULT_PROVIDER: ProviderId = 'printspace'
  * Quote with NO country, which is what makes the result destination-free: the
  * provider returns the artwork line alone, with no shipping and no tax.
  */
-function artworkLineCents(config: WizardConfig, artistPriceCents: number, providerId: ProviderId) {
-  return getProviderQuote(providerId, { config, country: '', artistPriceCents }).totalCents
+function artworkLineCents(
+  config: WizardConfig,
+  artistPriceCents: number,
+  galleryRate: number,
+  providerId: ProviderId,
+) {
+  return getProviderQuote(providerId, { config, country: '', artistPriceCents, galleryRate })
+    .totalCents
 }
 
 /**
@@ -76,12 +85,13 @@ function artworkLineCents(config: WizardConfig, artistPriceCents: number, provid
  */
 export function minimumPriceForLimited(
   liveVariants: LiveVariant[],
+  galleryRate: number,
   providerId: ProviderId = DEFAULT_PROVIDER,
 ): MinimumPrice | null {
   let best: MinimumPrice | null = null
   for (const v of liveVariants) {
     if (v.priceCents == null) continue
-    const cents = artworkLineCents(variantToWizardConfig(v), v.priceCents, providerId)
+    const cents = artworkLineCents(variantToWizardConfig(v), v.priceCents, galleryRate, providerId)
     if (best === null || cents < best.cents) {
       best = {
         cents,
@@ -101,12 +111,13 @@ export function minimumPriceForLimited(
  */
 export function maximumPriceForLimited(
   liveVariants: LiveVariant[],
+  galleryRate: number,
   providerId: ProviderId = DEFAULT_PROVIDER,
 ): number | null {
   let most: number | null = null
   for (const v of liveVariants) {
     if (v.priceCents == null) continue
-    const cents = artworkLineCents(variantToWizardConfig(v), v.priceCents, providerId)
+    const cents = artworkLineCents(variantToWizardConfig(v), v.priceCents, galleryRate, providerId)
     if (most === null || cents > most) most = cents
   }
   return most
@@ -128,6 +139,7 @@ export function minimumPriceForOpen(
     originalWidth: number | null
     originalHeight: number | null
   },
+  galleryRate: number,
   providerId: ProviderId = DEFAULT_PROVIDER,
 ): MinimumPrice | null {
   const { printPriceCents, originalWidth, originalHeight } = artwork
@@ -143,7 +155,7 @@ export function minimumPriceForOpen(
   const size = config.customSize ?? min
 
   return {
-    cents: artworkLineCents(config, printPriceCents, providerId),
+    cents: artworkLineCents(config, printPriceCents, galleryRate, providerId),
     widthCm: size.widthCm,
     heightCm: size.heightCm,
     basis: 'smallest-print',
@@ -162,13 +174,14 @@ export function minimumPriceForArtwork(
     originalWidth: number | null
     originalHeight: number | null
   },
+  galleryRate: number,
   liveVariants: LiveVariant[] = [],
   providerId: ProviderId = DEFAULT_PROVIDER,
 ): MinimumPrice | null {
   if (!artwork.printEnabled) return null
   return artwork.editionType === 'limited'
-    ? minimumPriceForLimited(liveVariants, providerId)
-    : minimumPriceForOpen(artwork, providerId)
+    ? minimumPriceForLimited(liveVariants, galleryRate, providerId)
+    : minimumPriceForOpen(artwork, galleryRate, providerId)
 }
 
 /**

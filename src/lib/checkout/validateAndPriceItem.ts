@@ -34,7 +34,7 @@ import {
   findConfigRestrictionClash,
 } from '@/lib/print-providers'
 import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
-import { TPS_GALLERY_MARKUP_RATE } from '@/lib/print-providers/printspace/pricing'
+import { galleryCommissionCents } from '@/lib/galleryCommission'
 import { getProviderQuote } from '@/lib/print-providers/quote'
 import { summarizeConfig, type SpecsSummary } from '@/lib/print-providers/specs'
 import type { PrintRestrictions } from '@/lib/print-providers/types'
@@ -52,6 +52,8 @@ export type ItemValidationInput = {
    *  be absent for open editions. */
   variantId?: string
   countryCode: string
+  /** The gallery's commission rate, read once per request by the caller (getGalleryCommissionRate). */
+  galleryRate: number
 }
 
 export type ItemPricing = {
@@ -96,7 +98,7 @@ export type ItemValidationResult =
 export async function validateAndPriceItem(
   input: ItemValidationInput,
 ): Promise<ItemValidationResult> {
-  const { artworkSlug, providerId, config, variantId, countryCode } = input
+  const { artworkSlug, providerId, config, variantId, countryCode, galleryRate } = input
 
   const artwork = await prisma.artwork.findUnique({
     where: { slug: artworkSlug },
@@ -213,12 +215,13 @@ export async function validateAndPriceItem(
   // Limited editions use the chosen variant's price; open editions use the
   // single artwork price. Both are guaranteed non-null by the checks above.
   const artistCents = isLimited ? pinnedVariant!.priceCents! : artwork.printPriceCents!
-  const galleryCents = Math.round(artistCents * TPS_GALLERY_MARKUP_RATE)
+  const galleryCents = galleryCommissionCents(artistCents, galleryRate)
 
   const quote = getProviderQuote(providerId, {
     config: effectiveConfig,
     country: countryCode,
     artistPriceCents: artistCents,
+    galleryRate,
   })
 
   // Provider Quote.lines layout: [{id:'artwork', amount}, {id:'shipping', amount}]
