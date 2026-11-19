@@ -14,8 +14,11 @@
     height: 600px;
   }
 
+  // 720 px up to 1920 px wide, then it grows with the width (37.5vw = 720 at 1920), so very wide
+  // screens keep the 1920 shape (8:3) instead of a thin band (owner, 2026-11-19); at most 80% of the
+  // window's height, never under 720.
   @include breakpoint(lg) {
-    height: 720px;
+    height: clamp(720px, 37.5vw, 80svh);
   }
 }
 
