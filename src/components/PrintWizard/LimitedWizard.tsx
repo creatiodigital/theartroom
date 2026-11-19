@@ -36,6 +36,9 @@ import styles from './PrintWizard.module.scss'
 type Props = {
   artwork: WizardArtwork
   catalog: Catalog
+  /** The gallery's commission rate (Admin › Sales › Pricing), read by the page for this request.
+   *  The wizard prices with it; the payment intent re-prices with the setting as it is then. */
+  galleryRate: number
 }
 
 function readCountryFromStash(slug: string): string {
@@ -58,7 +61,7 @@ function readCountryFromStash(slug: string): string {
  * existing machinery unchanged. The chosen `variantId` is forwarded to
  * checkout so the server can reserve an edition number.
  */
-export const LimitedWizard = ({ artwork, catalog }: Props) => {
+export const LimitedWizard = ({ artwork, catalog, galleryRate }: Props) => {
   const router = useRouter()
   // NOTE: the cart shows no "Edit item" for a limited line and this wizard
   // reads no `editLineId` / `variant` param. Nothing here edits a line — see
@@ -109,11 +112,12 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
           config: variantToWizardConfig(v),
           country,
           artistPriceCents: v.priceCents ?? artwork.printPriceCents,
+          galleryRate,
         }),
       )
     }
     return quotes
-  }, [allVariants, country, catalog.providerId, artwork.printPriceCents])
+  }, [allVariants, country, catalog.providerId, artwork.printPriceCents, galleryRate])
 
   // Re-resolved every render: it supplies the opening selection — the cheapest
   // edition on sale, at the price its card shows (owner, 2026-11-17) — and moves
@@ -153,9 +157,10 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
             // Limited editions price per variant; fall back to the artwork
             // price only if a variant somehow lacks its own.
             artistPriceCents: selected?.priceCents ?? artwork.printPriceCents,
+            galleryRate,
           })
         : null,
-    [config, country, catalog.providerId, selected?.priceCents, artwork.printPriceCents],
+    [config, country, catalog.providerId, selected?.priceCents, artwork.printPriceCents, galleryRate],
   )
 
   // GA4: the wizard opening (at the edition it opens on) and the editions the buyer picks.
@@ -219,6 +224,7 @@ export const LimitedWizard = ({ artwork, catalog }: Props) => {
           config,
           quote,
           artistCents: selected.priceCents ?? artwork.printPriceCents,
+          galleryRate,
           specsSummary: summarizeConfig(catalog, config),
         }),
         quantity: 1,

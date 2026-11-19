@@ -79,6 +79,8 @@ export type ValidateVariantArgs = {
   artwork: { widthPx: number; heightPx: number }
   /** Other variants' sizes on the same artwork, for the distinctness check. */
   siblingSizes: { widthCm: number; heightCm: number }[]
+  /** The gallery's commission rate, for the margin rule (the caller reads the setting). */
+  galleryRate: number
 }
 
 export type ValidateVariantResult =
@@ -86,7 +88,7 @@ export type ValidateVariantResult =
   | { ok: false; error: string }
 
 export function validateVariantInput(args: ValidateVariantArgs): ValidateVariantResult {
-  const { variant, artwork, siblingSizes } = args
+  const { variant, artwork, siblingSizes, galleryRate } = args
 
   if (!variant.name.trim()) {
     return { ok: false, error: 'Variant name is required.' }
@@ -267,6 +269,7 @@ export function validateVariantInput(args: ValidateVariantArgs): ValidateVariant
         sheetWidthCm: variant.sheetWidthCm,
         sheetHeightCm: variant.sheetHeightCm,
         artistPriceCents: variant.priceCents,
+        galleryRate,
       })
     : null
   if (margin && margin.marginCents <= 0) {

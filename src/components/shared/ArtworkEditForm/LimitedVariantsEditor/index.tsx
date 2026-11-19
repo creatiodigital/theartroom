@@ -29,6 +29,7 @@ import { nameLooksLikeSize } from '@/lib/editions/variantName'
 import { TPS_PAPERS, TPS_SIZE_BOUNDS, MIN_SHORT_EDGE_CM } from '@/lib/print-providers/printspace'
 import type { PrintLongEdgeBounds } from '@/lib/print-providers/printspace'
 import { LockNote } from '../LockNote'
+import { getGalleryRateForEditor } from './galleryRateAction'
 import { remapIndexKeys } from './remapIndexKeys'
 
 import styles from './LimitedVariantsEditor.module.scss'
@@ -129,6 +130,19 @@ export const LimitedVariantsEditor = ({
     return init
   })
   const toggle = (k: string) => setExpanded((e) => ({ ...e, [k]: !e[k] }))
+
+  // The owner's commission (Admin › Sales › Pricing), for the margin hint. Null until it arrives,
+  // and on a failed request: the hint is skipped, never computed at a guessed rate.
+  const [galleryRate, setGalleryRate] = useState<number | null>(null)
+  useEffect(() => {
+    let live = true
+    getGalleryRateForEditor()
+      .then((rate) => live && setGalleryRate(rate))
+      .catch(() => {})
+    return () => {
+      live = false
+    }
+  }, [])
 
   // Presentation-only per-variant "fixed sheet" UI mode, keyed like
   // `expanded` above and seeded from isFixedSheet(variant) on mount.
@@ -856,6 +870,8 @@ export const LimitedVariantsEditor = ({
                             {formatCm(recipe.expectedBorderXCm)} left/right cm
                           </p>
                           {(() => {
+                            // No hint until the rate is in (one request on mount).
+                            if (galleryRate === null) return null
                             const margin = estimateVariantMarginCents({
                               widthCm: variant.widthCm,
                               heightCm: variant.heightCm,
@@ -863,6 +879,7 @@ export const LimitedVariantsEditor = ({
                               sheetWidthCm: variant.sheetWidthCm,
                               sheetHeightCm: variant.sheetHeightCm,
                               artistPriceCents: Math.round(Number(variant.priceEuros ?? 0) * 100),
+                              galleryRate,
                             })
                             if (!margin) return null
                             const euros = (c: number) => (c / 100).toFixed(2)

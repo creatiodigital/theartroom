@@ -22,6 +22,7 @@
  * stays directly testable — same split as `deleteLimitedVariant`.
  */
 import prisma from '@/lib/prisma'
+import { getGalleryCommissionRate } from '@/lib/settings'
 
 import { updateVariantNameAndPrice, VARIANT_NAME_MAX_LENGTH } from './updateVariantNameAndPrice'
 import { validateVariantInput, MAX_LIMITED_VARIANTS } from './validateVariant'
@@ -127,6 +128,7 @@ export async function saveSingleVariant(args: {
     variant: input,
     artwork: { widthPx: artwork.originalWidth, heightPx: artwork.originalHeight },
     siblingSizes: siblings.map((s) => ({ widthCm: s.widthCm, heightCm: s.heightCm })),
+    galleryRate: await getGalleryCommissionRate(),
   })
   if (!validated.ok) return { ok: false, error: validated.error }
 

@@ -3,7 +3,7 @@
 // before calling this; nothing here is exposed as an action.
 import { unstable_cache } from 'next/cache'
 
-import { isGa4Configured } from '@/lib/analytics/ga4'
+import { ga4ErrorCode, isGa4Configured } from '@/lib/analytics/ga4'
 import {
   fetchAnalyticsReport,
   type AnalyticsRange,
@@ -76,6 +76,14 @@ export async function getAnalyticsPageData(
     return { ok: true, data: await cachedReport(range, split) }
   } catch (err) {
     captureError(err, { flow: 'admin', stage: 'analytics-page', level: 'warning' })
-    return { ok: false, error: 'Could not load analytics from GA4.' }
+    // Say what GA4 answered: "busy" is a minute's wait, anything else needs a look.
+    const busy = ga4ErrorCode(err) === 8
+    const detail = err instanceof Error ? err.message.slice(0, 200) : String(err)
+    return {
+      ok: false,
+      error: busy
+        ? 'Google Analytics is busy (too many requests at once). Try again in a minute.'
+        : `Could not load analytics from GA4: ${detail}`,
+    }
   }
 }

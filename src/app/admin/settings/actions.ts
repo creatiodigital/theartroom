@@ -1,11 +1,12 @@
 'use server'
 
 /**
- * Site-wide switches the admin flips from the dashboard. Currently one:
- * the purchases kill switch — see SiteSettings in schema.prisma.
+ * Site-wide settings the admin changes: the purchases kill switch (dashboard) and the gallery's
+ * commission (Sales › Pricing) — see SiteSettings in schema.prisma.
  */
 import { requireAdminAction } from '@/lib/authUtils'
-import { getPurchasesPaused, setPurchasesPaused } from '@/lib/settings'
+import { isValidGalleryCommissionPct } from '@/lib/galleryCommission'
+import { getPurchasesPaused, setGalleryCommissionPct, setPurchasesPaused } from '@/lib/settings'
 import { captureError } from '@/lib/observability/captureError'
 
 type SettingsResult = { ok: true; paused: boolean } | { ok: false; error: string }
@@ -34,5 +35,27 @@ export async function togglePurchasesPaused(paused: boolean): Promise<SettingsRe
   } catch (err) {
     captureError(err, { flow: 'admin', stage: 'toggle-purchases-paused' })
     return { ok: false, error: err instanceof Error ? err.message : 'Failed to update settings.' }
+  }
+}
+
+type CommissionResult = { ok: true; pct: number; changedAt: string } | { ok: false; error: string }
+
+/**
+ * Sales › Pricing (pricing.md): set the gallery's commission. Every price on the site, cart
+ * re-prices at checkout and new payment intents use it from the next request; placed orders keep
+ * their stored prices and artists' payouts don't change. Records who and when.
+ */
+export async function saveGalleryCommission(pct: number): Promise<CommissionResult> {
+  const guard = await requireAdminAction()
+  if (!guard.ok) return { ok: false, error: guard.error }
+  if (!isValidGalleryCommissionPct(pct)) {
+    return { ok: false, error: 'Enter a percentage from 0 to 100, with one decimal at most.' }
+  }
+  try {
+    const changedAt = await setGalleryCommissionPct(pct, guard.session.user.id)
+    return { ok: true, pct, changedAt: changedAt.toISOString() }
+  } catch (err) {
+    captureError(err, { flow: 'admin', stage: 'save-gallery-commission' })
+    return { ok: false, error: 'The commission wasn’t saved. Please try again.' }
   }
 }

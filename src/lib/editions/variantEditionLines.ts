@@ -98,7 +98,11 @@ export function variantEditionLineParts(line: VariantEditionLine): VariantEditio
  * reservation (an unfinished checkout) cannot move it. The buyer still learns their
  * own number when production starts.
  */
-export async function getVariantEditionLines(artworkId: string): Promise<VariantEditionLine[]> {
+export async function getVariantEditionLines(
+  artworkId: string,
+  /** The gallery's commission rate the caller read for this request. */
+  galleryRate: number,
+): Promise<VariantEditionLine[]> {
   const variants = await prisma.limitedVariant.findMany({
     where: { artworkId, ...LIVE_VARIANT_WHERE },
     orderBy: { editionSize: 'desc' },
@@ -133,7 +137,7 @@ export async function getVariantEditionLines(artworkId: string): Promise<Variant
     // Priced by handing this variant ALONE to the same function that picks the
     // cheapest across all of them. Same arithmetic, so a row's figure and the
     // card's minimum cannot drift apart.
-    priceCents: minimumPriceForLimited([v])?.cents ?? null,
+    priceCents: minimumPriceForLimited([v], galleryRate)?.cents ?? null,
   }))
   // Smallest print first (units.md): the rows read as a run of sizes.
   return lines.sort((a, b) => a.widthCm * a.heightCm - b.widthCm * b.heightCm)

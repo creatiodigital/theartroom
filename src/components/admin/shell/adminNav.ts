@@ -8,6 +8,7 @@ import {
   ImageSquare,
   Invoice,
   ListNumbers,
+  Percent,
   ShoppingBag,
   SquaresFour,
   Users,
@@ -51,6 +52,8 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
       { label: 'Gift orders', href: '/admin/gift-orders', icon: Gift },
       { label: 'Invoices', href: '/admin/invoices', icon: Invoice },
       { label: 'Payouts', href: '/admin/payouts', icon: Wallet },
+      // The gallery's commission, set by the owner (pricing.md, 2026-11-18).
+      { label: 'Pricing', href: '/admin/pricing', icon: Percent },
     ],
   },
   {

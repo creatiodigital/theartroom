@@ -6,7 +6,7 @@ import { PurchasesPausedNotice } from '@/components/checkout/PurchasesPausedNoti
 import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
 import { isArtworkPurchasable, LIVE_VARIANT_WHERE } from '@/lib/editions/printable'
 import prisma from '@/lib/prisma'
-import { getPurchasesPaused } from '@/lib/settings'
+import { getGalleryCommissionRate, getPurchasesPaused } from '@/lib/settings'
 
 interface CheckoutPageProps {
   params: Promise<{ slug: string }>
@@ -29,7 +29,7 @@ const CheckoutPage = async ({ params, searchParams }: CheckoutPageProps) => {
 
   // Kill-switch read runs alongside the artwork query (independent) —
   // covers deep links into the single-print checkout.
-  const [paused, artwork] = await Promise.all([
+  const [paused, artwork, galleryRate] = await Promise.all([
     getPurchasesPaused(),
     prisma.artwork.findUnique({
       where: { slug },
@@ -39,6 +39,7 @@ const CheckoutPage = async ({ params, searchParams }: CheckoutPageProps) => {
         _count: { select: { limitedVariants: { where: LIVE_VARIANT_WHERE } } },
       },
     }),
+    getGalleryCommissionRate(),
   ])
 
   if (paused) {
@@ -91,6 +92,7 @@ const CheckoutPage = async ({ params, searchParams }: CheckoutPageProps) => {
       providerId="printspace"
       supportedCountries={catalog.supportedCountries}
       initialCountry={initialCountry}
+      galleryRate={galleryRate}
     />
   )
 }

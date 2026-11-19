@@ -13,6 +13,7 @@ import {
   teardownLimitedFixture,
 } from './edition-helpers'
 import { fixtures, routes } from './fixtures'
+import { liveGalleryRate, TEST_GALLERY_RATE } from './gallery-commission-helpers'
 
 /**
  * The sale block on an artwork card — edition tag, price, "Order Print".
@@ -58,17 +59,17 @@ const IN_STOCK: SaleVariant = {
 
 test.describe('resolveArtworkSale', () => {
   test('an open edition on sale resolves to a price', () => {
-    const sale = resolveArtworkSale(OPEN)
+    const sale = resolveArtworkSale(OPEN, TEST_GALLERY_RATE)
     expect(sale?.editionType).toBe('open')
     expect(sale?.minPriceCents).toBeGreaterThan(0)
   })
 
   test('an artwork with prints switched off carries no sale block', () => {
-    expect(resolveArtworkSale({ ...OPEN, printEnabled: false })).toBeNull()
+    expect(resolveArtworkSale({ ...OPEN, printEnabled: false }, TEST_GALLERY_RATE)).toBeNull()
   })
 
   test('an open edition with no artist price carries no sale block', () => {
-    expect(resolveArtworkSale({ ...OPEN, printPriceCents: null })).toBeNull()
+    expect(resolveArtworkSale({ ...OPEN, printPriceCents: null }, TEST_GALLERY_RATE)).toBeNull()
   })
 
   /**
@@ -78,11 +79,13 @@ test.describe('resolveArtworkSale', () => {
    * price would render "Sold out" — and open editions never sell out.
    */
   test('an open edition that cannot be quoted shows nothing, not "Sold out"', () => {
-    expect(resolveArtworkSale({ ...OPEN, originalWidth: null, originalHeight: null })).toBeNull()
+    expect(
+      resolveArtworkSale({ ...OPEN, originalWidth: null, originalHeight: null }, TEST_GALLERY_RATE),
+    ).toBeNull()
   })
 
   test('a limited edition with a live, in-stock variant resolves to a price', () => {
-    const sale = resolveArtworkSale(LIMITED, [IN_STOCK])
+    const sale = resolveArtworkSale(LIMITED, TEST_GALLERY_RATE, [IN_STOCK])
     expect(sale?.editionType).toBe('limited')
     expect(sale?.minPriceCents).toBeGreaterThan(0)
   })
@@ -90,14 +93,16 @@ test.describe('resolveArtworkSale', () => {
   test('a limited edition whose copies are gone is sold out, not absent', () => {
     // Live variants, no numbers left: the work is still on sale in every sense
     // the card cares about — there is simply nothing left to buy.
-    const sale = resolveArtworkSale(LIMITED, [{ ...IN_STOCK, hasAvailableNumber: false }])
+    const sale = resolveArtworkSale(LIMITED, TEST_GALLERY_RATE, [
+      { ...IN_STOCK, hasAvailableNumber: false },
+    ])
     expect(sale, 'a sold-out edition is marked, not hidden').not.toBeNull()
     expect(sale?.minPriceCents, 'no price on an edition with nothing left').toBeNull()
   })
 
   test('a limited edition with no live variant carries no sale block', () => {
     // Nothing was ever on sale — "Sold out" would invent a history.
-    expect(resolveArtworkSale(LIMITED, [])).toBeNull()
+    expect(resolveArtworkSale(LIMITED, TEST_GALLERY_RATE, [])).toBeNull()
   })
 
   test('the cheapest IN-STOCK variant sets the figure', () => {
@@ -110,8 +115,8 @@ test.describe('resolveArtworkSale', () => {
       heightCm: 45,
       hasAvailableNumber: true,
     }
-    const both = resolveArtworkSale(LIMITED, [soldOutCheap, dear])
-    const dearOnly = resolveArtworkSale(LIMITED, [dear])
+    const both = resolveArtworkSale(LIMITED, TEST_GALLERY_RATE, [soldOutCheap, dear])
+    const dearOnly = resolveArtworkSale(LIMITED, TEST_GALLERY_RATE, [dear])
     expect(both?.minPriceCents, 'a sold-out variant must not keep quoting its price').toBe(
       dearOnly?.minPriceCents,
     )
@@ -123,7 +128,7 @@ test.describe('resolveArtworkSale', () => {
  * row. The page queries must agree with this for every card they render — that
  * is the whole contract, and it holds whatever happens to be on sale today.
  */
-async function expectedSaleFor(artworkId: string) {
+async function expectedSaleFor(artworkId: string, galleryRate: number) {
   const row = await prisma.artwork.findUnique({
     where: { id: artworkId },
     select: {
@@ -151,8 +156,11 @@ async function expectedSaleFor(artworkId: string) {
   })
   if (!row) throw new Error(`artwork ${artworkId} vanished mid-test`)
   const { limitedVariants, ...artwork } = row
+  // At the live commission (read once by the test): the page queries price with the owner's
+  // setting, and so must this.
   return resolveArtworkSale(
     artwork,
+    galleryRate,
     limitedVariants.map((v) => ({ ...v, hasAvailableNumber: v.editionNumbers.length > 0 })),
   )
 }
@@ -173,9 +181,10 @@ test.describe('the artist page carries the sale block', () => {
         'the seeded featured work must reach the artist page',
       ).toBe(true)
 
+      const galleryRate = await liveGalleryRate()
       for (const artwork of artist!.artworks) {
         expect(artwork.sale, `sale block for "${artwork.title ?? artwork.name}"`).toEqual(
-          await expectedSaleFor(artwork.id),
+          await expectedSaleFor(artwork.id, galleryRate),
         )
       }
     } finally {
@@ -229,9 +238,10 @@ test.describe('the exhibition page carries the sale block', () => {
     ).not.toBeNull()
     expect(exhibition!.artworks.length, 'fixture exhibition hangs no artwork').toBeGreaterThan(0)
 
+    const galleryRate = await liveGalleryRate()
     for (const artwork of exhibition!.artworks) {
       expect(artwork.sale, `sale block for "${artwork.title ?? artwork.name}"`).toEqual(
-        await expectedSaleFor(artwork.id),
+        await expectedSaleFor(artwork.id, galleryRate),
       )
     }
   })
@@ -288,7 +298,7 @@ test.describe('the grid renders the sale block', () => {
       await expect(card).toContainText(title)
       await expect(card, 'the edition on the year line').toContainText('Limited edition')
       // The figure the site computes for this work (the cheapest edition in stock, or the range).
-      const sale = await expectedSaleFor(fx.artworkId)
+      const sale = await expectedSaleFor(fx.artworkId, await liveGalleryRate())
       const price = sale ? salePriceLabel(sale) : null
       expect(price, 'the fixture edition is on sale, so it has a price').not.toBeNull()
       await expect(card, 'the price on the card').toContainText(price!)
