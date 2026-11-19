@@ -5,8 +5,9 @@ import styles from './TextSection.module.scss'
 
 /**
  * docs/public-redesign/components.md "TextSection": a small grey caps label on the left (360px),
- * readable text on the right (up to 760px); one column on phones, the label first. The exhibition
- * page (About the exhibition), the artist page, About and Contact.
+ * the text on the right at the reading measure (`--measure`, readable-text.md); one column on
+ * phones, the label first. About, Contact and the artwork page's About the work; the `columns`
+ * variant on the exhibition page (About the exhibition) and the artist page.
  */
 export const TextSection = ({
   label,
@@ -18,8 +19,9 @@ export const TextSection = ({
   children: ReactNode
   className?: string
   /**
-   * `columns`: the text spans the right two thirds (under the artist page's photo, which takes the
-   * same share) in two columns, one on phones (owner, 2026-11-12).
+   * `columns` (readable-text.md, final): the text in two columns of at most `--measure`, across the
+   * full width with the label on top; from 1680 px the label in the left third and the columns in
+   * the right two thirds (under the hero image); one column at 768 px and below.
    */
   variant?: 'default' | 'columns'
 }) => (

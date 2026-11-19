@@ -19,9 +19,12 @@ line height 1.7–1.75. Phosphor **light** for UI icons.
 - **`SectionHeading`**: centered serif caps between two hairlines with a grey count under it ("10 works") — series,
   Works, Exhibitions on the artist page. And the left-aligned variant: serif title + optional ArrowLink on the right
   ("Current exhibitions · All exhibitions →").
-- **`TextSection`**: two columns, a small grey caps label (360 px) on the left, readable text (max 760 px) on the
-  right; one column on phone, label first. Used by the exhibition page (About the exhibition), artist page (About
-  the artist), About, Contact.
+- **`TextSection`**: a small grey caps label (360 px) on the left from lg (on top below), the text at `--measure`
+  (34em) in one column; one column on phone, label first. Props as built: `label`, `variant`, `className`.
+  `variant="columns"` (exhibition About the exhibition, artist About the artist; readable-text.md final): two columns
+  of at most 34em (`reading-columns` mixin, also on the exhibition page's `.artistBio`), label on top below 1680 px,
+  in the left third from 1680 with the columns in the right two thirds; one column at 768 px and below. Default
+  variant: About, Contact, the artwork page (About the work).
 - **`Band`**: full-width `#f8f8f6` section with serif heading, a line, and actions (feedback band, "Walk through the
   exhibition", "See the work for yourself", "Many more works are available as prints").
 - **`ArtworkCard`**: framed render on `#f2f2f2` (1:1, contain), caption = title (serif italics) + year (+ artist and

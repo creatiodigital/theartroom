@@ -43,9 +43,9 @@
   }
 }
 
-// A <p>: size pinned.
+// A <p>: size pinned. At the reading measure (readable-text.md).
 .line {
-  max-width: 760px;
+  max-width: var(--measure);
   margin: 0;
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: 18px;

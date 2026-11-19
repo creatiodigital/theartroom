@@ -14,8 +14,10 @@
     height: 600px;
   }
 
+  // As Marian Goodman's (owner, 2026-11-19): half the width (2:1), never taller than the window, at
+  // most 900 px. 1440 × 900 keeps its 720; 1920 and wider get 900.
   @include breakpoint(lg) {
-    height: 720px;
+    height: min(50vw, 100svh, 900px);
   }
 }
 

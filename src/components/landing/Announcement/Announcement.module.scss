@@ -70,6 +70,11 @@
   }
 }
 
+// The reading measure (readable-text.md); in em, so at the text's 17 px.
+.content .text {
+  max-width: var(--measure);
+}
+
 .content .text p + p {
   margin-top: 18px;
 }

@@ -14,7 +14,6 @@
   flex-direction: column;
   align-items: center;
   gap: 26px;
-  max-width: 780px;
   margin: 0 auto;
   text-align: center;
 
@@ -36,8 +35,10 @@
   }
 }
 
-// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px).
+// A <p>: size and line height pinned (globals.scss gives every <p> 16–18px). At the reading measure
+// of its own size (readable-text.md): centred lines stay short enough to follow.
 .lead {
+  max-width: var(--measure);
   margin: 0;
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: 19px;

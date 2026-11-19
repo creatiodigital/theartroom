@@ -83,7 +83,8 @@
 // are real, in-use breakpoints kept as named tokens so existing layouts that
 // switch at those widths don't shift — `laptop` (1040) is the width below
 // which three-column layouts (the print wizard) run out of room and stack.
-// `ultrawide` (2000) is not part of the
+// `xxxl` (1680) is where a labelled two-column text (TextSection `columns`) has room for its
+// label beside it (readable-text.md). `ultrawide` (2000) is not part of the
 // scale — it's the width above which fixed-size centrepieces start looking
 // marooned in empty space, and is only ever used with media-up.
 $breakpoints: (
@@ -96,6 +97,7 @@ $breakpoints: (
   wide: 1100px,
   xl: 1280px,
   xxl: 1440px,
+  xxxl: 1680px,
   ultrawide: 2000px,
 );
 
@@ -147,6 +149,30 @@ $room-button-z: 998;
 @mixin media-down($name) {
   @media (max-width: bp($name)) {
     @content;
+  }
+}
+
+// Long text in two columns, each at most --measure; one column at 768 px and below
+// (docs/public-redesign/readable-text.md, final: owner 2026-11-19).
+@mixin reading-columns {
+  max-width: calc(2 * var(--measure) + var(--space-14));
+  column-count: 2;
+  column-gap: var(--space-14);
+
+  @include media-down(lg) {
+    column-gap: var(--space-10);
+  }
+
+  // One column, still at most the measure: a portrait tablet (600–768 px) would otherwise run ~100
+  // characters a line; phones are narrower than the measure, so full width.
+  @include media-down(md) {
+    max-width: var(--measure);
+    column-count: 1;
+  }
+
+  // The first paragraph starts each column level (no top margin pushing the left one down).
+  > * > :first-child {
+    margin-top: 0;
   }
 }
 
