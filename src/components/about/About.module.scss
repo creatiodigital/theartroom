@@ -24,10 +24,8 @@
   }
 }
 
-// In line with a labelled section's text: indented by the label column from xl, where TextSection
-// puts its label on the left (readable-text.md rule 2).
 .unlabelled {
-  @include media-up(xl) {
+  @include media-up(lg) {
     padding-left: calc(360px + var(--space-14));
   }
 

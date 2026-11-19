@@ -113,8 +113,9 @@
   }
 }
 
-// As TextSection's `columns` (About the exhibition): from xl the label in the left third, the rest
-// across the right two thirds; the label on top below xl (readable-text.md rule 2).
+// As TextSection's `columns` (About the exhibition, readable-text.md final): the label on top, the
+// rest across the full width; from xxxl (1680) the label in the left third, the rest across the
+// right two thirds.
 .artistSection {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -122,7 +123,7 @@
   align-items: start;
   padding: 72px 0 96px;
 
-  @include media-up(xl) {
+  @include media-up(xxxl) {
     grid-template-columns: minmax(0, 1fr) 66.67%;
     gap: var(--space-8);
   }
@@ -154,14 +155,10 @@
   }
 }
 
-// As About the exhibition's text (TextSection `columns`, readable-text.md): one column at the
-// reading measure; two only for a short bio, where each can be --measure-min wide.
+// As About the exhibition's text (TextSection `columns`): two columns of at most --measure, one at
+// 768 px and below.
 .artistBio {
-  max-width: var(--measure);
-}
-
-.artistBioShort {
-  @include short-text-columns;
+  @include reading-columns;
 }
 
 .artistView {
