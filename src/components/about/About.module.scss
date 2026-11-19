@@ -26,12 +26,12 @@
 
 .unlabelled {
   @include media-up(lg) {
-    padding-left: calc(360px + 56px);
+    padding-left: calc(360px + var(--space-14));
   }
 
-  // The same 760 px reading measure as a labelled section's text (TextSection's .text).
+  // The reading measure, as a labelled section's text (TextSection's .text).
   .text {
-    max-width: 760px;
+    max-width: var(--measure);
   }
 }
 

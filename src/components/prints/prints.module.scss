@@ -73,8 +73,11 @@
   }
 }
 
-// The page editor's paragraphs: Lato 16 / 1.75 (prints.md §2).
+// The page editor's paragraphs: Lato 16 / 1.75 (prints.md §2), at the reading measure
+// (readable-text.md).
 .descriptionText {
+  max-width: var(--measure);
+
   p {
     font-size: 16px;
     line-height: 1.75;

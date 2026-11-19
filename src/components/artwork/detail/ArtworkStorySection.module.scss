@@ -9,10 +9,8 @@
   }
 }
 
-// The text at reading measure (680 px).
+// The reading measure comes from TextSection's .text (readable-text.md).
 .body {
-  max-width: 680px;
-
   p:empty {
     display: none;
   }
