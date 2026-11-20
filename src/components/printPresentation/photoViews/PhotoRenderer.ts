@@ -59,6 +59,8 @@ import {
 } from '@/components/PrintWizard/editionNumberMetrics'
 import { random } from '@/lib/printPresentation/look'
 
+import { useStockShadows } from './stockShadows'
+
 import type { PhotoSheet as PhotoSheetCm } from '@/lib/printPresentation/photoInputs'
 import { PHOTO_WIDTH_PX, type PhotoViewKind } from '@/lib/printPresentation/record'
 
@@ -438,7 +440,7 @@ export class PhotoRenderer {
           cm(pencil.hCm) / ph,
         ]
       : [0, 0, 0, 0]
-    top.onBeforeCompile = (shader) => {
+    useStockShadows(top, (shader) => {
       Object.assign(shader.uniforms, {
         uArt: { value: art },
         uImg: { value: uImg },
@@ -476,8 +478,9 @@ export class PhotoRenderer {
             diffuseColor.rgb *= mix(paperC, artC, inImg) * (1.0 + uGrainAlbedo * (tooth - 0.5));
           }`,
         )
-    }
+    })
     const side = new MeshStandardMaterial({ color: PAPER, roughness: 0.95 })
+    useStockShadows(side)
     const paper = new Mesh(geometry, [side, side, top, side, side, side])
     paper.castShadow = true
     paper.receiveShadow = true
@@ -485,15 +488,14 @@ export class PhotoRenderer {
     // --- The table -------------------------------------------------------------------------------
     const tableGrain = this.tableGrain
     tableGrain.repeat.set(8 / 0.12, 8 / 0.12)
-    const table = new Mesh(
-      new PlaneGeometry(8, 8),
-      new MeshStandardMaterial({
-        color: TABLE,
-        roughness: 0.9,
-        normalMap: tableGrain,
-        normalScale: new Vector2(0.05, 0.05),
-      }),
-    )
+    const tableMaterial = new MeshStandardMaterial({
+      color: TABLE,
+      roughness: 0.9,
+      normalMap: tableGrain,
+      normalScale: new Vector2(0.05, 0.05),
+    })
+    useStockShadows(tableMaterial)
+    const table = new Mesh(new PlaneGeometry(8, 8), tableMaterial)
     table.rotation.x = -Math.PI / 2
     table.receiveShadow = true
 
