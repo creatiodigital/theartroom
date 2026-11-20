@@ -213,7 +213,6 @@ export const ArtworkDetailBody = ({
         <div className={styles.viewSlide}>{framed}</div>
         {PHOTO_VIEWS.map((kind, i) => (
           <div key={kind} className={styles.viewSlide}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={withPhotos.photos[kind].large}
               alt={viewAlt(displayTitle || 'Artwork', i + 1)}

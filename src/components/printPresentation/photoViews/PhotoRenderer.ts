@@ -60,7 +60,7 @@ import {
 } from '@/components/PrintWizard/editionNumberMetrics'
 import { random } from '@/lib/printPresentation/look'
 
-import { useStockShadows } from './stockShadows'
+import { withStockShadows } from './stockShadows'
 
 import type { PhotoSheet as PhotoSheetCm } from '@/lib/printPresentation/photoInputs'
 import { PHOTO_WIDTH_PX, type PhotoViewKind } from '@/lib/printPresentation/record'
@@ -441,7 +441,7 @@ export class PhotoRenderer {
           cm(pencil.hCm) / ph,
         ]
       : [0, 0, 0, 0]
-    useStockShadows(top, (shader) => {
+    withStockShadows(top, (shader) => {
       Object.assign(shader.uniforms, {
         uArt: { value: art },
         uImg: { value: uImg },
@@ -481,7 +481,7 @@ export class PhotoRenderer {
         )
     })
     const side = new MeshStandardMaterial({ color: PAPER, roughness: 0.95 })
-    useStockShadows(side)
+    withStockShadows(side)
     const paper = new Mesh(geometry, [side, side, top, side, side, side])
     paper.castShadow = true
     paper.receiveShadow = true
@@ -495,7 +495,7 @@ export class PhotoRenderer {
       normalMap: tableGrain,
       normalScale: new Vector2(0.05, 0.05),
     })
-    useStockShadows(tableMaterial)
+    withStockShadows(tableMaterial)
     const table = new Mesh(new PlaneGeometry(8, 8), tableMaterial)
     table.rotation.x = -Math.PI / 2
     table.receiveShadow = true

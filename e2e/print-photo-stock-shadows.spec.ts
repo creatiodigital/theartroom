@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { MeshStandardMaterial, ShaderChunk, type WebGLProgramParametersWithUniforms } from 'three'
 
-import { useStockShadows } from '@/components/printPresentation/photoViews/stockShadows'
+import { withStockShadows } from '@/components/printPresentation/photoViews/stockShadows'
 
 /**
  * The photo views render right after the framed studio, whose drei `SoftShadows` REWRITES three's
@@ -17,7 +17,7 @@ test('a patched shared shadow shader never reaches the photo materials', () => {
   try {
     ShaderChunk.shadowmap_pars_fragment = '/* PATCHED BY SOMEONE ELSE */'
     const material = new MeshStandardMaterial()
-    useStockShadows(material, (shader) => {
+    withStockShadows(material, (shader) => {
       shader.fragmentShader += '\n/* the material’s own edit */'
     })
     const shader = {

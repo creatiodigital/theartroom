@@ -9,7 +9,7 @@ import type { Material, WebGLProgramParametersWithUniforms } from 'three'
  * is still mounted while the photo views render, and inherited it made them black and 85× slower.
  * `edit` is the material's own `onBeforeCompile`, run after.
  */
-export function useStockShadows(
+export function withStockShadows(
   material: Material,
   edit?: (shader: WebGLProgramParametersWithUniforms) => void,
 ): void {

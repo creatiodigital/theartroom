@@ -20,6 +20,8 @@ test.describe('variantEditionLineParts', () => {
     variantName: 'Medium',
     editionSize: 30,
     left: soldOut ? 0 : 28,
+    // The copy a buyer gets next: copies 1 and 2 sold.
+    nextCopy: soldOut ? null : 3,
     soldOut,
     priceCents,
     widthCm: 36,
@@ -35,6 +37,7 @@ test.describe('variantEditionLineParts', () => {
       heightCm: 24,
       editionSize: 30,
       left: 28,
+      nextCopy: 3,
       soldOut: false,
       price: '\u20ac312',
     })

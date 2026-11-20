@@ -65,7 +65,6 @@ export function ArtworkViews({
               renderClassName={styles.framedFit}
             >
               {(placement) => (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={imageUrl}
                   alt=""
@@ -77,7 +76,6 @@ export function ArtworkViews({
               )}
             </PrintPresentation>
           ) : (
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={presentation.photos[kind].small}
               alt=""
