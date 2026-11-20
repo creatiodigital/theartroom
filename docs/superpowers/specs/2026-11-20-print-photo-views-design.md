@@ -102,6 +102,8 @@ spec. Don't retune them; move them as they are.
 
     Then a seeded nudge: aim ±6 mm, azimuth ±0.04, elevation ±0.025, distance ±3 cm, camera roll ±0.02 rad.
     A sheet **without** a number may instead be shot at its bottom-right corner, mirrored (50%), for more variety.
+    The guaranteed corner lift (≥ 1.6 mm, for the small shadow) goes on **the corner being shot**. The spike always
+    put it on the bottom-left one. *(My call; builder check 2026-11-20.)*
     Versions 1–3 and the mirror were rendered for review on 2026-11-20 and accepted ("it's ok if the other
     screenshots get a randomly different angle"). Angles come from the work's seed, so a re-render (after a sale)
     changes only the number.
@@ -126,7 +128,11 @@ spec. Don't retune them; move them as they are.
 - **What:** `{next}/{N}`, where `next` is the lowest `EditionNumber.number` with `state: 'available'` for the mandatory
   variant (`order: 0`), and N its edition size. It's read when the render runs. It replaces the seeded "copy within the
   first 20%" (`makeLook(...).copy`, `COPY_NUMBERS`) for the framed view too.
-- **Sold out** (no available copy): no change. The last render stays and there's no warning.
+- **Sold out** (no available copy): no change and no warning. If a sold-out work must be rendered anyway (new image,
+  new frame), it pencils `N/N`. *(My call.)*
+- **Mandatory size not published yet** (no `EditionNumber` rows exist before publishing): pencils `1/N`. *(My call.)*
+- **"A number is pencilled"** (a photo fingerprint input) means only: presentation `limited` and bottom margin
+  ≥ 1.6 cm. It never depends on availability, so the last sale can't change a fingerprint.
 - **The record stores the number it pencilled** (`copy`).
 - **A sale never hides a render.** The framed fingerprint and the views fingerprint do **not** include the copy number
   (and the framed one stays frozen, see "Prod safety"):
@@ -135,9 +141,8 @@ spec. Don't retune them; move them as they are.
 - **Stale number:** `record.copy` is below the current `next`. It's an admin signal only:
   - the render page marks the row "Number sold" (or similar) and the black button includes it;
   - the **admin dashboard homepage** shows "You have X artworks that need to be re-rendered", linking to the render
-    page. X counts every work that needs a render (out of date, missing photos, or a stale number), or only the
-    stale-number ones if the dashboard already says the rest elsewhere: the builder checks what the dashboard shows
-    today.
+    page. X counts every work that needs a render (out of date, missing photos, or a stale number); the dashboard
+    shows nothing about presentations today (builder check).
 - **The printed copy:** the lab numbers "next free" too, so as long as orders go to the lab in the order they were
   paid, the buyer gets the copy shown (or the next one, if two buyers pay within the same render window).
 
@@ -239,7 +244,10 @@ get the real number, and keep their current render until then.
 
   The large photo loads on selection. The small ones load lazily after the page.
 - **Alt text**: "{title}, the print: framed", "… unframed, its corner", "… a detail", "… a detail at its top edge".
-- Grids, the 3D room pop-up and admin lists are unchanged.
+- Grids, the 3D room pop-up and admin lists are unchanged. The 3D room pop-up (`ArtworkModal`) shares
+  `ArtworkDetailBody`, so it opts out of the photos explicitly.
+- `docs/public-redesign/artwork.md` (11-11) says "only the framed print render, no thumbnails". The owner's 2026-11-20
+  decisions here supersede it. The design Claude updates that file; the code side only logs it in questions.
 
 ### Tests (no WebGL in e2e)
 
