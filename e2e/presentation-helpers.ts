@@ -45,13 +45,17 @@ const SIZES: PresentationSize[] = ['large', 'small']
 /** The local file behind one of an artwork's render URLs. */
 const fileOf = (url: string) => localPresentationPath(url.split('/').slice(3))!
 
-/** Writes a blank render of `shape` under the artwork's real names; returns its URLs. */
+/**
+ * Writes a blank render of `shape` under the artwork's real names (a render's own names when
+ * `renderId` is given, as renders made since 2026-11-20 have); returns its URLs.
+ */
 export async function writeBlankRender(
   artworkId: string,
   fingerprint: string,
   shape: BlankShape,
+  renderId?: string,
 ): Promise<Record<PresentationSize, string>> {
-  const urls = presentationPublicUrls(artworkId, fingerprint)
+  const urls = presentationPublicUrls(artworkId, fingerprint, renderId)
   for (const size of SIZES) await writeLocalPresentationFile(fileOf(urls[size]), BLANK[shape][size])
   return urls
 }

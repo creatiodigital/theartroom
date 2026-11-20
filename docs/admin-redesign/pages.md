@@ -86,6 +86,13 @@ Differences from the design / components.md, and why:
 Verified: `pnpm typecheck`, `pnpm lint`, prettier, and a fresh code review. Not yet seen in a
 browser by Code Claude (the owner's local env pointed at the production database at the time).
 
+### Dashboard · "artworks to re-render" warning — Built 2026-11-20 · branch `feat/AR-188-copy-improvements`
+Owner, 2026-11-20 (print photo views, `docs/superpowers/specs/2026-11-20-print-photo-views-design.md`): "just give me a
+warning on my dashboard homepage", copy "You have X artworks that need to be re-rendered". An amber `Callout` under the
+"Needs your attention" cards, only when X > 0, action link **Open print presentations** → `/admin/print-presentations`.
+X = works that need a render: none yet, out of date, photos missing or old, or a pencilled copy that has sold
+(`countWorksToRender`, same rule as the page's Out of date). No board for it yet: Q-PV1.
+
 ### Step 2 · Dashboard — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
 
 Files: `src/components/admin/ui/*` (the page pieces), `src/components/admin/dashboard/*` (page,

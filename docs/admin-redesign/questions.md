@@ -1329,3 +1329,9 @@ built the conservative way; please confirm or adjust.
 - The card title uses the boards' 18 px / 600 heading, not `Panel`'s caps title, so the card is page-local, not `Panel`.
 - Typed the same value with a trailing zero ("30.0" for a saved 30): Save resets the field to "30" without asking.
 
+**Q-PV1 (Code Claude, 2026-11-20): Dashboard › "You have X artworks that need to be re-rendered".** Asked by the owner
+(print photo views), built without a board, the conservative way: an amber `Callout` under the attention cards (not a
+sixth `AttentionCard`: it isn't an order count), only when X > 0, with the action link "Open print presentations". X
+counts every work needing a render (none yet, out of date, photos missing or old, a sold pencilled copy). Its count is
+read on its own (the page doesn't wait for it); when it can't be read, nothing shows. Please confirm or adjust the look.
+
