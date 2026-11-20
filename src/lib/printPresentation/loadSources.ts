@@ -12,6 +12,21 @@ export type SourceRow = PresentationSource & {
   artistId: string
   accountName: string
   imageUrl: string | null
+  /**
+   * The mandatory print size (`order: 0`) as the lab prints it: the image in cm and its border, or a
+   * fixed sheet. Null for works without one (open editions). Feeds the photo views' sheet.
+   */
+  mandatorySize: {
+    widthCm: number
+    heightCm: number
+    borderCm: number
+    sheetWidthCm: number | null
+    sheetHeightCm: number | null
+  } | null
+  /** The lowest unsold copy of the mandatory size (what the renders pencil), or null if none. */
+  nextCopy: number | null
+  /** Whether the mandatory size has its copies yet (they're created when it's published). */
+  hasCopies: boolean
 }
 
 /**
@@ -40,17 +55,37 @@ export async function loadPresentationSources(where?: { ids?: string[] }): Promi
       author: true,
       imageUrl: true,
       user: { select: { name: true, lastName: true } },
-      limitedVariants: { where: { order: 0 }, select: { editionSize: true }, take: 1 },
+      limitedVariants: {
+        where: { order: 0 },
+        select: {
+          editionSize: true,
+          widthCm: true,
+          heightCm: true,
+          borderCm: true,
+          sheetWidthCm: true,
+          sheetHeightCm: true,
+          editionNumbers: {
+            where: { state: 'available' },
+            orderBy: { number: 'asc' },
+            select: { number: true },
+            take: 1,
+          },
+          _count: { select: { editionNumbers: true } },
+        },
+        take: 1,
+      },
     },
   })
-  return rows.map((r) => ({
+  return rows.map((r) => {
+    const variant = r.limitedVariants[0]
+    return {
     id: r.id,
     artworkType: r.artworkType,
     originalWidth: r.originalWidth,
     originalHeight: r.originalHeight,
     printEnabled: r.printEnabled,
     editionType: r.editionType,
-    firstVariantEditionSize: r.limitedVariants[0]?.editionSize ?? null,
+    firstVariantEditionSize: variant?.editionSize ?? null,
     presentationFrame: r.presentationFrame,
     presentationPassepartout: r.presentationPassepartout,
     presentationRatio: r.presentationRatio,
@@ -60,5 +95,17 @@ export async function loadPresentationSources(where?: { ids?: string[] }): Promi
     artistId: r.userId,
     accountName: [r.user.name, r.user.lastName].filter(Boolean).join(' '),
     imageUrl: r.imageUrl,
-  }))
+    mandatorySize: variant
+      ? {
+          widthCm: variant.widthCm,
+          heightCm: variant.heightCm,
+          borderCm: variant.borderCm,
+          sheetWidthCm: variant.sheetWidthCm,
+          sheetHeightCm: variant.sheetHeightCm,
+        }
+      : null,
+    nextCopy: variant?.editionNumbers[0]?.number ?? null,
+    hasCopies: (variant?._count.editionNumbers ?? 0) > 0,
+    }
+  })
 }
