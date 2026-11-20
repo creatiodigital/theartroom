@@ -86,8 +86,8 @@ export function variantEditionLineParts(line: VariantEditionLine): VariantEditio
 }
 
 /**
- * One line per live variant, smallest print first: its size, name, edition size, copies left and
- * price.
+ * One line per live variant, cheapest first: its size, name, edition size, copies left, the copy
+ * a buyer gets and price.
  *
  * "28 left" (owner, 2026-11-17) counts SOLD copies only: edition size minus the copies paid for.
  * The counts tried before misled because they moved with checkouts, or read as a copy number:
@@ -157,6 +157,11 @@ export async function getVariantEditionLines(
     // card's minimum cannot drift apart.
     priceCents: minimumPriceForLimited([v], galleryRate)?.cents ?? null,
   }))
-  // Smallest print first (units.md): the rows read as a run of sizes.
-  return lines.sort((a, b) => a.widthCm * a.heightCm - b.widthCm * b.heightCm)
+  // Cheapest first (owner, 2026-11-20: "move the cheapest up"); a row without a price last; equal
+  // prices smallest print first.
+  return lines.sort(
+    (a, b) =>
+      (a.priceCents ?? Infinity) - (b.priceCents ?? Infinity) ||
+      a.widthCm * a.heightCm - b.widthCm * b.heightCm,
+  )
 }

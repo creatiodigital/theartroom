@@ -25,7 +25,7 @@ import styles from './ArtworkAvailabilityCard.module.scss'
  * - Open edition: Smallest / Largest, "or any size in between.", From €303 + Available (no "Size,
  *   paper and frame are chosen next." line: owner, 2026-11-20).
  * - Limited, one size: the size, "Edition 3 of 30" (the copy a buyer gets), the price + Available.
- * - Limited, two or more: "Available in two sizes:", one row per edition, smallest first (size;
+ * - Limited, two or more: "Available in two sizes:", one row per edition, cheapest first (size;
  *   Edition 3 of 30, no size name; price on the right, or Sold out), Available under the rows.
  *   Visitors never see the word "variant". Two editions of one size (other paper) are "versions",
  *   and their rows name the paper.
@@ -39,7 +39,7 @@ type ArtworkAvailabilityCardProps = {
   sizes?: ArtworkSizes | null
   /** Cheapest completable purchase. `null` means live but sold out. */
   minPriceCents: number | null
-  /** Every live edition, smallest first (limited editions only). */
+  /** Every live edition, cheapest first (limited editions only). */
   editionLines?: VariantEditionLineParts[]
   artworkSlug: string
   /** The Inquire button, set under Order a print. */
