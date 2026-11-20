@@ -19,4 +19,4 @@ export const EDITION_NUMBER_NOTICE_HEADING = 'Your edition number'
 export const EDITION_NUMBER_NOTICE_BODY =
   'This is a numbered limited edition. We\u2019ll confirm which copy is yours when your print ' +
   'goes into production \u2014 the number is printed into the margin, and recorded on your ' +
-  'Certificate of Authenticity, hand-signed by the artist.'
+  'Certificate of Authenticity, which carries the artist\u2019s printed signature.'

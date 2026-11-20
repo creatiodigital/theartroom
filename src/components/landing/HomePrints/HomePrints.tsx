@@ -151,12 +151,13 @@ export const HomePrints = ({ slides }: { slides: HomePrintSlide[] }) => {
         <div className={styles.text}>
           <span className={styles.label}>Fine-art prints</span>
           <h2 id="home-prints-heading" className={styles.heading}>
-            Every print, approved and signed by the artist.
+            Every print, approved by the artist.
           </h2>
           <p className={styles.lead}>
             Each one is produced on archival fine-art paper by the labs museums rely on, approved by
-            the artist before it reaches your wall, and arrives with a certificate of authenticity
-            signed by the artist.
+            the artist before it reaches your wall, and arrives with a certificate of authenticity. A
+            limited edition is also numbered on the print, and its certificate carries the
+            artist&rsquo;s printed signature.
           </p>
           <div className={styles.captions}>
             {slides.map((slide, i) => (

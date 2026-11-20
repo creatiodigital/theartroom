@@ -55,10 +55,10 @@ export function renderOrderInProductionEmail(args: OrderInProductionArgs): {
     ? ''
     : isSingleEdition
       ? emailParagraph(
-          `This work is a limited edition, and your copy is <strong>${formatEditionCopy(editions[0])}</strong>. The number is printed into the margin of the print, and it arrives with a Certificate of Authenticity, signed by ${safeArtist}.`,
+          `This work is a limited edition, and your copy is <strong>${formatEditionCopy(editions[0])}</strong>. The number is printed into the margin of the print, and it arrives with a Certificate of Authenticity carrying the printed signature of ${safeArtist}.`,
         )
       : emailParagraph(
-          `These are limited editions. Each copy is individually numbered — printed into the margin — and arrives with a Certificate of Authenticity signed by the artist.`,
+          `These are limited editions. Each copy is individually numbered — printed into the margin — and arrives with a Certificate of Authenticity carrying the artist’s printed signature.`,
         )
 
   const detailRows = [

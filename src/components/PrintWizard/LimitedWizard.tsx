@@ -343,7 +343,7 @@ export const LimitedWizard = ({ artwork, catalog, galleryRate }: Props) => {
             artistName={artwork.artistName}
             terms={[
               'Individually numbered: each print carries its own number in the margin below the image.',
-              'Comes with a Certificate of Authenticity (COA), hand-signed by the artist: the signature is on the certificate, not the print.',
+              'Comes with a Certificate of Authenticity (COA) with the artist’s signature printed on it. The print itself carries its number, not a signature.',
               'Sold unframed, on premium archival paper: frame it your way.',
               'Price might rise as the edition sells.',
               'Your edition number is allocated at the point of sale: the number shown in the preview is for reference only.',
