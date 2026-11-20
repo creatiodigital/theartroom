@@ -9,6 +9,7 @@ import { openEditionFromConfig } from '@/lib/print-providers/printspace/fromConf
 import { getProviderQuote } from '@/lib/print-providers/quote'
 import prisma from '@/lib/prisma'
 import { saleFromRow } from '@/lib/editions/artworkSale'
+import { validateAndPriceItem } from '@/lib/checkout/validateAndPriceItem'
 import { getGalleryCommission, getGalleryCommissionRates } from '@/lib/settings'
 
 import {
@@ -179,6 +180,24 @@ test.describe('the gallery commission setting', () => {
             const at = (r: number) => saleFromRow(row, { open: r, limited: r })?.minPriceCents
             expect(from, `${row.editionType}: priced at its own commission`).toBe(at(rate))
             expect(at(0.33), 'the two commissions give different prices').not.toBe(at(0.47))
+          }
+
+          // The cart's re-price at checkout (and so the charge): a limited line at the limited
+          // commission, whatever the open one is. The commission plus under €1 of rounding.
+          const priced = await validateAndPriceItem({
+            artworkSlug: limited.slug,
+            providerId: 'printspace',
+            config: { values: {} },
+            variantId: limited.variantId,
+            countryCode: 'ES',
+            galleryRates: await getGalleryCommissionRates(),
+          })
+          expect(priced.ok, priced.ok ? '' : priced.error).toBe(true)
+          if (priced.ok) {
+            const commission = galleryCommissionCents(limited.artistPriceCents, 0.47)
+            expect(priced.pricing.galleryCents).toBeGreaterThanOrEqual(commission)
+            expect(priced.pricing.galleryCents).toBeLessThan(commission + 100)
+            expect(priced.pricing.preTaxCents % 100, 'a whole-euro price').toBe(0)
           }
         },
         47,

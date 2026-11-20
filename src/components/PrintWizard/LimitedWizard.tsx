@@ -142,11 +142,14 @@ export const LimitedWizard = ({ artwork, catalog, galleryRate }: Props) => {
   const config = useMemo(() => (selected ? variantToWizardConfig(selected) : null), [selected])
 
   // The mark stays in the diagram — it is part of what the buyer is buying, and
-  // showing where it sits on the sheet matters. It is ILLUSTRATIVE: nothing is
-  // reserved before payment, so the real number is unknown here. The terms say
-  // so ("the number shown in the preview is for reference only"), which is what
-  // stops "1/100" reading as a promise of the first copy.
-  const editionLabel = selected ? `1/${selected.editionSize}` : undefined
+  // showing where it sits on the sheet matters. It shows the next unsold copy, the
+  // same number as the size card's "Edition 3 of 30" and the print's photos (owner
+  // 2026-11-20: "we show the closest number the buyer will buy"). Nothing is
+  // reserved before payment, so the terms still say the number shown is for
+  // reference only.
+  const editionLabel = selected
+    ? `${selected.nextCopy ?? 1}/${selected.editionSize}`
+    : undefined
 
   const quote: Quote | null = useMemo(
     () =>

@@ -125,7 +125,7 @@ spec. Don't retune them; move them as they are.
 
 ## The pencilled number (framed view and photos)
 
-- **What:** `{next}/{N}`, where `next` is the lowest `EditionNumber.number` with `state: 'available'` for the mandatory
+- **What:** `{next}/{N}`, where `next` is the lowest `EditionNumber.number` whose state is not `sold` (built: a reserved copy still counts as unsold, as the page's "Edition N of M" does) for the mandatory
   variant (`order: 0`), and N its edition size. It's read when the render runs. It replaces the seeded "copy within the
   first 20%" (`makeLook(...).copy`, `COPY_NUMBERS`) for the framed view too.
 - **Sold out** (no available copy): no change and no warning. If a sold-out work must be rendered anyway (new image,
@@ -181,7 +181,7 @@ views?: {
 The framed fingerprint is unchanged, so existing framed renders stay current.
 
 `currentInputs` / `presentationInputs` also yield the photo inputs (sheet, next copy, image URL, views fingerprint).
-That needs `imageUrl`, the mandatory variant's sizes and its lowest available copy in `loadPresentationSources` (one
+That needs `imageUrl`, the mandatory variant's sizes and its lowest unsold copy in `loadPresentationSources` (one
 query, as today). The framed fingerprint is **not** changed (see "Prod safety"). Limited works need one re-render to
 get the real number, and keep their current render until then.
 
@@ -201,7 +201,7 @@ get the real number, and keep their current render until then.
   - Replacing a render deletes the previous files, photos included.
   - `deletePresentationFiles`, `reconcile-r2` and artwork DELETE learn the new names.
 - **Status**: a row is *Out of date* if either fingerprint no longer matches (e.g. the artist replaced the image),
-  *Missing* when it has no `views`, and flagged when its pencilled copy has sold. The black button and per-row
+  also *Out of date* when it has no `views` (built: one status for both), and flagged when its pencilled copy has sold. The black button and per-row
   Re-render render all four. The table preview stays the framed one only.
 - **Admin work follows `CLAUDE.md`**: read `docs/admin-redesign/README.md`, then `components.md`, `pages.md` and
   `questions.md`, before touching `/admin`. The dashboard warning uses the redesign's own alert or notice pattern.
@@ -275,7 +275,9 @@ showing after the deploy, unchanged, until the owner re-renders it.
 
 ### Rollout
 
-No database step. Release, then the owner re-renders artist by artist on prod (about 2 s more per work, and limited works
+No database step for the photos. The same release carries the two gallery commissions (open / limited, added
+2026-11-20), whose new column `SiteSettings.galleryCommissionLimitedPct` must reach prod BEFORE the deploy (a read of it
+fails until then and prices fall back). Release, then the owner re-renders artist by artist on prod (about 2 s more per work, and limited works
 once more for the real number). Until a work is re-rendered, its page shows the framed view alone, with its old number.
 
 ## Left to the builder

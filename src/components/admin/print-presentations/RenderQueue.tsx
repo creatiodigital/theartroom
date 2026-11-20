@@ -48,6 +48,24 @@ const loadImage = (src: string) =>
     img.src = src
   })
 
+/** A work's three photo views on `renderer`, rendered and encoded (both sizes each). */
+async function renderPhotoViews(renderer: PhotoRenderer, photo: PhotoInputs) {
+  const image = await loadImage(photo.imageUrl)
+  const sheet = {
+    ...photo.sheet,
+    number:
+      photo.numbered && photo.copy !== null && photo.edition !== null
+        ? `${photo.copy}/${photo.edition}`
+        : null,
+  }
+  const out = {} as Record<PhotoViewKind, Record<PresentationSize, Blob>>
+  for (const view of PHOTO_VIEWS) {
+    const canvas = await renderer.render({ image, sheet, seed: photo.seed, view })
+    out[view] = await encodePhoto(canvas)
+  }
+  return out
+}
+
 /** One work's studio: a scene that throws (a texture that won't load, no WebGL) fails that work only. */
 class StudioBoundary extends Component<
   { onError: (error: Error) => void; children: ReactNode },
@@ -92,38 +110,36 @@ export function RenderQueue({
   const current = useRef<string | null>(null)
   const busy = useRef(false)
   // One photo renderer (one WebGL context) for the whole batch, freed when the queue unmounts.
+  // Thrown away after any photo failure or timeout (a lost context, a throw mid-render that
+  // left GPU objects behind, a job still drawing on it): the next work gets a fresh one.
   const photoRenderer = useRef<PhotoRenderer | null>(null)
-  useEffect(
-    () => () => {
-      photoRenderer.current?.dispose()
-      photoRenderer.current = null
-    },
-    [],
-  )
+  const discardPhotoRenderer = useCallback(() => {
+    photoRenderer.current?.dispose()
+    photoRenderer.current = null
+  }, [])
+  useEffect(() => discardPhotoRenderer, [discardPhotoRenderer])
 
   /** A work's three photo views, rendered and encoded (both sizes each). */
-  const renderPhotos = useCallback(async (photo: PhotoInputs) => {
-    if (!photoRenderer.current) {
-      const { PhotoRenderer } = await import(
-        '@/components/printPresentation/photoViews/PhotoRenderer'
-      )
-      photoRenderer.current = new PhotoRenderer(document.createElement('canvas'))
-    }
-    const image = await loadImage(photo.imageUrl)
-    const sheet = {
-      ...photo.sheet,
-      number:
-        photo.numbered && photo.copy !== null && photo.edition !== null
-          ? `${photo.copy}/${photo.edition}`
-          : null,
-    }
-    const out = {} as Record<PhotoViewKind, Record<PresentationSize, Blob>>
-    for (const view of PHOTO_VIEWS) {
-      const canvas = await photoRenderer.current.render({ image, sheet, seed: photo.seed, view })
-      out[view] = await encodePhoto(canvas)
-    }
-    return out
-  }, [])
+  const renderPhotos = useCallback(
+    async (photo: PhotoInputs) => {
+      if (!photoRenderer.current) {
+        const { PhotoRenderer } = await import(
+          '@/components/printPresentation/photoViews/PhotoRenderer'
+        )
+        photoRenderer.current = new PhotoRenderer(document.createElement('canvas'))
+      }
+      // This work's renderer, held here: a job given up on never draws on the next one's.
+      const renderer = photoRenderer.current
+      try {
+        return await renderPhotoViews(renderer, photo)
+      } catch (err) {
+        if (photoRenderer.current === renderer) discardPhotoRenderer()
+        throw err
+      }
+    },
+    [discardPhotoRenderer],
+  )
+
 
   const finish = useCallback(
     (artworkId: string, result: 'saved' | 'failed', error?: string) => {
@@ -143,12 +159,13 @@ export function RenderQueue({
   useEffect(() => {
     if (!job) return
     current.current = job.artworkId
-    const timer = setTimeout(
-      () => finish(job.artworkId, 'failed', 'Timed out: the render never finished'),
-      JOB_TIMEOUT_MS,
-    )
+    const timer = setTimeout(() => {
+      // The job may still be drawing: its renderer goes with it.
+      discardPhotoRenderer()
+      finish(job.artworkId, 'failed', 'Timed out: the render never finished')
+    }, JOB_TIMEOUT_MS)
     return () => clearTimeout(timer)
-  }, [job, finish])
+  }, [job, finish, discardPhotoRenderer])
 
   const onReady = useCallback(
     async (shot: StudioShot) => {

@@ -37,6 +37,9 @@ export async function setPurchasesPaused(paused: boolean): Promise<void> {
     where: { id: 1 },
     update: { purchasesPaused: paused },
     create: { id: 1, purchasesPaused: paused },
+    // Return only the id: an upsert returns every column by default, so the kill switch would
+    // fail on a column it doesn't use if a deploy ever landed before its schema sync.
+    select: { id: true },
   })
 }
 
@@ -66,6 +69,7 @@ export async function setPrintPresentationsEnabled(enabled: boolean): Promise<vo
     where: { id: 1 },
     update: { printPresentationsEnabled: enabled },
     create: { id: 1, printPresentationsEnabled: enabled },
+    select: { id: true }, // as setPurchasesPaused: never read columns it doesn't use
   })
 }
 
@@ -152,7 +156,12 @@ export async function setGalleryCommissions(
     galleryCommissionChangedAt: changedAt,
     galleryCommissionChangedById: changedById,
   }
-  await prisma.siteSettings.upsert({ where: { id: 1 }, update: data, create: { id: 1, ...data } })
+  await prisma.siteSettings.upsert({
+    where: { id: 1 },
+    update: data,
+    create: { id: 1, ...data },
+    select: { id: true },
+  })
   lastKnownCommission = { ...pcts }
   return changedAt
 }

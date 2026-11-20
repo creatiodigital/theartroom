@@ -192,10 +192,20 @@ function makeGrain(size: number, seed: number, strength: number): DataTexture {
 
 const PENCIL_PX_PER_CM = 220
 
+/** The pencil's font, loaded and added to the document once per page (not once per photo). */
+let pencilFont: Promise<void> | null = null
+const loadPencilFont = () =>
+  (pencilFont ??= (async () => {
+    const face = new FontFace('CaveatPhoto', 'url(/fonts/caveat-regular.ttf)')
+    await face.load()
+    document.fonts.add(face)
+  })().catch((err) => {
+    pencilFont = null // a failed load is tried again by the next photo
+    throw err
+  }))
+
 async function pencilMask(label: string, seed: number) {
-  const face = new FontFace('CaveatPhoto', 'url(/fonts/caveat-regular.ttf)')
-  await face.load()
-  document.fonts.add(face)
+  await loadPencilFont()
   const fontPx = EDITION_NUMBER_FONT_SIZE_CM * 0.75 * PENCIL_PX_PER_CM
   const wCm = 12
   const hCm = 3

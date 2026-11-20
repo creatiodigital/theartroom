@@ -63,6 +63,18 @@ test.describe('print photo inputs', () => {
     expect(photoSheet(s, 1.5)).toEqual({ imageW: 30, imageH: 20, left: 5, right: 5, top: 5, bottom: 5 })
   })
 
+  test('an adaptive border never stretches the artwork: the image keeps the file\'s ratio', () => {
+    // A variant may be up to 2% off the file's ratio (validateVariant); the photo follows the file.
+    const s = source({
+      mandatorySize: { widthCm: 30, heightCm: 20.4, borderCm: 5, sheetWidthCm: null, sheetHeightCm: null },
+    })
+    expect(photoSheet(s, 1.5)).toEqual({ imageW: 30, imageH: 20, left: 5, right: 5, top: 5, bottom: 5 })
+    const portrait = source({
+      mandatorySize: { widthCm: 20.4, heightCm: 30, borderCm: 5, sheetWidthCm: null, sheetHeightCm: null },
+    })
+    expect(photoSheet(portrait, 2 / 3)).toEqual({ imageW: 20, imageH: 30, left: 5, right: 5, top: 5, bottom: 5 })
+  })
+
   test('an open edition: 50 cm on the long side, a 5 cm margin', () => {
     const s = source({ editionType: 'open', mandatorySize: null, originalWidth: 6000, originalHeight: 6000 })
     expect(photoSheet(s, 1)).toEqual({ imageW: 50, imageH: 50, left: 5, right: 5, top: 5, bottom: 5 })

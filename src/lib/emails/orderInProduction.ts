@@ -49,7 +49,7 @@ export function renderOrderInProductionEmail(args: OrderInProductionArgs): {
 
   // Reinforces, in restrained terms, exactly what the buyer was promised at
   // checkout: the copy is individually numbered (printed into the margin) and
-  // arrives with an artist-signed Certificate of Authenticity. No hype — the
+  // arrives with a Certificate of Authenticity carrying the artist's printed signature. No hype — the
   // authenticity marks themselves carry the prestige.
   const editionParagraph = !hasEditions
     ? ''

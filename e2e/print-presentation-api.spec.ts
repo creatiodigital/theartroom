@@ -5,7 +5,7 @@ import { shotFrame } from '@/lib/printPresentation/geometry'
 import { makeLook } from '@/lib/printPresentation/look'
 import { presentationFingerprint, presentationInputs } from '@/lib/printPresentation/inputs'
 import { loadPresentationSources } from '@/lib/printPresentation/loadSources'
-import { photoInputs } from '@/lib/printPresentation/photoInputs'
+import { photoInputs, renderCopy } from '@/lib/printPresentation/photoInputs'
 import {
   PHOTO_VIEWS,
   PRESENTATION_WIDTH_PX,
@@ -16,6 +16,7 @@ import { deletePresentationFiles, presentationPublicUrls } from '@/lib/printPres
 import prisma from '@/lib/prisma'
 import { R2_ENV_PREFIXES, buildPresentationKey, publicUrlForKey, type R2EnvPrefix } from '@/lib/r2'
 
+import { setupLimitedFixture, teardownLimitedFixture } from './edition-helpers'
 import { fixtures } from './fixtures'
 
 /**
@@ -300,6 +301,69 @@ test('with a web image, a render stores its three photo views too; all or nothin
       await deletePresentationFiles(row.printPresentation, id)
     }
     await prisma.artwork.delete({ where: { id } })
+  }
+})
+
+test('a limited edition saves the copy it pencilled, only while it is still the next one', async ({
+  playwright,
+  baseURL,
+}) => {
+  const fx = await setupLimitedFixture(30)
+  const id = fx.artworkId
+  await prisma.artwork.update({
+    where: { id },
+    data: { artworkType: 'image', imageUrl: 'https://assets.example/e2e-presentation-limited.webp' },
+  })
+  const admin = await playwright.request.newContext({
+    baseURL,
+    storageState: 'e2e/.auth/admin.json',
+  })
+  try {
+    const [source] = await loadPresentationSources({ ids: [id] })
+    const inputs = presentationInputs(source)!
+    const photo = photoInputs(source, inputs)!
+    const next = renderCopy(source, inputs)
+    expect(next, 'a fresh edition pencils copy 1').toBe(1)
+    const { fingerprint } = inputs
+    const viewsFingerprint = photo.fingerprint
+
+    const res = await admin.post(`/api/admin/print-presentations/${id}/uploads`, {
+      data: { fingerprint, viewsFingerprint },
+    })
+    expect(res.status()).toBe(200)
+    const { renderId, framed, photos } = (await res.json()) as {
+      renderId: string
+      framed: Record<'large' | 'small', { url: string }>
+      photos: Record<'sheet' | 'close' | 'edge', Record<'large' | 'small', { url: string }>>
+    }
+    const put = (url: string) =>
+      admin.put(url, { data: WEBP, headers: { 'Content-Type': 'image/webp' } })
+    for (const size of ['large', 'small'] as const) {
+      expect((await put(framed[size].url)).status()).toBe(200)
+      for (const view of PHOTO_VIEWS) expect((await put(photos[view][size].url)).status()).toBe(200)
+    }
+    const save = (copy: number) =>
+      admin.put(`/api/admin/print-presentations/${id}`, {
+        data: { fingerprint, viewsFingerprint, renderId, copy, window: WINDOW },
+      })
+
+    // A copy other than the next one (a stale tab, or one sold since the render began): out of date.
+    expect((await save(2)).status()).toBe(409)
+    expect((await save(1)).status()).toBe(200)
+    const row = await prisma.artwork.findUniqueOrThrow({
+      where: { id },
+      select: { printPresentation: true },
+    })
+    expect((row.printPresentation as unknown as PrintPresentationRecord).copy).toBe(1)
+  } finally {
+    const row = await prisma.artwork.findUniqueOrThrow({
+      where: { id },
+      select: { printPresentation: true },
+    })
+    if (isPrintPresentationRecord(row.printPresentation)) {
+      await deletePresentationFiles(row.printPresentation, id)
+    }
+    await teardownLimitedFixture(fx)
   }
 })
 

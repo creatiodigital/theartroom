@@ -134,9 +134,15 @@ export const ArtworkDetailBody = ({
       : null
   const [viewIndex, setViewIndex] = useState(0)
   const viewsTrack = useRef<HTMLDivElement>(null)
+  // The large photos load lazily, but the one picked and the one after it load at once: a photo
+  // first requested as it slides into the clipped strip would show a blank slide meanwhile.
+  const [wantedViews, setWantedViews] = useState<ReadonlySet<number>>(() => new Set([0, 1]))
+  const want = (...indices: number[]) =>
+    setWantedViews((w) => (indices.every((i) => w.has(i)) ? w : new Set([...w, ...indices])))
   // Picking a view slides the box to it; on phones a swipe moves the box and the row follows.
   const showView = (index: number) => {
     setViewIndex(index)
+    want(index, index + 1)
     const track = viewsTrack.current
     if (track) track.scrollTo({ left: index * track.clientWidth, behavior: 'smooth' })
   }
@@ -144,8 +150,30 @@ export const ArtworkDetailBody = ({
     const track = viewsTrack.current
     if (!track || track.clientWidth === 0) return
     const index = Math.round(track.scrollLeft / track.clientWidth)
-    if (index !== viewIndex && index >= 0 && index < VIEW_COUNT) setViewIndex(index)
+    if (index !== viewIndex && index >= 0 && index < VIEW_COUNT) {
+      setViewIndex(index)
+      want(index + 1)
+    }
   }
+  // A resize changes the slides' width: keep the picked one in place (only on a real width
+  // change, so a swipe in progress is never moved).
+  const viewIndexRef = useRef(viewIndex)
+  useEffect(() => {
+    viewIndexRef.current = viewIndex
+  }, [viewIndex])
+  const hasViews = !!withPhotos
+  useEffect(() => {
+    const track = viewsTrack.current
+    if (!hasViews || !track || typeof ResizeObserver === 'undefined') return
+    let width = track.clientWidth
+    const observer = new ResizeObserver(() => {
+      if (track.clientWidth === width) return
+      width = track.clientWidth
+      track.scrollLeft = viewIndexRef.current * width
+    })
+    observer.observe(track)
+    return () => observer.disconnect()
+  }, [hasViews])
 
   // Purchases kill switch (admin dashboard). The hook's cache is shared with
   // the artwork grids, so moving between a listing and a work doesn't re-read.
@@ -217,7 +245,7 @@ export const ArtworkDetailBody = ({
               src={withPhotos.photos[kind].large}
               alt={viewAlt(displayTitle || 'Artwork', i + 1)}
               className={styles.viewPhoto}
-              loading="lazy"
+              loading={wantedViews.has(i + 1) ? 'eager' : 'lazy'}
               decoding="async"
             />
           </div>

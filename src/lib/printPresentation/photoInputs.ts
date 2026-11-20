@@ -61,8 +61,18 @@ export function photoSheet(source: SourceRow, ratio: number): PhotoSheet {
         bottom: cm(layout.borderYCm),
       }
     }
+    // The variant's long side, the other from the image itself: a variant may differ from the
+    // file's ratio by up to 2% (validateVariant), and the photo must never stretch the artwork.
     const b = cm(size.borderCm)
-    return { imageW: cm(size.widthCm), imageH: cm(size.heightCm), left: b, right: b, top: b, bottom: b }
+    const long = Math.max(size.widthCm, size.heightCm)
+    return {
+      imageW: cm(ratio >= 1 ? long : long * ratio),
+      imageH: cm(ratio >= 1 ? long / ratio : long),
+      left: b,
+      right: b,
+      top: b,
+      bottom: b,
+    }
   }
   const bounds =
     source.originalWidth && source.originalHeight

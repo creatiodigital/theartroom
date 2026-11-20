@@ -76,12 +76,18 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ artwork
     }
     // The copy it pencilled: a whole number within the edition, or none for works that carry none.
     const edition = current.inputs.edition
-    const numbered = renderCopy(current.source, current.inputs) !== null
+    const nextCopy = renderCopy(current.source, current.inputs)
+    const numbered = nextCopy !== null
     const copyOk = numbered
       ? Number.isInteger(copy) && (copy as number) >= 1 && (copy as number) <= (edition ?? 0)
       : copy === null
     if (!copyOk) {
       return NextResponse.json({ error: 'The pencilled copy is not valid' }, { status: 400 })
+    }
+    // …and the one the work pencils now: a copy sold since the render started (or a stale tab)
+    // would save a record that is out of date at once. Like a stale fingerprint, refused.
+    if (numbered && copy !== nextCopy) {
+      return NextResponse.json({ error: 'This render is out of date' }, { status: 409 })
     }
 
     const complete = photo

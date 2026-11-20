@@ -53,7 +53,7 @@ export function renderOrderDeliveredEmail(args: OrderDeliveredArgs): {
       ? ''
       : editions.length === 1
         ? emailParagraph(
-            `Your copy is <strong>${formatEditionCopy(editions[0])}</strong>. The number is printed into the margin, and the Certificate of Authenticity in the parcel &mdash; signed by ${safeArtist} &mdash; records it too. Keep the two together; that pairing is what proves the work is yours.`,
+            `Your copy is <strong>${formatEditionCopy(editions[0])}</strong>. The number is printed into the margin, and the Certificate of Authenticity in the parcel &mdash; carrying the printed signature of ${safeArtist} &mdash; records it too. Keep the two together; that pairing is what proves the work is yours.`,
           )
         : emailParagraph(
             `Each copy is individually numbered &mdash; printed into the margin &mdash; and arrives with a Certificate of Authenticity recording that same number. Keep each print with its certificate; that pairing is what proves the work is yours.`,

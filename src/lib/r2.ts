@@ -349,7 +349,7 @@ export async function buildProfileImageKey(userId: string): Promise<string> {
 }
 
 // Artist signature stored as a transparent PNG alongside the profile
-// image. Supplied to theprintspace for signed limited-edition prints.
+// image. Supplied to theprintspace, which prints it on limited editions' certificates (never on a print).
 export async function buildSignatureImageKey(userId: string): Promise<string> {
   const handler = await getArtistHandler(userId)
   return `${getEnvPrefix()}/profiles/${handler}/signature-${randomSuffix()}.png`

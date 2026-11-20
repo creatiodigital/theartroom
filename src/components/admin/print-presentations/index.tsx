@@ -383,7 +383,9 @@ export const AdminPrintPresentations = () => {
                               >
                                 {(placement) =>
                                   placement === 'window' ? (
-                                    <img src={row.imageUrl!} alt={row.title} />
+                                    // CORS like the renders that fetch this same file: a copy
+                                    // cached without CORS could otherwise fail their request.
+                                    <img src={row.imageUrl!} alt={row.title} crossOrigin="anonymous" />
                                   ) : (
                                     <span className={styles.tileText}>No render</span>
                                   )
