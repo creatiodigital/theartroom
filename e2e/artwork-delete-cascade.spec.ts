@@ -1,7 +1,13 @@
+import { rm, stat } from 'fs/promises'
+import path from 'path'
+
 import { test, expect } from '@playwright/test'
 import { r2Reachable, R2_BLOCKED_REASON } from './r2-reachable'
+import { BLANK } from './presentation-helpers'
 
+import { bakeBackend } from '@/lib/bake/bakeStorage'
 import prisma from '@/lib/prisma'
+import { localPresentationPath, writeLocalPresentationFile } from '@/lib/printPresentation/storage'
 import { deleteR2KeyDirect, getR2ObjectSize, uploadToR2 } from '@/lib/r2'
 
 /** Artwork blobs live in the PUBLIC bucket, so existence is a head on that one —
@@ -189,6 +195,143 @@ test.describe('Deleting an artwork removes every trace of it', () => {
       ).toEqual([f.otherArtworkId])
     } finally {
       await teardownFixture(f)
+    }
+  })
+})
+
+/** A short unique tag for this run's rows and files. */
+const stampNow = () => `${Date.now().toString(36)}-${Math.round(Math.random() * 1e6).toString(36)}`
+
+/** The fixture artwork's artist: every throwaway work below is theirs. */
+async function fixtureArtistId(): Promise<string> {
+  const base = await prisma.artwork.findUnique({
+    where: { slug: fixtures.artworkSlug },
+    select: { userId: true },
+  })
+  if (!base) throw new Error(`Fixture artwork "${fixtures.artworkSlug}" not found — check dev DB`)
+  return base.userId
+}
+
+test.describe('Deleting an artwork for good removes its files (AR-189)', () => {
+  test('the extra images and videos of its page leave R2', async ({ page }) => {
+    test.skip(!(await r2Reachable()), R2_BLOCKED_REASON)
+    test.setTimeout(120_000)
+
+    const stamp = stampNow()
+    // REAL objects in R2: an extra image and an extra video, as ArtworkMedia rows point at them.
+    const keys = [
+      `staging/test/artwork-delete-media-${stamp}.webp`,
+      `staging/test/artwork-delete-media-${stamp}.mp4`,
+    ]
+    let artworkId: string | null = null
+    try {
+      const urls = await Promise.all(
+        keys.map((key) =>
+          uploadToR2(key, Buffer.from(`e2e-media-${key}`), 'application/octet-stream'),
+        ),
+      )
+      const artwork = await prisma.artwork.create({
+        data: {
+          name: 'E2E Delete Media',
+          slug: `e2e-delete-media-${stamp}`,
+          title: 'E2E Delete Media',
+          userId: await fixtureArtistId(),
+          media: {
+            create: [
+              { kind: 'image', url: urls[0], order: 0 },
+              { kind: 'video', url: urls[1], order: 1 },
+            ],
+          },
+        },
+        select: { id: true },
+      })
+      artworkId = artwork.id
+      for (const key of keys) expect(await publicObjectExists(key), `${key} uploaded`).toBe(true)
+
+      const res = await page.request.delete(`/api/artworks/${artwork.id}`)
+      expect(res.status(), `delete should succeed: ${await res.text()}`).toBe(200)
+
+      expect(await prisma.artworkMedia.count({ where: { artworkId: artwork.id } })).toBe(0)
+      for (const key of keys) expect(await publicObjectExists(key), `${key} deleted`).toBe(false)
+    } finally {
+      try {
+        if (artworkId) await prisma.artwork.deleteMany({ where: { id: artworkId } })
+        for (const key of keys) if (await publicObjectExists(key)) await deleteR2KeyDirect(key)
+      } catch (err) {
+        console.warn(
+          '[e2e cleanup] artwork media fixture:',
+          err instanceof Error ? err.message : err,
+        )
+      }
+    }
+  })
+
+  test('its whole render folder goes, failed renders included; another work keeps its own', async ({
+    page,
+  }) => {
+    test.skip(bakeBackend() !== 'local', 'stores renders: run with BAKE_STORAGE=local, never on R2')
+
+    const stamp = stampNow()
+    const userId = await fixtureArtistId()
+    const make = (name: string, tag: string) =>
+      prisma.artwork.create({
+        data: { name, slug: `e2e-delete-renders-${tag}-${stamp}`, title: name, userId },
+        select: { id: true },
+      })
+    // The local file of one of an artwork's render names.
+    const fileOf = (artworkId: string, name: string) =>
+      localPresentationPath(['presentations', artworkId, name])!
+    const exists = (p: string) =>
+      stat(p).then(
+        () => true,
+        () => false,
+      )
+
+    let ids: string[] = []
+    try {
+      const doomed = await make('E2E Delete Renders', 'doomed')
+      const bystander = await make('E2E Delete Renders Bystander', 'bystander')
+      ids = [doomed.id, bystander.id]
+
+      // A finished render, a failed one that left only its framed files and one photo, and a
+      // render from before render ids. No record on the row: the folder goes whatever it holds.
+      const names = [
+        'aaaa0001-bbbb0001-1800.webp',
+        'aaaa0001-bbbb0001-900.webp',
+        'cccc0001-bbbb0001-sheet-2400.webp',
+        'cccc0001-bbbb0001-sheet-600.webp',
+        'aaaa0001-dddd0002-1800.webp',
+        'cccc0001-dddd0002-close-2400.webp',
+        'eeee0003-1800.webp',
+      ]
+      for (const name of names) {
+        await writeLocalPresentationFile(fileOf(doomed.id, name), BLANK.wide.large)
+      }
+      const keep = fileOf(bystander.id, 'aaaa0001-bbbb0001-1800.webp')
+      await writeLocalPresentationFile(keep, BLANK.wide.large)
+      const folder = path.dirname(fileOf(doomed.id, names[0]))
+      expect(await exists(folder), 'render folder written').toBe(true)
+
+      const res = await page.request.delete(`/api/artworks/${doomed.id}`)
+      expect(res.status(), `delete should succeed: ${await res.text()}`).toBe(200)
+
+      expect(await exists(folder), 'the artwork’s render folder is gone').toBe(false)
+      expect(await exists(keep), 'another work’s render stays').toBe(true)
+    } finally {
+      try {
+        for (const id of ids) {
+          await rm(path.dirname(fileOf(id, 'aaaa0001-bbbb0001-1800.webp')), {
+            recursive: true,
+            force: true,
+          })
+        }
+        await prisma.artwork.deleteMany({ where: { id: { in: ids } } })
+      } catch (err) {
+        console.warn(
+          '[e2e cleanup] artwork renders fixture:',
+          err instanceof Error ? err.message : err,
+        )
+      }
     }
   })
 })
