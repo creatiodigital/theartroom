@@ -1345,3 +1345,16 @@ and says the price is rounded up to a whole euro. Card sub: "Added on top of eac
 Open and limited editions each have their own." Until the first save of both, the limited field shows the open value
 (the column is empty and limited prices follow it). Please design the two-field card (desktop + phone) or confirm.
 
+**Q-AN2 (Code Claude, 2026-11-20): Analytics, cleaning the numbers (owner: "let's tackle" the fixes after reading the
+prod page).** Built without a board, the conservative way; please confirm or adjust the look.
+- Meta's crawlers are left out of every panel. They show as a 2000×2000 screen, or a phone in a Meta data-center town
+  arriving from Facebook. They were about 18 of a week's visits, most of "United States" and of Facebook. The
+  footnote now names them, and the gallery's home connection: a GA4 internal-traffic IP rule, set up 11-20.
+- 3D room › "Works looked at" = works framed per room that loaded (`room_artwork_view`). Before, it was `room_visit_end`'s
+  count, an event lost for ~4 visits in 10, so it read near 0.
+- Visits per day: today's stretch of each line is dashed and its date reads "…, so far". Before, every line seemed to
+  fall at the right edge.
+- Source "card" (the business card's QR, `utm_source=card`) reads **Business card (QR)**.
+- Artworks: a 40 px thumbnail (the web image, `--radius-sm`, gray while missing) before each title, through BarList's new
+  `media`. Ten works are titled "La memoria de las puertas". Open: is a thumbnail right here, and should
+  Dashboard › Most viewed artworks get one too?
