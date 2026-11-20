@@ -122,6 +122,11 @@ export type PresentationView = {
   small: string
   /** The piece with a thin border of wall, for a page that crops the shot to it (`pieceArea`). */
   piece?: PresentationWindow
+  /**
+   * The work's three photo views, each in both sizes — only while they show the work as it is
+   * (its image and print) and load here. Artwork pages only.
+   */
+  photos?: Record<PhotoViewKind, Record<PresentationSize, string>>
 }
 
 export const presentationView = (record: PrintPresentationRecord): PresentationView => ({
