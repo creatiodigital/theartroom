@@ -16,9 +16,10 @@ import { track } from '@/lib/analytics/track'
 import type { ArtworkSizes } from '@/lib/editions/artworkSizes'
 import type { VariantEditionLineParts } from '@/lib/editions/variantEditionLines'
 import { ArtworkAvailabilityCard, ArtworkPrintFacts } from './ArtworkAvailabilityCard'
+import { ArtworkViews, VIEW_COUNT, viewAlt } from './ArtworkViews'
 import { SHOW_NEIGHBOUR_ARROWS } from './neighbourArrows'
 import { reportImageError } from '@/lib/observability/reportImageError'
-import type { PresentationView } from '@/lib/printPresentation/record'
+import { PHOTO_VIEWS, type PresentationView } from '@/lib/printPresentation/record'
 
 import styles from './ArtworkDetail.module.scss'
 
@@ -125,6 +126,26 @@ export const ArtworkDetailBody = ({
   surface = 'page',
 }: ArtworkDetailBodyProps) => {
   const [isInquireOpen, setIsInquireOpen] = useState(false)
+  // The work's four views (owner, 2026-11-20): the framed view, then three photos of the print.
+  // Artwork pages only — the 3D room's pop-up keeps the framed view alone.
+  const withPhotos =
+    surface === 'page' && presentation?.photos && artwork.imageUrl
+      ? { ...presentation, photos: presentation.photos }
+      : null
+  const [viewIndex, setViewIndex] = useState(0)
+  const viewsTrack = useRef<HTMLDivElement>(null)
+  // Picking a view slides the box to it; on phones a swipe moves the box and the row follows.
+  const showView = (index: number) => {
+    setViewIndex(index)
+    const track = viewsTrack.current
+    if (track) track.scrollTo({ left: index * track.clientWidth, behavior: 'smooth' })
+  }
+  const onViewsScroll = () => {
+    const track = viewsTrack.current
+    if (!track || track.clientWidth === 0) return
+    const index = Math.round(track.scrollLeft / track.clientWidth)
+    if (index !== viewIndex && index >= 0 && index < VIEW_COUNT) setViewIndex(index)
+  }
 
   // Purchases kill switch (admin dashboard). The hook's cache is shared with
   // the artwork grids, so moving between a listing and a work doesn't re-read.
@@ -178,6 +199,35 @@ export const ArtworkDetailBody = ({
     />
   )
 
+  // With its photos, the grey box is a strip of the four views: the framed view, then the photos,
+  // each filling the box (cover: it's the same space, owner 2026-11-20). Moved by the grid below
+  // Inquire, or on phones by a swipe (native scroll-snap); otherwise the framed view alone.
+  const inViews = (framed: ReactNode) =>
+    withPhotos ? (
+      <div
+        ref={viewsTrack}
+        className={styles.viewsTrack}
+        onScroll={onViewsScroll}
+        data-views-track=""
+      >
+        <div className={styles.viewSlide}>{framed}</div>
+        {PHOTO_VIEWS.map((kind, i) => (
+          <div key={kind} className={styles.viewSlide}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={withPhotos.photos[kind].large}
+              alt={viewAlt(displayTitle || 'Artwork', i + 1)}
+              className={styles.viewPhoto}
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        ))}
+      </div>
+    ) : (
+      framed
+    )
+
   // docs/public-redesign/artwork.md, designs/artwork-*.dc.html: the work in the grey box on the
   // left, the info column (320 px, sticky) on the right. The info column comes first in the DOM:
   // the <h1> leads for a screen reader; the grid places the picture first on the screen.
@@ -217,12 +267,24 @@ export const ArtworkDetailBody = ({
               // the only route forward.
               <ArtworkPrintFacts sizes={artwork.sizes} inquire={inquireButton} />
             )}
+            {withPhotos && (
+              <ArtworkViews
+                presentation={withPhotos}
+                imageUrl={artwork.imageUrl!}
+                title={displayTitle || 'Artwork'}
+                selected={viewIndex}
+                onSelect={showView}
+                layout="grid"
+                className={styles.viewsGrid}
+              />
+            )}
             <Share title={displayTitle || 'Artwork'} url={shareUrl} className={styles.share} />
           </div>
         </aside>
 
         <div className={c(styles.imageArea, isPortrait && styles.imageAreaPortrait)}>
-          {artwork.imageUrl && (
+          {inViews(
+            artwork.imageUrl && (
             // Raw <img> (not next/image): reuses the image the 3D scene already cached, and
             // sidesteps the known next/image + R2 prod issue. crossOrigin matches THREE's
             // texture request so the same browser-cache entry is reused.
@@ -253,7 +315,7 @@ export const ArtworkDetailBody = ({
                 />
               )}
             </PrintPresentation>
-          )}
+          ))}
 
           {/* Previous / next in the set the visitor came from: round buttons on the image's
               edges, plain links to the neighbouring works (artwork.md "Below the work"). */}
@@ -280,6 +342,19 @@ export const ArtworkDetailBody = ({
             </Button>
           )}
         </div>
+
+        {/* Phones: the four views in one row, right under the photo (owner, 2026-11-20). */}
+        {withPhotos && (
+          <ArtworkViews
+            presentation={withPhotos}
+            imageUrl={artwork.imageUrl!}
+            title={displayTitle || 'Artwork'}
+            selected={viewIndex}
+            onSelect={showView}
+            layout="row"
+            className={styles.viewsRow}
+          />
+        )}
       </div>
 
       <InquireSidebar

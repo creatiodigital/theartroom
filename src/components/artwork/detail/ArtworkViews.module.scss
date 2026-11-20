@@ -1,0 +1,77 @@
+@use '@/styles/mixins' as *;
+
+// A work's four views (owner, 2026-11-20). Square tiles, square corners (visitor-facing rule).
+.views {
+  display: grid;
+  gap: var(--space-3);
+}
+
+// Tablets and desktop: two rows of two, below Inquire. Not on phones (they get the row).
+.grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  @include media-down(sm) {
+    display: none;
+  }
+}
+
+// Phones: one row of four, right under the photo.
+.row {
+  display: none;
+
+  @include media-down(sm) {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-2);
+    // Aligned with the photo's edges, a little room above and below.
+    padding: var(--space-3) 0;
+  }
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: var(--public-render-wall);
+  cursor: pointer;
+  // A size container: the framed view is capped against the tile, as the page caps it in the box.
+  container-type: size;
+
+  // The selected view: a 1 px dark outline, inside the tile.
+  &.selected {
+    outline: 1px solid var(--color-text-primary);
+    outline-offset: -1px;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-text-primary);
+    outline-offset: 2px;
+  }
+}
+
+// The framed view, contained in its tile with a little wall round it.
+.framed {
+  max-width: 100%;
+}
+
+.framedFit {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 84cqw;
+  max-height: 84cqh;
+}
+
+// The photos fill their tile (cover), as they fill the box.
+.photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
