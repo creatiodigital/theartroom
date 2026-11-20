@@ -43,12 +43,8 @@
   // A size container: the framed view is capped against the tile, as the page caps it in the box.
   container-type: size;
 
-  // The selected view: a 1 px dark outline, inside the tile.
-  &.selected {
-    outline: 1px solid var(--color-text-primary);
-    outline-offset: -1px;
-  }
-
+  // No mark on the selected view (owner, 2026-11-20: "remove the black border when selected"): the
+  // large picture says which it is. Keyboard focus still shows.
   &:focus-visible {
     outline: 2px solid var(--color-text-primary);
     outline-offset: 2px;

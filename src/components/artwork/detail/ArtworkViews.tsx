@@ -21,8 +21,8 @@ export const VIEW_COUNT = 1 + PHOTO_VIEWS.length
 /**
  * A work's four views as small tiles (owner, 2026-11-20): the framed view first, then the photos
  * of the print — unframed at a corner, a detail, a detail at its top edge. Picking one shows it
- * large in the grey box. `grid`: two rows of two, below Inquire (tablets, desktop); `row`: one row
- * of four under the box (phones). Square corners (visitor-facing rule).
+ * large in the grey box (no mark on the picked tile, owner). `grid`: two rows of two, below Inquire
+ * (tablets, desktop); `row`: one row of four under the box (phones). Square corners (visitor rule).
  */
 export function ArtworkViews({
   presentation,
@@ -51,7 +51,7 @@ export function ArtworkViews({
         <Button
           key={kind ?? 'framed'}
           variant="bare"
-          className={c(styles.tile, index === selected && styles.selected)}
+          className={styles.tile}
           aria-pressed={index === selected}
           aria-label={viewAlt(title, index)}
           onClick={() => onSelect(index)}
