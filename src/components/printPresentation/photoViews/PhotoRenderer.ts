@@ -104,13 +104,13 @@ const SENSOR_HALF_H_M = 0.012 // full frame, 36 × 24 mm
  * never mind").
  */
 export const SHEET_SHOTS = [
-  { dx: 0.025, dz: -0.01, azimuth: -0.42, elevation: 0.62, distance: 0.76, fNumber: 8 },
+  { dx: 0.025, dz: -0.01, azimuth: -0.42, elevation: 0.62, distance: 0.76 },
   // From higher above: the sheet flatter, more of the image.
-  { dx: 0.03, dz: -0.025, azimuth: -0.6, elevation: 0.88, distance: 0.8, fNumber: 8 },
+  { dx: 0.03, dz: -0.025, azimuth: -0.6, elevation: 0.88, distance: 0.8 },
   // Lower, the bottom edge nearly across the frame, the far side softer.
-  { dx: 0.035, dz: -0.005, azimuth: -0.22, elevation: 0.5, distance: 0.72, fNumber: 7.1 },
+  { dx: 0.035, dz: -0.005, azimuth: -0.22, elevation: 0.5, distance: 0.72 },
   // From further left: the left edge runs across, the bottom edge climbs.
-  { dx: 0.01, dz: -0.03, azimuth: -0.95, elevation: 0.66, distance: 0.78, fNumber: 8 },
+  { dx: 0.01, dz: -0.03, azimuth: -0.95, elevation: 0.66, distance: 0.78 },
 ] as const
 
 // ---------------------------------------------------------------------------------------------
@@ -531,7 +531,9 @@ export class PhotoRenderer {
         distance: base.distance + nudge(0.03),
         roll: m * nudge(0.02),
         focal: 0.09,
-        fNumber: base.fNumber,
+        // Sharp front to back: no focus blur on the unframed sheet (owner, 2026-11-20: "on the
+        // unframed ones, please do not add FOV"). A pinhole lens; the close-ups keep theirs.
+        fNumber: Infinity,
       }
     } else {
       const detail = detailMap(job.image)
@@ -580,7 +582,7 @@ export class PhotoRenderer {
     const near = 0.02
     const far = 20
     const aspect = width / height
-    const aperture = shot.focal / shot.fNumber / 2
+    const aperture = Number.isFinite(shot.fNumber) ? shot.focal / shot.fNumber / 2 : 0
 
 
     // --- The light ---------------------------------------------------------------------------------

@@ -13,7 +13,8 @@ import type { SourceRow } from './loadSources'
  */
 
 /** Bump when the photos' look changes: every work's photos then read as out of date. */
-export const PHOTO_LOOK_VERSION = 1
+// 2: the unframed sheet is sharp front to back (owner, 2026-11-20).
+export const PHOTO_LOOK_VERSION = 2
 
 /** The printed sheet, in centimetres: the image and the paper's margin on each side. */
 export type PhotoSheet = {
