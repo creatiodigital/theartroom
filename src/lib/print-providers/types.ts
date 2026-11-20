@@ -231,9 +231,10 @@ export type GetQuoteInput = {
   /** Artist's per-print share, in cents. Provider folds this into pricing. */
   artistPriceCents: number
   /**
-   * The gallery's commission as a rate (0.25 = 25%), added on top of the artist's price. The
-   * owner's setting (SiteSettings.galleryCommissionPct): servers read it per request with
-   * `getGalleryCommissionRate`, clients get it from their page. Never a constant.
+   * The gallery's commission as a rate (0.25 = 25%), added on top of the artist's price: the one
+   * for this print's edition type (open and limited each have their own, the owner's settings).
+   * Servers read both per request with `getGalleryCommissionRates` and pick with `rateForEdition`;
+   * clients get it from their page. Never a constant.
    */
   galleryRate: number
 }

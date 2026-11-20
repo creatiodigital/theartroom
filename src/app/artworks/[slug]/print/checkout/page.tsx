@@ -6,7 +6,8 @@ import { PurchasesPausedNotice } from '@/components/checkout/PurchasesPausedNoti
 import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
 import { isArtworkPurchasable, LIVE_VARIANT_WHERE } from '@/lib/editions/printable'
 import prisma from '@/lib/prisma'
-import { getGalleryCommissionRate, getPurchasesPaused } from '@/lib/settings'
+import { rateForEdition } from '@/lib/galleryCommission'
+import { getGalleryCommissionRates, getPurchasesPaused } from '@/lib/settings'
 
 interface CheckoutPageProps {
   params: Promise<{ slug: string }>
@@ -29,7 +30,7 @@ const CheckoutPage = async ({ params, searchParams }: CheckoutPageProps) => {
 
   // Kill-switch read runs alongside the artwork query (independent) —
   // covers deep links into the single-print checkout.
-  const [paused, artwork, galleryRate] = await Promise.all([
+  const [paused, artwork, galleryRates] = await Promise.all([
     getPurchasesPaused(),
     prisma.artwork.findUnique({
       where: { slug },
@@ -39,7 +40,7 @@ const CheckoutPage = async ({ params, searchParams }: CheckoutPageProps) => {
         _count: { select: { limitedVariants: { where: LIVE_VARIANT_WHERE } } },
       },
     }),
-    getGalleryCommissionRate(),
+    getGalleryCommissionRates(),
   ])
 
   if (paused) {
@@ -62,6 +63,8 @@ const CheckoutPage = async ({ params, searchParams }: CheckoutPageProps) => {
   // Stay in sync with the wizard entry — no original dims means we
   // can't compute a sharp print ceiling, so the print flow is closed.
   if (!artwork.originalWidth || !artwork.originalHeight) notFound()
+  // The commission of this work's edition type (open and limited each have their own).
+  const galleryRate = rateForEdition(galleryRates, artwork.editionType)
 
   const initialCountry = pickString(sp.country) ?? ''
   const artistName = `${artwork.user.name} ${artwork.user.lastName}`

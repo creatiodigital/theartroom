@@ -9,7 +9,8 @@ import type { PrintRecommendations, PrintRestrictions } from '@/lib/print-provid
 import type { LimitedVariantView } from '@/lib/editions/types'
 import { toLimitedVariantView } from '@/lib/editions/toLimitedVariantView'
 import prisma from '@/lib/prisma'
-import { getGalleryCommissionRate, getPurchasesPaused } from '@/lib/settings'
+import { rateForEdition } from '@/lib/galleryCommission'
+import { getGalleryCommissionRates, getPurchasesPaused } from '@/lib/settings'
 
 interface PrintWizardPageProps {
   params: Promise<{ slug: string }>
@@ -37,7 +38,7 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
   // The kill-switch read runs alongside the artwork query (independent) —
   // it covers deep links / bookmarks straight into the wizard while the
   // CTAs that normally lead here are hidden.
-  const [paused, artwork, galleryRate] = await Promise.all([
+  const [paused, artwork, galleryRates] = await Promise.all([
     getPurchasesPaused(),
     prisma.artwork.findUnique({
       where: { slug },
@@ -48,7 +49,7 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
         limitedVariants: { where: LIVE_VARIANT_WHERE, orderBy: { order: 'asc' } },
       },
     }),
-    getGalleryCommissionRate(),
+    getGalleryCommissionRates(),
   ])
 
   if (paused) {
@@ -79,6 +80,8 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
   if (!artwork.originalWidth || !artwork.originalHeight) {
     notFound()
   }
+  // The commission of this work's edition type (open and limited each have their own).
+  const galleryRate = rateForEdition(galleryRates, artwork.editionType)
 
   const originalWidthPx = artwork.originalWidth
   const originalHeightPx = artwork.originalHeight

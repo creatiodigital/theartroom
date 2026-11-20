@@ -1,6 +1,7 @@
 import {
   DEFAULT_GALLERY_COMMISSION_PCT,
   isValidGalleryCommissionPct,
+  type GalleryRates,
 } from '@/lib/galleryCommission'
 import prisma from '@/lib/prisma'
 import { captureError } from '@/lib/observability/captureError'
@@ -69,28 +70,32 @@ export async function setPrintPresentationsEnabled(enabled: boolean): Promise<vo
 }
 
 /**
- * Last value read successfully in this server instance: what a failed read falls back to before
+ * Last values read successfully in this server instance: what a failed read falls back to before
  * the default, so a blip never swaps the owner's commission for another one (pricing.md: "fails safe
  * to the last known value, never to 0").
  */
-let lastKnownCommissionPct: number | null = null
+let lastKnownCommission: { pct: number; limitedPct: number } | null = null
 
 export type GalleryCommission = {
+  /** Open editions' commission, in percent. */
   pct: number
+  /** Limited editions' commission, in percent (the open one until the owner saves its own). */
+  limitedPct: number
   /** Last save, for "Last changed {date}". Null until the first save (or when the read failed). */
   changedAt: Date | null
   changedById: string | null
-  /** The read failed and `pct` is the fallback (last known value, else the default). */
+  /** The read failed and the percents are the fallback (last known values, else the default). */
   readFailed: boolean
 }
 
 /**
- * The gallery's commission on every print (pricing.md; formula in ../lib/galleryCommission). Read
- * per request: a change in Admin › Sales › Pricing reaches every price, the cart re-price and the
- * next payment intent at once, no deploy.
+ * The gallery's commissions (pricing.md; formula in ../lib/galleryCommission): one for open
+ * editions, one for limited editions. Read per request: a change in Admin › Sales › Pricing reaches
+ * every price, the cart re-price and the next payment intent at once, no deploy.
  *
- * No row yet: the default (the column's own default). FAILED read — e.g. a deploy that landed
- * before the schema sync — the last value this instance read, else the default; reported as an
+ * No row yet: the default (the column's own default). No limited commission saved yet (the column
+ * is NULL): the open one, as before the two were split. FAILED read — e.g. a deploy that landed
+ * before the schema sync — the last values this instance read, else the default; reported as an
  * error. Never 0, and never a 500 on every grid that shows a price.
  */
 export async function getGalleryCommission(): Promise<GalleryCommission> {
@@ -99,14 +104,17 @@ export async function getGalleryCommission(): Promise<GalleryCommission> {
       where: { id: 1 },
       select: {
         galleryCommissionPct: true,
+        galleryCommissionLimitedPct: true,
         galleryCommissionChangedAt: true,
         galleryCommissionChangedById: true,
       },
     })
     const pct = settings?.galleryCommissionPct ?? DEFAULT_GALLERY_COMMISSION_PCT
-    lastKnownCommissionPct = pct
+    const limitedPct = settings?.galleryCommissionLimitedPct ?? pct
+    lastKnownCommission = { pct, limitedPct }
     return {
       pct,
+      limitedPct,
       changedAt: settings?.galleryCommissionChangedAt ?? null,
       changedById: settings?.galleryCommissionChangedById ?? null,
       readFailed: false,
@@ -114,7 +122,8 @@ export async function getGalleryCommission(): Promise<GalleryCommission> {
   } catch (err) {
     captureError(err, { flow: 'checkout', stage: 'gallery-commission-read', level: 'error' })
     return {
-      pct: lastKnownCommissionPct ?? DEFAULT_GALLERY_COMMISSION_PCT,
+      pct: lastKnownCommission?.pct ?? DEFAULT_GALLERY_COMMISSION_PCT,
+      limitedPct: lastKnownCommission?.limitedPct ?? DEFAULT_GALLERY_COMMISSION_PCT,
       changedAt: null,
       changedById: null,
       readFailed: true,
@@ -122,23 +131,28 @@ export async function getGalleryCommission(): Promise<GalleryCommission> {
   }
 }
 
-/** The commission as a rate (30% → 0.3): what every price function takes. */
-export async function getGalleryCommissionRate(): Promise<number> {
-  return (await getGalleryCommission()).pct / 100
+/** Both commissions as rates (30% → 0.3): what the price functions take, one per edition type. */
+export async function getGalleryCommissionRates(): Promise<GalleryRates> {
+  const { pct, limitedPct } = await getGalleryCommission()
+  return { open: pct / 100, limited: limitedPct / 100 }
 }
 
-/** Save the commission and stamp who and when. Returns the stamp, for "Last changed". */
-export async function setGalleryCommissionPct(pct: number, changedById: string): Promise<Date> {
-  if (!isValidGalleryCommissionPct(pct)) {
+/** Save both commissions and stamp who and when. Returns the stamp, for "Last changed". */
+export async function setGalleryCommissions(
+  pcts: { pct: number; limitedPct: number },
+  changedById: string,
+): Promise<Date> {
+  if (!isValidGalleryCommissionPct(pcts.pct) || !isValidGalleryCommissionPct(pcts.limitedPct)) {
     throw new Error('The commission must be a percentage from 0 to 100, with at most one decimal.')
   }
   const changedAt = new Date()
   const data = {
-    galleryCommissionPct: pct,
+    galleryCommissionPct: pcts.pct,
+    galleryCommissionLimitedPct: pcts.limitedPct,
     galleryCommissionChangedAt: changedAt,
     galleryCommissionChangedById: changedById,
   }
   await prisma.siteSettings.upsert({ where: { id: 1 }, update: data, create: { id: 1, ...data } })
-  lastKnownCommissionPct = pct
+  lastKnownCommission = { ...pcts }
   return changedAt
 }

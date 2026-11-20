@@ -1,8 +1,9 @@
 /**
  * The gallery's commission on a print — the one formula every price uses (pricing.md).
  *
- * The PERCENT is the owner's to set in Admin › Sales › Pricing (SiteSettings.galleryCommissionPct,
- * read on the server by `getGalleryCommissionRate` in ./settings). Everything that prices a print
+ * The PERCENTS are the owner's to set in Admin › Sales › Pricing, one for open editions
+ * (SiteSettings.galleryCommissionPct) and one for limited editions (galleryCommissionLimitedPct),
+ * read on the server by `getGalleryCommissionRates` in ./settings. Everything that prices a print
  * takes the resulting RATE (percent / 100) as an input instead of importing a constant: the quote,
  * the cart line, the checkout's authoritative re-price, the limited-edition margin check, the
  * "From" figures. Specs read the same setting or pass a rate, never a copy of the number.
@@ -15,6 +16,18 @@
 
 /** The commission until the owner sets one. Must match SiteSettings.galleryCommissionPct's @default. */
 export const DEFAULT_GALLERY_COMMISSION_PCT = 25
+
+/**
+ * The two commissions, as rates (owner 2026-11-20): open and limited editions each have their own,
+ * set separately in Admin › Sales › Pricing, so a numbered edition isn't cheaper than an open one
+ * at the same artist price. Servers read both once per request (`getGalleryCommissionRates`); a
+ * function that prices one edition type takes its single rate, picked with `rateForEdition`.
+ */
+export type GalleryRates = { open: number; limited: number }
+
+/** The rate a print of this edition type is priced with. */
+export const rateForEdition = (rates: GalleryRates, editionType: string): number =>
+  editionType === 'limited' ? rates.limited : rates.open
 
 export const GALLERY_COMMISSION_MIN_PCT = 0
 export const GALLERY_COMMISSION_MAX_PCT = 100

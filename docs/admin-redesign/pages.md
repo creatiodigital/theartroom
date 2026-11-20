@@ -1200,6 +1200,12 @@ The wheel over the toolbar scrolls it (no longer walks the room); every Save pan
   servers read it once per request, the wizard / checkout get it from their page, the variant editor fetches it.
   `TPS_GALLERY_MARKUP_RATE` is gone. Save asks first (`AdminConfirmModal`, no icon), then a green `FeedbackBar`.
   Deviations and open points: Q-PR1. Spec `e2e/gallery-commission.spec.ts`. Look: `/admin/pricing`, desktop and phone.
+  **2026-11-20 (owner, AR-188): two commissions, open and limited editions**, each chosen separately ("I will choose
+  the % separately"), so a limited edition isn't cheaper than an open one at the same artist price. New nullable
+  column `SiteSettings.galleryCommissionLimitedPct` (NULL = same as `galleryCommissionPct`, which becomes the open
+  editions' one; adding it changes no price). The card has two fields, **Open editions** and **Limited editions**,
+  one Save (asks first, naming what changes) and one "Last changed"; the example compares both columns. Every price
+  picks its work's edition type (`getGalleryCommissionRates()` + `rateForEdition`). No board: Q-PR2.
 
 | F1 | **Gallery › Feedback** (owner 2026-11-14): new menu item and page `/admin/feedback`, a table of every visitor feedback, newest first, filter Home page / 3D rooms, delete each one (asks first). No schema change. | `feedback-list.md` · `designs/admin-feedback-*.dc.html` | — | Built | See Built notes (F1). Pager: Q165. |
 | P1 | **Sales › Pricing** (owner 2026-11-18): new menu item and page `/admin/pricing`, the gallery commission as a setting (no longer hardcoded), Save asks first. Schema: 3 new `SiteSettings` columns. | `pricing.md` · `designs/admin-pricing*.dc.html` | — | Built | See Built notes (P1). Open points: Q-PR1. |

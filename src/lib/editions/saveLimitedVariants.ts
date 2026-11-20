@@ -22,7 +22,7 @@
  * in the publish action — this only manages the variant rows + ledger.
  */
 import prisma from '@/lib/prisma'
-import { getGalleryCommissionRate } from '@/lib/settings'
+import { getGalleryCommissionRates } from '@/lib/settings'
 import { TPS_PAPERS } from '@/lib/print-providers/printspace'
 import {
   isValidEditionSize,
@@ -126,8 +126,8 @@ export async function saveLimitedVariants(args: {
   // incoming sizes so the distinctness rule is checked against the final
   // set, not the stored one.
   const validated: { input: IncomingVariant; printTypeId: string }[] = []
-  // The owner's commission as it is now: the margin rule judges each fixed sheet at this rate.
-  const galleryRate = await getGalleryCommissionRate()
+  // The limited editions' commission as it is now: the margin rule judges each fixed sheet at it.
+  const galleryRate = (await getGalleryCommissionRates()).limited
   for (let i = 0; i < variants.length; i++) {
     const v = variants[i]
     const siblingSizes = variants

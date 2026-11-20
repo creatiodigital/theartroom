@@ -8,9 +8,16 @@ import { buildPrintspaceCatalog, getPrintMinSize } from '@/lib/print-providers/p
 import { openEditionFromConfig } from '@/lib/print-providers/printspace/fromConfig'
 import { getProviderQuote } from '@/lib/print-providers/quote'
 import prisma from '@/lib/prisma'
-import { getGalleryCommission, getGalleryCommissionRate } from '@/lib/settings'
+import { saleFromRow } from '@/lib/editions/artworkSale'
+import { getGalleryCommission, getGalleryCommissionRates } from '@/lib/settings'
 
-import { setupOpenFixture, teardownOpenFixture, type OpenFixture } from './edition-helpers'
+import {
+  setupLimitedFixture,
+  setupOpenFixture,
+  teardownLimitedFixture,
+  teardownOpenFixture,
+  type OpenFixture,
+} from './edition-helpers'
 import { withGalleryCommission } from './gallery-commission-helpers'
 import { buyOneLimited, teardownBoughtOrder, type BoughtLimitedOrder } from './order-helpers'
 import { cancelPaymentIntent, fixtureAddress } from './stripe-helpers'
@@ -50,7 +57,7 @@ test.describe('the gallery commission setting', () => {
     const fromAt: Record<number, number> = {}
     for (const pct of [33, 47]) {
       await withGalleryCommission(pct, async () => {
-        const rate = await getGalleryCommissionRate()
+        const rate = (await getGalleryCommissionRates()).open
         expect(rate, 'the app reads the setting just saved').toBe(pct / 100)
 
         // 1. The artwork page's "From" (the card + edition lines builder).
@@ -138,14 +145,46 @@ test.describe('the gallery commission setting', () => {
       bought = await buyOneLimited({ tag: 'commission-placed-order' })
       const before = await money(bought.orderId)
       // Any commission other than the one the order was placed at.
-      const other = (await getGalleryCommissionRate()) === 0.6 ? 50 : 60
+      const other = (await getGalleryCommissionRates()).limited === 0.6 ? 50 : 60
 
-      await withGalleryCommission(other, async () => {
-        expect(await money(bought!.orderId)).toEqual(before)
-      })
+      await withGalleryCommission(
+        other,
+        async () => {
+          expect(await money(bought!.orderId)).toEqual(before)
+        },
+        other,
+      )
       expect(await money(bought.orderId)).toEqual(before)
     } finally {
       await teardownBoughtOrder(bought)
+    }
+  })
+
+  test('open and limited editions are each priced at their own commission', async () => {
+    const limited = await setupLimitedFixture(3)
+    try {
+      await withGalleryCommission(
+        33,
+        async () => {
+          expect(await getGalleryCommissionRates()).toEqual({ open: 0.33, limited: 0.47 })
+          for (const [artworkId, rate] of [
+            [open.artworkId, 0.33],
+            [limited.artworkId, 0.47],
+          ] as const) {
+            const row = await prisma.artwork.findUniqueOrThrow({
+              where: { id: artworkId },
+              select: COMMERCE_SELECT,
+            })
+            const from = (await buildArtworkCommerce(artworkId, row))?.minPriceCents
+            const at = (r: number) => saleFromRow(row, { open: r, limited: r })?.minPriceCents
+            expect(from, `${row.editionType}: priced at its own commission`).toBe(at(rate))
+            expect(at(0.33), 'the two commissions give different prices').not.toBe(at(0.47))
+          }
+        },
+        47,
+      )
+    } finally {
+      await teardownLimitedFixture(limited)
     }
   })
 
@@ -169,6 +208,7 @@ test.describe('the gallery commission setting', () => {
       const failed = await getGalleryCommission()
       expect(failed.readFailed).toBe(true)
       expect(failed.pct, 'falls back to the last value read, not 0').toBe(good.pct)
+      expect(failed.limitedPct, 'the limited one too').toBe(good.limitedPct)
 
       const fromDuring = (await buildArtworkCommerce(open.artworkId, row))?.minPriceCents
       expect(fromDuring, 'prices stay what they were').toBe(fromBefore)

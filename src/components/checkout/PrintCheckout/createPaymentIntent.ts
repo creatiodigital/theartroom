@@ -13,7 +13,8 @@ import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
 import { getVatRate } from '@/lib/print-providers/printspace/pricing'
 import { getProviderQuote } from '@/lib/print-providers/quote'
 import type { PrintRestrictions } from '@/lib/print-providers/types'
-import { getGalleryCommissionRate, getPurchasesPaused } from '@/lib/settings'
+import { getGalleryCommissionRates, getPurchasesPaused } from '@/lib/settings'
+import { rateForEdition } from '@/lib/galleryCommission'
 import { variantToWizardConfig } from '@/lib/editions/variantToWizardConfig'
 import {
   reserveNextEditionNumber,
@@ -281,9 +282,12 @@ export async function createPaymentIntent(
   // Limited editions use the chosen variant's price; open editions use the
   // single artwork price. Both are guaranteed non-null by the checks above.
   const artistCents = isLimited ? pinnedVariant!.priceCents! : artwork.printPriceCents!
-  // The owner's commission as it is NOW (Admin › Sales › Pricing): this is the price the buyer is
-  // charged, whatever the page showed when it loaded.
-  const galleryRate = await getGalleryCommissionRate()
+  // The owner's commission for this edition type as it is NOW (Admin › Sales › Pricing): this is
+  // the price the buyer is charged, whatever the page showed when it loaded.
+  const galleryRate = rateForEdition(
+    await getGalleryCommissionRates(),
+    isLimited ? 'limited' : 'open',
+  )
 
   const quote = getProviderQuote(providerId, {
     config: effectiveConfig,

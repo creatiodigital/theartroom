@@ -24,6 +24,7 @@
  * between the three outcomes.
  */
 import type { Prisma } from '@/generated/prisma'
+import { rateForEdition, type GalleryRates } from '@/lib/galleryCommission'
 
 import {
   maximumPriceForLimited,
@@ -70,10 +71,12 @@ export type SaleArtwork = {
 
 export function resolveArtworkSale(
   artwork: SaleArtwork,
-  /** The gallery's commission rate, read once per request by the loader (getGalleryCommissionRate). */
-  galleryRate: number,
+  /** The gallery's commissions, read once per request by the loader (getGalleryCommissionRates);
+   *  the work is priced with its own edition type's. */
+  galleryRates: GalleryRates,
   liveVariants: SaleVariant[] = [],
 ): ArtworkSale | null {
+  const galleryRate = rateForEdition(galleryRates, artwork.editionType)
   const purchasable = isArtworkPurchasable({
     printEnabled: artwork.printEnabled,
     editionType: artwork.editionType,
@@ -149,18 +152,18 @@ export type SaleRow = SaleArtwork & {
 }
 
 /**
- * Resolve a row selected with `SALE_SELECT`, at the commission rate the loader read once for its
+ * Resolve a row selected with `SALE_SELECT`, at the commission rates the loader read once for its
  * whole query (never per row).
  *
  * Callers must NOT pass the row's pricing inputs on to the client:
  * `printPriceCents` is the ARTIST's cut, not a buyer-facing figure, and the
  * card only ever needs the resolved number.
  */
-export function saleFromRow(row: SaleRow, galleryRate: number): ArtworkSale | null {
+export function saleFromRow(row: SaleRow, galleryRates: GalleryRates): ArtworkSale | null {
   const { limitedVariants, ...artwork } = row
   return resolveArtworkSale(
     artwork,
-    galleryRate,
+    galleryRates,
     limitedVariants.map((v) => ({ ...v, hasAvailableNumber: v.editionNumbers.length > 0 })),
   )
 }

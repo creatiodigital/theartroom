@@ -20,7 +20,7 @@ import { getVatRate } from '@/lib/print-providers/printspace/pricing'
 import { validateAndPriceItem } from '@/lib/checkout/validateAndPriceItem'
 import type { ItemPricing } from '@/lib/checkout/validateAndPriceItem'
 import { sanitizeAndValidateAddress } from '@/lib/checkout/sanitizeAndValidateAddress'
-import { getGalleryCommissionRate } from '@/lib/settings'
+import { getGalleryCommissionRates } from '@/lib/settings'
 import type { ShippingAddress } from '@/components/checkout/PrintCheckout/createPaymentIntent'
 
 /**
@@ -112,9 +112,9 @@ export async function validateCart(
   // makes the failure list deterministic.
   const failures: CartValidationFailure[] = []
   const limitedVariantsSeen = new Set<string>()
-  // The owner's commission, read once for the whole cart: every line is priced at the same rate,
-  // and it's the current one (a change in admin re-prices carts here, at checkout).
-  const galleryRate = await getGalleryCommissionRate()
+  // The owner's commissions, read once for the whole cart: each line is priced at its edition
+  // type's, and it's the current one (a change in admin re-prices carts here, at checkout).
+  const galleryRates = await getGalleryCommissionRates()
   const priced: Array<{
     item: CartLikeItem
     pricing: ItemPricing
@@ -158,7 +158,7 @@ export async function validateCart(
       config: item.config,
       variantId: item.variantId,
       countryCode: address.countryCode,
-      galleryRate,
+      galleryRates,
     })
     if (!result.ok) {
       failures.push({ lineId: item.lineId, error: result.error })

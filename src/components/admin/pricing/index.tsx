@@ -38,72 +38,104 @@ const exampleFor = (pct: number) => {
   return { commission, artwork: EXAMPLE_ARTIST_CENTS + commission }
 }
 
+/** The two commissions (owner 2026-11-20: "I will choose the % separately"). */
+type Kind = 'open' | 'limited'
+type Pcts = Record<Kind, number>
+
+const KINDS: { kind: Kind; label: string; id: string }[] = [
+  { kind: 'open', label: 'Open editions', id: 'gallery-commission-open' },
+  { kind: 'limited', label: 'Limited editions', id: 'gallery-commission-limited' },
+]
+
+const INVALID = 'Enter a number from 0 to 100, with one decimal at most.'
+
 type AdminPricingProps = {
-  /** The commission as stored (pricing.md). */
+  /** Open editions' commission as stored (pricing.md). */
   pct: number
-  /** Its last save, ISO; null until the first one. */
+  /** Limited editions' commission as stored (the open one until the first save of both). */
+  limitedPct: number
+  /** The last save, ISO; null until the first one. */
   changedAt: string | null
-  /** The server couldn't read the setting and `pct` is its fallback. */
+  /** The server couldn't read the setting and the percents are its fallback. */
   readFailed: boolean
 }
 
 /**
  * Admin › Sales › Pricing (docs/admin-redesign/pricing.md, designs/admin-pricing*.dc.html): the
- * gallery's commission, added on top of every artist's price. Save asks first; the change reaches
- * every price on the site at once.
+ * gallery's commission, added on top of every artist's price — one for open editions, one for
+ * limited editions (owner 2026-11-20). One Save for both, which asks first; the change reaches every
+ * price on the site at once.
  */
-export function AdminPricing({ pct, changedAt, readFailed }: AdminPricingProps) {
-  const [saved, setSaved] = useState({ pct, changedAt })
-  const [text, setText] = useState(String(pct))
+export function AdminPricing({ pct, limitedPct, changedAt, readFailed }: AdminPricingProps) {
+  const [saved, setSaved] = useState<{ pcts: Pcts; changedAt: string | null }>({
+    pcts: { open: pct, limited: limitedPct },
+    changedAt,
+  })
+  const [text, setText] = useState<Record<Kind, string>>({
+    open: String(pct),
+    limited: String(limitedPct),
+  })
   // Silent until Save (the app's form rule): the error shows on Save and clears once fixed;
   // typing never adds one.
-  const [fieldError, setFieldError] = useState<string | null>(null)
+  const [invalid, setInvalid] = useState<Record<Kind, boolean>>({ open: false, limited: false })
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [feedback, setFeedback] = useState<{
     tone: 'success' | 'error'
-    pct?: number
     message?: string
   } | null>(null)
 
-  const typed = parsePct(text)
-  const valid = isValidGalleryCommissionPct(typed)
-  const dirty = text.trim() !== String(saved.pct)
-  const shownPct = valid ? typed : saved.pct
-  const example = exampleFor(shownPct)
+  const typed: Pcts = { open: parsePct(text.open), limited: parsePct(text.limited) }
+  const valid: Record<Kind, boolean> = {
+    open: isValidGalleryCommissionPct(typed.open),
+    limited: isValidGalleryCommissionPct(typed.limited),
+  }
+  const dirty =
+    text.open.trim() !== String(saved.pcts.open) ||
+    text.limited.trim() !== String(saved.pcts.limited)
+  // The example keeps the last valid figure while a field holds something else.
+  const shown: Pcts = {
+    open: valid.open ? typed.open : saved.pcts.open,
+    limited: valid.limited ? typed.limited : saved.pcts.limited,
+  }
+  const changes = KINDS.filter(({ kind }) => valid[kind] && typed[kind] !== saved.pcts[kind])
 
   const onSave = () => {
-    if (!valid) {
-      setFieldError('Enter a number from 0 to 100, with one decimal at most.')
+    if (!valid.open || !valid.limited) {
+      setInvalid({ open: !valid.open, limited: !valid.limited })
       return
     }
-    if (typed === saved.pct) {
+    if (changes.length === 0) {
       // "30.0" for a saved 30: nothing to change.
-      setText(String(saved.pct))
+      setText({ open: String(saved.pcts.open), limited: String(saved.pcts.limited) })
       return
     }
     setConfirmOpen(true)
   }
 
   const onConfirm = async () => {
-    if (!valid) return
+    if (!valid.open || !valid.limited) return
     setBusy(true)
-    const res = await saveGalleryCommission(typed).catch(() => ({
-      ok: false as const,
-      error: 'The commission wasn’t saved. Please try again.',
-    }))
+    const res = await saveGalleryCommission({ pct: typed.open, limitedPct: typed.limited }).catch(
+      () => ({ ok: false as const, error: 'The commission wasn’t saved. Please try again.' }),
+    )
     setBusy(false)
     setConfirmOpen(false)
     if (res.ok) {
-      setSaved({ pct: res.pct, changedAt: res.changedAt })
-      setText(String(res.pct))
-      setFeedback({ tone: 'success', pct: res.pct })
+      const pcts = { open: res.pct, limited: res.limitedPct }
+      setSaved({ pcts, changedAt: res.changedAt })
+      setText({ open: String(pcts.open), limited: String(pcts.limited) })
+      setFeedback({
+        tone: 'success',
+        message: `Open editions now use a ${pctLabel(pcts.open)} commission, limited editions ${pctLabel(pcts.limited)}.`,
+      })
     } else {
       setFeedback({ tone: 'error', message: res.error })
     }
   }
 
-  const before = exampleFor(saved.pct)
+  const example = { open: exampleFor(shown.open), limited: exampleFor(shown.limited) }
+  const before = { open: exampleFor(saved.pcts.open), limited: exampleFor(saved.pcts.limited) }
 
   return (
     <div className={styles.page}>
@@ -118,8 +150,7 @@ export function AdminPricing({ pct, changedAt, readFailed }: AdminPricingProps) 
           <FeedbackBar tone={feedback.tone} onDismiss={() => setFeedback(null)}>
             {feedback.tone === 'success' ? (
               <>
-                <strong>Saved.</strong> Prices now use a {pctLabel(feedback.pct ?? saved.pct)}{' '}
-                commission.
+                <strong>Saved.</strong> {feedback.message}
               </>
             ) : (
               feedback.message
@@ -131,7 +162,8 @@ export function AdminPricing({ pct, changedAt, readFailed }: AdminPricingProps) 
       {readFailed && (
         <div className={styles.feedback}>
           <Callout tone="red" title="The saved commission couldn’t be read.">
-            Prices are using {pctLabel(pct)} until it can. Reload the page before changing it.
+            Prices are using {pctLabel(pct)} for open editions and {pctLabel(limitedPct)} for
+            limited editions until it can. Reload the page before changing it.
           </Callout>
         </div>
       )}
@@ -142,7 +174,8 @@ export function AdminPricing({ pct, changedAt, readFailed }: AdminPricingProps) 
             Gallery commission
           </h2>
           <span className={styles.cardSub}>
-            Added on top of each artist’s price, for every artist and every print.
+            Added on top of each artist’s price, for every artist. Open and limited editions each
+            have their own.
           </span>
         </div>
 
@@ -154,32 +187,35 @@ export function AdminPricing({ pct, changedAt, readFailed }: AdminPricingProps) 
             onSave()
           }}
         >
-          <div className={styles.field}>
-            <label htmlFor="gallery-commission" className={styles.label}>
-              Commission
-            </label>
-            <div className={styles.inputWrap}>
-              <Input
-                id="gallery-commission"
-                type="text"
-                inputMode="decimal"
-                size="bare"
-                inputClassName={styles.input}
-                value={text}
-                invalid={!!fieldError}
-                onChange={(e) => {
-                  setText(e.target.value)
-                  if (fieldError && isValidGalleryCommissionPct(parsePct(e.target.value))) {
-                    setFieldError(null)
-                  }
-                }}
-                autoComplete="off"
-              />
-              <span className={styles.suffix} aria-hidden="true">
-                %
-              </span>
+          {KINDS.map(({ kind, label, id }) => (
+            <div key={kind} className={styles.field}>
+              <label htmlFor={id} className={styles.label}>
+                {label}
+              </label>
+              <div className={styles.inputWrap}>
+                <Input
+                  id={id}
+                  type="text"
+                  inputMode="decimal"
+                  size="bare"
+                  inputClassName={styles.input}
+                  value={text[kind]}
+                  invalid={invalid[kind]}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setText((t) => ({ ...t, [kind]: value }))
+                    if (invalid[kind] && isValidGalleryCommissionPct(parsePct(value))) {
+                      setInvalid((v) => ({ ...v, [kind]: false }))
+                    }
+                  }}
+                  autoComplete="off"
+                />
+                <span className={styles.suffix} aria-hidden="true">
+                  %
+                </span>
+              </div>
             </div>
-          </div>
+          ))}
           <Button
             type="submit"
             variant="bare"
@@ -190,30 +226,51 @@ export function AdminPricing({ pct, changedAt, readFailed }: AdminPricingProps) 
             Save
           </Button>
           {dirty ? (
-            <span className={styles.unsaved}>Not saved yet. Currently {pctLabel(saved.pct)}.</span>
+            <span className={styles.unsaved}>
+              Not saved yet. Currently {pctLabel(saved.pcts.open)} and{' '}
+              {pctLabel(saved.pcts.limited)}.
+            </span>
           ) : (
             <span className={styles.meta}>
               {saved.changedAt ? `Last changed ${dateLabel(saved.changedAt)}.` : 'Not changed yet.'}
             </span>
           )}
         </form>
-        {fieldError && (
+        {(invalid.open || invalid.limited) && (
           <p className={styles.error} role="alert">
-            {fieldError}
+            {INVALID}
           </p>
         )}
 
         <div className={styles.example} aria-live="polite">
           <span className={styles.exampleTitle}>Example</span>
+          <span aria-hidden="true" />
+          <span className={styles.exampleHead}>Open edition</span>
+          <span className={styles.exampleHead}>Limited edition</span>
+
           <span className={styles.exampleLabel}>Artist’s price</span>
           <span className={styles.exampleValue}>{formatDisplayPrice(EXAMPLE_ARTIST_CENTS)}</span>
-          <span className={styles.exampleLabel}>Gallery commission ({pctLabel(shownPct)})</span>
-          <span className={styles.exampleValue}>{formatDisplayPrice(example.commission)}</span>
+          <span className={styles.exampleValue}>{formatDisplayPrice(EXAMPLE_ARTIST_CENTS)}</span>
+
+          <span className={styles.exampleLabel}>Gallery commission</span>
+          <span className={styles.exampleValue}>
+            {formatDisplayPrice(example.open.commission)} ({pctLabel(shown.open)})
+          </span>
+          <span className={styles.exampleValue}>
+            {formatDisplayPrice(example.limited.commission)} ({pctLabel(shown.limited)})
+          </span>
+
           <span className={styles.exampleTotalLabel}>Artwork price</span>
-          <span className={styles.exampleTotalValue}>{formatDisplayPrice(example.artwork)}</span>
+          <span className={styles.exampleTotalValue}>{formatDisplayPrice(example.open.artwork)}</span>
+          <span className={styles.exampleTotalValue}>
+            {formatDisplayPrice(example.limited.artwork)}
+          </span>
+
           <span className={styles.exampleNote}>
-            The buyer also pays the print, shipping and VAT. The gallery keeps{' '}
-            {pctLabel(gallerySharePct(shownPct))} of the artwork price.
+            The buyer also pays the print, shipping and VAT, and the price is rounded up to a whole
+            euro. The gallery keeps {pctLabel(gallerySharePct(shown.open))} of an open
+            edition’s artwork price and {pctLabel(gallerySharePct(shown.limited))} of a limited
+            edition’s.
           </span>
         </div>
 
@@ -223,15 +280,26 @@ export function AdminPricing({ pct, changedAt, readFailed }: AdminPricingProps) 
         </p>
       </section>
 
-      {confirmOpen && valid && (
+      {confirmOpen && valid.open && valid.limited && (
         <AdminConfirmModal
-          title={`Change the gallery commission to ${pctLabel(typed)}?`}
-          message={`Every print price on the site changes now. With the example artist price of ${formatDisplayPrice(
+          title={
+            changes.length === 2
+              ? 'Change both gallery commissions?'
+              : `Change the ${changes[0].label.toLowerCase()} commission to ${pctLabel(typed[changes[0].kind])}?`
+          }
+          message={`Every ${
+            changes.length === 2 ? '' : `${changes[0].kind} edition `
+          }print price on the site changes now. With the example artist price of ${formatDisplayPrice(
             EXAMPLE_ARTIST_CENTS,
-          )}, the artwork price goes from ${formatDisplayPrice(before.artwork)} to ${formatDisplayPrice(
-            example.artwork,
-          )}. Orders already placed don’t change.`}
-          confirmLabel={`Change to ${pctLabel(typed)}`}
+          )}, ${changes
+            .map(
+              ({ kind }) =>
+                `${kind === 'open' ? 'an open' : 'a limited'} edition’s artwork price goes from ${formatDisplayPrice(
+                  before[kind].artwork,
+                )} to ${formatDisplayPrice(example[kind].artwork)} (${pctLabel(typed[kind])})`,
+            )
+            .join(', and ')}. Orders already placed don’t change.`}
+          confirmLabel={changes.length === 2 ? 'Change both' : `Change to ${pctLabel(typed[changes[0].kind])}`}
           cancelLabel="Cancel"
           busyLabel="Saving…"
           busy={busy}

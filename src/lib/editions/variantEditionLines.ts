@@ -108,7 +108,7 @@ export function variantEditionLineParts(line: VariantEditionLine): VariantEditio
  */
 export async function getVariantEditionLines(
   artworkId: string,
-  /** The gallery's commission rate the caller read for this request. */
+  /** The LIMITED editions' commission rate the caller read for this request. */
   galleryRate: number,
 ): Promise<VariantEditionLine[]> {
   const variants = await prisma.limitedVariant.findMany({
