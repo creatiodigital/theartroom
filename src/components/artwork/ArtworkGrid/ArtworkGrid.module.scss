@@ -144,11 +144,12 @@
   color: var(--color-text-primary);
 }
 
+// A little bigger and bolder than the drawn 19 px regular (owner, 2026-11-20), on every grid.
 .title {
   margin: 0;
   font-family: var(--font-serif), var(--font-serif-fallback);
-  font-size: 19px;
-  font-weight: var(--font-regular);
+  font-size: var(--text-xl-mobile);
+  font-weight: var(--font-medium);
   line-height: 1.25;
   color: var(--public-text);
 }
