@@ -5,7 +5,9 @@ import { shotFrame } from '@/lib/printPresentation/geometry'
 import { makeLook } from '@/lib/printPresentation/look'
 import { presentationFingerprint, presentationInputs } from '@/lib/printPresentation/inputs'
 import { loadPresentationSources } from '@/lib/printPresentation/loadSources'
+import { photoInputs } from '@/lib/printPresentation/photoInputs'
 import {
+  PHOTO_VIEWS,
   PRESENTATION_WIDTH_PX,
   isPrintPresentationRecord,
   type PrintPresentationRecord,
@@ -92,20 +94,25 @@ test('an admin stores a print presentation; nothing partial, nothing out of date
       ).status(),
     ).toBe(404)
 
-    // Two sizes, named by the fingerprint.
+    // Two sizes, named by the fingerprint and the render's own id (the server picks it). A work
+    // without a web image gets no photo views.
     const res = await admin.post(uploadsUrl, { data: { fingerprint } })
     expect(res.status()).toBe(200)
-    const uploads = (await res.json()) as Record<
-      'large' | 'small',
-      { url: string; publicUrl: string }
-    >
-    expect(uploads.large.publicUrl).toMatch(new RegExp(`${fingerprint}-1800\\.webp$`))
-    expect(uploads.small.publicUrl).toMatch(new RegExp(`${fingerprint}-900\\.webp$`))
+    const started = (await res.json()) as {
+      renderId: string
+      framed: Record<'large' | 'small', { url: string; publicUrl: string }>
+      photos: unknown
+    }
+    const { renderId, framed: uploads } = started
+    expect(renderId).toMatch(/^[0-9a-f]{8}$/)
+    expect(started.photos).toBeNull()
+    expect(uploads.large.publicUrl).toMatch(new RegExp(`${fingerprint}-${renderId}-1800\\.webp$`))
+    expect(uploads.small.publicUrl).toMatch(new RegExp(`${fingerprint}-${renderId}-900\\.webp$`))
 
     // Nothing is saved before both files are stored.
-    expect((await admin.put(recordUrl, { data: { fingerprint, window: WINDOW } })).status()).toBe(
-      400,
-    )
+    expect(
+      (await admin.put(recordUrl, { data: { fingerprint, renderId, window: WINDOW } })).status(),
+    ).toBe(400)
 
     for (const size of ['large', 'small'] as const) {
       const put = await admin.put(uploads[size].url, {
@@ -118,23 +125,32 @@ test('an admin stores a print presentation; nothing partial, nothing out of date
     // A window outside the shot, a stale fingerprint, an unknown work: refused.
     expect(
       (
-        await admin.put(recordUrl, { data: { fingerprint, window: { ...WINDOW, x: 1.2 } } })
+        await admin.put(recordUrl, {
+          data: { fingerprint, renderId, window: { ...WINDOW, x: 1.2 } },
+        })
       ).status(),
     ).toBe(400)
     expect(
-      (await admin.put(recordUrl, { data: { fingerprint: 'nope', window: WINDOW } })).status(),
+      (
+        await admin.put(recordUrl, { data: { fingerprint: 'nope', renderId, window: WINDOW } })
+      ).status(),
     ).toBe(409)
     expect(
       (
         await admin.put(`/api/admin/print-presentations/${UNKNOWN_ID}`, {
-          data: { fingerprint, window: WINDOW },
+          data: { fingerprint, renderId, window: WINDOW },
         })
       ).status(),
     ).toBe(404)
 
     // The record: built by the server, URLs of this fingerprint, window as sent.
     const saved = await admin.put(recordUrl, {
-      data: { fingerprint, window: WINDOW, urls: { large: 'https://evil.example/x.webp' } },
+      data: {
+        fingerprint,
+        renderId,
+        window: WINDOW,
+        urls: { large: 'https://evil.example/x.webp' },
+      },
     })
     expect(saved.status()).toBe(200)
     const row = await prisma.artwork.findUniqueOrThrow({
@@ -168,6 +184,113 @@ test('an admin stores a print presentation; nothing partial, nothing out of date
     const served = await admin.get(uploads.small.publicUrl)
     expect(served.status()).toBe(200)
     expect(served.headers()['content-type']).toBe('image/webp')
+  } finally {
+    const row = await prisma.artwork.findUniqueOrThrow({
+      where: { id },
+      select: { printPresentation: true },
+    })
+    if (isPrintPresentationRecord(row.printPresentation)) {
+      await deletePresentationFiles(row.printPresentation, id)
+    }
+    await prisma.artwork.delete({ where: { id } })
+  }
+})
+
+test('with a web image, a render stores its three photo views too; all or nothing', async ({
+  playwright,
+  baseURL,
+}) => {
+  const owner = await prisma.user.findUniqueOrThrow({
+    where: { handler: fixtures.artistSlug },
+    select: { id: true },
+  })
+  await prisma.artwork.deleteMany({ where: { slug: { startsWith: 'e2e-presentation-photos-' } } })
+  const artwork = await prisma.artwork.create({
+    data: {
+      userId: owner.id,
+      name: 'E2E Presentation Photos',
+      slug: `e2e-presentation-photos-${Date.now()}`,
+      artworkType: 'image',
+      originalWidth: 3000,
+      originalHeight: 2000,
+      imageUrl: 'https://assets.example/e2e-presentation-photos.webp',
+    },
+    select: { id: true },
+  })
+  const id = artwork.id
+  const [source] = await loadPresentationSources({ ids: [id] })
+  const inputs = presentationInputs(source)!
+  const photo = photoInputs(source, inputs)!
+  expect(photo, 'a work with a web image gets photo views').not.toBeNull()
+  const admin = await playwright.request.newContext({
+    baseURL,
+    storageState: 'e2e/.auth/admin.json',
+  })
+  const uploadsUrl = `/api/admin/print-presentations/${id}/uploads`
+  const recordUrl = `/api/admin/print-presentations/${id}`
+  const fingerprint = inputs.fingerprint
+  const viewsFingerprint = photo.fingerprint
+
+  try {
+    // A stale (or missing) photos fingerprint is refused: the image may have changed.
+    expect((await admin.post(uploadsUrl, { data: { fingerprint } })).status()).toBe(409)
+    expect(
+      (
+        await admin.post(uploadsUrl, { data: { fingerprint, viewsFingerprint: '00000000' } })
+      ).status(),
+    ).toBe(409)
+
+    const res = await admin.post(uploadsUrl, { data: { fingerprint, viewsFingerprint } })
+    expect(res.status()).toBe(200)
+    const { renderId, framed, photos } = (await res.json()) as {
+      renderId: string
+      framed: Record<'large' | 'small', { url: string; publicUrl: string }>
+      photos: Record<'sheet' | 'close' | 'edge', Record<'large' | 'small', { url: string; publicUrl: string }>>
+    }
+    for (const view of PHOTO_VIEWS) {
+      expect(photos[view].large.publicUrl).toMatch(
+        new RegExp(`${viewsFingerprint}-${renderId}-${view}-2400\\.webp$`),
+      )
+      expect(photos[view].small.publicUrl).toMatch(
+        new RegExp(`${viewsFingerprint}-${renderId}-${view}-600\\.webp$`),
+      )
+    }
+    const put = (url: string) =>
+      admin.put(url, { data: WEBP, headers: { 'Content-Type': 'image/webp' } })
+    const save = () =>
+      admin.put(recordUrl, { data: { fingerprint, viewsFingerprint, renderId, window: WINDOW } })
+
+    // The framed files alone are not enough: every photo must be stored first.
+    for (const size of ['large', 'small'] as const) expect((await put(framed[size].url)).status()).toBe(200)
+    expect((await save()).status()).toBe(400)
+    for (const view of PHOTO_VIEWS) {
+      for (const size of ['large', 'small'] as const) {
+        expect((await put(photos[view][size].url)).status()).toBe(200)
+      }
+    }
+    // An open edition pencils no copy: one sent is refused.
+    expect(
+      (
+        await admin.put(recordUrl, {
+          data: { fingerprint, viewsFingerprint, renderId, copy: 3, window: WINDOW },
+        })
+      ).status(),
+    ).toBe(400)
+    expect((await save()).status()).toBe(200)
+
+    const row = await prisma.artwork.findUniqueOrThrow({
+      where: { id },
+      select: { printPresentation: true },
+    })
+    expect(isPrintPresentationRecord(row.printPresentation)).toBe(true)
+    const record = row.printPresentation as unknown as PrintPresentationRecord
+    expect(record.renderId).toBe(renderId)
+    expect(record.copy).toBeUndefined()
+    expect(record.views?.fingerprint).toBe(viewsFingerprint)
+    for (const view of PHOTO_VIEWS) {
+      expect(record.views?.urls[view].large).toBe(photos[view].large.publicUrl)
+      expect(record.views?.urls[view].small).toBe(photos[view].small.publicUrl)
+    }
   } finally {
     const row = await prisma.artwork.findUniqueOrThrow({
       where: { id },

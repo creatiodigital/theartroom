@@ -26,3 +26,18 @@ export function checkShot(px: {
   }
   return null
 }
+
+/** A photo view darker than this on average drew nothing (a lost WebGL context). */
+const PHOTO_MIN_MEAN = 20
+/** A photo view with less spread than this is one flat colour: no paper, table or artwork in it. */
+const PHOTO_MIN_SD = 1.5
+
+/**
+ * Whether a photo view (2026-11-20) came out wrong, from its luminance (0–255) measured on the
+ * photo drawn down: its mean and standard deviation. Returns why, or null.
+ */
+export function photoProblem(px: { mean: number; sd: number }): string | null {
+  if (px.mean < PHOTO_MIN_MEAN) return 'The photo came out black'
+  if (px.sd < PHOTO_MIN_SD) return 'The photo came out flat'
+  return null
+}

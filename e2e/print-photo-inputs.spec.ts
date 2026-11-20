@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 import { presentationInputs } from '@/lib/printPresentation/inputs'
 import type { SourceRow } from '@/lib/printPresentation/loadSources'
-import { photoInputs, pencilledCopy, photoSheet } from '@/lib/printPresentation/photoInputs'
+import { photoInputs, pencilledCopy, photoSheet, renderCopy } from '@/lib/printPresentation/photoInputs'
 
 /**
  * Print photo views (2026-11-20): what a work's three photos depend on.
@@ -99,6 +99,18 @@ test.describe('print photo inputs', () => {
     const p = photoInputs(s, presentationInputs(s))!
     expect(p.numbered).toBe(false)
     expect(p.copy).toBeNull()
+  })
+
+  test('the copy a render pencils: every limited edition, even with no room in the photos', () => {
+    expect(renderCopy(source({ nextCopy: 4 }), presentationInputs(source()))).toBe(4)
+    const narrow = source({
+      nextCopy: 2,
+      mandatorySize: { widthCm: 30, heightCm: 20, borderCm: 1, sheetWidthCm: null, sheetHeightCm: null },
+    })
+    // The framed view's own sheet always has room: it still pencils the real copy.
+    expect(renderCopy(narrow, presentationInputs(narrow))).toBe(2)
+    const open = source({ editionType: 'open', mandatorySize: null, firstVariantEditionSize: null })
+    expect(renderCopy(open, presentationInputs(open))).toBeNull()
   })
 
   test('no web image, or no presentation: no photos', () => {

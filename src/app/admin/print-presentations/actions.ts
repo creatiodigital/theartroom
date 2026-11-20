@@ -11,6 +11,7 @@ import prisma from '@/lib/prisma'
 import { isCurrentRecord, shotFacts } from '@/lib/printPresentation/currentInputs'
 import { presentationInputs, type PresentationInputs } from '@/lib/printPresentation/inputs'
 import { loadPresentationSources } from '@/lib/printPresentation/loadSources'
+import { photoInputs, renderCopy, type PhotoInputs } from '@/lib/printPresentation/photoInputs'
 import { isFrameChoice, type FrameChoice } from '@/lib/printPresentation/look'
 import { measureMissingRatios } from '@/lib/printPresentation/measureRatios'
 import { presentationView, type PresentationView } from '@/lib/printPresentation/record'
@@ -29,6 +30,10 @@ export type PresentationRow = {
   status: PresentationStatus
   /** What a render needs; null when the work gets no presentation. */
   inputs: PresentationInputs | null
+  /** What its three photo views need; null without a presentation or a web image. */
+  photo: PhotoInputs | null
+  /** The copy a render pencils now (the real next unsold one); null for works that carry none. */
+  copy: number | null
   /** The stored render, whatever the switch says — the admin's preview. */
   view: PresentationView | null
 }
@@ -68,6 +73,8 @@ export async function listPrintPresentations(): Promise<
           imageUrl: source.imageUrl,
           status,
           inputs,
+          photo: photoInputs(source, inputs),
+          copy: renderCopy(source, inputs),
           view: record ? presentationView(record) : null,
         }
       })

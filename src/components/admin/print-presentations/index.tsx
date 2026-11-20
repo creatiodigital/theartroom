@@ -159,7 +159,7 @@ export const AdminPrintPresentations = () => {
     () =>
       (shown ?? []).flatMap((row) =>
         (row.status === 'missing' || row.status === 'stale') && row.inputs
-          ? [{ artworkId: row.artworkId, inputs: row.inputs }]
+          ? [{ artworkId: row.artworkId, inputs: row.inputs, photo: row.photo, copy: row.copy }]
           : [],
       ),
     [shown],
@@ -484,7 +484,14 @@ export const AdminPrintPresentations = () => {
                             aria-label={`${renderLabel} ${row.title}`}
                             disabled={!canRender || running || savingSetting}
                             onClick={() =>
-                              start([{ artworkId: row.artworkId, inputs: row.inputs! }])
+                              start([
+                                {
+                                  artworkId: row.artworkId,
+                                  inputs: row.inputs!,
+                                  photo: row.photo,
+                                  copy: row.copy,
+                                },
+                              ])
                             }
                           />
                         )}

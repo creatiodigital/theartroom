@@ -89,6 +89,15 @@ export function pencilledCopy(source: SourceRow, edition: number): number {
   return source.hasCopies ? edition : 1
 }
 
+/**
+ * The copy a render pencils — the framed view's number and, when there's room, the photos' — or
+ * null for works that carry none (open editions, works not for sale).
+ */
+export function renderCopy(source: SourceRow, inputs: PresentationInputs | null): number | null {
+  if (!inputs || inputs.mode !== 'limited' || inputs.edition === null) return null
+  return pencilledCopy(source, inputs.edition)
+}
+
 export type PhotoInputs = {
   sheet: PhotoSheet
   /** A number is pencilled: a limited edition with room for it under the image. */
