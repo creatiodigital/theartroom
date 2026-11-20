@@ -53,10 +53,11 @@ Sentry.init({
     }
 
     // Brave on iOS (built on Firefox for iOS) injects its own scripts into every
-    // page: reader mode under `window.__firefox__`, Night Mode via DarkReader.
-    // When they run before their globals exist they throw from an inline frame
-    // (`<page url>:1:19`, "global code"). Not our code; we never use either name.
-    if (/__firefox__|\bDarkReader\b/.test(message)) {
+    // page: reader mode under `window.__firefox__`, Night Mode via DarkReader,
+    // Brave Wallet as `window.ethereum`. When they run before their globals exist
+    // they throw from an inline frame (`<page url>:1:19`, "global code"). Not our
+    // code; we never use any of these names.
+    if (/__firefox__|\bDarkReader\b|\bethereum\b|selectedAddress/.test(message)) {
       return null
     }
 
