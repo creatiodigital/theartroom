@@ -12,6 +12,7 @@ import {
   isSuperAdmin,
 } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
+import { deleteFromR2 } from '@/lib/r2'
 import { isEmail } from '@/lib/validation'
 import { sanitizeLine } from '@/utils/sanitizeLine'
 
@@ -215,13 +216,63 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
       return NextResponse.json({ error: 'Forbidden - Cannot delete yourself' }, { status: 403 })
     }
 
-    // Get target user to verify it exists
-    const targetUser = await prisma.user.findUnique({ where: { id } })
+    const targetUser = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        profileImageUrl: true,
+        signatureUrl: true,
+        _count: { select: { artworks: true, exhibitions: true } },
+      },
+    })
     if (!targetUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    await prisma.user.delete({ where: { id } })
+    // Refused while the user still has artworks or exhibitions. The cascade
+    // would take their rows but none of their files, and an artwork with
+    // orders can't go at all: each is deleted on its own first, which cleans
+    // its files and keeps a sold work.
+    const { artworks, exhibitions } = targetUser._count
+    if (artworks > 0 || exhibitions > 0) {
+      const count = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`
+      const held = [
+        artworks > 0 ? count(artworks, 'artwork') : null,
+        exhibitions > 0 ? count(exhibitions, 'exhibition') : null,
+      ]
+        .filter(Boolean)
+        .join(' and ')
+      return NextResponse.json(
+        {
+          error: `This user still has ${held}. Delete ${artworks + exhibitions === 1 ? 'it' : 'them'} first, then the user.`,
+        },
+        { status: 409 },
+      )
+    }
+
+    // The row first, files after (as an artwork delete): a refused delete
+    // never loses a file.
+    try {
+      await prisma.user.delete({ where: { id } })
+    } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'P2003') {
+        return NextResponse.json(
+          { error: 'This user has orders, so they cannot be deleted.' },
+          { status: 409 },
+        )
+      }
+      throw error
+    }
+
+    // Best-effort: an orphaned file is a cost, never a reason to report the
+    // completed delete as failed.
+    for (const url of [targetUser.profileImageUrl, targetUser.signatureUrl]) {
+      if (!url) continue
+      try {
+        await deleteFromR2(url)
+      } catch (error) {
+        console.warn('[DELETE /api/users/[id]] failed to delete a file:', error)
+      }
+    }
 
     revalidatePath('/')
 

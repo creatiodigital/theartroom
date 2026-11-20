@@ -13,6 +13,7 @@ import {
   deleteR2KeyDirect,
   getPresignedUploadUrl,
   getR2ObjectSize,
+  listAllR2Keys,
   publicUrlForKey,
 } from '@/lib/r2'
 
@@ -324,4 +325,24 @@ export async function deletePresentationFiles(
   await Promise.all(
     names.map((name) => deleteR2KeyDirect(buildPresentationFileKey(artworkId, name))),
   )
+}
+
+/**
+ * Removes an artwork's whole render folder, for an artwork deleted for good: every render it ever
+ * stored, the current one's files and whatever failed or replaced renders left behind. This
+ * environment's folder only (`{env}/presentations/{artworkId}/` on R2), never another's.
+ */
+export async function deleteArtworkPresentationFolder(artworkId: string): Promise<void> {
+  if (!ARTWORK_SEGMENT.test(artworkId)) throw new Error('Invalid presentation path segment')
+  if (bakeBackend() === 'local') {
+    assertLocalAllowed()
+    await rm(/*turbopackIgnore: true*/ path.join(LOCAL_ROOT, artworkId), {
+      recursive: true,
+      force: true,
+    })
+    return
+  }
+  // The trailing slash keeps one id from matching another that starts with it.
+  const keys = await listAllR2Keys(buildPresentationFileKey(artworkId, ''))
+  await Promise.all(keys.map((key) => deleteR2KeyDirect(key)))
 }

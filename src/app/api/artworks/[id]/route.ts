@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { deleteFromR2 } from '@/lib/r2'
-import { isPrintPresentationRecord } from '@/lib/printPresentation/record'
-import { deletePresentationFiles } from '@/lib/printPresentation/storage'
+import { deleteArtworkPresentationFolder } from '@/lib/printPresentation/storage'
 
 import { isAdminOrAbove, requireOwnership } from '@/lib/authUtils'
 import { PUBLIC_ARTWORK_OMIT } from '@/lib/artworkFields'
@@ -604,7 +603,8 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
         originalImageUrl: true,
         soundUrl: true,
         videoUrl: true,
-        printPresentation: true,
+        // Its extra images and videos: the rows cascade with the artwork, their files don't.
+        media: { select: { url: true } },
       },
     })
 
@@ -665,9 +665,11 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     // The row is gone; now its files. Each is best-effort: an orphaned file is
     // a cost, never a reason to report a completed delete as failed.
     //
-    // The web image, the print presentation's stored renders (both sizes), the
-    // high-res original (the raw TIFF/PNG/JPEG, often tens of MB — orphaned
-    // in R2 every time an artist removed a piece without this), sound, video.
+    // The web image, the high-res original (the raw TIFF/PNG/JPEG, often tens
+    // of MB — orphaned in R2 every time an artist removed a piece without
+    // this), sound, video, the extra images and videos of its page, and its
+    // whole render folder: the current render and whatever failed or replaced
+    // renders left there.
     const deleteFile = async (url: string | null, what: string) => {
       if (!url) return
       try {
@@ -677,16 +679,15 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
       }
     }
     await deleteFile(artwork.imageUrl, 'image blob')
-    if (isPrintPresentationRecord(artwork.printPresentation)) {
-      try {
-        await deletePresentationFiles(artwork.printPresentation, artwork.id)
-      } catch (error) {
-        console.warn('Failed to delete print presentation files:', error)
-      }
+    try {
+      await deleteArtworkPresentationFolder(artwork.id)
+    } catch (error) {
+      console.warn('Failed to delete print presentation files:', error)
     }
     await deleteFile(artwork.originalImageUrl, 'original image blob')
     await deleteFile(artwork.soundUrl, 'sound blob')
     await deleteFile(artwork.videoUrl, 'video blob')
+    for (const { url } of artwork.media) await deleteFile(url, 'artwork media blob')
 
     return NextResponse.json({ success: true })
   } catch (error) {
