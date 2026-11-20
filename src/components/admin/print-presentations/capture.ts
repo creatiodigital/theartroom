@@ -1,6 +1,11 @@
 import { BAKE_CACHE_CONTROL } from '@/lib/bake/bakeUpload'
 import type { PresentationWindow } from '@/lib/printPresentation/geometry'
-import { PRESENTATION_WIDTH_PX, type PresentationSize } from '@/lib/printPresentation/record'
+import {
+  PHOTO_VIEWS,
+  PRESENTATION_WIDTH_PX,
+  type PhotoViewKind,
+  type PresentationSize,
+} from '@/lib/printPresentation/record'
 import { checkShot } from '@/lib/printPresentation/shotCheck'
 
 /**
@@ -94,39 +99,73 @@ const refused = async (response: Response, what: string) => {
   return new Error(`${what}: ${reason}`)
 }
 
+type UploadUrls = Record<PresentationSize, { url: string }>
+
 /**
- * Stores one render: upload URLs for both sizes, both files, then the record — in that order, so
- * nothing is saved unless every file is stored (the server checks too).
+ * Stores one render — the framed shot and, for a work with a web image, its three photo views:
+ * the render's id and every upload URL, every file, then the record — in that order, so nothing
+ * is saved unless every file is stored (the server checks too).
  */
-export async function storeShot(
-  artworkId: string,
-  fingerprint: string,
+export async function storeRender(
+  render: {
+    artworkId: string
+    fingerprint: string
+    /** The photos' fingerprint; null for a work without photos. */
+    viewsFingerprint: string | null
+    /** The copy the render pencils; null for works that carry none. */
+    copy: number | null
+  },
   window: PresentationWindow,
   files: Record<PresentationSize, Blob>,
+  photos: Record<PhotoViewKind, Record<PresentationSize, Blob>> | null,
   origin: string,
 ): Promise<void> {
-  const base = `/api/admin/print-presentations/${artworkId}`
+  const base = `/api/admin/print-presentations/${render.artworkId}`
   const started = await fetch(`${base}/uploads`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fingerprint }),
+    body: JSON.stringify({
+      fingerprint: render.fingerprint,
+      viewsFingerprint: render.viewsFingerprint,
+    }),
   })
   if (!started.ok) throw await refused(started, 'Upload refused')
-  const uploads = (await started.json()) as Record<PresentationSize, { url: string }>
+  const uploads = (await started.json()) as {
+    renderId: string
+    framed: UploadUrls
+    photos: Record<PhotoViewKind, UploadUrls> | null
+  }
 
-  for (const size of ['large', 'small'] as const) {
-    const put = await fetch(uploads[size].url, {
+  const put = async (url: string, blob: Blob, what: string) => {
+    const response = await fetch(url, {
       method: 'PUT',
-      headers: presentationUploadHeaders(uploads[size].url, origin),
-      body: files[size],
+      headers: presentationUploadHeaders(url, origin),
+      body: blob,
     })
-    if (!put.ok) throw new Error(`Storing the ${size} file failed: HTTP ${put.status}`)
+    if (!response.ok) throw new Error(`Storing ${what} failed: HTTP ${response.status}`)
+  }
+  for (const size of ['large', 'small'] as const) {
+    await put(uploads.framed[size].url, files[size], `the ${size} file`)
+  }
+  if (photos) {
+    if (!uploads.photos) throw new Error('Upload refused: no photo uploads')
+    for (const view of PHOTO_VIEWS) {
+      for (const size of ['large', 'small'] as const) {
+        await put(uploads.photos[view][size].url, photos[view][size], `the ${view} photo (${size})`)
+      }
+    }
   }
 
   const saved = await fetch(base, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fingerprint, window }),
+    body: JSON.stringify({
+      fingerprint: render.fingerprint,
+      viewsFingerprint: render.viewsFingerprint,
+      renderId: uploads.renderId,
+      copy: render.copy,
+      window,
+    }),
   })
   if (!saved.ok) throw await refused(saved, 'Saving refused')
 }

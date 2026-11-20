@@ -148,3 +148,18 @@ export function makeLook(seed: number, mode: PresentationMode, edition: number):
     barOffsets: [0, 1, 2, 3].map(() => [r(), r()]),
   }
 }
+
+/**
+ * The look a render uses: `makeLook`'s, pencilling `copy` — the real next unsold copy (owner,
+ * 2026-11-20) — when one is given. Only the copy changes; makeLook still draws its own in
+ * sequence, so every other value stays where it was approved. Null keeps makeLook's copy.
+ */
+export function studioLook(
+  seed: number,
+  mode: PresentationMode,
+  edition: number,
+  copy: number | null,
+): Look {
+  const look = makeLook(seed, mode, edition)
+  return copy === null ? look : { ...look, copy }
+}

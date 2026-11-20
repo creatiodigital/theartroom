@@ -42,9 +42,7 @@ export const PrintsPage = ({ selection, pageContent }: PrintsPageProps) => {
           />
           <div className={styles.description}>
             <span className={styles.eyebrow}>Fine-art prints</span>
-            <h2 className={styles.descriptionTitle}>
-              Every print, approved and signed by the artist.
-            </h2>
+            <h2 className={styles.descriptionTitle}>Two kinds of prints</h2>
             {/* The paragraphs are the page editor's (Admin › Content › Prints), as before. */}
             {hasDescription && (
               <RichText content={pageContent!.content} className={styles.descriptionText} />

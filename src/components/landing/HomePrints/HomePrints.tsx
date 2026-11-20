@@ -151,12 +151,13 @@ export const HomePrints = ({ slides }: { slides: HomePrintSlide[] }) => {
         <div className={styles.text}>
           <span className={styles.label}>Fine-art prints</span>
           <h2 id="home-prints-heading" className={styles.heading}>
-            Every print, approved and signed by the artist.
+            Every print, approved by the artist.
           </h2>
           <p className={styles.lead}>
             Each one is produced on archival fine-art paper by the labs museums rely on, approved by
-            the artist before it reaches your wall, and arrives with a certificate of authenticity
-            signed by the artist.
+            the artist before it reaches your wall, and arrives with a certificate of authenticity. A
+            limited edition is also numbered on the print, and its certificate carries the
+            artist&rsquo;s printed signature.
           </p>
           <div className={styles.captions}>
             {slides.map((slide, i) => (
@@ -170,8 +171,15 @@ export const HomePrints = ({ slides }: { slides: HomePrintSlide[] }) => {
                   className={styles.work}
                   tabIndex={i === index ? undefined : -1}
                 >
-                  {workTitle(slide)}
-                  {slide.year ? `, ${slide.year}` : ''}
+                  {/* Title italic only when the year follows: "<i>Title</i>, 2024" (owner,
+                      2026-11-20). Titles stand upright everywhere else. */}
+                  {slide.year ? (
+                    <>
+                      <cite>{workTitle(slide)}</cite>, {slide.year}
+                    </>
+                  ) : (
+                    workTitle(slide)
+                  )}
                 </Link>
                 <span className={styles.artist}>{slide.artistName}</span>
                 {/* The edition and the price under the artist, as the grids' cards (owner,

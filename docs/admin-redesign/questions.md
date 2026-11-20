@@ -1329,3 +1329,19 @@ built the conservative way; please confirm or adjust.
 - The card title uses the boards' 18 px / 600 heading, not `Panel`'s caps title, so the card is page-local, not `Panel`.
 - Typed the same value with a trailing zero ("30.0" for a saved 30): Save resets the field to "30" without asking.
 
+**Q-PV1 (Code Claude, 2026-11-20): Dashboard › "You have X artworks that need to be re-rendered".** Asked by the owner
+(print photo views), built without a board, the conservative way: an amber `Callout` under the attention cards (not a
+sixth `AttentionCard`: it isn't an order count), only when X > 0, with the action link "Open print presentations". X
+counts every work needing a render (none yet, out of date, photos missing or old, a sold pencilled copy). Its count is
+read on its own (the page doesn't wait for it); when it can't be read, nothing shows. Please confirm or adjust the look.
+
+**Q-PR2 (Code Claude, 2026-11-20): Sales › Pricing, a second commission for limited editions.** Owner: "add a second
+column on the db for limited, I will choose the % separately". Built without a board, the conservative way, inside the
+same card: two fields side by side (**Open editions**, **Limited editions**, same field look), one Save for both, one
+status line ("Not saved yet. Currently 25% and 30%." / "Last changed …"); the confirm names what changes ("Change both
+gallery commissions?" or "Change the limited editions commission to 30%?") with the example before → after; the example
+box gains a column per edition type (Artist's price, Gallery commission, Artwork price) and its note gives both shares
+and says the price is rounded up to a whole euro. Card sub: "Added on top of each artist's price, for every artist.
+Open and limited editions each have their own." Until the first save of both, the limited field shows the open value
+(the column is empty and limited prices follow it). Please design the two-field card (desktop + phone) or confirm.
+

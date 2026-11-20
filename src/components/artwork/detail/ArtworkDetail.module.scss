@@ -64,6 +64,57 @@
   max-width: 100%;
 }
 
+// ── The four views (owner, 2026-11-20) ───────────────────────────────────
+// With its photos, the box holds a strip of four slides, each the box's size: the framed view
+// (contained, as before) and three photos (cover). Moved by the grid below Inquire; on phones the
+// strip also swipes (native scroll-snap). The slides keep the box as their container, so the
+// framed view's caps (cq units) read from it as before.
+.viewsTrack {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @include media-down(sm) {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+  }
+}
+
+.viewSlide {
+  display: flex;
+  flex: 0 0 100%;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 100%;
+  scroll-snap-align: start;
+}
+
+.viewPhoto {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+// Tablets and desktop: below Inquire, in the info column (the grid's own gap above it).
+.viewsGrid {
+  margin-top: var(--space-2);
+}
+
+// Phones: the row sits right under the photo, so the info column moves one row down.
+.viewsRow {
+  grid-column: 1;
+  grid-row: 2;
+}
+
 // The picture's (or the print photo's) size: as large as the box allows, with air on every side.
 .fit {
   display: block;
@@ -124,12 +175,16 @@
   // Scrolls with the page, top-aligned with the picture; not sticky (owner, 2026-11-12).
   align-self: start;
 
-  // Stacked: under the picture, on the off-white.
+  // Stacked: under the picture (and, on phones, under the views row), on the off-white.
   @include media-down(lg) {
     grid-column: 1;
     grid-row: 2;
     padding: var(--space-6) var(--space-5) var(--space-8);
     background: var(--public-off-white);
+
+    @include media-down(sm) {
+      grid-row: 3;
+    }
   }
 }
 
@@ -181,20 +236,20 @@ a.artist:hover {
   color: var(--color-text-secondary);
 }
 
-// The technique's lines (camera, lens, ISO…), as entered, 8 px under the size. Through .info
-// .identity: outranks RichText's own compact rules whatever the stylesheet order (the room
-// overlay loads them in another order than the page).
-.info .identity .technique {
-  margin-top: 4px;
+// The technique's lines (camera, lens, ISO…), as entered: the first lines of the print block,
+// under the divider (owner, 2026-11-20), set close ("lines look too separated": 1.5, as the year).
+// Through .info: outranks RichText's own rules whatever the stylesheet order (the room overlay
+// loads them in another order than the page).
+.info .technique {
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.5;
   color: var(--color-text-secondary);
 
   p,
   li {
     margin: 0;
     font-size: 13px;
-    line-height: 1.6;
+    line-height: 1.5;
     color: var(--color-text-secondary);
   }
 }

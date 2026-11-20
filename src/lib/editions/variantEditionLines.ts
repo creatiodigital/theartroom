@@ -33,6 +33,11 @@ export type VariantEditionLine = {
   left: number
   /** True once every copy has sold. */
   soldOut: boolean
+  /** The copy a buyer gets: the lowest not yet paid for (owner, 2026-11-20: "Edition 1 of 30",
+   *  "replace by the correct number"). A reserved copy (an unfinished checkout) still counts as
+   *  unsold, so an abandoned checkout never moves it. The renders pencil the same copy. Null when
+   *  sold out. */
+  nextCopy: number | null
   /** What this edition costs, excluding shipping and tax. Price is NOT common
    *  across a work's editions — each variant is its own size, paper and figure —
    *  so it belongs on the row, never as one number above them all. */
@@ -60,6 +65,8 @@ export type VariantEditionLineParts = {
   /** Copies not yet sold (see `VariantEditionLine.left`). */
   left: number
   soldOut: boolean
+  /** The copy a buyer gets (see `VariantEditionLine.nextCopy`). */
+  nextCopy: number | null
   /** "€312", or null when the variant carries no usable price. */
   price: string | null
 }
@@ -73,13 +80,14 @@ export function variantEditionLineParts(line: VariantEditionLine): VariantEditio
     editionSize: line.editionSize,
     left: line.left,
     soldOut: line.soldOut,
+    nextCopy: line.nextCopy,
     price: line.priceCents === null ? null : formatDisplayPrice(line.priceCents),
   }
 }
 
 /**
- * One line per live variant, smallest print first: its size, name, edition size, copies left and
- * price.
+ * One line per live variant, cheapest first: its size, name, edition size, copies left, the copy
+ * a buyer gets and price.
  *
  * "28 left" (owner, 2026-11-17) counts SOLD copies only: edition size minus the copies paid for.
  * The counts tried before misled because they moved with checkouts, or read as a copy number:
@@ -100,7 +108,7 @@ export function variantEditionLineParts(line: VariantEditionLine): VariantEditio
  */
 export async function getVariantEditionLines(
   artworkId: string,
-  /** The gallery's commission rate the caller read for this request. */
+  /** The LIMITED editions' commission rate the caller read for this request. */
   galleryRate: number,
 ): Promise<VariantEditionLine[]> {
   const variants = await prisma.limitedVariant.findMany({
@@ -121,6 +129,13 @@ export async function getVariantEditionLines(
       // counts for nothing — only the Stripe webhook sets `sold`, so it is the
       // single state that means money arrived.
       _count: { select: { editionNumbers: { where: { state: 'sold' } } } },
+      // The copy a buyer gets: the lowest not yet paid for.
+      editionNumbers: {
+        where: { state: { not: 'sold' } },
+        orderBy: { number: 'asc' },
+        select: { number: true },
+        take: 1,
+      },
     },
   })
 
@@ -131,6 +146,9 @@ export async function getVariantEditionLines(
     // the ledger would make wrong.
     left: Math.max(0, v.editionSize - v._count.editionNumbers),
     soldOut: v._count.editionNumbers >= v.editionSize,
+    // No copies yet (not published): the first copy is 1.
+    nextCopy:
+      v._count.editionNumbers >= v.editionSize ? null : (v.editionNumbers[0]?.number ?? 1),
     widthCm: v.widthCm,
     heightCm: v.heightCm,
     paperId: v.paperId,
@@ -139,6 +157,11 @@ export async function getVariantEditionLines(
     // card's minimum cannot drift apart.
     priceCents: minimumPriceForLimited([v], galleryRate)?.cents ?? null,
   }))
-  // Smallest print first (units.md): the rows read as a run of sizes.
-  return lines.sort((a, b) => a.widthCm * a.heightCm - b.widthCm * b.heightCm)
+  // Cheapest first (owner, 2026-11-20: "move the cheapest up"); a row without a price last; equal
+  // prices smallest print first.
+  return lines.sort(
+    (a, b) =>
+      (a.priceCents ?? Infinity) - (b.priceCents ?? Infinity) ||
+      a.widthCm * a.heightCm - b.widthCm * b.heightCm,
+  )
 }

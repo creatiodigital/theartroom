@@ -10,11 +10,11 @@ import {
   findConfigRestrictionClash,
 } from '@/lib/print-providers'
 import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
-import { galleryCommissionCents } from '@/lib/galleryCommission'
 import { getVatRate } from '@/lib/print-providers/printspace/pricing'
 import { getProviderQuote } from '@/lib/print-providers/quote'
 import type { PrintRestrictions } from '@/lib/print-providers/types'
-import { getGalleryCommissionRate, getPurchasesPaused } from '@/lib/settings'
+import { getGalleryCommissionRates, getPurchasesPaused } from '@/lib/settings'
+import { rateForEdition } from '@/lib/galleryCommission'
 import { variantToWizardConfig } from '@/lib/editions/variantToWizardConfig'
 import {
   reserveNextEditionNumber,
@@ -282,10 +282,12 @@ export async function createPaymentIntent(
   // Limited editions use the chosen variant's price; open editions use the
   // single artwork price. Both are guaranteed non-null by the checks above.
   const artistCents = isLimited ? pinnedVariant!.priceCents! : artwork.printPriceCents!
-  // The owner's commission as it is NOW (Admin › Sales › Pricing): this is the price the buyer is
-  // charged, whatever the page showed when it loaded.
-  const galleryRate = await getGalleryCommissionRate()
-  const galleryCents = galleryCommissionCents(artistCents, galleryRate)
+  // The owner's commission for this edition type as it is NOW (Admin › Sales › Pricing): this is
+  // the price the buyer is charged, whatever the page showed when it loaded.
+  const galleryRate = rateForEdition(
+    await getGalleryCommissionRates(),
+    isLimited ? 'limited' : 'open',
+  )
 
   const quote = getProviderQuote(providerId, {
     config: effectiveConfig,
@@ -296,11 +298,11 @@ export async function createPaymentIntent(
 
   // Provider Quote.lines layout: [{id:'artwork', amount}, {id:'shipping', amount}]
   // The 'artwork' line bundles artist + gallery + production cost
-  // together; we split them out for the order metadata so the admin
+  // together; the quote's split goes into the order metadata so the admin
   // page can show the breakdown without recomputing.
-  const artworkLineCents = quote.lines.find((l) => l.id === 'artwork')?.amountCents ?? 0
   const shippingCents = quote.lines.find((l) => l.id === 'shipping')?.amountCents ?? 0
-  const productionCents = Math.max(0, artworkLineCents - artistCents - galleryCents)
+  // The quote's split: the gallery part carries the rounding to a whole euro (the price shown).
+  const { galleryCents, productionCents } = quote.artworkSplit
   const preTaxCents = quote.subtotalCents
   const currency = quote.currency.toLowerCase()
 

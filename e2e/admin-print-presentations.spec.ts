@@ -2,10 +2,16 @@ import { test, expect } from '@playwright/test'
 
 import { Prisma } from '@/generated/prisma'
 import { bakeBackend } from '@/lib/bake/bakeStorage'
+import { needsRender } from '@/lib/printPresentation/currentInputs'
 import { presentationInputs } from '@/lib/printPresentation/inputs'
 import { loadPresentationSources } from '@/lib/printPresentation/loadSources'
+import { photoInputs, renderCopy } from '@/lib/printPresentation/photoInputs'
 import type { PrintPresentationRecord } from '@/lib/printPresentation/record'
-import { deletePresentationFiles } from '@/lib/printPresentation/storage'
+import {
+  deletePresentationFiles,
+  newRenderId,
+  photoPublicUrls,
+} from '@/lib/printPresentation/storage'
 import prisma from '@/lib/prisma'
 import { getPrintPresentationsEnabled, setPrintPresentationsEnabled } from '@/lib/settings'
 
@@ -61,14 +67,24 @@ test.beforeAll(async () => {
   switchWas = await getPrintPresentationsEnabled()
   const [source] = await loadPresentationSources({ ids: [artworkId] })
   const inputs = presentationInputs(source)!
+  // Up to date means its photos too (2026-11-20): a render made today, with its three photo views
+  // (the admin never previews them, so their files needn't exist).
+  const photo = photoInputs(source, inputs)!
+  const renderId = newRenderId()
   record = {
     fingerprint: inputs.fingerprint,
     mode: inputs.mode,
     edition: inputs.edition,
     window: { x: 0.2, y: 0.2, w: 0.6, h: 0.6 },
     aspect: BLANK.tall.aspect,
-    urls: await writeBlankRender(artworkId, inputs.fingerprint, 'tall'),
+    urls: await writeBlankRender(artworkId, inputs.fingerprint, 'tall', renderId),
     renderedAt: new Date().toISOString(),
+    renderId,
+    views: {
+      fingerprint: photo.fingerprint,
+      urls: photoPublicUrls(artworkId, photo.fingerprint, renderId),
+      renderedAt: new Date().toISOString(),
+    },
   }
 })
 
@@ -229,4 +245,29 @@ test.describe('as an artist', () => {
     await expect(page).toHaveURL(/\/dashboard/)
     await expect(page.getByRole('heading', { name: 'Print presentations' })).toHaveCount(0)
   })
+})
+
+test('the dashboard says how many artworks need to be re-rendered', async ({ page }) => {
+  // The count as the server makes it: no render, an old one, photos missing or old, or a pencilled
+  // copy that has sold (owner, 2026-11-20: "just give me a warning on my dashboard homepage").
+  const sources = await loadPresentationSources()
+  const n = sources.filter((s) => {
+    const inputs = presentationInputs(s)
+    return needsRender(s.id, s.record, inputs, photoInputs(s, inputs), renderCopy(s, inputs))
+  }).length
+  await page.goto('/admin/dashboard')
+  const note = page.getByRole('note').filter({ hasText: /to be re-rendered/ })
+  if (n === 0) {
+    await expect(note).toHaveCount(0)
+    return
+  }
+  await expect(note).toContainText(
+    n === 1
+      ? 'You have 1 artwork that needs to be re-rendered'
+      : `You have ${n} artworks that need to be re-rendered`,
+  )
+  await expect(note.getByRole('link', { name: /print presentations/i })).toHaveAttribute(
+    'href',
+    '/admin/print-presentations',
+  )
 })

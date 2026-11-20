@@ -34,12 +34,12 @@ import {
   findConfigRestrictionClash,
 } from '@/lib/print-providers'
 import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
-import { galleryCommissionCents } from '@/lib/galleryCommission'
 import { getProviderQuote } from '@/lib/print-providers/quote'
 import { summarizeConfig, type SpecsSummary } from '@/lib/print-providers/specs'
 import type { PrintRestrictions } from '@/lib/print-providers/types'
 import { variantToWizardConfig } from '@/lib/editions/variantToWizardConfig'
 import prisma from '@/lib/prisma'
+import { rateForEdition, type GalleryRates } from '@/lib/galleryCommission'
 
 export type ItemValidationInput = {
   artworkSlug: string
@@ -52,8 +52,9 @@ export type ItemValidationInput = {
    *  be absent for open editions. */
   variantId?: string
   countryCode: string
-  /** The gallery's commission rate, read once per request by the caller (getGalleryCommissionRate). */
-  galleryRate: number
+  /** The gallery's commissions, read once per request by the caller (getGalleryCommissionRates).
+   *  The line is priced with its artwork's edition type's, as stored, never the cart's say-so. */
+  galleryRates: GalleryRates
 }
 
 export type ItemPricing = {
@@ -98,7 +99,7 @@ export type ItemValidationResult =
 export async function validateAndPriceItem(
   input: ItemValidationInput,
 ): Promise<ItemValidationResult> {
-  const { artworkSlug, providerId, config, variantId, countryCode, galleryRate } = input
+  const { artworkSlug, providerId, config, variantId, countryCode, galleryRates } = input
 
   const artwork = await prisma.artwork.findUnique({
     where: { slug: artworkSlug },
@@ -147,6 +148,7 @@ export async function validateAndPriceItem(
   // the canonical config from the chosen (published) variant. For an
   // open edition a supplied variantId is a tamper signal.
   const isLimited = artwork.editionType === 'limited'
+  const galleryRate = rateForEdition(galleryRates, artwork.editionType)
   let effectiveConfig: WizardConfig = config
   let pinnedVariant: (typeof artwork.limitedVariants)[number] | null = null
   if (isLimited) {
@@ -215,7 +217,6 @@ export async function validateAndPriceItem(
   // Limited editions use the chosen variant's price; open editions use the
   // single artwork price. Both are guaranteed non-null by the checks above.
   const artistCents = isLimited ? pinnedVariant!.priceCents! : artwork.printPriceCents!
-  const galleryCents = galleryCommissionCents(artistCents, galleryRate)
 
   const quote = getProviderQuote(providerId, {
     config: effectiveConfig,
@@ -229,7 +230,8 @@ export async function validateAndPriceItem(
   // together; we split them out so callers can show the breakdown.
   const artworkLineCents = quote.lines.find((l) => l.id === 'artwork')?.amountCents ?? 0
   const shippingCents = quote.lines.find((l) => l.id === 'shipping')?.amountCents ?? 0
-  const productionCents = Math.max(0, artworkLineCents - artistCents - galleryCents)
+  // The quote's split: the gallery part carries the rounding to a whole euro (the price shown).
+  const { galleryCents, productionCents } = quote.artworkSplit
   // Per-item PRE-TAX is the artwork line ONLY — it must EXCLUDE shipping.
   // The provider's quote.subtotalCents = artworkLineCents + shippingCents
   // (see printspace getQuote), but for a multi-item order shipping is a

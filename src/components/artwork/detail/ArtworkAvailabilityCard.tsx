@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { UnitsSwitch } from '@/components/ui/UnitsSwitch'
 import type { ArtworkSizes } from '@/lib/editions/artworkSizes'
 import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
+import { editionLineText } from '@/lib/editions/editionLineText'
 import type { VariantEditionLineParts } from '@/lib/editions/variantEditionLines'
 import { formatDimensions, type Unit } from '@/lib/units/format'
 import { useUnits } from '@/lib/units/UnitsProvider'
@@ -17,13 +18,15 @@ import styles from './ArtworkAvailabilityCard.module.scss'
  * The print part of the artwork page's info column (docs/public-redesign/units.md "Artwork page:
  * the print, its sizes and its price together"; owner, 2026-11-17: "I don't want to make users
  * guess… do not be too verbose either"): what kind of print it is, its sizes, the price, Order a
- * print, the caller's Inquire, then the caveat. The same block in the 3D room's artwork details.
+ * print, then the caller's Inquire. The same block in the 3D room's artwork details. No "Not
+ * reserved until you pay" line under the buttons (owner, 2026-11-20: too pushy); the order
+ * wizard's limited step still says it.
  *
- * - Open edition: Smallest / Largest, "or any size in between.", From €303 + Available, then
- *   "Size, paper and frame are chosen next."
- * - Limited, one size: the size, "Edition of 30 · 28 left", the price + Available.
- * - Limited, two or more: "Available in two sizes:", one row per edition, smallest first (size;
- *   name · Edition of 30 · 28 left; price on the right, or Sold out), Available under the rows.
+ * - Open edition: Smallest / Largest, "or any size in between.", From €303 + Available (no "Size,
+ *   paper and frame are chosen next." line: owner, 2026-11-20).
+ * - Limited, one size: the size, "Edition 3 of 30" (the copy a buyer gets), the price + Available.
+ * - Limited, two or more: "Available in two sizes:", one row per edition, cheapest first (size;
+ *   Edition 3 of 30, no size name; price on the right, or Sold out), Available under the rows.
  *   Visitors never see the word "variant". Two editions of one size (other paper) are "versions",
  *   and their rows name the paper.
  *
@@ -36,10 +39,10 @@ type ArtworkAvailabilityCardProps = {
   sizes?: ArtworkSizes | null
   /** Cheapest completable purchase. `null` means live but sold out. */
   minPriceCents: number | null
-  /** Every live edition, smallest first (limited editions only). */
+  /** Every live edition, cheapest first (limited editions only). */
   editionLines?: VariantEditionLineParts[]
   artworkSlug: string
-  /** The Inquire button, set between Order a print and the caveat. */
+  /** The Inquire button, set under Order a print. */
   inquire?: ReactNode
 }
 
@@ -49,11 +52,9 @@ const countWord = (n: number) => COUNT_WORDS[n] ?? String(n)
 const sizeOf = (line: VariantEditionLineParts, unit: Unit) =>
   formatDimensions(line.widthCm, line.heightCm, unit)
 
-/** "Edition of 30 · 28 left", or "Edition of 30" once sold out (the price says Sold out). */
-const stockText = (line: VariantEditionLineParts) =>
-  line.soldOut
-    ? `Edition of ${line.editionSize}`
-    : `Edition of ${line.editionSize} · ${line.left} left`
+/** "Edition 3 of 30" — the copy a buyer gets, the number the renders pencil — or "Edition of 30"
+ *  once sold out (the price says Sold out). */
+const stockText = (line: VariantEditionLineParts) => editionLineText(line)
 
 export const ArtworkAvailabilityCard = ({
   editionType,
@@ -90,7 +91,6 @@ export const ArtworkAvailabilityCard = ({
             )}
             {status}
           </div>
-          {!soldOut && <p className={styles.next}>Size, paper and frame are chosen next.</p>}
         </>
       )}
 
@@ -123,16 +123,6 @@ export const ArtworkAvailabilityCard = ({
       )}
 
       {inquire}
-
-      {/* Limited only: on an open edition nothing can be taken first and the sentence would
-          simply be untrue. Editions are deliberately NOT held before payment — this line is the
-          whole mitigation, and saying it plainly is what keeps a lost race from feeling like a
-          trick. */}
-      {isLimited && !soldOut && (
-        <p className={styles.caveat}>
-          Not reserved until you pay: another collector may take it first.
-        </p>
-      )}
     </div>
   )
 }
@@ -188,7 +178,8 @@ const LimitedRows = ({
             <span className={styles.rowText}>
               <span className={styles.rowSize}>{sizeOf(line, unit)}</span>
               <span className={styles.rowMeta}>
-                {[line.name, sharedSize ? line.paper : null, stockText(line)]
+                {/* No size name ("Small 20"): the size itself is on the row (owner, 2026-11-20). */}
+                {[sharedSize ? line.paper : null, stockText(line)]
                   .filter(Boolean)
                   .join(' · ')}
               </span>

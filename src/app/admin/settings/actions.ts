@@ -2,11 +2,11 @@
 
 /**
  * Site-wide settings the admin changes: the purchases kill switch (dashboard) and the gallery's
- * commission (Sales › Pricing) — see SiteSettings in schema.prisma.
+ * commissions (Sales › Pricing) — see SiteSettings in schema.prisma.
  */
 import { requireAdminAction } from '@/lib/authUtils'
 import { isValidGalleryCommissionPct } from '@/lib/galleryCommission'
-import { getPurchasesPaused, setGalleryCommissionPct, setPurchasesPaused } from '@/lib/settings'
+import { getPurchasesPaused, setGalleryCommissions, setPurchasesPaused } from '@/lib/settings'
 import { captureError } from '@/lib/observability/captureError'
 
 type SettingsResult = { ok: true; paused: boolean } | { ok: false; error: string }
@@ -38,22 +38,29 @@ export async function togglePurchasesPaused(paused: boolean): Promise<SettingsRe
   }
 }
 
-type CommissionResult = { ok: true; pct: number; changedAt: string } | { ok: false; error: string }
+type CommissionResult =
+  | { ok: true; pct: number; limitedPct: number; changedAt: string }
+  | { ok: false; error: string }
 
 /**
- * Sales › Pricing (pricing.md): set the gallery's commission. Every price on the site, cart
- * re-prices at checkout and new payment intents use it from the next request; placed orders keep
- * their stored prices and artists' payouts don't change. Records who and when.
+ * Sales › Pricing (pricing.md): set the gallery's commissions, one for open editions and one for
+ * limited editions (owner 2026-11-20), saved together. Every price on the site, cart re-prices at
+ * checkout and new payment intents use them from the next request; placed orders keep their stored
+ * prices and artists' payouts don't change. Records who and when.
  */
-export async function saveGalleryCommission(pct: number): Promise<CommissionResult> {
+export async function saveGalleryCommission(pcts: {
+  pct: number
+  limitedPct: number
+}): Promise<CommissionResult> {
   const guard = await requireAdminAction()
   if (!guard.ok) return { ok: false, error: guard.error }
-  if (!isValidGalleryCommissionPct(pct)) {
+  const { pct, limitedPct } = pcts ?? {}
+  if (!isValidGalleryCommissionPct(pct) || !isValidGalleryCommissionPct(limitedPct)) {
     return { ok: false, error: 'Enter a percentage from 0 to 100, with one decimal at most.' }
   }
   try {
-    const changedAt = await setGalleryCommissionPct(pct, guard.session.user.id)
-    return { ok: true, pct, changedAt: changedAt.toISOString() }
+    const changedAt = await setGalleryCommissions({ pct, limitedPct }, guard.session.user.id)
+    return { ok: true, pct, limitedPct, changedAt: changedAt.toISOString() }
   } catch (err) {
     captureError(err, { flow: 'admin', stage: 'save-gallery-commission' })
     return { ok: false, error: 'The commission wasn’t saved. Please try again.' }

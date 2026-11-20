@@ -28,8 +28,8 @@ import {
   type PresentationWindow,
 } from '@/lib/printPresentation/geometry'
 import {
-  makeLook,
   shotMode,
+  studioLook,
   type Look,
   type PresentationFrame,
   type PresentationMode,
@@ -136,6 +136,7 @@ export function PrintStudio({
   frame,
   passepartout,
   seed,
+  copy = null,
   widthPx,
   onReady,
 }: {
@@ -148,6 +149,8 @@ export function PrintStudio({
   /** A passepartout in the frame. */
   passepartout: boolean
   seed: number
+  /** Limited: the copy to pencil (the real next unsold one); null keeps the look's own. */
+  copy?: number | null
   widthPx: number
   /** Called once, when the shot is ready to capture. */
   onReady: (shot: StudioShot) => void
@@ -161,7 +164,10 @@ export function PrintStudio({
   const kind = shotMode(frame)
   // `edition` only feeds the copy number; the draw happens either way, so every value after it
   // stays where it was approved.
-  const look = useMemo(() => makeLook(seed, kind, edition ?? 1), [seed, kind, edition])
+  const look = useMemo(
+    () => studioLook(seed, kind, edition ?? 1, copy),
+    [seed, kind, edition, copy],
+  )
   const shot = useMemo(() => shotFrame(kind, ratio, widthPx, look), [kind, ratio, widthPx, look])
 
   const windowRect = useRef<WindowRectPx | null>(null)

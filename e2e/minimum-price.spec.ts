@@ -13,7 +13,7 @@ import { openEditionFromConfig } from '@/lib/print-providers/printspace/fromConf
 import { galleryCommissionCents } from '@/lib/galleryCommission'
 import { getProviderQuote } from '@/lib/print-providers/quote'
 
-import { TEST_GALLERY_RATE } from './gallery-commission-helpers'
+import { TEST_GALLERY_RATE, TEST_GALLERY_RATES } from './gallery-commission-helpers'
 
 /**
  * The number behind a price on a prints card.
@@ -147,10 +147,10 @@ test.describe('minimumPriceForArtwork', () => {
   const base = { ...LANDSCAPE, printEnabled: true, printPriceCents: 20000 }
 
   test('dispatches on edition type', async () => {
-    const open = minimumPriceForArtwork({ ...base, editionType: 'open' }, TEST_GALLERY_RATE)
+    const open = minimumPriceForArtwork({ ...base, editionType: 'open' }, TEST_GALLERY_RATES)
     expect(open?.basis).toBe('smallest-print')
 
-    const limited = minimumPriceForArtwork({ ...base, editionType: 'limited' }, TEST_GALLERY_RATE, [
+    const limited = minimumPriceForArtwork({ ...base, editionType: 'limited' }, TEST_GALLERY_RATES, [
       variant(),
     ])
     expect(limited?.basis).toBe('variant')
@@ -160,12 +160,12 @@ test.describe('minimumPriceForArtwork', () => {
     // Limited editions have no artwork price; a stale one must not leak in.
     const withStalePrice = minimumPriceForArtwork(
       { ...base, editionType: 'limited', printPriceCents: 999999 },
-      TEST_GALLERY_RATE,
+      TEST_GALLERY_RATES,
       [variant({ priceCents: 10000 })],
     )
     const withoutIt = minimumPriceForArtwork(
       { ...base, editionType: 'limited', printPriceCents: null },
-      TEST_GALLERY_RATE,
+      TEST_GALLERY_RATES,
       [variant({ priceCents: 10000 })],
     )
     expect(withStalePrice!.cents).toBe(withoutIt!.cents)
@@ -175,14 +175,14 @@ test.describe('minimumPriceForArtwork', () => {
     expect(
       minimumPriceForArtwork(
         { ...base, editionType: 'open', printEnabled: false },
-        TEST_GALLERY_RATE,
+        TEST_GALLERY_RATES,
       ),
     ).toBeNull()
   })
 
   test('a limited edition with no live variants is null, whatever the artwork says', async () => {
     expect(
-      minimumPriceForArtwork({ ...base, editionType: 'limited' }, TEST_GALLERY_RATE, []),
+      minimumPriceForArtwork({ ...base, editionType: 'limited' }, TEST_GALLERY_RATES, []),
     ).toBeNull()
   })
 })

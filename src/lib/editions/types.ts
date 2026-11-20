@@ -67,4 +67,7 @@ export type LimitedVariantView = {
    *  count as the artwork page (owner, 2026-11-17: "one count everywhere"); a reservation never
    *  moves it. */
   left: number
+  /** The copy a buyer gets: the lowest not yet paid for — "Edition 3 of 30", the same number as
+   *  the artwork page and the renders (owner, 2026-11-20). Null when sold out. */
+  nextCopy: number | null
 }

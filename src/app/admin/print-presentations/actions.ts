@@ -8,9 +8,10 @@
 import { requireAdminAction } from '@/lib/authUtils'
 import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
-import { isCurrentRecord, shotFacts } from '@/lib/printPresentation/currentInputs'
+import { needsRender, shotFacts } from '@/lib/printPresentation/currentInputs'
 import { presentationInputs, type PresentationInputs } from '@/lib/printPresentation/inputs'
 import { loadPresentationSources } from '@/lib/printPresentation/loadSources'
+import { photoInputs, renderCopy, type PhotoInputs } from '@/lib/printPresentation/photoInputs'
 import { isFrameChoice, type FrameChoice } from '@/lib/printPresentation/look'
 import { measureMissingRatios } from '@/lib/printPresentation/measureRatios'
 import { presentationView, type PresentationView } from '@/lib/printPresentation/record'
@@ -29,6 +30,10 @@ export type PresentationRow = {
   status: PresentationStatus
   /** What a render needs; null when the work gets no presentation. */
   inputs: PresentationInputs | null
+  /** What its three photo views need; null without a presentation or a web image. */
+  photo: PhotoInputs | null
+  /** The copy a render pencils now (the real next unsold one); null for works that carry none. */
+  copy: number | null
   /** The stored render, whatever the switch says — the admin's preview. */
   view: PresentationView | null
 }
@@ -52,13 +57,16 @@ export async function listPrintPresentations(): Promise<
       .map((source): PresentationRow => {
         const inputs = presentationInputs(source)
         const { record } = source
+        const photo = photoInputs(source, inputs)
+        const copy = renderCopy(source, inputs)
+        // Out of date also when its photos are missing or old, or its pencilled copy has sold.
         const status: PresentationStatus = !inputs
           ? 'ineligible'
           : !record
             ? 'missing'
-            : isCurrentRecord(source.id, record, inputs)
-              ? 'current'
-              : 'stale'
+            : needsRender(source.id, record, inputs, photo, copy)
+              ? 'stale'
+              : 'current'
         return {
           artworkId: source.id,
           title: source.title,
@@ -68,6 +76,8 @@ export async function listPrintPresentations(): Promise<
           imageUrl: source.imageUrl,
           status,
           inputs,
+          photo,
+          copy,
           view: record ? presentationView(record) : null,
         }
       })
@@ -75,6 +85,33 @@ export async function listPrintPresentations(): Promise<
   } catch (err) {
     captureError(err, { flow: 'admin', stage: 'list-print-presentations' })
     return { ok: false, error: err instanceof Error ? err.message : 'Failed to load the list.' }
+  }
+}
+
+/**
+ * How many works need a render — none yet, out of date, photos missing or old, or a pencilled copy
+ * that has sold — for the dashboard's "You have X artworks that need to be re-rendered" (owner,
+ * 2026-11-20). Null when it can't be counted.
+ */
+export async function countWorksToRender(): Promise<{ ok: true; count: number } | Failure> {
+  const guard = await requireAdminAction()
+  if (!guard.ok) return { ok: false, error: guard.error }
+  try {
+    const sources = await loadPresentationSources()
+    const count = sources.filter((source) => {
+      const inputs = presentationInputs(source)
+      return needsRender(
+        source.id,
+        source.record,
+        inputs,
+        photoInputs(source, inputs),
+        renderCopy(source, inputs),
+      )
+    }).length
+    return { ok: true, count }
+  } catch (err) {
+    captureError(err, { flow: 'admin', stage: 'count-works-to-render' })
+    return { ok: false, error: err instanceof Error ? err.message : 'Failed to count.' }
   }
 }
 

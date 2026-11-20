@@ -3,10 +3,11 @@ import { cache } from 'react'
 import { captureError } from '@/lib/observability/captureError'
 import { getPrintPresentationsEnabled } from '@/lib/settings'
 
-import { shownRecord } from './currentInputs'
+import { photosCurrent, shownRecord } from './currentInputs'
 import { pieceArea } from './geometry'
 import { presentationInputs } from './inputs'
 import { loadPresentationSources } from './loadSources'
+import { photoInputs } from './photoInputs'
 import { shotMode } from './look'
 import { presentationView, type PresentationView } from './record'
 
@@ -34,11 +35,17 @@ export async function getPrintPresentations(
     const views: Record<string, PresentationView> = {}
     for (const source of sources) {
       if (!source.record) continue
-      const shot = shownRecord(source.id, source.record, presentationInputs(source))
+      const inputs = presentationInputs(source)
+      const shot = shownRecord(source.id, source.record, inputs)
       if (!shot) continue
+      // Its photos only while they show the work as it is (2026-11-20): never an old image.
+      const photos = photosCurrent(source.id, source.record, photoInputs(source, inputs))
+        ? source.record.views!.urls
+        : undefined
       views[source.id] = {
         ...presentationView(source.record),
         piece: pieceArea(shotMode(shot.frame), shot.ratio, source.record.window),
+        ...(photos ? { photos } : {}),
       }
     }
     return views

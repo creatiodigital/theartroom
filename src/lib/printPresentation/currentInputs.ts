@@ -1,8 +1,9 @@
 import { presentationFingerprint, presentationInputs, type PresentationInputs } from './inputs'
 import { loadPresentationSources, type SourceRow } from './loadSources'
 import { PRESENTATION_FRAMES, frameOf, type PresentationFrame } from './look'
+import type { PhotoInputs } from './photoInputs'
 import type { PrintPresentationRecord } from './record'
-import { presentationFilesLoadHere, presentationPublicUrls } from './storage'
+import { photoFilesLoadHere, presentationFilesLoadHere, presentationPublicUrls } from './storage'
 
 /**
  * Whether this deployment stored a render's files itself: where it would store that render now.
@@ -12,7 +13,7 @@ import { presentationFilesLoadHere, presentationPublicUrls } from './storage'
  */
 const servedHere = (artworkId: string, record: PrintPresentationRecord) => {
   try {
-    const here = presentationPublicUrls(artworkId, record.fingerprint)
+    const here = presentationPublicUrls(artworkId, record.fingerprint, record.renderId)
     return record.urls.large === here.large && record.urls.small === here.small
   } catch {
     return false
@@ -112,4 +113,39 @@ export async function currentPresentation(
   if (!source) return null
   const inputs = presentationInputs(source)
   return inputs ? { source, inputs } : null
+}
+
+/**
+ * Whether a work's stored photo views show it as it is now — its image and print (their
+ * fingerprint) — and load here. Only then does a page show them: a photo of an old image never.
+ */
+export function photosCurrent(
+  artworkId: string,
+  record: PrintPresentationRecord,
+  photo: PhotoInputs | null,
+): boolean {
+  return (
+    !!photo &&
+    record.views?.fingerprint === photo.fingerprint &&
+    photoFilesLoadHere(artworkId, record)
+  )
+}
+
+/**
+ * Whether a work needs a render (the admin's "Out of date", the dashboard's count): none yet; its
+ * framed render is out of date; its photos are missing or out of date; or the copy it pencils is no
+ * longer the copy a buyer gets (a sale, owner 2026-11-20 — "just give me a warning"). A sale never
+ * hides a render; it only shows up here.
+ */
+export function needsRender(
+  artworkId: string,
+  record: PrintPresentationRecord | null,
+  inputs: PresentationInputs | null,
+  photo: PhotoInputs | null,
+  copy: number | null,
+): boolean {
+  if (!inputs) return false
+  if (!record || !isCurrentRecord(artworkId, record, inputs)) return true
+  if (photo && !photosCurrent(artworkId, record, photo)) return true
+  return copy !== null && record.copy !== copy
 }

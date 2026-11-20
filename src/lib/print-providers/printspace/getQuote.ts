@@ -1,4 +1,4 @@
-import { galleryCommissionCents } from '@/lib/galleryCommission'
+import { roundedGalleryCommissionCents } from '@/lib/galleryCommission'
 
 import type { GetQuoteInput, Quote, QuoteLine } from '../types'
 import { getMountPresetWidthCm } from './data'
@@ -27,7 +27,9 @@ import {
  * checkout step calls this again with a country to fold those in.
  *
  * Composition:
- *   subtotal = artist + gallery markup + print base + frame + glass + hanging [+ shipping]
+ *   artwork  = artist + gallery markup + print base + frame + glass + hanging, rounded UP to a
+ *              whole euro by the gallery's part (roundedGalleryCommissionCents)
+ *   subtotal = artwork [+ shipping]
  *   tax      = 21% on subtotal when shipping to an EU country
  *   total    = subtotal + tax
  */
@@ -79,14 +81,7 @@ export function getPrintspaceQuote(input: GetQuoteInput): Quote {
     ? getMountBoardSupplementCents(mountWidthCm, Math.max(widthCm, heightCm))
     : 0
 
-  // The gallery's commission on top of the artist's price (the owner's setting, passed in).
-  const galleryCents = galleryCommissionCents(artistPriceCents, galleryRate)
-
-  // Wizard summary lumps artwork + production into a single "Artwork"
-  // line and shows shipping separately when a destination is set.
-  const artworkLineCents =
-    artistPriceCents +
-    galleryCents +
+  const productionCents =
     printBaseCents +
     // Every print ships with the COA + gallery letter (2026-07-24).
     TPS_COA_LETTER_SUPPLEMENT_CENTS +
@@ -95,12 +90,22 @@ export function getPrintspaceQuote(input: GetQuoteInput): Quote {
     hangingCents +
     mountCents
 
+  // The gallery's commission on top of the artist's price (the owner's setting, passed in), plus
+  // the cents that make the price a whole euro (owner 2026-11-20: no cents before tax/shipping).
+  const galleryCents = roundedGalleryCommissionCents(artistPriceCents, galleryRate, productionCents)
+
+  // Wizard summary lumps artwork + production into a single "Artwork"
+  // line and shows shipping separately when a destination is set.
+  const artworkLineCents = artistPriceCents + galleryCents + productionCents
+  const artworkSplit = { artistCents: artistPriceCents, galleryCents, productionCents }
+
   const lines: QuoteLine[] = [{ id: 'artwork', label: 'Artwork', amountCents: artworkLineCents }]
 
   if (!hasCountry) {
     return {
       currency: 'EUR',
       lines,
+      artworkSplit,
       subtotalCents: artworkLineCents,
       taxCents: 0,
       totalCents: artworkLineCents,
@@ -132,6 +137,7 @@ export function getPrintspaceQuote(input: GetQuoteInput): Quote {
   return {
     currency: 'EUR',
     lines,
+    artworkSplit,
     subtotalCents,
     taxCents,
     taxLabel: vatRate > 0 ? `VAT (ES ${rateText})` : undefined,
