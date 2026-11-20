@@ -26,7 +26,7 @@ import styles from './ArtworkAvailabilityCard.module.scss'
  *   paper and frame are chosen next." line: owner, 2026-11-20).
  * - Limited, one size: the size, "Edition 3 of 30" (the copy a buyer gets), the price + Available.
  * - Limited, two or more: "Available in two sizes:", one row per edition, smallest first (size;
- *   name · Edition 3 of 30; price on the right, or Sold out), Available under the rows.
+ *   Edition 3 of 30, no size name; price on the right, or Sold out), Available under the rows.
  *   Visitors never see the word "variant". Two editions of one size (other paper) are "versions",
  *   and their rows name the paper.
  *
@@ -178,7 +178,8 @@ const LimitedRows = ({
             <span className={styles.rowText}>
               <span className={styles.rowSize}>{sizeOf(line, unit)}</span>
               <span className={styles.rowMeta}>
-                {[line.name, sharedSize ? line.paper : null, stockText(line)]
+                {/* No size name ("Small 20"): the size itself is on the row (owner, 2026-11-20). */}
+                {[sharedSize ? line.paper : null, stockText(line)]
                   .filter(Boolean)
                   .join(' · ')}
               </span>
