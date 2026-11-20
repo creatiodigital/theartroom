@@ -36,7 +36,7 @@ import path from 'node:path'
 import { Prisma } from '@/generated/prisma/client'
 import { estimateVariantMarginCents } from '@/lib/editions/variantMargin'
 import prisma from '@/lib/prisma'
-import { getGalleryCommissionRate } from '@/lib/settings'
+import { getGalleryCommissionRates } from '@/lib/settings'
 
 type Row = {
   table: 'Artwork' | 'LimitedVariant'
@@ -96,8 +96,10 @@ async function undo(file: string) {
 }
 
 async function main() {
-  const galleryRate = await getGalleryCommissionRate()
-  console.log(`DB project ref: ${dbRef ?? 'UNKNOWN'} · gallery commission setting: ${galleryRate * 100}%`)
+  const galleryRates = await getGalleryCommissionRates()
+  console.log(
+    `DB project ref: ${dbRef ?? 'UNKNOWN'} · gallery commission settings: open ${galleryRates.open * 100}%, limited ${galleryRates.limited * 100}%`,
+  )
 
   const undoFile = arg('undo')
   if (undoFile) return undo(undoFile)
@@ -151,7 +153,11 @@ async function main() {
       const oldCents = v.priceCents!
       const newCents = oldCents - amountCents
       const label = `${base} · "${v.name}" ${cm(v.widthCm)}×${cm(v.heightCm)}`
-      const margin = estimateVariantMarginCents({ ...v, artistPriceCents: newCents, galleryRate })
+      const margin = estimateVariantMarginCents({
+        ...v,
+        artistPriceCents: newCents,
+        galleryRate: galleryRates.limited,
+      })
       if (newCents < floorCents) skipped.push(`${label}: ${euros(oldCents)} would go below ${euros(floorCents)}`)
       else if (margin && margin.marginCents <= 0)
         skipped.push(`${label}: at ${euros(newCents)} it no longer covers its paper (${euros(margin.absorbedCents)})`)

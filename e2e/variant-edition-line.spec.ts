@@ -20,6 +20,8 @@ test.describe('variantEditionLineParts', () => {
     variantName: 'Medium',
     editionSize: 30,
     left: soldOut ? 0 : 28,
+    // The copy a buyer gets next: copies 1 and 2 sold.
+    nextCopy: soldOut ? null : 3,
     soldOut,
     priceCents,
     widthCm: 36,
@@ -35,6 +37,7 @@ test.describe('variantEditionLineParts', () => {
       heightCm: 24,
       editionSize: 30,
       left: 28,
+      nextCopy: 3,
       soldOut: false,
       price: '\u20ac312',
     })
@@ -53,7 +56,7 @@ test.describe('getVariantEditionLines', () => {
   test('an abandoned checkout leaves the row untouched', async () => {
     const fx = await setupLimitedFixture(50)
     try {
-      const [before] = await getVariantEditionLines(fx.artworkId, await liveGalleryRate())
+      const [before] = await getVariantEditionLines(fx.artworkId, await liveGalleryRate('limited'))
       expect(before.left).toBe(50)
 
       // Two visitors reach payment and abandon. A number is reserved the moment
@@ -68,7 +71,7 @@ test.describe('getVariantEditionLines', () => {
         where: { variantId: fx.variantId, number: { in: [1, 2] } },
         data: { state: 'reserved' },
       })
-      const [after] = await getVariantEditionLines(fx.artworkId, await liveGalleryRate())
+      const [after] = await getVariantEditionLines(fx.artworkId, await liveGalleryRate('limited'))
       expect(after.soldOut, 'a held copy is not a sold one').toBe(false)
       expect(after.left, 'a held copy is still left').toBe(50)
 
@@ -77,7 +80,7 @@ test.describe('getVariantEditionLines', () => {
         where: { variantId: fx.variantId, number: 1 },
         data: { state: 'sold' },
       })
-      const [sold] = await getVariantEditionLines(fx.artworkId, await liveGalleryRate())
+      const [sold] = await getVariantEditionLines(fx.artworkId, await liveGalleryRate('limited'))
       expect(sold.left).toBe(49)
     } finally {
       await teardownLimitedFixture(fx)
@@ -92,13 +95,13 @@ test.describe('getVariantEditionLines', () => {
         data: { state: 'sold' },
       })
     try {
-      let [line] = await getVariantEditionLines(fx.artworkId, await liveGalleryRate())
+      let [line] = await getVariantEditionLines(fx.artworkId, await liveGalleryRate('limited'))
       expect(line.editionSize).toBe(5)
       expect(line.soldOut).toBe(false)
 
       // Copies sell; the row counts them.
       await sell([1, 2, 3])
-      ;[line] = await getVariantEditionLines(fx.artworkId, await liveGalleryRate())
+      ;[line] = await getVariantEditionLines(fx.artworkId, await liveGalleryRate('limited'))
       expect(line.soldOut).toBe(false)
       expect(line.left).toBe(2)
 
@@ -109,13 +112,13 @@ test.describe('getVariantEditionLines', () => {
         where: { variantId: fx.variantId, number: 2 },
         data: { state: 'available' },
       })
-      ;[line] = await getVariantEditionLines(fx.artworkId, await liveGalleryRate())
+      ;[line] = await getVariantEditionLines(fx.artworkId, await liveGalleryRate('limited'))
       expect(line.soldOut, 'a returned copy is not sold out').toBe(false)
       expect(line.left).toBe(3)
 
       // Every copy gone — counted, so a gap in the numbering cannot fake it.
       await sell([2, 4, 5])
-      ;[line] = await getVariantEditionLines(fx.artworkId, await liveGalleryRate())
+      ;[line] = await getVariantEditionLines(fx.artworkId, await liveGalleryRate('limited'))
       expect(line.soldOut).toBe(true)
       expect(line.left).toBe(0)
     } finally {

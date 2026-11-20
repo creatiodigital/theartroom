@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma'
-import { getGalleryCommissionRate } from '@/lib/settings'
+import { rateForEdition, type GalleryRates } from '@/lib/galleryCommission'
+import { getGalleryCommissionRates } from '@/lib/settings'
 
 /**
  * The gallery's commission in specs (pricing.md). Two kinds of spec, two sources, and never a
@@ -14,27 +15,44 @@ import { getGalleryCommissionRate } from '@/lib/settings'
  */
 export const TEST_GALLERY_RATE = 0.25
 
-export const liveGalleryRate = () => getGalleryCommissionRate()
+/**
+ * Both commissions (open and limited editions each have their own, owner 2026-11-20) for pure specs
+ * that price either type. Different on purpose: a work priced at the other type's rate fails.
+ */
+export const TEST_GALLERY_RATES: GalleryRates = { open: TEST_GALLERY_RATE, limited: 0.3 }
+
+/** Both live commissions, as the page loaders read them. */
+export const liveGalleryRates = () => getGalleryCommissionRates()
+
+/** One edition type's live commission rate. */
+export const liveGalleryRate = async (editionType: 'open' | 'limited') =>
+  rateForEdition(await getGalleryCommissionRates(), editionType)
 
 /**
- * Run `fn` with the commission at `pct`, then restore exactly what was there (value, who and
- * when — or no row at all). The dev DB is shared with staging, so this stays as short as the
- * test, and the e2e suite runs on one worker, so no other spec sees the temporary value.
+ * Run `fn` with the open editions' commission at `pct` (and the limited editions' at `limitedPct`
+ * when given, else as it was), then restore exactly what was there (values, who and when — or no
+ * row at all). The dev DB is shared with staging, so this stays as short as the test, and the e2e
+ * suite runs on one worker, so no other spec sees the temporary values.
  */
-export async function withGalleryCommission<T>(pct: number, fn: () => Promise<T>): Promise<T> {
+export async function withGalleryCommission<T>(
+  pct: number,
+  fn: () => Promise<T>,
+  limitedPct?: number,
+): Promise<T> {
   const before = await prisma.siteSettings.findUnique({
     where: { id: 1 },
     select: {
       galleryCommissionPct: true,
+      galleryCommissionLimitedPct: true,
       galleryCommissionChangedAt: true,
       galleryCommissionChangedById: true,
     },
   })
-  await prisma.siteSettings.upsert({
-    where: { id: 1 },
-    update: { galleryCommissionPct: pct },
-    create: { id: 1, galleryCommissionPct: pct },
-  })
+  const set = {
+    galleryCommissionPct: pct,
+    ...(limitedPct !== undefined && { galleryCommissionLimitedPct: limitedPct }),
+  }
+  await prisma.siteSettings.upsert({ where: { id: 1 }, update: set, create: { id: 1, ...set } })
   try {
     return await fn()
   } finally {

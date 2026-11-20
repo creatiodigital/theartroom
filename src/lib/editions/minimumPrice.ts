@@ -14,8 +14,9 @@
  *
  *     artist + gallery commission + print base(size) + COA/gallery letter
  *
- * The commission is the owner's setting, so every function here takes its rate (`galleryRate`,
- * read once per request on the server) rather than knowing a number.
+ * The commission is the owner's setting, one for open and one for limited editions, so every
+ * function here takes its rate (`galleryRate`, or both as `galleryRates` where the edition type
+ * decides; read once per request on the server) rather than knowing a number.
  *
  * excluding shipping and VAT, both of which depend on the buyer's destination
  * and so cannot be known on a listing. Excluding shipping is an ordinary shop
@@ -38,6 +39,7 @@ import { openEditionFromConfig } from '@/lib/print-providers/printspace/fromConf
 import { getProviderQuote } from '@/lib/print-providers/quote'
 import type { ProviderId } from '@/lib/print-providers/types'
 import type { WizardConfig } from '@/lib/print-providers/types'
+import type { GalleryRates } from '@/lib/galleryCommission'
 
 import { variantToWizardConfig, type VariantConfigInput } from './variantToWizardConfig'
 
@@ -174,14 +176,15 @@ export function minimumPriceForArtwork(
     originalWidth: number | null
     originalHeight: number | null
   },
-  galleryRate: number,
+  /** Both commissions; the work is priced with its own edition type's. */
+  galleryRates: GalleryRates,
   liveVariants: LiveVariant[] = [],
   providerId: ProviderId = DEFAULT_PROVIDER,
 ): MinimumPrice | null {
   if (!artwork.printEnabled) return null
   return artwork.editionType === 'limited'
-    ? minimumPriceForLimited(liveVariants, galleryRate, providerId)
-    : minimumPriceForOpen(artwork, galleryRate, providerId)
+    ? minimumPriceForLimited(liveVariants, galleryRates.limited, providerId)
+    : minimumPriceForOpen(artwork, galleryRates.open, providerId)
 }
 
 /**

@@ -1,5 +1,4 @@
 import type { ProviderId, Quote, SpecsSummary, WizardConfig } from '@/lib/print-providers'
-import { galleryCommissionCents } from '@/lib/galleryCommission'
 import type { CartItem } from './types'
 
 type ArtworkMeta = {
@@ -18,11 +17,8 @@ type BuildCartItemInput = {
   /** Display name of the chosen limited-edition variant (e.g. "Medium"). */
   editionName?: string
   config: WizardConfig
+  /** The line's price, and its artist / gallery / production split (`quote.artworkSplit`). */
   quote: Quote
-  /** Artist's share in cents (printPriceCents or variant.priceCents). */
-  artistCents: number
-  /** The gallery's commission rate the quote was priced with (the wizard's page passes it). */
-  galleryRate: number
   specsSummary: SpecsSummary
 }
 
@@ -41,14 +37,12 @@ export function buildCartItem(input: BuildCartItemInput): Omit<CartItem, 'lineId
     editionName,
     config,
     quote,
-    artistCents,
-    galleryRate,
     specsSummary,
   } = input
 
-  const galleryCents = galleryCommissionCents(artistCents, galleryRate)
-  const artworkLineCents = quote.lines.find((l) => l.id === 'artwork')?.amountCents ?? 0
-  const productionCents = Math.max(0, artworkLineCents - artistCents - galleryCents)
+  // The quote's own split: its gallery part carries the rounding to a whole euro, so the three
+  // add up to the price the buyer saw.
+  const { artistCents, galleryCents, productionCents } = quote.artworkSplit
 
   return {
     artworkSlug: artwork.slug,

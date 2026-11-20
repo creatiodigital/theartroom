@@ -64,7 +64,9 @@
   gap: var(--space-2);
 }
 
-.label {
+// The example's column heads read like the field labels.
+.label,
+.exampleHead {
   font-size: 13px;
   font-weight: var(--font-semibold);
   color: var(--color-text-primary);
@@ -153,11 +155,12 @@
   color: var(--color-red-50);
 }
 
-// ── Example: follows the field live ──
+// ── Example: follows the fields live — a label column, then open and limited editions ──
 .example {
   max-width: 460px;
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
+  column-gap: var(--space-5);
   row-gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
@@ -176,6 +179,10 @@
 
 .exampleLabel {
   color: var(--color-text-secondary);
+}
+
+.exampleHead {
+  text-align: right;
 }
 
 .exampleValue {

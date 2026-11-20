@@ -15,7 +15,8 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 /**
- * Admin › Sales › Pricing (docs/admin-redesign/pricing.md): the gallery's commission. Admins only —
+ * Admin › Sales › Pricing (docs/admin-redesign/pricing.md): the gallery's commissions (open and
+ * limited editions). Admins only —
  * the proxy keeps /admin to admins, and this page checks again before reading anything.
  */
 export default async function AdminPricingPage() {
@@ -26,6 +27,7 @@ export default async function AdminPricingPage() {
   return (
     <AdminPricing
       pct={commission.pct}
+      limitedPct={commission.limitedPct}
       changedAt={commission.changedAt?.toISOString() ?? null}
       readFailed={commission.readFailed}
     />

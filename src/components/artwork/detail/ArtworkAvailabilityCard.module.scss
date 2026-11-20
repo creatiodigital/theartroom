@@ -13,6 +13,9 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-4);
+  // A divider above the price (owner, 2026-11-20), as the one above the print block.
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-gray-30);
 }
 
 .price {
@@ -104,13 +107,6 @@
   color: var(--color-text-secondary);
 }
 
-.next {
-  margin: -4px 0 0;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--color-text-secondary);
-}
-
 // Limited: one size (no count sentence), or "Available in two sizes:" and a row per edition.
 .single {
   display: flex;
@@ -194,12 +190,4 @@
   font-weight: var(--font-semibold);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-}
-
-// #666, not the drawn #999 (Q-P12).
-.caveat {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--color-text-secondary);
 }

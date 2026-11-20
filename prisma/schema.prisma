@@ -1132,7 +1132,14 @@ model SiteSettings {
   // limited-edition margin check. Placed orders keep what they sold at (galleryCents). The default
   // must match DEFAULT_GALLERY_COMMISSION_PCT in src/lib/galleryCommission.ts.
   galleryCommissionPct          Float     @default(25)
-  // Who changed it last and when, for the page's "Last changed" line. Null until the first save.
+  // Limited editions' own commission (owner 2026-11-20: "I will choose the % separately"), so a
+  // numbered edition is not cheaper than an open one at the same artist price. galleryCommissionPct
+  // is then the open editions' commission. NULL = the same as galleryCommissionPct, which is what
+  // every limited price used before this column, so adding it changes no price; the Pricing page
+  // saves both at once.
+  galleryCommissionLimitedPct   Float?
+  // Who changed them last and when (either one), for the page's "Last changed" line. Null until the
+  // first save.
   galleryCommissionChangedAt    DateTime?
   galleryCommissionChangedById  String?
 

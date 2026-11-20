@@ -23,7 +23,9 @@ import { cancelPaymentIntent, fixtureAddress } from './stripe-helpers'
  * unit-level test that existed only ever moved numbers between `available` and
  * `sold` — it never produced a `reserved` one, so it could not fail.
  *
- * The figure now reports copies SOLD, so an abandoned checkout cannot touch it.
+ * The page states the next copy a buyer gets, "Edition 3 of 50" (owner 2026-11-20, "Edition N of M"):
+ * the lowest number not SOLD, so a reserved copy still counts as unsold and an abandoned checkout
+ * cannot move it.
  *
  * Deliberately drives the REAL reservation path rather than writing states by
  * hand: writing `reserved` directly would prove only that the query filters a
@@ -37,14 +39,14 @@ test.describe('an abandoned checkout', () => {
     const fx = await setupLimitedFixture(50)
     const abandoned: string[] = []
     try {
-      // Two copies genuinely sold — the edition stands at 2 of 50.
+      // Two copies genuinely sold — the next copy is 3 of 50.
       await prisma.editionNumber.updateMany({
         where: { variantId: fx.variantId, number: { in: [1, 2] } },
         data: { state: 'sold' },
       })
 
       await page.goto(`/artworks/${fx.slug}`)
-      await expect(page.getByText(/Edition of 50/).first()).toBeVisible()
+      await expect(page.getByText(/Edition 3 of 50/).first()).toBeVisible()
 
       // Two visitors reach payment and leave. Real reservations, real Stripe
       // intents, no confirmation.
@@ -76,12 +78,10 @@ test.describe('an abandoned checkout', () => {
       // production: it read 5 of 50 because two held copies had been skipped.
       await page.goto(`/artworks/${fx.slug}`)
       await expect(
-        page.getByText(/Edition of 50/).first(),
+        page.getByText(/Edition 3 of 50/).first(),
         'an unpaid reservation must not change what the page states',
       ).toBeVisible()
-      // No copy number of any kind: the row promises nothing a checkout could
-      // falsify, which is the whole point of stating only the size.
-      await expect(page.locator('body')).not.toContainText(/\d+ of 50/)
+      await expect(page.locator('body')).not.toContainText(/Edition [45] of 50/)
     } finally {
       for (const id of abandoned) await cancelPaymentIntent(id).catch(() => {})
       await teardownLimitedFixture(fx)

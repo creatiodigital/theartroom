@@ -8,9 +8,17 @@ import { buildPrintspaceCatalog, getPrintMinSize } from '@/lib/print-providers/p
 import { openEditionFromConfig } from '@/lib/print-providers/printspace/fromConfig'
 import { getProviderQuote } from '@/lib/print-providers/quote'
 import prisma from '@/lib/prisma'
-import { getGalleryCommission, getGalleryCommissionRate } from '@/lib/settings'
+import { saleFromRow } from '@/lib/editions/artworkSale'
+import { validateAndPriceItem } from '@/lib/checkout/validateAndPriceItem'
+import { getGalleryCommission, getGalleryCommissionRates } from '@/lib/settings'
 
-import { setupOpenFixture, teardownOpenFixture, type OpenFixture } from './edition-helpers'
+import {
+  setupLimitedFixture,
+  setupOpenFixture,
+  teardownLimitedFixture,
+  teardownOpenFixture,
+  type OpenFixture,
+} from './edition-helpers'
 import { withGalleryCommission } from './gallery-commission-helpers'
 import { buyOneLimited, teardownBoughtOrder, type BoughtLimitedOrder } from './order-helpers'
 import { cancelPaymentIntent, fixtureAddress } from './stripe-helpers'
@@ -50,7 +58,7 @@ test.describe('the gallery commission setting', () => {
     const fromAt: Record<number, number> = {}
     for (const pct of [33, 47]) {
       await withGalleryCommission(pct, async () => {
-        const rate = await getGalleryCommissionRate()
+        const rate = (await getGalleryCommissionRates()).open
         expect(rate, 'the app reads the setting just saved').toBe(pct / 100)
 
         // 1. The artwork page's "From" (the card + edition lines builder).
@@ -91,7 +99,11 @@ test.describe('the gallery commission setting', () => {
         try {
           const t = res.totals
           expect(t.artistCents, 'the artist keeps their price').toBe(artistPriceCents)
-          expect(t.galleryCents).toBe(galleryCommissionCents(artistPriceCents, pct / 100))
+          // The commission, plus under €1 that makes the price a whole euro (the gallery's).
+          const commission = galleryCommissionCents(artistPriceCents, pct / 100)
+          expect(t.galleryCents).toBeGreaterThanOrEqual(commission)
+          expect(t.galleryCents).toBeLessThan(commission + 100)
+          expect(from! % 100, 'a whole-euro price').toBe(0)
           expect(
             t.artistCents + t.galleryCents + t.productionCents,
             'the checkout artwork line is the From price',
@@ -103,10 +115,14 @@ test.describe('the gallery commission setting', () => {
       })
     }
 
-    expect(fromAt[47] - fromAt[33], 'the price moved by exactly the change in commission').toBe(
+    // By the change in commission, give or take the rounding to a whole euro.
+    const change =
       galleryCommissionCents(artistPriceCents, 0.47) -
-        galleryCommissionCents(artistPriceCents, 0.33),
-    )
+      galleryCommissionCents(artistPriceCents, 0.33)
+    expect(
+      Math.abs(fromAt[47] - fromAt[33] - change),
+      'the price moved by the change in commission',
+    ).toBeLessThan(100)
   })
 
   test('an order already placed keeps the prices it was paid at', async () => {
@@ -130,14 +146,64 @@ test.describe('the gallery commission setting', () => {
       bought = await buyOneLimited({ tag: 'commission-placed-order' })
       const before = await money(bought.orderId)
       // Any commission other than the one the order was placed at.
-      const other = (await getGalleryCommissionRate()) === 0.6 ? 50 : 60
+      const other = (await getGalleryCommissionRates()).limited === 0.6 ? 50 : 60
 
-      await withGalleryCommission(other, async () => {
-        expect(await money(bought!.orderId)).toEqual(before)
-      })
+      await withGalleryCommission(
+        other,
+        async () => {
+          expect(await money(bought!.orderId)).toEqual(before)
+        },
+        other,
+      )
       expect(await money(bought.orderId)).toEqual(before)
     } finally {
       await teardownBoughtOrder(bought)
+    }
+  })
+
+  test('open and limited editions are each priced at their own commission', async () => {
+    const limited = await setupLimitedFixture(3)
+    try {
+      await withGalleryCommission(
+        33,
+        async () => {
+          expect(await getGalleryCommissionRates()).toEqual({ open: 0.33, limited: 0.47 })
+          for (const [artworkId, rate] of [
+            [open.artworkId, 0.33],
+            [limited.artworkId, 0.47],
+          ] as const) {
+            const row = await prisma.artwork.findUniqueOrThrow({
+              where: { id: artworkId },
+              select: COMMERCE_SELECT,
+            })
+            const from = (await buildArtworkCommerce(artworkId, row))?.minPriceCents
+            const at = (r: number) => saleFromRow(row, { open: r, limited: r })?.minPriceCents
+            expect(from, `${row.editionType}: priced at its own commission`).toBe(at(rate))
+            expect(at(0.33), 'the two commissions give different prices').not.toBe(at(0.47))
+          }
+
+          // The cart's re-price at checkout (and so the charge): a limited line at the limited
+          // commission, whatever the open one is. The commission plus under €1 of rounding.
+          const priced = await validateAndPriceItem({
+            artworkSlug: limited.slug,
+            providerId: 'printspace',
+            config: { values: {} },
+            variantId: limited.variantId,
+            countryCode: 'ES',
+            galleryRates: await getGalleryCommissionRates(),
+          })
+          expect(priced.ok, priced.ok ? '' : priced.error).toBe(true)
+          if (priced.ok) {
+            const commission = galleryCommissionCents(limited.artistPriceCents, 0.47)
+            expect(priced.pricing.galleryCents).toBeGreaterThanOrEqual(commission)
+            expect(priced.pricing.galleryCents).toBeLessThan(commission + 100)
+            expect(priced.pricing.preTaxCents % 100, 'a whole-euro price').toBe(0)
+          }
+        },
+        47,
+      )
+    } finally {
+      await teardownLimitedFixture(limited)
     }
   })
 
@@ -161,6 +227,7 @@ test.describe('the gallery commission setting', () => {
       const failed = await getGalleryCommission()
       expect(failed.readFailed).toBe(true)
       expect(failed.pct, 'falls back to the last value read, not 0').toBe(good.pct)
+      expect(failed.limitedPct, 'the limited one too').toBe(good.limitedPct)
 
       const fromDuring = (await buildArtworkCommerce(open.artworkId, row))?.minPriceCents
       expect(fromDuring, 'prices stay what they were').toBe(fromBefore)

@@ -34,11 +34,13 @@ export type LimitedVariantRow = {
 /**
  * @param remaining Edition numbers still available to buy. 0 = sold out.
  * @param sold Copies sold (paid for): the shown "N left" is the edition size minus these.
+ * @param nextCopy The lowest copy not yet paid for (the "Edition 3 of 30"); null when sold out.
  */
 export function toLimitedVariantView(
   row: LimitedVariantRow,
   remaining: number,
   sold = 0,
+  nextCopy: number | null = null,
 ): LimitedVariantView {
   return {
     id: row.id,
@@ -57,5 +59,6 @@ export function toLimitedVariantView(
     priceCents: row.priceCents,
     remaining,
     left: Math.max(0, row.editionSize - sold),
+    nextCopy: sold >= row.editionSize ? null : (nextCopy ?? 1),
   }
 }

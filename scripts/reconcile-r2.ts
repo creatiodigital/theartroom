@@ -120,6 +120,11 @@ async function collectReferencedKeys(): Promise<Set<string>> {
     if (isPrintPresentationRecord(a.printPresentation)) {
       add(a.printPresentation.urls.large)
       add(a.printPresentation.urls.small)
+      // Its photo views (2026-11-20): every view's two sizes, so they're never taken for orphans.
+      for (const sizes of Object.values(a.printPresentation.views?.urls ?? {})) {
+        add(sizes.large)
+        add(sizes.small)
+      }
     }
   }
   for (const u of users) {

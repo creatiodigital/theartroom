@@ -418,9 +418,10 @@ export const DashboardProfilePage = () => {
         title="Artist signature"
         description={
           <>
-            Upload a scan or photo of your handwritten signature. It is supplied to the print lab
-            for your <strong>signed limited editions</strong>. It reassures the buyer the piece is
-            genuine, and keeps your work traceable back to you.
+            Upload a scan or photo of your handwritten signature. The print lab prints it on the
+            Certificate of Authenticity of your <strong>limited editions</strong> (never on the print
+            itself). It reassures the buyer the piece is genuine, and keeps your work traceable back
+            to you.
           </>
         }
       >

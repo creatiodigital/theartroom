@@ -9,7 +9,8 @@ import type { PrintRecommendations, PrintRestrictions } from '@/lib/print-provid
 import type { LimitedVariantView } from '@/lib/editions/types'
 import { toLimitedVariantView } from '@/lib/editions/toLimitedVariantView'
 import prisma from '@/lib/prisma'
-import { getGalleryCommissionRate, getPurchasesPaused } from '@/lib/settings'
+import { rateForEdition } from '@/lib/galleryCommission'
+import { getGalleryCommissionRates, getPurchasesPaused } from '@/lib/settings'
 
 interface PrintWizardPageProps {
   params: Promise<{ slug: string }>
@@ -37,7 +38,7 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
   // The kill-switch read runs alongside the artwork query (independent) —
   // it covers deep links / bookmarks straight into the wizard while the
   // CTAs that normally lead here are hidden.
-  const [paused, artwork, galleryRate] = await Promise.all([
+  const [paused, artwork, galleryRates] = await Promise.all([
     getPurchasesPaused(),
     prisma.artwork.findUnique({
       where: { slug },
@@ -48,7 +49,7 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
         limitedVariants: { where: LIVE_VARIANT_WHERE, orderBy: { order: 'asc' } },
       },
     }),
-    getGalleryCommissionRate(),
+    getGalleryCommissionRates(),
   ])
 
   if (paused) {
@@ -79,6 +80,8 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
   if (!artwork.originalWidth || !artwork.originalHeight) {
     notFound()
   }
+  // The commission of this work's edition type (open and limited each have their own).
+  const galleryRate = rateForEdition(galleryRates, artwork.editionType)
 
   const originalWidthPx = artwork.originalWidth
   const originalHeightPx = artwork.originalHeight
@@ -115,8 +118,24 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
       _count: { _all: true },
     })
     const sold = new Map(soldCounts.map((c) => [c.variantId, c._count._all]))
+    // The copy a buyer gets — the lowest not yet paid for — named as "Edition 3 of 30", the same
+    // number as the artwork page and the renders (owner, 2026-11-20).
+    const unsold = await prisma.editionNumber.groupBy({
+      by: ['variantId'],
+      where: {
+        variantId: { in: artwork.limitedVariants.map((v) => v.id) },
+        state: { not: 'sold' },
+      },
+      _min: { number: true },
+    })
+    const nextCopy = new Map(unsold.map((c) => [c.variantId, c._min.number]))
     variants = artwork.limitedVariants.map((v) =>
-      toLimitedVariantView(v, remaining.get(v.id) ?? 0, sold.get(v.id) ?? 0),
+      toLimitedVariantView(
+        v,
+        remaining.get(v.id) ?? 0,
+        sold.get(v.id) ?? 0,
+        nextCopy.get(v.id) ?? null,
+      ),
     )
   }
 

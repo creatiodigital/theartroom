@@ -17,11 +17,13 @@ import { useAttentionCounts } from '@/components/admin/shell'
 import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
 import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
 import { AttentionCard } from '@/components/admin/ui/AttentionCard'
+import { Callout } from '@/components/admin/ui/Callout'
 import { Panel, PanelLink } from '@/components/admin/ui/Panel'
 import { PipelineList } from '@/components/admin/ui/PipelineList'
 import { Button } from '@/components/ui/Button'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { clearAllTestData, getTestDataCounts } from '@/app/admin/dev-cleanup/actions'
+import { countWorksToRender } from '@/app/admin/print-presentations/actions'
 import type { AttentionMetric, Bucket } from '@/lib/orders/orderBuckets'
 
 // Dev/staging-only cleanup controls. NEXT_PUBLIC_APP_ENV is inlined at build
@@ -126,6 +128,20 @@ export const DashboardAdmin = () => {
   // the menu badge); analytics from its own single request.
   const { metrics, buckets, error: countsError, reload: loadCounts } = useAttentionCounts()
   const analytics = useDashboardAnalytics()
+
+  // How many artworks need a render (owner, 2026-11-20: "just give me a warning on my dashboard
+  // homepage"): none yet, out of date, photos missing or old, or a pencilled copy that has sold.
+  // Quiet when it can't be counted: the print presentations page says the same, work by work.
+  const [toRender, setToRender] = useState<number | null>(null)
+  useEffect(() => {
+    let live = true
+    countWorksToRender()
+      .then((res) => live && res.ok && setToRender(res.count))
+      .catch(() => {})
+    return () => {
+      live = false
+    }
+  }, [])
 
   // Dev-cleanup state (section only renders outside production).
   const [cleanupConfirmOpen, setCleanupConfirmOpen] = useState(false)
@@ -256,6 +272,24 @@ export const DashboardAdmin = () => {
               onClick={() => void loadCounts()}
             />
           </div>
+        )}
+        {toRender !== null && toRender > 0 && (
+          <Callout
+            tone="amber"
+            action={
+              <Button
+                variant="bare"
+                font="dashboard"
+                href="/admin/print-presentations"
+                label="Open print presentations"
+                className={styles.retry}
+              />
+            }
+          >
+            {toRender === 1
+              ? 'You have 1 artwork that needs to be re-rendered'
+              : `You have ${toRender} artworks that need to be re-rendered`}
+          </Callout>
         )}
       </section>
 

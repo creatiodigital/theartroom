@@ -349,7 +349,7 @@ export async function buildProfileImageKey(userId: string): Promise<string> {
 }
 
 // Artist signature stored as a transparent PNG alongside the profile
-// image. Supplied to theprintspace for signed limited-edition prints.
+// image. Supplied to theprintspace, which prints it on limited editions' certificates (never on a print).
 export async function buildSignatureImageKey(userId: string): Promise<string> {
   const handler = await getArtistHandler(userId)
   return `${getEnvPrefix()}/profiles/${handler}/signature-${randomSuffix()}.png`
@@ -383,7 +383,16 @@ export function buildPresentationKey(
   widthPx: number,
   env: R2EnvPrefix = getEnvPrefix(),
 ): string {
-  return `${env}/presentations/${artworkId}/${fingerprint}-${widthPx}.webp`
+  return buildPresentationFileKey(artworkId, `${fingerprint}-${widthPx}.webp`, env)
+}
+
+/** Any file of an artwork's print presentation (the framed render, its photos), by its name. */
+export function buildPresentationFileKey(
+  artworkId: string,
+  fileName: string,
+  env: R2EnvPrefix = getEnvPrefix(),
+): string {
+  return `${env}/presentations/${artworkId}/${fileName}`
 }
 
 /** The public URL of a main-bucket object key. */

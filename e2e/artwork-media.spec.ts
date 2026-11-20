@@ -100,7 +100,8 @@ test.describe('the artwork imagery zone', () => {
       await expect(page.getByRole('button', { name: /^(next|previous) image$/i })).toHaveCount(0)
       await expect(page.locator('img[src="   "]')).toHaveCount(0)
       // The rest of the page is untouched.
-      await expect(page.getByText(/Edition of 3/).first()).toBeVisible()
+      // "Edition 1 of 3": the next copy of a fresh edition (owner 2026-11-20, "Edition N of M").
+      await expect(page.getByText(/Edition 1 of 3/).first()).toBeVisible()
     } finally {
       await teardownLimitedFixture(fx)
     }
