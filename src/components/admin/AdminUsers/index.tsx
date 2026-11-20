@@ -214,7 +214,14 @@ export const AdminUsers = () => {
         setDeleteTarget(null)
         setConfirmText('')
       } else {
-        setActionError('Failed to delete user')
+        // The server's own reason when it gives one (a user who still has
+        // artworks or exhibitions is refused with what to delete first).
+        const data: unknown = await response.json().catch(() => null)
+        const serverError =
+          data && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
+            ? data.error
+            : ''
+        setActionError(serverError || 'Failed to delete user')
       }
     } catch (err) {
       console.error('Delete error:', err)

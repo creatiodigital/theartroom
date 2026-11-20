@@ -77,8 +77,22 @@ async function collectReferencedKeys(): Promise<Set<string>> {
   // Pull every URL-bearing column from every model that writes to R2.
   // Keep this list in sync with schema.prisma — any new *Url column
   // that targets R2 needs to be added here or its files become
-  // orphan candidates on the next run.
-  const [artworks, users, orders, exhibitions, slides, pages] = await Promise.all([
+  // orphan candidates on the next run. Checked against the schema
+  // 2026-11-20: every file column is here (the JSON ones too —
+  // printPresentation, bake, publishedSnapshot's bake). Not files:
+  // trackingUrl (a carrier's page), Exhibition.url, Slide.exhibitionUrl.
+  const [
+    artworks,
+    media,
+    users,
+    orders,
+    orderItems,
+    invoices,
+    exhibitions,
+    slides,
+    pages,
+    announcements,
+  ] = await Promise.all([
     prisma.artwork.findMany({
       select: {
         imageUrl: true,
@@ -89,8 +103,15 @@ async function collectReferencedKeys(): Promise<Set<string>> {
         printPresentation: true,
       },
     }),
+    // An artwork page's extra images and videos.
+    prisma.artworkMedia.findMany({ select: { url: true } }),
     prisma.user.findMany({ select: { profileImageUrl: true, signatureUrl: true } }),
     prisma.printOrder.findMany({ select: { certificateUrl: true } }),
+    // One certificate per item.
+    prisma.printOrderItem.findMany({ select: { certificateUrl: true } }),
+    // Invoice PDFs: a raw KEY, not a URL. They sit in this (public) bucket whenever
+    // R2_PRIVATE_BUCKET_NAME is unset.
+    prisma.invoice.findMany({ select: { r2Key: true } }),
     prisma.exhibition.findMany({
       select: {
         thumbnailUrl: true,
@@ -101,8 +122,10 @@ async function collectReferencedKeys(): Promise<Set<string>> {
         publishedSnapshot: true,
       },
     }),
-    prisma.slide.findMany({ select: { imageUrl: true } }),
+    // A slide's own phone image beside the main one.
+    prisma.slide.findMany({ select: { imageUrl: true, mobileImageUrl: true } }),
     prisma.pageContent.findMany({ select: { bannerImageUrl: true } }),
+    prisma.announcement.findMany({ select: { imageUrl: true } }),
   ])
 
   const referenced = new Set<string>()
@@ -127,11 +150,14 @@ async function collectReferencedKeys(): Promise<Set<string>> {
       }
     }
   }
+  for (const m of media) add(m.url)
   for (const u of users) {
     add(u.profileImageUrl)
     add(u.signatureUrl)
   }
   for (const o of orders) add(o.certificateUrl)
+  for (const i of orderItems) add(i.certificateUrl)
+  for (const inv of invoices) if (inv.r2Key) referenced.add(inv.r2Key)
   for (const e of exhibitions) {
     add(e.thumbnailUrl)
     add(e.bannerUrl)
@@ -141,8 +167,12 @@ async function collectReferencedKeys(): Promise<Set<string>> {
     for (const url of bakeMapUrls(e.bake)) add(url)
     for (const url of bakeMapUrls(snapshot?.exhibition?.bake)) add(url)
   }
-  for (const s of slides) add(s.imageUrl)
+  for (const s of slides) {
+    add(s.imageUrl)
+    add(s.mobileImageUrl)
+  }
   for (const p of pages) add(p.bannerImageUrl)
+  for (const a of announcements) add(a.imageUrl)
 
   return referenced
 }
