@@ -181,20 +181,20 @@ a.artist:hover {
   color: var(--color-text-secondary);
 }
 
-// The technique's lines (camera, lens, ISO…), as entered, 8 px under the size. Through .info
-// .identity: outranks RichText's own compact rules whatever the stylesheet order (the room
-// overlay loads them in another order than the page).
-.info .identity .technique {
-  margin-top: 4px;
+// The technique's lines (camera, lens, ISO…), as entered: the first lines of the print block,
+// under the divider (owner, 2026-11-20), set close ("lines look too separated": 1.5, as the year).
+// Through .info: outranks RichText's own rules whatever the stylesheet order (the room overlay
+// loads them in another order than the page).
+.info .technique {
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.5;
   color: var(--color-text-secondary);
 
   p,
   li {
     margin: 0;
     font-size: 13px;
-    line-height: 1.6;
+    line-height: 1.5;
     color: var(--color-text-secondary);
   }
 }
