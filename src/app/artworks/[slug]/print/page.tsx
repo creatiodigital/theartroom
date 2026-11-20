@@ -115,8 +115,24 @@ const PrintWizardPage = async ({ params }: PrintWizardPageProps) => {
       _count: { _all: true },
     })
     const sold = new Map(soldCounts.map((c) => [c.variantId, c._count._all]))
+    // The copy a buyer gets — the lowest not yet paid for — named as "Edition 3 of 30", the same
+    // number as the artwork page and the renders (owner, 2026-11-20).
+    const unsold = await prisma.editionNumber.groupBy({
+      by: ['variantId'],
+      where: {
+        variantId: { in: artwork.limitedVariants.map((v) => v.id) },
+        state: { not: 'sold' },
+      },
+      _min: { number: true },
+    })
+    const nextCopy = new Map(unsold.map((c) => [c.variantId, c._min.number]))
     variants = artwork.limitedVariants.map((v) =>
-      toLimitedVariantView(v, remaining.get(v.id) ?? 0, sold.get(v.id) ?? 0),
+      toLimitedVariantView(
+        v,
+        remaining.get(v.id) ?? 0,
+        sold.get(v.id) ?? 0,
+        nextCopy.get(v.id) ?? null,
+      ),
     )
   }
 

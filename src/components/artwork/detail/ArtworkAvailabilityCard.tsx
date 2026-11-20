@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { UnitsSwitch } from '@/components/ui/UnitsSwitch'
 import type { ArtworkSizes } from '@/lib/editions/artworkSizes'
 import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
+import { editionLineText } from '@/lib/editions/editionLineText'
 import type { VariantEditionLineParts } from '@/lib/editions/variantEditionLines'
 import { formatDimensions, type Unit } from '@/lib/units/format'
 import { useUnits } from '@/lib/units/UnitsProvider'
@@ -51,11 +52,9 @@ const countWord = (n: number) => COUNT_WORDS[n] ?? String(n)
 const sizeOf = (line: VariantEditionLineParts, unit: Unit) =>
   formatDimensions(line.widthCm, line.heightCm, unit)
 
-/** "Edition of 30 · 28 left", or "Edition of 30" once sold out (the price says Sold out). */
-const stockText = (line: VariantEditionLineParts) =>
-  line.soldOut
-    ? `Edition of ${line.editionSize}`
-    : `Edition of ${line.editionSize} · ${line.left} left`
+/** "Edition 3 of 30" — the copy a buyer gets, the number the renders pencil — or "Edition of 30"
+ *  once sold out (the price says Sold out). */
+const stockText = (line: VariantEditionLineParts) => editionLineText(line)
 
 export const ArtworkAvailabilityCard = ({
   editionType,

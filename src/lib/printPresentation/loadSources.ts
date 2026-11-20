@@ -23,7 +23,8 @@ export type SourceRow = PresentationSource & {
     sheetWidthCm: number | null
     sheetHeightCm: number | null
   } | null
-  /** The lowest unsold copy of the mandatory size (what the renders pencil), or null if none. */
+  /** The lowest copy of the mandatory size not yet paid for (what the renders pencil and the page
+   *  names), or null when every copy is sold. */
   nextCopy: number | null
   /** Whether the mandatory size has its copies yet (they're created when it's published). */
   hasCopies: boolean
@@ -64,8 +65,10 @@ export async function loadPresentationSources(where?: { ids?: string[] }): Promi
           borderCm: true,
           sheetWidthCm: true,
           sheetHeightCm: true,
+          // The lowest copy not yet PAID for (a reserved one — an unfinished checkout — still
+          // counts as unsold): the copy the page names too (variantEditionLines).
           editionNumbers: {
-            where: { state: 'available' },
+            where: { state: { not: 'sold' } },
             orderBy: { number: 'asc' },
             select: { number: true },
             take: 1,

@@ -34,10 +34,9 @@ test.describe('the availability card', () => {
       await expect(page.getByText(/^€[\d.,]+$/).first()).toBeVisible()
       await expect(page.getByText('Limited Edition')).toHaveCount(1)
 
-      // The row states the edition SIZE and makes no claim about copies. "X of
-      // Y" is the edition-number convention, so any count in that shape reads
-      // as "this is copy X" — which the page cannot honestly promise.
-      await expect(page.getByText(/Edition of 5/).first()).toBeVisible()
+      // The row names the copy a buyer gets — the lowest not yet paid for, the
+      // number the renders pencil (owner, 2026-11-20: "Edition 1 of 30").
+      await expect(page.getByText(/Edition 1 of 5/).first()).toBeVisible()
 
       // No "Not reserved until you pay" line on the page (owner, 2026-11-20: too
       // pushy). Only the order wizard's limited step still says it.

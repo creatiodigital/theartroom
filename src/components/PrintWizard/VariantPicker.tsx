@@ -1,5 +1,6 @@
 'use client'
 
+import { editionLineText } from '@/lib/editions/editionLineText'
 import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
 import { Icon } from '@/components/ui/Icon'
 import { TPS_PAPERS, TPS_PRINT_TYPES } from '@/lib/print-providers/printspace'
@@ -109,10 +110,10 @@ export const VariantPicker = ({
                 ? `${formatDimensions(v.widthCm, v.heightCm, unit)} print · sheet ${formatDimensions(v.sheetWidthCm as number, v.sheetHeightCm as number, unit)}`
                 : `${formatDimensions(v.widthCm, v.heightCm, unit)} print`}
             </span>
-            {/* "Edition of 30 · 29 left" (order-flow.md; questions Q-P4: the count is real data). */}
+            {/* "Edition 3 of 30": the copy a buyer gets, as the artwork page and the renders name
+                it (owner, 2026-11-20); "Edition of 30" once sold out. */}
             <span className={styles.variantCardStock}>
-              Edition of {v.editionSize}
-              {!soldOut && ` · ${v.left} left`}
+              {editionLineText({ editionSize: v.editionSize, soldOut, nextCopy: v.nextCopy })}
             </span>
           </button>
         )
