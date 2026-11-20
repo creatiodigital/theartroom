@@ -7,7 +7,7 @@ import { setupLimitedFixture, teardownLimitedFixture } from './edition-helpers'
  * The availability card — the compact block in the artwork page's left column.
  *
  * It must sit ABOVE THE FOLD, so it is deliberately terse: a price, the edition
- * this buyer would receive, the one caveat that matters, and the button. The
+ * this buyer would receive, and the button. The
  * fuller explanation lives in the band further down the page.
  *
  * It describes exactly ONE configuration — the cheapest live variant, the one
@@ -17,7 +17,7 @@ import { setupLimitedFixture, teardownLimitedFixture } from './edition-helpers'
  * Flat page: no WebGL.
  */
 test.describe('the availability card', () => {
-  test('names the price, the copy on offer and the caveat', async ({ page }) => {
+  test('names the price and the copy on offer', async ({ page }) => {
     const fx = await setupLimitedFixture(5)
     try {
       await prisma.artwork.update({
@@ -39,10 +39,9 @@ test.describe('the availability card', () => {
       // as "this is copy X" — which the page cannot honestly promise.
       await expect(page.getByText(/Edition of 5/).first()).toBeVisible()
 
-      // Editions are not held before payment — the card says so plainly rather
-      // than pretending otherwise or reserving anything. This caveat belongs to
-      // the card ALONE, so it must not be duplicated.
-      await expect(page.getByText(/not reserved until you pay/i)).toHaveCount(1)
+      // No "Not reserved until you pay" line on the page (owner, 2026-11-20: too
+      // pushy). Only the order wizard's limited step still says it.
+      await expect(page.getByText(/not reserved until you pay/i)).toHaveCount(0)
 
       await expect(page.getByRole('button', { name: /order a print/i }).first()).toBeVisible()
     } finally {
@@ -64,7 +63,6 @@ test.describe('the availability card', () => {
 
       await expect(page.getByText('Available', { exact: true })).toHaveCount(0)
       await expect(page.getByRole('button', { name: /order a print/i })).toHaveCount(0)
-      await expect(page.getByText(/not reserved until you pay/i)).toHaveCount(0)
       // The work itself is still here, and still enquirable.
       await expect(page.getByRole('button', { name: /inquire/i })).toBeVisible()
     } finally {

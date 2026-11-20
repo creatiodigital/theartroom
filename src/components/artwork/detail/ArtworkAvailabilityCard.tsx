@@ -17,7 +17,9 @@ import styles from './ArtworkAvailabilityCard.module.scss'
  * The print part of the artwork page's info column (docs/public-redesign/units.md "Artwork page:
  * the print, its sizes and its price together"; owner, 2026-11-17: "I don't want to make users
  * guess… do not be too verbose either"): what kind of print it is, its sizes, the price, Order a
- * print, the caller's Inquire, then the caveat. The same block in the 3D room's artwork details.
+ * print, then the caller's Inquire. The same block in the 3D room's artwork details. No "Not
+ * reserved until you pay" line under the buttons (owner, 2026-11-20: too pushy); the order
+ * wizard's limited step still says it.
  *
  * - Open edition: Smallest / Largest, "or any size in between.", From €303 + Available, then
  *   "Size, paper and frame are chosen next."
@@ -39,7 +41,7 @@ type ArtworkAvailabilityCardProps = {
   /** Every live edition, smallest first (limited editions only). */
   editionLines?: VariantEditionLineParts[]
   artworkSlug: string
-  /** The Inquire button, set between Order a print and the caveat. */
+  /** The Inquire button, set under Order a print. */
   inquire?: ReactNode
 }
 
@@ -123,16 +125,6 @@ export const ArtworkAvailabilityCard = ({
       )}
 
       {inquire}
-
-      {/* Limited only: on an open edition nothing can be taken first and the sentence would
-          simply be untrue. Editions are deliberately NOT held before payment — this line is the
-          whole mitigation, and saying it plainly is what keeps a lost race from feeling like a
-          trick. */}
-      {isLimited && !soldOut && (
-        <p className={styles.caveat}>
-          Not reserved until you pay: another collector may take it first.
-        </p>
-      )}
     </div>
   )
 }
