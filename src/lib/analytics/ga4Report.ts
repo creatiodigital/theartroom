@@ -69,8 +69,54 @@ const publicPages: Filter = {
     },
   },
 }
+/**
+ * Meta's crawlers: every link posted on Facebook is opened by headless browsers in Meta's data
+ * centers, and GA4 counts each as a visitor (2026-11-20: about 18 of a week's visits, most of
+ * "United States" and of Facebook). They show as a 2000×2000 screen, or as a phone in a
+ * data-center town arriving from Facebook, one page and no time on it. Dublin (Clonee) is left
+ * in: real visitors from Facebook live there too.
+ */
+const META_DATA_CENTER_TOWNS = [
+  'Prineville',
+  'Forest City',
+  'Fort Worth',
+  'Lulea',
+  'Luleå',
+  'Altoona',
+  'Los Lunas',
+  'Papillion',
+  'Eagle Mountain',
+  'Odense',
+]
+const notMetaCrawler: Filter = {
+  notExpression: {
+    orGroup: {
+      expressions: [
+        {
+          filter: {
+            fieldName: 'screenResolution',
+            stringFilter: { matchType: 'EXACT', value: '2000x2000' },
+          },
+        },
+        {
+          andGroup: {
+            expressions: [
+              { filter: { fieldName: 'city', inListFilter: { values: META_DATA_CENTER_TOWNS } } },
+              {
+                filter: {
+                  fieldName: 'sessionSource',
+                  stringFilter: { matchType: 'PARTIAL_REGEXP', value: 'facebook' },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  },
+}
 const visitorsOnly = (...more: Filter[]): Filter => ({
-  andGroup: { expressions: [notInternal, ...more] },
+  andGroup: { expressions: [notInternal, notMetaCrawler, ...more] },
 })
 
 const FUNNEL: { id: FunnelStepId; label: string; filter: Filter }[] = [
@@ -103,6 +149,8 @@ const SOURCE_PLATFORMS: [RegExp, string][] = [
   [/^t\.co$|twitter|^x\.com$/, 'X'],
   [/whatsapp/, 'WhatsApp'],
   [/mail/, 'Email'],
+  // The QR code on the gallery's business card (`utm_source=card&utm_medium=qr`).
+  [/^card$/, 'Business card (QR)'],
 ]
 
 /** What a raw GA4 value is called on the page. */
@@ -162,7 +210,13 @@ export async function fetchAnalyticsReport(
   }
   const both = [current, previous]
   const splitDim = { name: SPLIT_DIMENSION[split] }
-  const roomEvents = ['room_loaded', 'room_load_abandon', 'room_visit_end', 'room_artwork_details']
+  const roomEvents = [
+    'room_loaded',
+    'room_load_abandon',
+    'room_visit_end',
+    'room_artwork_view',
+    'room_artwork_details',
+  ]
 
   const requests: Ga4ReportRequest[] = [
     // 0 · totals, both periods
@@ -408,7 +462,10 @@ export async function fetchAnalyticsReport(
       leftWhileLoading: roomEvent.get('room_load_abandon')?.[0] ?? 0,
       avgLoadMs: loaded ? (loadedRow?.[1] ?? 0) / loaded : null,
       avgSecondsInRoom: ends ? (endRow?.[2] ?? 0) / ends : null,
-      avgWorksViewed: ends ? (endRow?.[3] ?? 0) / ends : null,
+      // Each framing of a work, per room that loaded. Not `room_visit_end`'s `works_viewed`:
+      // that event is lost for about 4 visits in 10 (a phone closing the tab), mostly the ones
+      // that looked at works, so its average read near 0 (2026-11-20).
+      avgWorksViewed: loaded ? (roomEvent.get('room_artwork_view')?.[0] ?? 0) / loaded : null,
       detailsOpened: roomEvent.get('room_artwork_details')?.[0] ?? 0,
       errors: rowsOf(reports[10])
         .filter((r) => r.dims[0] && r.dims[0] !== '(not set)')

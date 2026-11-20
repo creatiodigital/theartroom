@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
+import c from 'classnames'
 
 import { formatDay, formatNumber } from './format'
 
@@ -16,6 +17,11 @@ type LineChartProps = {
   unit: string
   /** Spoken summary of the chart. */
   label: string
+  /**
+   * The last day is still going (the period ends today): its stretch of each line is dashed and
+   * its date reads "so far", so the drop to it doesn't read as a fall.
+   */
+  partialLast?: boolean
 }
 
 const HEIGHT = 240
@@ -36,7 +42,7 @@ function niceCeil(n: number): number {
  * crosshair that snaps to the nearest day and one tooltip listing every line. Arrow keys move the
  * crosshair; a table under the chart (screen readers) holds every value.
  */
-export function LineChart({ dates, series, unit, label }: LineChartProps) {
+export function LineChart({ dates, series, unit, label, partialLast = false }: LineChartProps) {
   const frameRef = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(720)
   const [active, setActive] = useState<number | null>(null)
@@ -66,6 +72,15 @@ export function LineChart({ dates, series, unit, label }: LineChartProps) {
   // The last day is labelled too, unless it would crowd the label before it.
   const labelsLast = (count - 1) % labelEvery >= labelEvery * 0.6
   const showsLabel = (i: number) => i % labelEvery === 0 || (i === count - 1 && labelsLast)
+  // Where the solid line ends: the last day, unless that day is still going.
+  const dashedFrom = partialLast && count > 1 ? count - 2 : count - 1
+  const pathThrough = (values: number[], from: number, to: number) =>
+    values
+      .slice(from, to + 1)
+      .map((v, i) => `${i === 0 ? 'M' : 'L'}${x(from + i)},${y(v)}`)
+      .join(' ')
+  const dayLabel = (i: number) =>
+    partialLast && i === count - 1 ? `${formatDay(dates[i])}, so far` : formatDay(dates[i])
   const indexAt = (clientX: number) => {
     const box = frameRef.current?.getBoundingClientRect()
     if (!box || count === 0) return null
@@ -149,12 +164,20 @@ export function LineChart({ dates, series, unit, label }: LineChartProps) {
             ) : null,
           )}
           {series.map((s) => (
-            <path
-              key={s.key}
-              d={s.values.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i)},${y(v)}`).join(' ')}
-              className={styles.line}
-              style={{ stroke: s.color }}
-            />
+            <g key={s.key}>
+              <path
+                d={pathThrough(s.values, 0, dashedFrom)}
+                className={styles.line}
+                style={{ stroke: s.color }}
+              />
+              {dashedFrom < count - 1 && (
+                <path
+                  d={pathThrough(s.values, dashedFrom, count - 1)}
+                  className={c(styles.line, styles.lineSoFar)}
+                  style={{ stroke: s.color }}
+                />
+              )}
+            </g>
           ))}
           {active !== null && (
             <g>
@@ -193,7 +216,7 @@ export function LineChart({ dates, series, unit, label }: LineChartProps) {
             className={styles.tooltip}
             style={flip ? { right: width - tooltipLeft + 12 } : { left: tooltipLeft + 12 }}
           >
-            <span className={styles.tooltipDate}>{formatDay(dates[active])}</span>
+            <span className={styles.tooltipDate}>{dayLabel(active)}</span>
             {series.map((s) => (
               <span key={s.key} className={styles.tooltipRow}>
                 <span className={styles.lineKey} style={{ background: s.color }} aria-hidden />
@@ -220,7 +243,7 @@ export function LineChart({ dates, series, unit, label }: LineChartProps) {
         <tbody>
           {dates.map((date, i) => (
             <tr key={date}>
-              <th scope="row">{formatDay(date)}</th>
+              <th scope="row">{dayLabel(i)}</th>
               {series.map((s) => (
                 <td key={s.key}>{s.values[i] ?? 0}</td>
               ))}

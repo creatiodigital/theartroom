@@ -88,6 +88,11 @@
   stroke-linecap: round;
 }
 
+// Today's stretch, still filling up: the same line, dashed.
+.lineSoFar {
+  stroke-dasharray: 4 4;
+}
+
 .crosshair {
   stroke: var(--color-text-secondary);
   stroke-width: 1;

@@ -87,3 +87,13 @@
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
 }
+
+// An artwork's web image beside its row in Artworks, so works with the same title tell apart.
+.thumb {
+  display: block;
+  width: var(--space-10);
+  height: var(--space-10);
+  border-radius: var(--radius-sm);
+  background: var(--color-gray-20);
+  object-fit: cover;
+}

@@ -11,6 +11,8 @@ export type BarListRow = {
   label: ReactNode
   /** Second line under the label (e.g. the artist). */
   sublabel?: ReactNode
+  /** A picture before the text (`table` only), e.g. the artwork's thumbnail. */
+  media?: ReactNode
   value: number
 }
 
@@ -64,8 +66,13 @@ export function BarList({ rows, emptyMessage, variant = 'list', columns }: BarLi
           {rows.map((row) => (
             <tr key={row.key}>
               <td>
-                <span className={styles.title}>{row.label}</span>
-                {row.sublabel && <span className={styles.sublabel}>{row.sublabel}</span>}
+                <span className={styles.labelCell}>
+                  {row.media && <span className={styles.media}>{row.media}</span>}
+                  <span className={styles.labelText}>
+                    <span className={styles.title}>{row.label}</span>
+                    {row.sublabel && <span className={styles.sublabel}>{row.sublabel}</span>}
+                  </span>
+                </span>
               </td>
               <td>
                 <Bar value={row.value} max={max} />
@@ -80,6 +87,7 @@ export function BarList({ rows, emptyMessage, variant = 'list', columns }: BarLi
         {rows.map((row) => (
           <li key={row.key} className={styles.stackedRow}>
             <span className={styles.stackedHead}>
+              {row.media && <span className={styles.media}>{row.media}</span>}
               <span className={styles.stackedText}>
                 <span className={styles.title}>{row.label}</span>
                 {row.sublabel && <span className={styles.sublabel}>{row.sublabel}</span>}
