@@ -183,6 +183,12 @@ export type WizardConfig = {
 export type Quote = {
   currency: string
   lines: QuoteLine[]
+  /**
+   * The 'artwork' line's parts (they add up to it). The gallery's part carries the rounding to a
+   * whole euro (`roundedGalleryCommissionCents`), so callers that split a price read it here
+   * instead of recomputing the commission.
+   */
+  artworkSplit: { artistCents: number; galleryCents: number; productionCents: number }
   subtotalCents: number
   taxCents: number
   taxLabel?: string

@@ -64,7 +64,11 @@ test.describe('createPaymentIntent contract', () => {
       expect(t.currency).toBe('eur')
       // Artist keeps their set price; gallery markup is derived from it.
       expect(t.artistCents).toBe(artistPriceCents)
-      expect(t.galleryCents).toBe(galleryCommissionCents(artistPriceCents, await liveGalleryRate()))
+      // The commission, plus under €1 that makes the price before tax and shipping a whole euro.
+      const commission = galleryCommissionCents(artistPriceCents, await liveGalleryRate())
+      expect(t.galleryCents).toBeGreaterThanOrEqual(commission)
+      expect(t.galleryCents).toBeLessThan(commission + 100)
+      expect((t.artistCents + t.galleryCents + t.productionCents) % 100, 'a whole-euro price').toBe(0)
       expect(t.productionCents).toBeGreaterThanOrEqual(0)
       expect(t.shippingCents).toBeGreaterThanOrEqual(0)
       expect(t.customerVatCents).toBeGreaterThanOrEqual(0)

@@ -223,8 +223,6 @@ export const LimitedWizard = ({ artwork, catalog, galleryRate }: Props) => {
           editionName: selected.name,
           config,
           quote,
-          artistCents: selected.priceCents ?? artwork.printPriceCents,
-          galleryRate,
           specsSummary: summarizeConfig(catalog, config),
         }),
         quantity: 1,

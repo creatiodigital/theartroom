@@ -91,7 +91,11 @@ test.describe('the gallery commission setting', () => {
         try {
           const t = res.totals
           expect(t.artistCents, 'the artist keeps their price').toBe(artistPriceCents)
-          expect(t.galleryCents).toBe(galleryCommissionCents(artistPriceCents, pct / 100))
+          // The commission, plus under €1 that makes the price a whole euro (the gallery's).
+          const commission = galleryCommissionCents(artistPriceCents, pct / 100)
+          expect(t.galleryCents).toBeGreaterThanOrEqual(commission)
+          expect(t.galleryCents).toBeLessThan(commission + 100)
+          expect(from! % 100, 'a whole-euro price').toBe(0)
           expect(
             t.artistCents + t.galleryCents + t.productionCents,
             'the checkout artwork line is the From price',
@@ -103,10 +107,14 @@ test.describe('the gallery commission setting', () => {
       })
     }
 
-    expect(fromAt[47] - fromAt[33], 'the price moved by exactly the change in commission').toBe(
+    // By the change in commission, give or take the rounding to a whole euro.
+    const change =
       galleryCommissionCents(artistPriceCents, 0.47) -
-        galleryCommissionCents(artistPriceCents, 0.33),
-    )
+      galleryCommissionCents(artistPriceCents, 0.33)
+    expect(
+      Math.abs(fromAt[47] - fromAt[33] - change),
+      'the price moved by the change in commission',
+    ).toBeLessThan(100)
   })
 
   test('an order already placed keeps the prices it was paid at', async () => {

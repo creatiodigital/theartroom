@@ -23,6 +23,24 @@ export const GALLERY_COMMISSION_MAX_PCT = 100
 export const galleryCommissionCents = (artistPriceCents: number, galleryRate: number): number =>
   Math.round(artistPriceCents * galleryRate)
 
+/**
+ * The commission a buyer's price actually carries: `galleryCommissionCents` plus the cents that
+ * bring the price before tax and shipping (artist + commission + production) UP to a whole euro.
+ * Owner, 2026-11-20: "showing decimal numbers in prices looks cheap" — €210.50 is €211. The gallery
+ * keeps those cents (under €1); the artist's price and the production cost stay exact. The quote
+ * is the only caller, so the "From" figures, the wizard, the cart and the charge all carry the
+ * same whole-euro price. Tax and shipping are added after, and may have cents.
+ */
+export const roundedGalleryCommissionCents = (
+  artistPriceCents: number,
+  galleryRate: number,
+  productionCents: number,
+): number => {
+  const commission = galleryCommissionCents(artistPriceCents, galleryRate)
+  const price = artistPriceCents + commission + productionCents
+  return commission + (Math.ceil(price / 100) * 100 - price)
+}
+
 /** A percent the admin may save: 0 to 100, whole or with one decimal (27.5 is fine). */
 export const isValidGalleryCommissionPct = (pct: unknown): pct is number =>
   typeof pct === 'number' &&

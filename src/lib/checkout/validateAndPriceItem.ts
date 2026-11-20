@@ -34,7 +34,6 @@ import {
   findConfigRestrictionClash,
 } from '@/lib/print-providers'
 import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
-import { galleryCommissionCents } from '@/lib/galleryCommission'
 import { getProviderQuote } from '@/lib/print-providers/quote'
 import { summarizeConfig, type SpecsSummary } from '@/lib/print-providers/specs'
 import type { PrintRestrictions } from '@/lib/print-providers/types'
@@ -215,7 +214,6 @@ export async function validateAndPriceItem(
   // Limited editions use the chosen variant's price; open editions use the
   // single artwork price. Both are guaranteed non-null by the checks above.
   const artistCents = isLimited ? pinnedVariant!.priceCents! : artwork.printPriceCents!
-  const galleryCents = galleryCommissionCents(artistCents, galleryRate)
 
   const quote = getProviderQuote(providerId, {
     config: effectiveConfig,
@@ -229,7 +227,8 @@ export async function validateAndPriceItem(
   // together; we split them out so callers can show the breakdown.
   const artworkLineCents = quote.lines.find((l) => l.id === 'artwork')?.amountCents ?? 0
   const shippingCents = quote.lines.find((l) => l.id === 'shipping')?.amountCents ?? 0
-  const productionCents = Math.max(0, artworkLineCents - artistCents - galleryCents)
+  // The quote's split: the gallery part carries the rounding to a whole euro (the price shown).
+  const { galleryCents, productionCents } = quote.artworkSplit
   // Per-item PRE-TAX is the artwork line ONLY — it must EXCLUDE shipping.
   // The provider's quote.subtotalCents = artworkLineCents + shippingCents
   // (see printspace getQuote), but for a multi-item order shipping is a

@@ -361,8 +361,6 @@ const OpenWizard = ({
         editionType: 'open',
         config,
         quote,
-        artistCents: artwork.printPriceCents,
-        galleryRate,
         specsSummary: summarizeConfig(catalog, config),
       }),
       quantity,

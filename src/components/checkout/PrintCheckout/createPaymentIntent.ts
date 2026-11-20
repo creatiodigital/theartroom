@@ -10,7 +10,6 @@ import {
   findConfigRestrictionClash,
 } from '@/lib/print-providers'
 import { loadProviderCatalog } from '@/lib/print-providers/loadCatalog'
-import { galleryCommissionCents } from '@/lib/galleryCommission'
 import { getVatRate } from '@/lib/print-providers/printspace/pricing'
 import { getProviderQuote } from '@/lib/print-providers/quote'
 import type { PrintRestrictions } from '@/lib/print-providers/types'
@@ -285,7 +284,6 @@ export async function createPaymentIntent(
   // The owner's commission as it is NOW (Admin › Sales › Pricing): this is the price the buyer is
   // charged, whatever the page showed when it loaded.
   const galleryRate = await getGalleryCommissionRate()
-  const galleryCents = galleryCommissionCents(artistCents, galleryRate)
 
   const quote = getProviderQuote(providerId, {
     config: effectiveConfig,
@@ -296,11 +294,11 @@ export async function createPaymentIntent(
 
   // Provider Quote.lines layout: [{id:'artwork', amount}, {id:'shipping', amount}]
   // The 'artwork' line bundles artist + gallery + production cost
-  // together; we split them out for the order metadata so the admin
+  // together; the quote's split goes into the order metadata so the admin
   // page can show the breakdown without recomputing.
-  const artworkLineCents = quote.lines.find((l) => l.id === 'artwork')?.amountCents ?? 0
   const shippingCents = quote.lines.find((l) => l.id === 'shipping')?.amountCents ?? 0
-  const productionCents = Math.max(0, artworkLineCents - artistCents - galleryCents)
+  // The quote's split: the gallery part carries the rounding to a whole euro (the price shown).
+  const { galleryCents, productionCents } = quote.artworkSplit
   const preTaxCents = quote.subtotalCents
   const currency = quote.currency.toLowerCase()
 
