@@ -170,8 +170,15 @@ export const HomePrints = ({ slides }: { slides: HomePrintSlide[] }) => {
                   className={styles.work}
                   tabIndex={i === index ? undefined : -1}
                 >
-                  {workTitle(slide)}
-                  {slide.year ? `, ${slide.year}` : ''}
+                  {/* Title italic only when the year follows: "<i>Title</i>, 2024" (owner,
+                      2026-11-20). Titles stand upright everywhere else. */}
+                  {slide.year ? (
+                    <>
+                      <cite>{workTitle(slide)}</cite>, {slide.year}
+                    </>
+                  ) : (
+                    workTitle(slide)
+                  )}
                 </Link>
                 <span className={styles.artist}>{slide.artistName}</span>
                 {/* The edition and the price under the artist, as the grids' cards (owner,

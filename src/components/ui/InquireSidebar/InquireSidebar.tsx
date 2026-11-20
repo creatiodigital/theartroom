@@ -216,8 +216,14 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
           </div>
           <div className={styles.workText}>
             <span className={styles.workTitle}>
-              {artwork.title}
-              {artwork.year && `, ${artwork.year}`}
+              {/* Title italic only when the year follows (owner, 2026-11-20). */}
+              {artwork.year ? (
+                <>
+                  <cite>{artwork.title}</cite>, {artwork.year}
+                </>
+              ) : (
+                artwork.title
+              )}
             </span>
             <span className={styles.workArtist}>{artwork.artistName}</span>
           </div>
