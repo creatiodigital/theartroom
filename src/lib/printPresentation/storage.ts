@@ -9,7 +9,7 @@ import { bakeBackend } from '@/lib/bake/bakeStorage'
 import { BAKE_CACHE_CONTROL } from '@/lib/bake/bakeUpload'
 import {
   R2_ENV_PREFIXES,
-  buildPresentationKey,
+  buildPresentationFileKey,
   deleteR2KeyDirect,
   getPresignedUploadUrl,
   getR2ObjectSize,
@@ -17,7 +17,11 @@ import {
 } from '@/lib/r2'
 
 import {
+  PHOTO_VIEWS,
+  PHOTO_WIDTH_PX,
   PRESENTATION_WIDTH_PX,
+  RENDER_ID,
+  type PhotoViewKind,
   type PresentationSize,
   type PrintPresentationRecord,
 } from './record'
@@ -26,8 +30,12 @@ import {
  * Where print presentations live — the same two backends as room bakes (`BAKE_STORAGE`):
  *
  * - `r2` (default): presigned PUTs straight to the bucket, served from its public URL, under
- *   `{env}/presentations/{artworkId}/{fingerprint}-{1800|900}.webp`. A new render has a new
- *   fingerprint, so a file is never overwritten — cached for a year, like bakes.
+ *   `{env}/presentations/{artworkId}/`:
+ *   - the framed render: `{fingerprint}-{renderId}-{1800|900}.webp` (renders saved before
+ *     2026-11-20, without a render id: `{fingerprint}-{1800|900}.webp`);
+ *   - its photos: `{viewsFingerprint}-{renderId}-{sheet|close|edge}-{2400|600}.webp`.
+ *   Every render has its own id, so a file is never overwritten — even a re-render after a sale,
+ *   which keeps both fingerprints — and is cached for a year, like bakes.
  * - `local`: development only. Files sit under `.presentation-files/` at the repo root and are
  *   served by `/api/presentation-files/[...key]`, laid out the same way (minus the env prefix).
  */
@@ -40,12 +48,23 @@ const LOCAL_ROOT = path.join(process.cwd(), '.presentation-files')
 const ARTWORK_SEGMENT = /^[A-Za-z0-9_-]+$/
 /** `presentationInputs(...).fingerprint`: 8 hex digits. */
 export const PRESENTATION_FINGERPRINT = /^[0-9a-f]{8}$/
-const FILE_PATTERN = /^([0-9a-f]{8})-(1800|900)\.webp$/
+const FILE_PATTERN =
+  /^(?:[0-9a-f]{8}(?:-[0-9a-f]{8})?-(?:1800|900)|[0-9a-f]{8}-[0-9a-f]{8}-(?:sheet|close|edge)-(?:2400|600))\.webp$/
 
-function assertSegments(artworkId: string, fingerprint: string) {
-  if (!ARTWORK_SEGMENT.test(artworkId) || !PRESENTATION_FINGERPRINT.test(fingerprint)) {
+function assertSegments(artworkId: string, fingerprint: string, renderId?: string) {
+  if (
+    !ARTWORK_SEGMENT.test(artworkId) ||
+    !PRESENTATION_FINGERPRINT.test(fingerprint) ||
+    (renderId !== undefined && !RENDER_ID.test(renderId))
+  ) {
     throw new Error('Invalid presentation path segment')
   }
+}
+
+/** A new render's id: 8 random hex digits. */
+export function newRenderId(): string {
+  const bytes = globalThis.crypto.getRandomValues(new Uint8Array(4))
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
 }
 
 function assertLocalAllowed() {
@@ -54,23 +73,56 @@ function assertLocalAllowed() {
   }
 }
 
-const fileName = (fingerprint: string, size: PresentationSize) =>
-  `${fingerprint}-${PRESENTATION_WIDTH_PX[size]}.webp`
+const fileName = (fingerprint: string, size: PresentationSize, renderId?: string) =>
+  renderId
+    ? `${fingerprint}-${renderId}-${PRESENTATION_WIDTH_PX[size]}.webp`
+    : `${fingerprint}-${PRESENTATION_WIDTH_PX[size]}.webp`
 
-const localUrl = (artworkId: string, fingerprint: string, size: PresentationSize) =>
-  `${LOCAL_URL_ROOT}/presentations/${artworkId}/${fileName(fingerprint, size)}`
+const photoFileName = (
+  viewsFingerprint: string,
+  renderId: string,
+  view: PhotoViewKind,
+  size: PresentationSize,
+) => `${viewsFingerprint}-${renderId}-${view}-${PHOTO_WIDTH_PX[size]}.webp`
 
-/** The public URLs a render of `fingerprint` is stored at. */
+/** Where a file is served from on this deployment's backend (or, for R2, `env`'s folder). */
+const fileUrl = (artworkId: string, name: string, env?: (typeof R2_ENV_PREFIXES)[number]) =>
+  bakeBackend() === 'local' && !env
+    ? `${LOCAL_URL_ROOT}/presentations/${artworkId}/${name}`
+    : publicUrlForKey(buildPresentationFileKey(artworkId, name, env))
+
+/**
+ * The public URLs a render of `fingerprint` is stored at: under `renderId`'s names, or, without
+ * one, the names renders had before 2026-11-20.
+ */
 export function presentationPublicUrls(
   artworkId: string,
   fingerprint: string,
+  renderId?: string,
 ): Record<PresentationSize, string> {
-  assertSegments(artworkId, fingerprint)
-  const url = (size: PresentationSize) =>
-    bakeBackend() === 'local'
-      ? localUrl(artworkId, fingerprint, size)
-      : publicUrlForKey(buildPresentationKey(artworkId, fingerprint, PRESENTATION_WIDTH_PX[size]))
-  return { large: url('large'), small: url('small') }
+  assertSegments(artworkId, fingerprint, renderId)
+  return {
+    large: fileUrl(artworkId, fileName(fingerprint, 'large', renderId)),
+    small: fileUrl(artworkId, fileName(fingerprint, 'small', renderId)),
+  }
+}
+
+/** The public URLs a render's photos are stored at, view by view. */
+export function photoPublicUrls(
+  artworkId: string,
+  viewsFingerprint: string,
+  renderId: string,
+  env?: (typeof R2_ENV_PREFIXES)[number],
+): Record<PhotoViewKind, Record<PresentationSize, string>> {
+  assertSegments(artworkId, viewsFingerprint, renderId)
+  const urls = {} as Record<PhotoViewKind, Record<PresentationSize, string>>
+  for (const view of PHOTO_VIEWS) {
+    urls[view] = {
+      large: fileUrl(artworkId, photoFileName(viewsFingerprint, renderId, view, 'large'), env),
+      small: fileUrl(artworkId, photoFileName(viewsFingerprint, renderId, view, 'small'), env),
+    }
+  }
+  return urls
 }
 
 /**
@@ -83,51 +135,90 @@ export function presentationFilesLoadHere(
   artworkId: string,
   record: PrintPresentationRecord,
 ): boolean {
-  const { fingerprint, urls } = record
+  const { fingerprint, urls, renderId } = record
   const matches = (url: (size: PresentationSize) => string) =>
     urls.large === url('large') && urls.small === url('small')
   try {
-    const own = presentationPublicUrls(artworkId, fingerprint)
+    const own = presentationPublicUrls(artworkId, fingerprint, renderId)
     if (matches((size) => own[size])) return true
     return R2_ENV_PREFIXES.some((env) =>
-      matches((size) =>
-        publicUrlForKey(
-          buildPresentationKey(artworkId, fingerprint, PRESENTATION_WIDTH_PX[size], env),
-        ),
-      ),
+      matches((size) => fileUrl(artworkId, fileName(fingerprint, size, renderId), env)),
     )
   } catch {
     return false
   }
 }
 
-/** One upload URL per size (a presigned R2 PUT, or the local route), and where each is served. */
+/**
+ * Whether a stored render's PHOTOS load on this deployment's pages: they exist, under their own
+ * names on this backend or on any environment's R2 folder (as `presentationFilesLoadHere`).
+ */
+export function photoFilesLoadHere(artworkId: string, record: PrintPresentationRecord): boolean {
+  const { views, renderId } = record
+  if (!views || !renderId) return false
+  const same = (a: Record<PhotoViewKind, Record<PresentationSize, string>>) =>
+    PHOTO_VIEWS.every(
+      (view) => views.urls[view].large === a[view].large && views.urls[view].small === a[view].small,
+    )
+  try {
+    if (same(photoPublicUrls(artworkId, views.fingerprint, renderId))) return true
+    return R2_ENV_PREFIXES.some((env) =>
+      same(photoPublicUrls(artworkId, views.fingerprint, renderId, env)),
+    )
+  } catch {
+    return false
+  }
+}
+
+type Upload = { url: string; publicUrl: string }
+
+/** One file's upload: a presigned R2 PUT, or the local route (which is also where it's served). */
+async function uploadFor(artworkId: string, name: string): Promise<Upload> {
+  const publicUrl = fileUrl(artworkId, name)
+  if (bakeBackend() === 'local') {
+    assertLocalAllowed()
+    return { url: publicUrl, publicUrl }
+  }
+  const url = await getPresignedUploadUrl(
+    buildPresentationFileKey(artworkId, name),
+    'image/webp',
+    3600,
+    BAKE_CACHE_CONTROL,
+  )
+  return { url, publicUrl }
+}
+
+/** One upload URL per size of the framed render, and where each is served. */
 export async function createPresentationUploads(
   artworkId: string,
   fingerprint: string,
-): Promise<Record<PresentationSize, { url: string; publicUrl: string }>> {
-  const publicUrls = presentationPublicUrls(artworkId, fingerprint)
-  if (bakeBackend() === 'local') {
-    assertLocalAllowed()
-    return {
-      large: { url: publicUrls.large, publicUrl: publicUrls.large },
-      small: { url: publicUrls.small, publicUrl: publicUrls.small },
-    }
-  }
+  renderId?: string,
+): Promise<Record<PresentationSize, Upload>> {
+  assertSegments(artworkId, fingerprint, renderId)
   const [large, small] = await Promise.all(
-    SIZES.map((size) =>
-      getPresignedUploadUrl(
-        buildPresentationKey(artworkId, fingerprint, PRESENTATION_WIDTH_PX[size]),
-        'image/webp',
-        3600,
-        BAKE_CACHE_CONTROL,
-      ),
-    ),
+    SIZES.map((size) => uploadFor(artworkId, fileName(fingerprint, size, renderId))),
   )
-  return {
-    large: { url: large, publicUrl: publicUrls.large },
-    small: { url: small, publicUrl: publicUrls.small },
-  }
+  return { large, small }
+}
+
+/** One upload URL per photo view and size, and where each is served. */
+export async function createPhotoUploads(
+  artworkId: string,
+  viewsFingerprint: string,
+  renderId: string,
+): Promise<Record<PhotoViewKind, Record<PresentationSize, Upload>>> {
+  assertSegments(artworkId, viewsFingerprint, renderId)
+  const entries = await Promise.all(
+    PHOTO_VIEWS.map(async (view) => {
+      const [large, small] = await Promise.all(
+        SIZES.map((size) =>
+          uploadFor(artworkId, photoFileName(viewsFingerprint, renderId, view, size)),
+        ),
+      )
+      return [view, { large, small }] as const
+    }),
+  )
+  return Object.fromEntries(entries) as Record<PhotoViewKind, Record<PresentationSize, Upload>>
 }
 
 /** Resolves a local route key to a path inside `.presentation-files/`, or null. */
@@ -155,47 +246,75 @@ export async function readLocalPresentationFile(filePath: string): Promise<Buffe
   }
 }
 
-/** Byte size of a stored render, or null when it isn't there. */
-export async function presentationObjectSize(
-  artworkId: string,
-  fingerprint: string,
-  size: PresentationSize,
-): Promise<number | null> {
-  assertSegments(artworkId, fingerprint)
+/** Byte size of a stored file, or null when it isn't there. */
+async function fileSize(artworkId: string, name: string): Promise<number | null> {
   if (bakeBackend() === 'local') {
     assertLocalAllowed()
     try {
-      return (
-        await stat(
-          /*turbopackIgnore: true*/ path.join(LOCAL_ROOT, artworkId, fileName(fingerprint, size)),
-        )
-      ).size
+      return (await stat(/*turbopackIgnore: true*/ path.join(LOCAL_ROOT, artworkId, name))).size
     } catch {
       return null
     }
   }
-  return getR2ObjectSize(buildPresentationKey(artworkId, fingerprint, PRESENTATION_WIDTH_PX[size]))
+  return getR2ObjectSize(buildPresentationFileKey(artworkId, name))
 }
 
-/** Removes both files of a stored render. Missing files are fine. */
+/** Byte size of a stored framed render, or null when it isn't there. */
+export async function presentationObjectSize(
+  artworkId: string,
+  fingerprint: string,
+  size: PresentationSize,
+  renderId?: string,
+): Promise<number | null> {
+  assertSegments(artworkId, fingerprint, renderId)
+  return fileSize(artworkId, fileName(fingerprint, size, renderId))
+}
+
+/** Whether every file of a render — the framed one's two sizes, each photo's two — is stored. */
+export async function storedRenderComplete(
+  artworkId: string,
+  fingerprint: string,
+  renderId: string,
+  viewsFingerprint: string,
+): Promise<boolean> {
+  assertSegments(artworkId, fingerprint, renderId)
+  assertSegments(artworkId, viewsFingerprint, renderId)
+  const names = [
+    ...SIZES.map((size) => fileName(fingerprint, size, renderId)),
+    ...PHOTO_VIEWS.flatMap((view) =>
+      SIZES.map((size) => photoFileName(viewsFingerprint, renderId, view, size)),
+    ),
+  ]
+  const sizes = await Promise.all(names.map((name) => fileSize(artworkId, name)))
+  return sizes.every((size) => !!size)
+}
+
+/** Every file name a stored render has: its framed sizes and, if it has them, its photos. */
+function recordFileNames(record: PrintPresentationRecord): string[] {
+  const { fingerprint, renderId, views } = record
+  const names = SIZES.map((size) => fileName(fingerprint, size, renderId))
+  if (views && renderId && PRESENTATION_FINGERPRINT.test(views.fingerprint)) {
+    for (const view of PHOTO_VIEWS) {
+      for (const size of SIZES) names.push(photoFileName(views.fingerprint, renderId, view, size))
+    }
+  }
+  return names
+}
+
+/** Removes every file of a stored render (framed and photos). Missing files are fine. */
 export async function deletePresentationFiles(
   record: PrintPresentationRecord,
   artworkId: string,
 ): Promise<void> {
   if (!PRESENTATION_FINGERPRINT.test(record.fingerprint)) return
-  assertSegments(artworkId, record.fingerprint)
+  if (record.renderId !== undefined && !RENDER_ID.test(record.renderId)) return
+  assertSegments(artworkId, record.fingerprint, record.renderId)
+  const names = recordFileNames(record)
   if (bakeBackend() === 'local') {
     assertLocalAllowed()
     await Promise.all(
-      SIZES.map((size) =>
-        rm(
-          /*turbopackIgnore: true*/ path.join(
-            LOCAL_ROOT,
-            artworkId,
-            fileName(record.fingerprint, size),
-          ),
-          { force: true },
-        ),
+      names.map((name) =>
+        rm(/*turbopackIgnore: true*/ path.join(LOCAL_ROOT, artworkId, name), { force: true }),
       ),
     )
     // Drop the artwork's folder once its last render is gone (fails harmlessly if not empty).
@@ -203,10 +322,6 @@ export async function deletePresentationFiles(
     return
   }
   await Promise.all(
-    SIZES.map((size) =>
-      deleteR2KeyDirect(
-        buildPresentationKey(artworkId, record.fingerprint, PRESENTATION_WIDTH_PX[size]),
-      ),
-    ),
+    names.map((name) => deleteR2KeyDirect(buildPresentationFileKey(artworkId, name))),
   )
 }

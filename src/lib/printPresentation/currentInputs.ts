@@ -12,7 +12,7 @@ import { presentationFilesLoadHere, presentationPublicUrls } from './storage'
  */
 const servedHere = (artworkId: string, record: PrintPresentationRecord) => {
   try {
-    const here = presentationPublicUrls(artworkId, record.fingerprint)
+    const here = presentationPublicUrls(artworkId, record.fingerprint, record.renderId)
     return record.urls.large === here.large && record.urls.small === here.small
   } catch {
     return false

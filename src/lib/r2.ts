@@ -383,7 +383,16 @@ export function buildPresentationKey(
   widthPx: number,
   env: R2EnvPrefix = getEnvPrefix(),
 ): string {
-  return `${env}/presentations/${artworkId}/${fingerprint}-${widthPx}.webp`
+  return buildPresentationFileKey(artworkId, `${fingerprint}-${widthPx}.webp`, env)
+}
+
+/** Any file of an artwork's print presentation (the framed render, its photos), by its name. */
+export function buildPresentationFileKey(
+  artworkId: string,
+  fileName: string,
+  env: R2EnvPrefix = getEnvPrefix(),
+): string {
+  return `${env}/presentations/${artworkId}/${fileName}`
 }
 
 /** The public URL of a main-bucket object key. */
