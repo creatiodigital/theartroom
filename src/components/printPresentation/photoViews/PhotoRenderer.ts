@@ -23,6 +23,7 @@ import {
   Color,
   DataTexture,
   DirectionalLight,
+  HemisphereLight,
   FloatType,
   HalfFloatType,
   LinearFilter,
@@ -594,7 +595,8 @@ export class PhotoRenderer {
     const keyEl = between(lightRand, 0.85, 1.1)
     const keyDist = between(lightRand, 1.7, 2.3)
     const keyShare = between(lightRand, 0.5, 0.62)
-    const softbox = 0.9
+    // A large softbox: soft-edged shadows (owner, 2026-11-20: "soften a bit the shadows"; was 0.9).
+    const softbox = 1.5
     const keyCentre = new Vector3(
       Math.sin(keyAz) * Math.cos(keyEl),
       Math.sin(keyEl),
@@ -607,6 +609,12 @@ export class PhotoRenderer {
     const keyV = new Vector3().crossVectors(keyU, keyNormal).normalize()
 
     const E = Math.PI * EXPOSURE
+    // Light the white table and paper bounce back into the shadows (a real white studio's fill,
+    // which direct light alone leaves out): unshadowed, so shadows lift and soften (owner,
+    // 2026-11-20: "soften a bit the shadows"). The shares still add up to E: an unshadowed white
+    // surface stays exactly as bright.
+    const BOUNCE = 0.15
+    const bounce = new HemisphereLight(0xffffff, 0xffffff, BOUNCE * E)
     const key = new SpotLight(0xffffff, 1, 0, Math.atan(0.5 / keyDist), 0, 2)
     key.castShadow = true
     key.shadow.mapSize.set(4096, 4096)
@@ -629,7 +637,7 @@ export class PhotoRenderer {
     const roomTarget = new Object3D()
     roomTarget.position.copy(shot.target)
     room.target = roomTarget
-    scene.add(key, keyTarget, room, roomTarget)
+    scene.add(key, keyTarget, room, roomTarget, bounce)
 
     // --- Accumulate ---------------------------------------------------------------------------------
     // Sampled pixel for pixel, so no filtering (float textures needn't be filterable).
@@ -714,7 +722,7 @@ export class PhotoRenderer {
       key.position.copy(keyPos)
       const kd = keyPos.distanceTo(shot.target)
       const kcos = keyPos.clone().sub(shot.target).normalize().dot(up0)
-      key.intensity = (keyShare * E * kd * kd) / kcos
+      key.intensity = (keyShare * (1 - BOUNCE) * E * kd * kd) / kcos
 
       // Room: a direction on the dome, cosine-weighted; its weight keeps the dome's radiance even.
       const u1 = passRand()
@@ -723,7 +731,7 @@ export class PhotoRenderer {
       const cosT = Math.max(0.12, Math.sqrt(1 - u1))
       const rd = new Vector3(sr * Math.cos(2 * Math.PI * u2), Math.sqrt(1 - u1), sr * Math.sin(2 * Math.PI * u2))
       room.position.copy(shot.target).addScaledVector(rd, 3)
-      room.intensity = ((1 - keyShare) * E) / cosT
+      room.intensity = ((1 - keyShare) * (1 - BOUNCE) * E) / cosT
 
       renderer.setRenderTarget(passRT)
       renderer.render(scene, camera)
