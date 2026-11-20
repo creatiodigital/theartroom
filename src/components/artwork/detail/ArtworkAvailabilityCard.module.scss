@@ -104,13 +104,6 @@
   color: var(--color-text-secondary);
 }
 
-.next {
-  margin: -4px 0 0;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--color-text-secondary);
-}
-
 // Limited: one size (no count sentence), or "Available in two sizes:" and a row per edition.
 .single {
   display: flex;

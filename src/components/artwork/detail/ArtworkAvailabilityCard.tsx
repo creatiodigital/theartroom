@@ -22,11 +22,11 @@ import styles from './ArtworkAvailabilityCard.module.scss'
  * reserved until you pay" line under the buttons (owner, 2026-11-20: too pushy); the order
  * wizard's limited step still says it.
  *
- * - Open edition: Smallest / Largest, "or any size in between.", From €303 + Available, then
- *   "Size, paper and frame are chosen next."
- * - Limited, one size: the size, "Edition of 30 · 28 left", the price + Available.
+ * - Open edition: Smallest / Largest, "or any size in between.", From €303 + Available (no "Size,
+ *   paper and frame are chosen next." line: owner, 2026-11-20).
+ * - Limited, one size: the size, "Edition 3 of 30" (the copy a buyer gets), the price + Available.
  * - Limited, two or more: "Available in two sizes:", one row per edition, smallest first (size;
- *   name · Edition of 30 · 28 left; price on the right, or Sold out), Available under the rows.
+ *   name · Edition 3 of 30; price on the right, or Sold out), Available under the rows.
  *   Visitors never see the word "variant". Two editions of one size (other paper) are "versions",
  *   and their rows name the paper.
  *
@@ -91,7 +91,6 @@ export const ArtworkAvailabilityCard = ({
             )}
             {status}
           </div>
-          {!soldOut && <p className={styles.next}>Size, paper and frame are chosen next.</p>}
         </>
       )}
 
