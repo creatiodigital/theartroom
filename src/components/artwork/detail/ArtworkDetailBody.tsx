@@ -197,12 +197,12 @@ export const ArtworkDetailBody = ({
             {/* The work leads, and it is the <h1>: this page is about the artwork. */}
             {displayTitle && <h1 className={styles.title}>{displayTitle}</h1>}
             {artwork.year && <span className={styles.fact}>{artwork.year}</span>}
-            {/* The work only: its sizes are part of the print, below (units.md "Artwork page: the
-                print, its sizes and its price together"). */}
-            {artwork.technique && technique}
           </div>
 
           <div className={styles.purchase}>
+            {/* The technical lines open the print block, under the divider: apart from the year,
+                just above the print's kind and size (owner, 2026-11-20). */}
+            {artwork.technique && technique}
             {commerce && !purchasesPaused ? (
               <ArtworkAvailabilityCard
                 editionType={commerce.editionType}
