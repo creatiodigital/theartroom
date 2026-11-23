@@ -1,0 +1,184 @@
+@use '@/styles/mixins' as *;
+
+// The .glb upload and its checker (docs/objects O4, Q-O8): the drop area, then the preview beside
+// the report rows (stacked on a phone), then Cancel · Upload.
+.dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--color-black);
+}
+
+// <p>s: size pinned (globals.scss gives every <p> 16–18px).
+.lead,
+.status {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+.lead {
+  color: var(--color-text-secondary);
+}
+
+.input {
+  display: none;
+}
+
+.drop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--color-gray-65);
+  border-radius: var(--radius-md);
+  background: var(--color-gray-10);
+  color: var(--color-text-secondary);
+}
+
+.dropActive {
+  border-color: var(--color-dark-surface);
+  background: var(--studio-3d-team-surface);
+}
+
+.dropText {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+
+  @include media-up(tablet) {
+    grid-template-columns: calc(var(--space-80) - var(--space-5)) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.preview {
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.previewEmpty {
+  border-radius: var(--radius-md);
+  background: var(--studio-3d-viewer);
+}
+
+.report,
+.server {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.statusPass {
+  font-weight: var(--font-semibold);
+  color: var(--color-green-70);
+}
+
+.statusFail {
+  font-weight: var(--font-semibold);
+  color: var(--color-red-50);
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--color-gray-20);
+
+  &:first-child {
+    border-top: 0;
+  }
+}
+
+.icon {
+  flex: 0 0 auto;
+  margin-top: calc(var(--space-1) / 2);
+}
+
+.pass .icon {
+  color: var(--color-green-70);
+}
+
+.warn .icon {
+  color: var(--color-yellow-70);
+}
+
+.fail .icon {
+  color: var(--color-red-50);
+}
+
+.rowText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.rowLabel {
+  font-weight: var(--font-semibold);
+  color: var(--color-black);
+}
+
+.rowDetail {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+// Two classes: Button's bare reset would win over one.
+.drop .choose,
+.actions .secondary,
+.actions .primary {
+  min-height: var(--space-10);
+  padding: var(--space-2) var(--space-4);
+  box-sizing: border-box;
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-black);
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+}
+
+.actions .primary {
+  border-color: var(--color-dark-surface);
+  background: var(--color-dark-surface);
+  color: var(--color-white);
+}

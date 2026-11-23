@@ -926,6 +926,19 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         onCancel={() => router.push(backLink)}
         onRichTextReady={handleRichTextReady}
         onVariantsDirtyChange={setVariantsDirty}
+        objectModel={
+          artwork?.artworkType === 'object'
+            ? {
+                modelStatus: artwork.modelStatus ?? 'none',
+                modelUrl: artwork.modelUrl ?? null,
+                modelSizeBytes: artwork.modelSizeBytes ?? null,
+                modelBoundsCm: artwork.modelBoundsCm ?? null,
+                modelRequestedAt: artwork.modelRequestedAt ?? null,
+                modelReadyAt: artwork.modelReadyAt ?? null,
+              }
+            : undefined
+        }
+        onObjectModelChange={(next) => setArtwork((prev) => (prev ? { ...prev, ...next } : prev))}
       />
       {artwork && (
         <SaveBar

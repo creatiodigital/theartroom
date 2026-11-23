@@ -42,6 +42,8 @@ import {
   type ObjectFormFields,
 } from './ObjectFields'
 import { ObjectMediaManager } from './ObjectMediaManager'
+import { ObjectSpaceChip } from '@/components/dashboard/artworks/ObjectSpaceChip'
+import { ObjectSpaceSection, type ObjectModelState } from '@/components/objects/ObjectSpaceSection'
 import { EditorPanel } from './EditorPanel'
 import { LockNote } from './LockNote'
 import { OptionChips } from './OptionChips'
@@ -70,6 +72,12 @@ export { ARTWORK_EDIT_FORM_ID } from './sections'
 /** An Object's cover (docs/objects "Cover photo"): at least 2000 px on the short side, 25 MB. */
 const OBJECT_COVER_MIN_SIDE = 2000
 const OBJECT_COVER_MAX_BYTES = 25 * 1024 * 1024
+
+/** A size typed in Details, for the 3D size check (the server validates what is saved). */
+const typedCm = (value: string): number | null => {
+  const n = Number(value.trim().replace(',', '.'))
+  return value.trim() && Number.isFinite(n) && n > 0 ? n : null
+}
 
 /** The print sizes dialog's title (one dialog per page). */
 const PRINT_SIZES_TITLE_ID = 'artwork-print-sizes-title'
@@ -151,6 +159,11 @@ export type Artwork = {
   exhibitionSections?: Record<string, string | null>
   // Objects (docs/objects): their own fields, as the artwork GET returns them.
   modelStatus?: string
+  modelUrl?: string | null
+  modelSizeBytes?: number | null
+  modelBoundsCm?: { h: number; w: number; d: number } | null
+  modelRequestedAt?: string | null
+  modelReadyAt?: string | null
   coverCropX?: number | null
   coverCropY?: number | null
   heightCm?: number | null
@@ -368,6 +381,10 @@ type ArtworkEditFormProps = {
   onRichTextReady?: (field: 'technique' | 'description', html: string) => void
   /** Display only: the variants editor's unsaved count, for the page's save bar. */
   onVariantsDirtyChange?: (count: number) => void
+  /** Objects (docs/objects O4): the 3D model's state, for In the 3D space (the studio page). */
+  objectModel?: ObjectModelState
+  /** The model changed there (asked for, uploaded): saved already, by its own routes. */
+  onObjectModelChange?: (next: ObjectModelState) => void
 }
 
 const ALLOWED_SOUND_TYPES = [
@@ -565,6 +582,8 @@ export const ArtworkEditForm = ({
   variant = 'overlay',
   onRichTextReady,
   onVariantsDirtyChange,
+  objectModel,
+  onObjectModelChange,
 }: ArtworkEditFormProps) => {
   const soundInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
@@ -770,6 +789,8 @@ export const ArtworkEditForm = ({
   const showOpenPrintOptions = isImage && formData.printEnabled && formData.editionType === 'open'
   const showExhibitions = !!exhibitions && exhibitions.length > 0 && (isImage || isObject)
   const showSupplementary = isAdmin && !!artworkId && !isObject
+  // In the 3D space: an extra, last (docs/objects O4); its actions save on their own.
+  const showSpace = isObject && !!artworkId && !!objectModel
   const isPage = variant === 'page'
   const imageSection = isVideo ? ARTWORK_SECTION.poster : ARTWORK_SECTION.image
 
@@ -787,6 +808,7 @@ export const ArtworkEditForm = ({
     hasArtDetails && ARTWORK_SECTION.description,
     hasArtDetails && ARTWORK_SECTION.where,
     showSupplementary && ARTWORK_SECTION.media,
+    showSpace && ARTWORK_SECTION.space,
   ]
   const sections = rendered.filter((section): section is ArtworkSection => Boolean(section))
 
@@ -1762,6 +1784,27 @@ export const ArtworkEditForm = ({
                 }
               >
                 <ArtworkMediaManager artworkId={artworkId} />
+              </EditorPanel>
+            )}
+
+            {showSpace && artworkId && objectModel && (
+              <EditorPanel
+                section={ARTWORK_SECTION.space}
+                className={styles.spacePanel}
+                description="An extra from The Art Room: visitors can walk around your piece in the 3D exhibition. Your artwork page and exhibition pages show it fully without it."
+                aside={<ObjectSpaceChip modelStatus={objectModel.modelStatus} short />}
+              >
+                <ObjectSpaceSection
+                  artworkId={artworkId}
+                  isAdmin={isAdmin}
+                  model={objectModel}
+                  details={{
+                    heightCm: typedCm(formData.heightCm),
+                    widthCm: typedCm(formData.widthCm),
+                    depthCm: typedCm(formData.depthCm),
+                  }}
+                  onModelChange={(next) => onObjectModelChange?.(next)}
+                />
               </EditorPanel>
             )}
 

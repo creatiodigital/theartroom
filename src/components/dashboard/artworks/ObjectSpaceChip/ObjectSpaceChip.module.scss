@@ -19,3 +19,17 @@
   background: var(--studio-3d-preparing);
   color: var(--studio-3d-preparing-text);
 }
+
+.dot {
+  width: calc(var(--space-1) * 1.5);
+  height: calc(var(--space-1) * 1.5);
+  border-radius: 50%;
+}
+
+.ready .dot {
+  background: var(--studio-3d-ready-dot);
+}
+
+.preparing .dot {
+  background: var(--studio-3d-preparing-dot);
+}

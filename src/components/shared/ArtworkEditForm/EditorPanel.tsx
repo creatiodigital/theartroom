@@ -12,6 +12,8 @@ type EditorPanelProps = {
   description?: ReactNode
   /** Right of the title and its line, e.g. the Print sales switch or Ready to sell's button. */
   aside?: ReactNode
+  /** An extra class on the panel, e.g. the In the 3D space panel's blue edge. */
+  className?: string
   children?: ReactNode
 }
 
@@ -21,9 +23,19 @@ type EditorPanelProps = {
  * an optional control on the right, then the section's fields. Its id is the
  * On this page anchor.
  */
-export function EditorPanel({ section, description, aside, children }: EditorPanelProps) {
+export function EditorPanel({
+  section,
+  description,
+  aside,
+  className,
+  children,
+}: EditorPanelProps) {
   return (
-    <section id={section.id} aria-labelledby={panelTitleId(section)} className={styles.panel}>
+    <section
+      id={section.id}
+      aria-labelledby={panelTitleId(section)}
+      className={className ? `${styles.panel} ${className}` : styles.panel}
+    >
       <div className={styles.head}>
         <div className={styles.headText}>
           <h2 id={panelTitleId(section)} className={styles.title}>

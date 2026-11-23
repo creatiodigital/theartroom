@@ -25,6 +25,7 @@ export const ARTWORK_SECTION = {
   cover: { id: 'artwork-section-image', title: 'Cover photo' },
   objectMedia: { id: 'artwork-section-object-media', title: 'Photos & reels' },
   technical: { id: 'artwork-section-technical', title: 'Technical info' },
+  space: { id: 'artwork-section-space', title: 'In the 3D space' },
 } as const satisfies Record<string, ArtworkSection>
 
 export const panelTitleId = (section: ArtworkSection) => `${section.id}-title`
