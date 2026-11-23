@@ -10,7 +10,8 @@ Copy in the boards is final unless marked "(board note)".
 - **Name: Object** (visitor and artist facing). Type key `object` next to image, text, sound, video, shape.
 - **The 3D space is a plus.** An Object is a full artwork without it: cover photo, photos and reels, details,
   description. Anyone must be able to explore an exhibition completely **without entering the 3D room**.
-- **Not for sale for now.** Objects are not prints: no print sales, never in the checkout wizard. Business logic later.
+- **Selling** (update 2026-11-23): like every artwork, an Object can be sold as **print** (a photograph of it, through
+  checkout) and/or as **unique** (by inquiry). Both live in the editor's **Sales** tab (`docs/unique-sales/README.md`).
 
 ## What an Object has (artist's editor, in this order)
 1. **Cover photo** (required): the main thumbnail for library, grids, exhibition pages, sharing. Square crop for
@@ -72,6 +73,9 @@ Copy in the boards is final unless marked "(board note)".
 - ~~Q-O2~~ Visitor artwork page: designed 2026-11-23 (O5).
 - **Q-O3** Who can request a 3D model and whether it costs anything (business logic later).
 - **Q-O4** Owner to confirm the pedestal shapes and materials on `objects-pedestals`, and send any GLB pedestals/tables.
+- **Q-O5** (Code, O2) The boards' sand / stone colours (Object tile `#ece9e3`, explainer `#f6f4f0`, its figure
+  `#6f685f`, the 3D chips `#e8eef8`/`#1f3b6b` and `#f4f1ea`/`#6b5a2e`) are not design tokens. O2 uses the nearest
+  existing ones (see Built O2). Add them as studio tokens with the exact values? (Owner.)
 
 ## Data (one migration, phase 1)
 On **`Artwork`** (all nullable / defaulted, so nothing changes for existing types):
@@ -116,9 +120,11 @@ Ship phase 1 so Objects can be shown on the site **without the 3D room**. Each s
 **O1 · Type and data.** Migration above; `TArtworkKind` gets `'object'`; `artworkFactory`, `artworkSlice`, the
 artworks API (`/api/artworks`, `/api/artworks/[id]`, batch) accept and return the new fields. Audit every
 `artworkType === …` branch (≈ 30 files, `grep -rn "artworkType ===\|TArtworkKind" src`): an Object must never
-fall into an image-only path (print sales, print presentations, lightbox, TPS checkout). **Objects are not prints:
-never in the print wizard, checkout or cart** (owner, 2026-11-23); `printEnabled` stays false and the editor has
-no Print sales section.
+fall into an image-only path by accident (print presentations, lightbox, TPS checkout).
+**Update 2026-11-23 (owner): an Object CAN sell prints of a photograph of it**, and can be sold as unique (see
+`docs/unique-sales/README.md`, editor **Sales** tab). The print source is the photo chosen in Sales › Print image
+(`printImageMediaId` → one of its ArtworkMedia images, or a print-only upload); from there it is an ordinary print:
+same wizard, checkout, TPS. Until the Sales tab is built, keep `printEnabled` false for Objects.
 
 **O2 · Library + Add artwork** (`objects-library`, `objects-add-artwork`). Add artwork: the Type select becomes
 5 cards (Image, Object, Text, Sound, Video) with the Object explainer panel. Library: "Object" filter; Object rows
@@ -227,3 +233,24 @@ change the decisions above without the owner.
   filters in `getPublicExhibitionByUrl`, `/api/exhibitions/by-url/[url]` and `getPublicArtistByHandler` (O5).
 - For O3: the spec makes materials / technique rich text, but the artwork routes clean `technique` as one line
   of at most 200 characters (as for images). The Object editor will need its own rule there.
+
+**O2 · Library + Add artwork** (2026-11-23, same branch).
+- Add artwork: the Type select is now five cards (Image, Object, Text, Sound, Video; Phosphor light icons, Cube
+  for Object), radios hidden with the focus ring on the card. Choosing Object shows the explainer panel with the
+  board's copy. The old help line under the select is gone (the board has none). Differs from the board: the
+  dialog is today's admin dialog (560 px, board 600), so the cards are a bit narrower; on a phone they wrap
+  three + two. Labels 14 px (`--text-sm`), board 13 px.
+- Library: description "Everything you can show in your exhibitions." (board copy; was "hang"). Filter
+  All · Image · Object · Text · Sound · Video (remembered as before). An Object row shows its cover cropped square
+  at `coverCropX/Y` (other types stay contained), or a cube on the warm tile with no cover; the meta line
+  "year · materials · H × W × D cm"; "8 photos · 2 reels" (reel = a vertical video or one labelled Reel); the 3D
+  chip ("In the 3D space" for `ready`, "3D model in preparation" for `requested`, none otherwise).
+  `GET /api/artworks` adds `objectMedia: { photos, videos, reels }` to Object rows (one extra query, only when
+  there are Objects).
+- Colours, nearest existing tokens (Q-O5): ready chip `--editor-tint-bake` / `-icon`, preparing chip
+  `--editor-tint-benches` / `-icon` (the 3D room editor's tints), the explainer and the empty Object tile on
+  `--studio-nav-active` (the other types' tile), the explainer's figure box `--studio-avatar`, figure
+  `--color-text-secondary`.
+- Seen in Chrome (dialog desktop + phone, an Object row through the API: print sales off, "64 × 38 × 31 cm").
+  Not seen with data: a cover photo and the 3D chips (no Object has them yet). Until O3, Create artwork for an
+  Object opens today's editor (Details only).
