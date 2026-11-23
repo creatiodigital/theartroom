@@ -227,7 +227,7 @@ function ArtworkThumb({ artwork, title, isPlaying, onTogglePlay }: ArtworkThumbP
       )
     }
     return (
-      <span aria-hidden className={c(styles.thumb, styles.tile)}>
+      <span aria-hidden className={c(styles.thumb, styles.tile, styles.objectTile)}>
         <Cube size={22} weight="light" />
       </span>
     )

@@ -81,6 +81,11 @@
   color: var(--color-text-secondary);
 }
 
+// An Object without a cover: the cube on the stone tile (objects-library.dc.html).
+.tile.objectTile {
+  background: var(--studio-object-tile);
+}
+
 // The sound preview (a button). Two classes beat Button's bare and size rules,
 // so this restates what they reset.
 .thumb.play {

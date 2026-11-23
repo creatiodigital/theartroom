@@ -1,4 +1,4 @@
-// The tag's geometry, the 3D room editor's tints (nearest tokens to the boards' colours, Q-O5).
+// The tag's geometry, the 3D states' colours (objects-library.dc.html).
 .chip {
   display: inline-flex;
   align-items: center;
@@ -11,11 +11,11 @@
 }
 
 .ready {
-  background: var(--editor-tint-bake);
-  color: var(--editor-tint-bake-icon);
+  background: var(--studio-3d-ready);
+  color: var(--studio-3d-ready-text);
 }
 
 .preparing {
-  background: var(--editor-tint-benches);
-  color: var(--editor-tint-benches-icon);
+  background: var(--studio-3d-preparing);
+  color: var(--studio-3d-preparing-text);
 }
