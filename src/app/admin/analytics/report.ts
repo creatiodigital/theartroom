@@ -17,7 +17,12 @@ const CACHE_SECONDS = 30 * 60
 const ARTWORKS_SHOWN = 10
 
 export type AnalyticsPageData = Omit<AnalyticsReport, 'artworks'> & {
-  artworks: (AnalyticsReport['artworks'][number] & { title: string; artistName: string })[]
+  artworks: (AnalyticsReport['artworks'][number] & {
+    title: string
+    artistName: string
+    /** The web image (never the original), for the row's thumbnail. */
+    imageUrl: string | null
+  })[]
   /** ISO time of the GA4 read, for "Updated …". */
   fetchedAt: string
 }
@@ -40,6 +45,7 @@ async function readReport(
       slug: true,
       title: true,
       name: true,
+      imageUrl: true,
       user: { select: { name: true, lastName: true } },
     },
   })
@@ -52,6 +58,7 @@ async function readReport(
       ...a,
       title: row.title || row.name,
       artistName: [row.user.name, row.user.lastName].filter(Boolean).join(' ').trim(),
+      imageUrl: row.imageUrl,
     })
     if (artworks.length >= ARTWORKS_SHOWN) break
   }
@@ -61,7 +68,7 @@ async function readReport(
 
 // Next's data cache, per period and split: shared across serverless instances; GA4 itself lags,
 // so half an hour loses nothing. Errors are not cached (the next visit tries again).
-const cachedReport = unstable_cache(readReport, ['admin-analytics-report-v1'], {
+const cachedReport = unstable_cache(readReport, ['admin-analytics-report-v2'], {
   revalidate: CACHE_SECONDS,
 })
 

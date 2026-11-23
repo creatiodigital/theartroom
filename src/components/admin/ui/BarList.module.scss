@@ -138,5 +138,21 @@
 }
 
 .stackedText {
+  flex: 1;
   min-width: 0;
+}
+
+// A row's picture (`media`), before its text: the table's first cell, the phone row's head.
+.labelCell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.labelText {
+  min-width: 0;
+}
+
+.media {
+  flex-shrink: 0;
 }
