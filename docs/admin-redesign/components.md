@@ -579,3 +579,10 @@ like the real Pause switch). Logic and dialogs unchanged.
 - **Built** · `shared/ArtworkEditForm/ObjectMediaManager.tsx` · `{ artworkId }`: Photos & reels (labels, captions, drag to
   reorder, the Object limits). Upload helpers in `uploadArtworkMedia.ts` (`uploadArtworkMediaFile`, `measureMedia`),
   shared with `ArtworkMediaManager`.
+- **Built** · `objects/ModelViewer` · `{ url; onResult?; resetKey?; hint?; className? }` (next/dynamic, client-only):
+  an Object's .glb to turn and zoom, with the 3D room's loaders; `onResult` reports load / compile / bounds for the
+  checker. Reused by O5's artwork page.
+- **Built** · `objects/ModelChecker` · `{ artworkId; details; replacing; onClose; onUploaded }` (next/dynamic): the team's
+  .glb upload with the checker rows (`lib/objects/glb.ts`); loads the glTF validator on open.
+- **Built** · `objects/ObjectSpaceSection` · `{ artworkId; isAdmin; model; details; onModelChange }`: the editor's In the
+  3D space. `EditorPanel` gained `className?`; `ObjectSpaceChip` gained `short?` ("Ready" / "In preparation" after a dot).

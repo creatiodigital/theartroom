@@ -293,3 +293,31 @@ change the decisions above without the owner.
 - Header: "Object" and the 3D chip (shared `ObjectSpaceChip`, also in the library).
 - Seen in Chrome with the e2e artist: an Object with a cover, two photos and a reel, uploaded through the API; the
   crop moved by keyboard and saved (0.4 = the top for a 4:5 photo); Save kept every field; then deleted.
+
+**O4 · The 3D model, with the GLB checker** (2026-11-23, same branch; owner's answers to Q-O5–Q-O8 the same day:
+tokens added with the board's exact values, 50 MB videos and JPG/PNG/TIFF covers kept, the Khronos validator added
+and loaded only when the upload dialog opens).
+- **Checker** (`lib/objects/glb.ts`, one set of rules for both sides): one binary .glb · ≤ 30 MB · Khronos glTF
+  Validator (errors fail, warnings warn) · opens (browser: the 3D room's loaders, meshopt + KTX2, drawn and its
+  shaders compiled; server: @gltf-transform reads and decodes it) · nothing external · not quantized
+  (KHR_mesh_quantization fails) · meshopt (warn if not) · textures (warn: not WebP/KTX2, above 4096 px; fail above
+  8192 px) · triangles (warn above 500,000) · real size from the bounds (warn if it looks like the wrong unit) ·
+  size check against Details (1 cm or 3 %; warn, never block) · base on y = 0 (0.5 cm) · origin at the centre of the
+  base (1 cm or 2 %). Fails block; warnings show but never block.
+- **Upload / Replace .glb** (gallery team only): the dialog checks the file before anything is sent and shows the
+  preview beside the rows; Upload is off while any row fails. The server reads the stored file back, runs the same
+  rules on its own facts, and on a fail deletes it and shows its rows. A pass stores `modelUrl`, size, bounds,
+  `ready`, the date, removes the replaced file and emails the artist if they had asked.
+- **Artist**: Not yet → "Ask for a 3D model" (note, optional GLB/OBJ/FBX/STL up to 200 MB) → In preparation ("Asked
+  23 Nov · we will email you when it is ready") → Ready: the preview (drag to turn, scroll to zoom), 3D model,
+  Real size, Size check, Prepared, "Ask for a change" (a note, required; back to In preparation). The gallery gets
+  an email for each request (note, file name and size, a link to the editor; never a file address).
+- The files artists send are not in a table: they sit under `model-requests/<env>/<artworkId>/` in the main bucket
+  with a secret key, like the print masters (the private bucket takes no browser uploads), listed for the team only
+  and deleted with the artwork. `reconcile-r2.ts` keeps `modelUrl` and never reads that prefix.
+- Differs from the board: no "To place it, open an exhibition's 3D editor and drag it…" line (the Floor view is O6,
+  not built); the file line says "GLB · 6.4 MB" (the original file name is not kept).
+- Checked: `e2e/object-glb.spec.ts` (the rules, and the server's facts on a real .glb from the repo); in Chrome with
+  the e2e artist and admin (emails off): a request with an STL, a broken .glb (four fails, Upload off), a real .glb
+  (Ready to upload · 2 warnings, stored at 44.9 × 185.3 × 40.6 cm, size check matches), the artist's ready view, the
+  artist refused the team's file list (403), and after deleting the Object both files answer 404.
