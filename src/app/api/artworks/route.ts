@@ -3,6 +3,8 @@ import type { NextRequest } from 'next/server'
 
 import { auth } from '@/auth'
 import { getEffectiveUserId } from '@/lib/authUtils'
+import { isArtworkKind } from '@/lib/artwork/artworkKinds'
+import { objectWriteData, parseObjectFields } from '@/lib/artwork/objectArtwork'
 import { PUBLIC_ARTWORK_OMIT } from '@/lib/artworkFields'
 import prisma from '@/lib/prisma'
 import { generateUniqueSlug } from '@/lib/slugify'
@@ -161,6 +163,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { artworkType, title, author, year, technique, dimensions, description, featured } = body
 
+    if (artworkType !== undefined && artworkType !== null && !isArtworkKind(artworkType)) {
+      return NextResponse.json({ error: 'Unknown artwork type.' }, { status: 400 })
+    }
+    // Objects (docs/objects): their own fields, and never print sales.
+    const objectFields = artworkType === 'object' ? parseObjectFields(body) : null
+    if (objectFields && !objectFields.ok) {
+      return NextResponse.json({ error: objectFields.error }, { status: 400 })
+    }
+    const objectData = objectFields?.ok ? objectWriteData(objectFields.data, null) : {}
+
     // Sanitize single-line text fields. Description is rich-text HTML
     // (TipTap) — not sanitized here, DOMPurify cleans at render time.
     const cleanTitle = typeof title === 'string' ? sanitizeLine(title) : ''
@@ -206,6 +218,7 @@ export async function POST(request: NextRequest) {
         dimensions: cleanDimensions || null,
         description: description || null,
         featured: featured === true || featured === 'true',
+        ...objectData,
       },
     })
 

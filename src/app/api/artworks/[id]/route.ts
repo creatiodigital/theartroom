@@ -4,6 +4,8 @@ import { deleteFromR2 } from '@/lib/r2'
 import { deleteArtworkPresentationFolder } from '@/lib/printPresentation/storage'
 
 import { isAdminOrAbove, requireOwnership } from '@/lib/authUtils'
+import { isArtworkKind } from '@/lib/artwork/artworkKinds'
+import { OBJECT_PRINT_OFF, objectWriteData, parseObjectFields } from '@/lib/artwork/objectArtwork'
 import { PUBLIC_ARTWORK_OMIT } from '@/lib/artworkFields'
 import { saveLimitedVariants } from '@/lib/editions/saveLimitedVariants'
 import { parseIncomingVariants } from '@/lib/editions/parseIncomingVariants'
@@ -257,6 +259,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         editionLocked: true,
         originalWidth: true,
         originalHeight: true,
+        artworkType: true,
+        heightCm: true,
+        widthCm: true,
+        depthCm: true,
       },
     })
     if (!existing) return NextResponse.json({ error: 'Artwork not found' }, { status: 404 })
@@ -265,6 +271,28 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     const requesterIsAdmin = isAdminOrAbove(session?.user?.userType)
 
     const body = await request.json()
+
+    // The type is chosen when the artwork is created. An Object never becomes another type and
+    // nothing becomes an Object: an image's print sales (prices, a locked edition) must not ride
+    // along into a type that never sells prints (docs/objects).
+    if (body.artworkType !== undefined && !isArtworkKind(body.artworkType)) {
+      return NextResponse.json({ error: 'Unknown artwork type.' }, { status: 400 })
+    }
+    const nextType = body.artworkType ?? existing.artworkType
+    const isObject = nextType === 'object'
+    if (isObject !== (existing.artworkType === 'object')) {
+      return NextResponse.json(
+        { error: 'An artwork cannot be turned into an Object, or an Object into another type.' },
+        { status: 400 },
+      )
+    }
+
+    // Objects: their own fields (only those sent), and never print sales.
+    const objectFields = isObject ? parseObjectFields(body) : null
+    if (objectFields && !objectFields.ok) {
+      return NextResponse.json({ error: objectFields.error }, { status: 400 })
+    }
+    const objectData = objectFields?.ok ? objectWriteData(objectFields.data, existing) : {}
 
     // Sanitize single-line text fields. `description` and `textContent`
     // are rich-text HTML — left untouched here, DOMPurify cleans at
@@ -341,7 +369,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         { status: 409 },
       )
     }
-    const editionType = requestedEditionType
+    const editionType = isObject ? OBJECT_PRINT_OFF.editionType : requestedEditionType
 
     // Sanitize artist-set printing restrictions.
     const printOptions = sanitizePrintOptions(body.printOptions)
@@ -381,6 +409,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         printRecommendations === null
           ? Prisma.DbNull
           : (printRecommendations as unknown as Prisma.InputJsonValue),
+      ...objectData,
     }
 
     // Exhibition membership. The client sends the full desired set, so this is

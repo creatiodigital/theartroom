@@ -34,6 +34,9 @@ export const LIVE_VARIANT_WHERE = {
  */
 export const purchasableArtworkWhere = (): Prisma.ArtworkWhereInput => ({
   printEnabled: true,
+  // Objects (sculptures, docs/objects) never sell prints; their rows keep printEnabled false
+  // and checkout refuses them too.
+  artworkType: { not: 'object' },
   OR: [
     { editionType: { not: 'limited' }, printPriceCents: { not: null } },
     { editionType: 'limited', limitedVariants: { some: LIVE_VARIANT_WHERE } },

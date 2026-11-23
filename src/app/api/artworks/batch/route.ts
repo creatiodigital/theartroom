@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+import { isArtworkKind } from '@/lib/artwork/artworkKinds'
+import { objectWriteData, parseObjectFields } from '@/lib/artwork/objectArtwork'
 import { getEffectiveUserId } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 import { secondTextFields } from '@/lib/roomLanguage'
@@ -44,7 +46,14 @@ export async function POST(request: NextRequest) {
     // binds userId, but existing rows take the unscoped UPDATE path).
     const existing = await prisma.artwork.findMany({
       where: { id: { in: artworks.map((a) => a.id) } },
-      select: { id: true, userId: true },
+      select: {
+        id: true,
+        userId: true,
+        artworkType: true,
+        heightCm: true,
+        widthCm: true,
+        depthCm: true,
+      },
     })
     const foreign = existing.filter((row) => row.userId !== userId)
     if (foreign.length > 0) {
@@ -52,6 +61,32 @@ export async function POST(request: NextRequest) {
         { error: 'One or more artworks belong to another user', ids: foreign.map((r) => r.id) },
         { status: 403 },
       )
+    }
+
+    // Types are known, and an artwork never turns into an Object or out of one (as in the
+    // single-artwork PUT): an image's print sales must not ride along into an Object.
+    const existingById = new Map(existing.map((row) => [row.id, row]))
+    for (const artwork of artworks) {
+      if (artwork.artworkType && !isArtworkKind(artwork.artworkType)) {
+        return NextResponse.json({ error: 'Unknown artwork type.' }, { status: 400 })
+      }
+      const stored = existingById.get(artwork.id)
+      const isObject = (artwork.artworkType || 'image') === 'object'
+      if (stored && isObject !== (stored.artworkType === 'object')) {
+        return NextResponse.json(
+          { error: 'An artwork cannot be turned into an Object, or an Object into another type.' },
+          { status: 400 },
+        )
+      }
+    }
+
+    // Objects (docs/objects): their own fields, only those sent, and never print sales.
+    const objectData = new Map<string, ReturnType<typeof objectWriteData>>()
+    for (const artwork of artworks) {
+      if (artwork.artworkType !== 'object') continue
+      const parsed = parseObjectFields(artwork as Record<string, unknown>)
+      if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 })
+      objectData.set(artwork.id, objectWriteData(parsed.data, existingById.get(artwork.id) ?? null))
     }
 
     // AR-182: the text's second version, only when sent (an absent key leaves it as it is).
@@ -88,6 +123,7 @@ export async function POST(request: NextRequest) {
             hiddenFromExhibition: artwork.hiddenFromExhibition ?? false,
             originalWidth: artwork.originalWidth ?? undefined,
             originalHeight: artwork.originalHeight ?? undefined,
+            ...objectData.get(artwork.id),
           },
           update: {
             name: artwork.name,
@@ -104,6 +140,7 @@ export async function POST(request: NextRequest) {
             hiddenFromExhibition: artwork.hiddenFromExhibition ?? false,
             originalWidth: artwork.originalWidth ?? undefined,
             originalHeight: artwork.originalHeight ?? undefined,
+            ...objectData.get(artwork.id),
           },
         })
       }),

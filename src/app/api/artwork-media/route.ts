@@ -2,11 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 import { auth } from '@/auth'
-import {
-  getArtworkMedia,
-  MAX_ARTWORK_MEDIA,
-  MAX_ARTWORK_MEDIA_VIDEOS,
-} from '@/lib/artwork/artworkMedia'
+import { getArtworkMedia, mediaLimitsFor } from '@/lib/artwork/artworkMedia'
 import { isValidImageType } from '@/lib/imageProcessor'
 import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
@@ -106,7 +102,7 @@ export async function POST(request: NextRequest) {
 
     const artwork = await prisma.artwork.findUnique({
       where: { id: artworkId },
-      select: { userId: true },
+      select: { userId: true, artworkType: true },
     })
     if (!artwork) return NextResponse.json({ error: 'Artwork not found' }, { status: 404 })
 
@@ -127,22 +123,28 @@ export async function POST(request: NextRequest) {
 
       // A ceiling far above real use, so a careless or compromised account
       // cannot fill the bucket. Counted here, before a URL is minted.
+      // Per type (`mediaLimitsFor`): Objects take more videos than the other types.
+      const limits = mediaLimitsFor(artwork.artworkType)
       const existing = await prisma.artworkMedia.findMany({
         where: { artworkId },
         select: { kind: true },
       })
-      if (existing.length >= MAX_ARTWORK_MEDIA) {
+      if (existing.length >= limits.maxItems) {
         return NextResponse.json(
-          { error: `This artwork already holds the maximum of ${MAX_ARTWORK_MEDIA} assets.` },
+          { error: `This artwork already holds the maximum of ${limits.maxItems} assets.` },
           { status: 400 },
         )
       }
-      if (
-        spec.kind === 'video' &&
-        existing.filter((m) => m.kind === 'video').length >= MAX_ARTWORK_MEDIA_VIDEOS
-      ) {
+      const sameKind = existing.filter((m) => m.kind === spec.kind).length
+      if (spec.kind === 'video' && sameKind >= limits.maxVideos) {
         return NextResponse.json(
-          { error: `At most ${MAX_ARTWORK_MEDIA_VIDEOS} videos per artwork.` },
+          { error: `At most ${limits.maxVideos} videos per artwork.` },
+          { status: 400 },
+        )
+      }
+      if (spec.kind === 'image' && sameKind >= limits.maxImages) {
+        return NextResponse.json(
+          { error: `At most ${limits.maxImages} photos per artwork.` },
           { status: 400 },
         )
       }
@@ -214,7 +216,15 @@ export async function POST(request: NextRequest) {
             typeof caption === 'string' && caption.trim() ? caption.trim().slice(0, 300) : null,
           order: (last?.order ?? -1) + 1,
         },
-        select: { id: true, kind: true, url: true, width: true, height: true, caption: true },
+        select: {
+          id: true,
+          kind: true,
+          url: true,
+          width: true,
+          height: true,
+          caption: true,
+          role: true,
+        },
       })
 
       return NextResponse.json(created)

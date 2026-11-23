@@ -45,6 +45,7 @@ const TYPE_LABEL: Record<string, string> = {
   text: 'Text',
   sound: 'Sound',
   video: 'Video',
+  object: 'Object',
 }
 
 /**

@@ -247,6 +247,36 @@ model Artwork {
   // print presentation for its shape. Print sizes always come from the original file.
   presentationRatio Float?
 
+  // ── Objects (artworkType "object": sculptures, decorative pieces; docs/objects/README.md) ──
+  // All nullable / defaulted, so nothing changes for the other types. The cover photo is the
+  // image fields above (imageUrl, originalImageUrl, originalWidth/Height). Objects never sell
+  // prints: printEnabled stays false (enforced by every write route). `dimensions` above keeps a
+  // "64 × 38 × 31 cm" copy of the structured size for older displays; these fields are the truth.
+  coverCropX         Float? // 0..1, centre of the square crop for grids (null = 0.5)
+  coverCropY         Float? // 0..1 (null = 0.5)
+  heightCm           Float?
+  widthCm            Float?
+  depthCm            Float?
+  weightKg           Float?
+  sizeIncludesBase   Boolean   @default(false)
+  objectEdition      String? // "unique" | "edition" (NOT editionType: that one is the print edition)
+  objectEditionNo    Int? // 3 → "Edition 3/8 + 2 AP"
+  objectEditionOf    Int? // 8
+  objectArtistProofs Int? // 2
+  placement          String? // "indoors" | "outdoors" | "both"
+  displayMode        String? // "floor" | "pedestal" | "wall" | "hanging"
+  signedNote         String?
+  certificateNote    String?
+  careNote           String?
+  // The 3D model: one cleaned .glb uploaded by the gallery team (step O4), stored in R2 under
+  // the artwork. Written only by the dedicated model routes, never by the artwork routes.
+  modelUrl           String?
+  modelSizeBytes     Int?
+  modelBoundsCm      Json? // { h, w, d } read from the GLB on upload
+  modelStatus        String    @default("none") // "none" | "requested" | "ready"
+  modelRequestedAt   DateTime?
+  modelReadyAt       DateTime?
+
   // The gallery's curated /prints entry, if this work is in the selection.
   selectedPrint SelectedPrint?
   // The home page's rotating prints entry, if this work is in that list (HomePrint).
@@ -1079,6 +1109,10 @@ model ArtworkMedia {
 
   /// Plain text only, escaped on render — never HTML.
   caption String?
+
+  /// Objects only (docs/objects): which view this is — "front" | "back" | "side" | "detail" |
+  /// "room" | "process" | "reel". A reel is a `video` with a 9:16 frame (width/height tell).
+  role String?
 
   order     Int      @default(0)
   createdAt DateTime @default(now())

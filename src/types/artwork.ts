@@ -9,7 +9,47 @@ import type {
 } from '@/lib/lightbox'
 import type { TFontFamily, TFontWeight, TOption } from '@/types/fonts'
 
-export type TArtworkKind = 'image' | 'text' | 'sound' | 'shape' | 'video'
+export type TArtworkKind = 'image' | 'text' | 'sound' | 'shape' | 'video' | 'object'
+
+/** An Object's edition (docs/objects): one of a kind, or number N of M (+ APs). */
+export type TObjectEdition = 'unique' | 'edition'
+export type TObjectPlacement = 'indoors' | 'outdoors' | 'both'
+export type TObjectDisplayMode = 'floor' | 'pedestal' | 'wall' | 'hanging'
+/** The 3D model's state: none → requested ("In preparation") → ready. */
+export type TObjectModelStatus = 'none' | 'requested' | 'ready'
+/** The label of one of an Object's photos or videos (ArtworkMedia.role). */
+export type TObjectMediaRole = 'front' | 'back' | 'side' | 'detail' | 'room' | 'process' | 'reel'
+/** The GLB's bounding box in cm, read on upload. */
+export type TObjectBoundsCm = { h: number; w: number; d: number }
+
+/**
+ * The Object fields (artworkType 'object', docs/objects/README.md "Data"). The cover photo is
+ * the artwork's ordinary image (`imageUrl`, `originalWidth`/`Height`).
+ */
+export type TArtworkObjectFields = {
+  coverCropX?: number | null
+  coverCropY?: number | null
+  heightCm?: number | null
+  widthCm?: number | null
+  depthCm?: number | null
+  weightKg?: number | null
+  sizeIncludesBase?: boolean
+  objectEdition?: TObjectEdition | null
+  objectEditionNo?: number | null
+  objectEditionOf?: number | null
+  objectArtistProofs?: number | null
+  placement?: TObjectPlacement | null
+  displayMode?: TObjectDisplayMode | null
+  signedNote?: string | null
+  certificateNote?: string | null
+  careNote?: string | null
+  modelUrl?: string | null
+  modelSizeBytes?: number | null
+  modelBoundsCm?: TObjectBoundsCm | null
+  modelStatus?: TObjectModelStatus
+  modelRequestedAt?: string | null
+  modelReadyAt?: string | null
+}
 
 export type TArtworkPosition = {
   id?: string
@@ -43,7 +83,7 @@ export type TArtworkPosition = {
   showOnPage?: boolean
 }
 
-export type TArtwork = {
+export type TArtwork = TArtworkObjectFields & {
   id: string
   slug?: string
   name: string

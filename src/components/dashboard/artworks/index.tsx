@@ -52,6 +52,7 @@ const TYPE_LABEL: Record<string, string> = {
   text: 'Text',
   sound: 'Sound',
   video: 'Video',
+  object: 'Object',
 }
 
 const FILTER_OPTIONS = ARTWORK_TYPE_FILTERS.map((id) => ({
