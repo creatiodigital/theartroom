@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Artwork library</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&amp;family=EB+Garamond:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f9f9f9}
+a{color:#333333}a:hover{color:#000000}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #f9f9f9; color: #333333; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<nav aria-label="Artist" style="flex: 1 1 248px; background: #ffffff; border-right: 1px solid #eaeaea; padding: 28px 16px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px">
+<a href="#" style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px; color: #000000; text-decoration: none"><span style="font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 24px; line-height: 1.1">The Art Room</span><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #bd1622">Artist studio</span></a>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<a href="#" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #333333; text-decoration: none">Home</a>
+<a href="#" aria-current="page" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; background: #f2f0ec; color: #000000; font-weight: 600; text-decoration: none">Artworks</a>
+<a href="#" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #333333; text-decoration: none">Profile</a>
+<a href="#" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #333333; text-decoration: none">Payouts</a>
+</div>
+<span style="padding: 0 12px; font-size: 12px; color: #767676">(menu shortened on this board)</span>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 40px 40px 56px; box-sizing: border-box">
+<div style="max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-weight: 700; font-size: 30px; letter-spacing: -0.02em; line-height: 1.15; color: #000000">Artwork library</h1>
+<span style="color: #666666">Everything you can show in your exhibitions. Drag to change the order.</span>
+</div>
+<a href="AddArtwork.dc.html" style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; padding: 8px 14px; min-height: 36px; box-sizing: border-box; background: #1a1a1a; color: #ffffff; border: 1px solid #1a1a1a; border-radius: 4px; text-decoration: none"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M228,128a12,12,0,0,1-12,12H140v76a12,12,0,0,1-24,0V140H40a12,12,0,0,1,0-24h76V40a12,12,0,0,1,24,0v76h76A12,12,0,0,1,228,128Z"></path></svg>Add artwork</a>
+</header>
+
+<section aria-label="Artworks" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid #eaeaea">
+<div role="group" aria-label="Type" style="display: inline-flex; flex-wrap: wrap; border: 1px solid #dcdcdc; border-radius: 4px; overflow: hidden">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="6"><button type="button" aria-pressed="{{f.on}}" style="{{f.style}}">{{f.label}}</button></sc-for>
+</div>
+<label style="position: relative; flex: 1 1 260px; max-width: 360px; margin-left: auto"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search artworks</span><svg width="16" height="16" viewBox="0 0 256 256" fill="#666666" aria-hidden="true" style="position: absolute; left: 12px; top: 10px"><path d="M228.24,219.76l-51.38-51.38a86.15,86.15,0,1,0-8.48,8.48l51.38,51.38a6,6,0,0,0,8.48-8.48ZM38,112a74,74,0,1,1,74,74A74.09,74.09,0,0,1,38,112Z"></path></svg><input type="search" placeholder="Search by title or content" style="width: 100%; box-sizing: border-box; font: inherit; font-size: 14px; padding: 8px 12px 8px 36px; min-height: 36px; border: 1px solid #dcdcdc; border-radius: 4px; background: #ffffff"></label>
+</div>
+<ul style="list-style: none; margin: 0; padding: 0">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+<li style="display: flex; align-items: center; gap: 14px; padding: 12px 20px 12px 8px; border-top: 1px solid #f0f0f0">
+<button type="button" aria-label="{{r.dragLabel}}" style="width: 32px; height: 44px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; background: none; border: 0; border-radius: 4px; color: #767676; cursor: grab"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M104,60A12,12,0,1,1,92,48,12,12,0,0,1,104,60Zm60,12a12,12,0,1,0-12-12A12,12,0,0,0,164,72ZM92,116a12,12,0,1,0,12,12A12,12,0,0,0,92,116Zm72,0a12,12,0,1,0,12,12A12,12,0,0,0,164,116ZM92,184a12,12,0,1,0,12,12A12,12,0,0,0,92,184Zm72,0a12,12,0,1,0,12,12A12,12,0,0,0,164,184Z"></path></svg></button>
+<span aria-hidden="true" style="{{r.thumb}}">
+<sc-if value="{{r.icon}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 256 256" fill="#555555"><path d="{{r.icon}}"></path></svg></sc-if>
+<sc-if value="{{r.sculpt}}" hint-placeholder-val="{{false}}"><svg width="40" height="56" viewBox="0 0 60 100"><ellipse cx="30" cy="97" rx="20" ry="3" fill="rgba(0,0,0,0.15)"></ellipse><path d="{{r.sculpt}}" fill="{{r.tone}}"></path></svg></sc-if>
+</span>
+<span style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 auto; min-width: 0">
+<a href="{{r.href}}" style="font-weight: 600; font-size: 15px; color: #000000; text-decoration: none">{{r.title}}</a>
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 12px; color: #666666"><span>{{r.type}}</span><span>{{r.meta}}</span>
+<sc-if value="{{r.selling}}" hint-placeholder-val="{{false}}"><span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: #d4edda; color: #155724"><span style="width: 6px; height: 6px; border-radius: 50%; background: #2e8b57"></span>Selling prints</span></sc-if>
+<sc-if value="{{r.media}}" hint-placeholder-val="{{false}}"><span>{{r.media}}</span></sc-if>
+<sc-if value="{{r.space}}" hint-placeholder-val="{{false}}"><span style="{{r.spaceStyle}}"><svg width="12" height="12" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="18" stroke-linejoin="round" aria-hidden="true"><path d="M128 24 L224 76 V180 L128 232 L32 180 V76 Z M32 76 L128 128 L224 76 M128 128 V232"></path></svg>{{r.space}}</span></sc-if>
+</span>
+</span>
+<a href="{{r.href}}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; padding: 7px 12px; min-height: 36px; box-sizing: border-box; border: 1px solid #dcdcdc; border-radius: 4px; text-decoration: none; color: #000000"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M225.9,74.78,181.21,30.09a14,14,0,0,0-19.8,0L38.1,153.41a13.94,13.94,0,0,0-4.1,9.9V208a14,14,0,0,0,14,14H92.69a13.94,13.94,0,0,0,9.9-4.1L225.9,94.58a14,14,0,0,0,0-19.8ZM94.1,209.41a2,2,0,0,1-1.41.59H48a2,2,0,0,1-2-2V163.31a2,2,0,0,1,.59-1.41L136,72.48,183.51,120ZM217.41,86.1,192,111.51,144.49,64,169.9,38.58a2,2,0,0,1,2.83,0l44.68,44.69a2,2,0,0,1,0,2.830Z"></path></svg>Edit</a>
+<button type="button" aria-label="{{r.delLabel}}" style="width: 36px; height: 36px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 4px; color: #bd1622; cursor: pointer"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M216,50H174V40a22,22,0,0,0-22-22H104A22,22,0,0,0,82,40V50H40a6,6,0,0,0,0,12H50V208a14,14,0,0,0,14,14H192a14,14,0,0,0,14-14V62h10a6,6,0,0,0,0-12ZM94,40a10,10,0,0,1,10-10h48a10,10,0,0,1,10,10V50H94ZM194,208a2,2,0,0,1-2,2H64a2,2,0,0,1-2-2V62H194ZM110,104v64a6,6,0,0,1-12,0V104a6,6,0,0,1,12,0Zm48,0v64a6,6,0,0,1-12,0V104a6,6,0,0,1,12,0Z"></path></svg></button>
+</li>
+</sc-for>
+</ul>
+<p style="margin: 0; padding: 12px 20px; border-top: 1px solid #f0f0f0; font-size: 12px; color: #666666">Keyboard: focus the handle, press Space, move with the arrow keys, Space again to drop.</p>
+</section>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const ICON = {
+      Text: 'M206,56V88a6,6,0,0,1-12,0V62H134V194h26a6,6,0,0,1,0,12H96a6,6,0,0,1,0-12h26V62H62V88a6,6,0,0,1-12,0V56a6,6,0,0,1,6-6H200A6,6,0,0,1,206,56Z',
+      Sound: 'M154.64,26.61a6,6,0,0,0-6.32.65L77.94,82H32A14,14,0,0,0,18,96v64a14,14,0,0,0,14,14H77.94l70.38,54.74A6,6,0,0,0,158,224V32A6,6,0,0,0,154.64,26.61ZM30,160V96a2,2,0,0,1,2-2H74v68H32A2,2,0,0,1,30,160Zm116,51.73L86,165.07V90.93l60-46.66Zm50.53-108.85a38,38,0,0,1,0,50.24,6,6,0,1,1-9-7.94,26,26,0,0,0,0-34.37,6,6,0,0,1,9-7.93ZM246,128a77.86,77.86,0,0,1-19.86,52,6,6,0,1,1-8.94-8,66,66,0,0,0,0-88,6,6,0,1,1,8.94-8A77.86,77.86,0,0,1,246,128Z',
+      Video: 'M250.83,74.71a6,6,0,0,0-6.16.3L206,100.79V72a14,14,0,0,0-14-14H32A14,14,0,0,0,18,72V184a14,14,0,0,0,14,14H192a14,14,0,0,0,14-14V155.21L244.67,181a6,6,0,0,0,9.33-5V80A6,6,0,0,0,250.83,74.71ZM194,184a2,2,0,0,1-2,2H32a2,2,0,0,1-2-2V72a2,2,0,0,1,2-2H192a2,2,0,0,1,2,2Zm48-19.21-36-24V115.21l36-24Z'
+    };
+    const TORSO = 'M14 96 C6 70 14 40 22 26 C14 14 22 2 30 2 C38 2 46 14 38 26 C46 40 54 70 46 96 Z';
+    const VESSEL = 'M18 96 C8 80 8 60 16 50 C20 44 22 38 20 30 L40 30 C38 38 40 44 44 50 C52 60 52 80 42 96 Z';
+    const CLOUD = 'M8 70 C2 58 12 46 24 50 C28 38 46 38 50 50 C60 52 60 66 52 70 C50 80 34 82 28 76 C18 82 6 80 8 70 Z';
+    const A = [
+      ['Torso II', 'Object', '2025 · Patinated bronze · 64 × 38 × 31 cm', { sculpt: TORSO, tone: '#6f685f', media: '8 photos · 2 reels', space: 'In the 3D space', ready: true }],
+      ['Vessel for the tide', 'Object', '2024 · Stoneware, ash glaze · 42 × 30 × 30 cm', { sculpt: VESSEL, tone: '#a08a6c', media: '5 photos · 1 video', space: '3D model in preparation' }],
+      ['Cloud study', 'Object', '2025 · Plaster, steel · 50 × 120 × 70 cm', { sculpt: CLOUD, tone: '#b9b3aa', media: '3 photos', space: false }],
+      ['Morning over the estuary', 'Image', '2024 · Oil on canvas', { selling: true, img: 'linear-gradient(135deg,#e7d3b0,#b08d57)' }],
+      ['Blue hour I', 'Image', '2023 · Photograph', { selling: true, img: 'linear-gradient(135deg,#a9bcd0,#3b5573)' }],
+      ['Letter to the sea', 'Text', '2024', {}],
+      ['Tide recording', 'Sound', '2022 · 4 min 12 s', {}],
+      ['Wind in the reeds', 'Video', '2023 · 2 min 40 s', {}]
+    ];
+    const seg = (on, first) => ({ font: 'inherit', fontSize: '13px', fontWeight: on ? 600 : 400, padding: '6px 12px', minHeight: '34px', background: on ? '#1a1a1a' : '#ffffff', color: on ? '#ffffff' : '#333333', border: 0, borderLeft: first ? 0 : '1px solid #dcdcdc', cursor: 'pointer' });
+    return {
+      filters: ['All', 'Image', 'Object', 'Text', 'Sound', 'Video'].map((label, i) => ({ label, on: i === 0 ? 'true' : 'false', style: seg(i === 0, i === 0) })),
+      rows: A.map(([title, type, meta, o]) => ({
+        title, type, meta,
+        selling: !!o.selling,
+        media: o.media || false,
+        space: o.space || false,
+        spaceStyle: { display: 'inline-flex', alignItems: 'center', gap: '5px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px', background: o.ready ? '#e8eef8' : '#f4f1ea', color: o.ready ? '#1f3b6b' : '#6b5a2e' },
+        sculpt: o.sculpt || false,
+        tone: o.tone || '#777',
+        icon: (o.img || o.sculpt) ? false : ICON[type],
+        href: type === 'Object' ? 'ObjectEditor.dc.html' : '#',
+        thumb: { width: '64px', height: '64px', flex: '0 0 auto', borderRadius: '4px', background: o.img || (o.sculpt ? '#ece9e3' : '#f2f0ec'), display: 'flex', alignItems: o.sculpt ? 'flex-end' : 'center', justifyContent: 'center', overflow: 'hidden' },
+        dragLabel: 'Reorder ' + title,
+        delLabel: 'Delete ' + title
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>
