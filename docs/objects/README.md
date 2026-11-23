@@ -76,6 +76,18 @@ Copy in the boards is final unless marked "(board note)".
 - **Q-O5** (Code, O2) The boards' sand / stone colours (Object tile `#ece9e3`, explainer `#f6f4f0`, its figure
   `#6f685f`, the 3D chips `#e8eef8`/`#1f3b6b` and `#f4f1ea`/`#6b5a2e`) are not design tokens. O2 uses the nearest
   existing ones (see Built O2). Add them as studio tokens with the exact values? (Owner.)
+- **Q-O6** (Code, O3) Video file size for Objects: raised from the supplementary media's 20 MB to 50 MB (the video
+  artworks' limit), since a 60 s phone reel is often 30–40 MB. Keep 50 MB? (Owner.)
+- **Q-O7** (Code, O3) The board's cover line says "JPG, PNG or WebP"; today's image upload (the print-master
+  pipeline) takes JPG, PNG and TIFF, so the editor says that. Accept WebP covers for Objects? (Owner.)
+- **Q-O8** (Owner, 2026-11-23, for O4) A **GLB checker before upload**: "I don't want to just upload any glb and see
+  only after it is not good." Plan: (1) in the browser, before anything is sent, load the file with the room's own
+  loaders (GLTFLoader + meshopt + KTX2), render it in the preview, and show a report with pass / warn / fail rows:
+  it loads and renders; one binary .glb, nothing external, textures inside; no quantization (spaces playbook §3.1);
+  meshopt; file size; triangles, meshes, materials; texture count, sizes and formats; real size in cm against the
+  Details size; base resting on y = 0 and centred; Upload is enabled only with no fail. (2) The server checks the same
+  again with `@gltf-transform` (already a dependency) and refuses a fail. Open: also run the official Khronos glTF
+  Validator (npm `gltf-validator`, a new package) for spec-level breakage? Needs the owner's OK.
 
 ## Data (one migration, phase 1)
 On **`Artwork`** (all nullable / defaulted, so nothing changes for existing types):
@@ -232,7 +244,8 @@ change the decisions above without the owner.
   `role` (O3); deleting the GLB and protecting it in `reconcile-r2.ts` (O4); the public `artworkType: 'image'`
   filters in `getPublicExhibitionByUrl`, `/api/exhibitions/by-url/[url]` and `getPublicArtistByHandler` (O5).
 - For O3: the spec makes materials / technique rich text, but the artwork routes clean `technique` as one line
-  of at most 200 characters (as for images). The Object editor will need its own rule there.
+  of at most 200 characters (as for images). (O3: no change needed: images already save rich text there; the 200
+  characters include the tags, as for images.)
 
 **O2 · Library + Add artwork** (2026-11-23, same branch).
 - Add artwork: the Type select is now five cards (Image, Object, Text, Sound, Video; Phosphor light icons, Cube
@@ -254,3 +267,29 @@ change the decisions above without the owner.
 - Seen in Chrome (dialog desktop + phone, an Object row through the API: print sales off, "64 × 38 × 31 cm").
   Not seen with data: a cover photo and the 3D chips (no Object has them yet). Until O3, Create artwork for an
   Object opens today's editor (Details only).
+
+**O3 · Object editor** (2026-11-23, same branch).
+- `ArtworkEditForm` for `object`: Cover photo · Photos & reels · Details · Technical info · Description · Where it
+  shows (On this page lists them). "In the 3D space" comes with O4. No Print sales, no Supplementary media.
+- Cover photo: today's image upload (saved with the form, as for images) in a 4:5 preview with the **square crop**:
+  a dashed square over the photo, the rest veiled; drag it or focus it and use the arrow keys (it moves along the
+  long side only: it is the largest square). Saved as `coverCropX/Y` = the square's centre; a new photo starts
+  centred. "How it shows": grid (square crop), artwork page (4:5, whole photo), lists. Checked in the browser: at
+  least 2000 px on the short side, up to 25 MB. Differs from the board: no separate "Adjust square crop" button
+  (the square is always adjustable, with a help line); formats say JPG, PNG or TIFF (Q-O7).
+- Photos & reels: tiles 4:5 (reels 9:16), label top left, duration on videos, drag handle top right (keyboard as the
+  other lists); clicking a tile opens a small window: Label (No label, Front, Back, Side, Detail, In a room, Process;
+  Reel for videos), Caption, Remove. A vertical video is labelled Reel on upload. Checked in the browser: 40 photos,
+  6 videos, a reel up to 60 s, a landscape video up to 3 min. The board draws no editing controls; the window and
+  the handle are additions.
+- `/api/artwork-media`: the artist may now manage their **own Object's** media (still admin-only for other types);
+  `PATCH` saves a label / caption or the whole order; uploads take `role`; Object videos up to 50 MB (Q-O6); the
+  upload rate limit counts presigns only (60 an hour) so an Object's 40 photos fit in one batch.
+- Details: Author, Year, Materials / technique (rich text), Size (H / W / D cm, weight kg, "Size includes the base",
+  "Visitors see it as 64 × 38 × 31 cm…"), Edition (Unique piece / Edition, number / of / + artist's proofs,
+  "Shown as “Edition 3/8 + 2 AP”"). Technical info: Where it can stand, Display (Floor, **Pedestal**, Wall, Hanging:
+  the README's word, the board says Plinth), Signed / marked, Certificate, Care and installation. Clicking a pressed
+  choice clears it (all optional). Clearing the edition clears its numbers.
+- Header: "Object" and the 3D chip (shared `ObjectSpaceChip`, also in the library).
+- Seen in Chrome with the e2e artist: an Object with a cover, two photos and a reel, uploaded through the API; the
+  crop moved by keyboard and saved (0.4 = the top for a 4:5 photo); Save kept every field; then deleted.

@@ -565,3 +565,17 @@ like the real Pause switch). Logic and dialogs unchanged.
   `checkoutErrorLabel`, `roomErrorLabel`, `pageLabel`. Data: `lib/analytics/ga4Report.ts` (`fetchAnalyticsReport`),
   shape in `lib/analytics/reportShape.ts` (client-safe), page data + cache in `app/admin/analytics/report.ts`.
 - Tokens: `--admin-series-1…3`, `--admin-series-other`.
+
+### Objects (docs/objects, AR-191)
+- `ImageUploader` (shared, admin row): `overlay?: ReactNode`, drawn over the preview above the image (hidden while
+  uploading), e.g. an Object cover's square-crop frame.
+- **Built** · `dashboard/artworks/ObjectSpaceChip` · `{ modelStatus?: string | null }`: "In the 3D space" (`ready`) or
+  "3D model in preparation" (`requested`), else nothing; library rows and the artwork editor's header.
+- **Built** · `shared/ArtworkEditForm/ObjectCover.tsx` · `CoverCropFrame { size; crop: { x; y }; onChange }` (the dashed
+  square over the 4:5 preview; drag or arrow keys, `role="slider"`) and `CoverPreviews { imageUrl; size; crop }` ("How it
+  shows": grid square, artwork page 4:5, list).
+- **Built** · `shared/ArtworkEditForm/ObjectFields.tsx` · `ObjectSizeAndEdition` / `ObjectTechnicalInfo { fields; onChange }`
+  and `objectFormFields(stored)`.
+- **Built** · `shared/ArtworkEditForm/ObjectMediaManager.tsx` · `{ artworkId }`: Photos & reels (labels, captions, drag to
+  reorder, the Object limits). Upload helpers in `uploadArtworkMedia.ts` (`uploadArtworkMediaFile`, `measureMedia`),
+  shared with `ArtworkMediaManager`.
