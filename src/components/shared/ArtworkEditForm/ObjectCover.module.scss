@@ -1,0 +1,86 @@
+// An Object's cover (docs/objects, objects-editor.dc.html "Cover photo"): the square-crop frame
+// drawn over the uploader's 4:5 preview, and the three "How it shows" previews.
+
+.overlay {
+  position: absolute;
+  inset: 0;
+}
+
+// The square: dashed, everything outside it veiled in white.
+.frameX,
+.frameY {
+  position: absolute;
+  box-sizing: border-box;
+  outline: 2px dashed var(--color-dark-surface);
+  box-shadow: 0 0 0 100vmax color-mix(in srgb, var(--color-white) 45%, transparent);
+  touch-action: none;
+
+  &:focus-visible {
+    outline-style: solid;
+  }
+}
+
+.frameX {
+  cursor: ew-resize;
+}
+
+.frameY {
+  cursor: ns-resize;
+}
+
+.previews {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.previewsLabel {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-secondary);
+}
+
+.previewRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.previewCaption {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.grid,
+.page,
+.list {
+  display: block;
+  border-radius: var(--radius-sm);
+  background: var(--studio-nav-active);
+  object-fit: cover;
+}
+
+// Grids · square (96px), Artwork page · 4:5 (80 × 100, the whole photo), Lists (40px).
+.grid {
+  width: calc(var(--space-12) * 2);
+  height: calc(var(--space-12) * 2);
+}
+
+.page {
+  width: calc(var(--space-10) * 2);
+  height: calc(var(--space-10) * 2.5);
+  object-fit: contain;
+}
+
+.list {
+  width: var(--space-10);
+  height: var(--space-10);
+}

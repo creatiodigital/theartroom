@@ -89,6 +89,11 @@ type ImageUploaderProps = {
   adminLayout?: 'row' | 'stacked'
   /** admin stacked only, empty: the drop area's first line (default "Drop an image here"). */
   dropPrompt?: string
+  /**
+   * admin row only: drawn over the preview, above the image (e.g. an Object cover's square-crop
+   * frame). Positioned by the caller inside the preview box.
+   */
+  overlay?: ReactNode
 }
 
 function formatFileSize(bytes: number): string {
@@ -250,6 +255,7 @@ export const ImageUploader = ({
   adminPreview = 'banner',
   adminLayout = 'row',
   dropPrompt = 'Drop an image here',
+  overlay,
 }: ImageUploaderProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   // questions.md Q128 (c): its own id, so two uploaders on one page (the profile) never share one.
@@ -542,6 +548,7 @@ export const ImageUploader = ({
             <div className={c(styles.adminPreview, shapeClass)} style={{ aspectRatio }}>
               {/* unoptimized: see the default preview below (AR-125). */}
               <Image src={imageUrl} alt="Uploaded image" fill unoptimized style={{ objectFit }} />
+              {!busy && overlay}
               {busy && (
                 <div className={styles.uploadingOverlay}>
                   <span className={styles.spinner} aria-hidden />

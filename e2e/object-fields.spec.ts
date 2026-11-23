@@ -4,6 +4,9 @@ import { hangsOnWall, isArtworkKind } from '../src/lib/artwork/artworkKinds'
 import { mediaLimitsFor } from '../src/lib/artwork/artworkMediaTypes'
 import {
   countObjectMedia,
+  coverObjectPosition,
+  coverSquare,
+  objectEditionText,
   objectDimensionsText,
   objectMediaSummary,
   objectWriteData,
@@ -80,6 +83,39 @@ test('"unique" clears the edition numbers', () => {
     objectEditionOf: null,
     objectArtistProofs: null,
   })
+})
+
+test('no edition at all clears the numbers too', () => {
+  expect(parsed({ objectEdition: '', objectEditionNo: '3', objectEditionOf: '8' })).toEqual({
+    objectEdition: null,
+    objectEditionNo: null,
+    objectEditionOf: null,
+    objectArtistProofs: null,
+  })
+})
+
+test('edition text, as the editor shows it', () => {
+  const t = (o: Record<string, unknown>) => objectEditionText(o)
+  expect(
+    t({ objectEdition: 'edition', objectEditionNo: 3, objectEditionOf: 8, objectArtistProofs: 2 }),
+  ).toBe('Edition 3/8 + 2 AP')
+  expect(t({ objectEdition: 'edition', objectEditionOf: 8 })).toBe('Edition of 8')
+  expect(t({ objectEdition: 'unique' })).toBe('Unique piece')
+  expect(t({ objectEdition: 'edition' })).toBeNull()
+  expect(t({})).toBeNull()
+})
+
+test('cover crop: centre to CSS position, clamped inside the photo', () => {
+  // Portrait 4000 × 5000: the square is 4000 tall, so it moves vertically only.
+  const size = { width: 4000, height: 5000 }
+  expect(coverObjectPosition({ x: 0.5, y: 0.5 }, size)).toBe('50% 50%')
+  expect(coverObjectPosition({ x: 0.5, y: 0.4 }, size)).toBe('50% 0%')
+  expect(coverObjectPosition({ x: 0.5, y: 0.6 }, size)).toBe('50% 100%')
+  expect(coverObjectPosition({ x: 0.5, y: 0.1 }, size)).toBe('50% 0%')
+  expect(coverObjectPosition({ x: 0.9, y: 0.5 }, size)).toBe('50% 50%')
+  expect(coverSquare({ x: null, y: 0.9 }, size)).toEqual({ sx: 1, sy: 0.8, x: 0.5, y: 0.6 })
+  // Without the photo's size the centre is used as is.
+  expect(coverObjectPosition({ x: 0.3, y: null }, {})).toBe('30% 50%')
 })
 
 test('notes: one line for signed / certificate, lines kept for care, length capped', () => {

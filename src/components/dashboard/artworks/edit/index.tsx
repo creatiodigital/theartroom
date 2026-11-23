@@ -10,6 +10,7 @@ import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
 import { Callout } from '@/components/admin/ui/Callout'
 import { SaveBar } from '@/components/admin/ui/SaveBar'
 import { StatusPill } from '@/components/admin/ui/StatusPill'
+import { ObjectSpaceChip } from '@/components/dashboard/artworks/ObjectSpaceChip'
 import {
   ARTWORK_EDIT_FORM_ID,
   ArtworkEditForm,
@@ -879,6 +880,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
             {artwork && isSellingNow(artwork) && (
               <StatusPill tone="green" shape="tag" dot label="Selling prints" />
             )}
+            {artworkType === 'object' && <ObjectSpaceChip modelStatus={artwork?.modelStatus} />}
           </span>
         }
       />

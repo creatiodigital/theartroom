@@ -34,6 +34,14 @@ import type { LimitedVariantDraft } from '@/lib/editions/types'
 import { resolveArtworkAuthor } from '@/utils/artistDisplayName'
 import { LimitedVariantsEditor } from './LimitedVariantsEditor'
 import { ArtworkMediaManager } from './ArtworkMediaManager'
+import { CoverCropFrame, CoverPreviews } from './ObjectCover'
+import {
+  ObjectSizeAndEdition,
+  ObjectTechnicalInfo,
+  objectFormFields,
+  type ObjectFormFields,
+} from './ObjectFields'
+import { ObjectMediaManager } from './ObjectMediaManager'
 import { EditorPanel } from './EditorPanel'
 import { LockNote } from './LockNote'
 import { OptionChips } from './OptionChips'
@@ -58,6 +66,10 @@ import { scrollToFirstError } from '@/lib/validation/scrollToFirstError'
 import styles from './ArtworkEditForm.module.scss'
 
 export { ARTWORK_EDIT_FORM_ID } from './sections'
+
+/** An Object's cover (docs/objects "Cover photo"): at least 2000 px on the short side, 25 MB. */
+const OBJECT_COVER_MIN_SIDE = 2000
+const OBJECT_COVER_MAX_BYTES = 25 * 1024 * 1024
 
 /** The print sizes dialog's title (one dialog per page). */
 const PRINT_SIZES_TITLE_ID = 'artwork-print-sizes-title'
@@ -137,9 +149,28 @@ export type Artwork = {
   /** The section each member exhibition places this work in (null = none).
    *  Keyed by exhibition id; same source as `exhibitionIds`. */
   exhibitionSections?: Record<string, string | null>
+  // Objects (docs/objects): their own fields, as the artwork GET returns them.
+  modelStatus?: string
+  coverCropX?: number | null
+  coverCropY?: number | null
+  heightCm?: number | null
+  widthCm?: number | null
+  depthCm?: number | null
+  weightKg?: number | null
+  sizeIncludesBase?: boolean
+  objectEdition?: string | null
+  objectEditionNo?: number | null
+  objectEditionOf?: number | null
+  objectArtistProofs?: number | null
+  placement?: string | null
+  displayMode?: string | null
+  signedNote?: string | null
+  certificateNote?: string | null
+  careNote?: string | null
 }
 
-export type ArtworkFormData = {
+/** The form's fields; an Object's own (`ObjectFormFields`) are empty for the other types. */
+export type ArtworkFormData = ObjectFormFields & {
   name: string
   artworkType: string
   title: string
@@ -211,6 +242,7 @@ export const getInitialFormData = (): ArtworkFormData => ({
   printRecommendations: null,
   exhibitionIds: [],
   exhibitionSections: {},
+  ...objectFormFields({}),
 })
 
 export const populateFormData = (data: Artwork): ArtworkFormData => ({
@@ -243,10 +275,17 @@ export const populateFormData = (data: Artwork): ArtworkFormData => ({
   printRecommendations: data.printRecommendations ?? null,
   exhibitionIds: data.exhibitionIds ?? [],
   exhibitionSections: data.exhibitionSections ?? {},
+  ...objectFormFields(data),
 })
 
 /** Every value shape the form's single change handler carries. */
-export type ArtworkFormValue = string | boolean | string[] | Record<string, string | null>
+export type ArtworkFormValue =
+  | string
+  | boolean
+  | string[]
+  | Record<string, string | null>
+  | number
+  | null
 
 type ArtworkEditFormProps = {
   formData: ArtworkFormData
@@ -627,6 +666,20 @@ export const ArtworkEditForm = ({
     }
   }, [])
 
+  // An Object's cover: its pixel size places the square crop; a new photo starts centred.
+  const coverSize =
+    imageMeta && imageMeta.width > 0 && imageMeta.height > 0
+      ? { width: imageMeta.width, height: imageMeta.height }
+      : null
+  const handleCoverUpload = useCallback(
+    async (file: File, previewUrl?: string) => {
+      onFormChange('coverCropX', null)
+      onFormChange('coverCropY', null)
+      await onImageUpload(file, previewUrl)
+    },
+    [onFormChange, onImageUpload],
+  )
+
   const handleSoundFileSelect = useCallback(
     async (e: ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0]
@@ -710,9 +763,13 @@ export const ArtworkEditForm = ({
   const isImage = formData.artworkType === 'image'
   const isVideo = formData.artworkType === 'video'
   const isImageOrVideo = isImage || isVideo
+  // docs/objects: an Object has an artwork's details (author, year, materials, description,
+  // where it shows), a cover photo and its own Photos & reels; never print sales.
+  const isObject = formData.artworkType === 'object'
+  const hasArtDetails = isImageOrVideo || isObject
   const showOpenPrintOptions = isImage && formData.printEnabled && formData.editionType === 'open'
-  const showExhibitions = !!exhibitions && exhibitions.length > 0 && isImage
-  const showSupplementary = isAdmin && !!artworkId
+  const showExhibitions = !!exhibitions && exhibitions.length > 0 && (isImage || isObject)
+  const showSupplementary = isAdmin && !!artworkId && !isObject
   const isPage = variant === 'page'
   const imageSection = isVideo ? ARTWORK_SECTION.poster : ARTWORK_SECTION.image
 
@@ -720,12 +777,15 @@ export const ArtworkEditForm = ({
     isImage && ARTWORK_SECTION.printSales,
     isVideo && ARTWORK_SECTION.videoFile,
     isImageOrVideo && imageSection,
+    isObject && ARTWORK_SECTION.cover,
+    isObject && !!artworkId && ARTWORK_SECTION.objectMedia,
     showOpenPrintOptions && ARTWORK_SECTION.ready,
     formData.artworkType === 'sound' && ARTWORK_SECTION.audioFile,
     ARTWORK_SECTION.details,
+    isObject && ARTWORK_SECTION.technical,
     formData.artworkType === 'text' && ARTWORK_SECTION.text,
-    isImageOrVideo && ARTWORK_SECTION.description,
-    isImageOrVideo && ARTWORK_SECTION.where,
+    hasArtDetails && ARTWORK_SECTION.description,
+    hasArtDetails && ARTWORK_SECTION.where,
     showSupplementary && ARTWORK_SECTION.media,
   ]
   const sections = rendered.filter((section): section is ArtworkSection => Boolean(section))
@@ -747,7 +807,9 @@ export const ArtworkEditForm = ({
                   ? 'Edit video'
                   : formData.artworkType === 'sound'
                     ? 'Edit sound'
-                    : 'Edit artwork'}
+                    : isObject
+                      ? 'Edit object'
+                      : 'Edit artwork'}
           </h1>
         )}
 
@@ -1257,6 +1319,73 @@ export const ArtworkEditForm = ({
             </EditorPanel>
           )}
 
+          {/* An Object's cover photo (docs/objects): today's image upload, a 4:5 preview with
+              the square crop the grids show, and how it shows. Not a print master: no print
+              checks; at least 2000 px on the short side, up to 25 MB. */}
+          {isObject && (
+            <EditorPanel
+              section={ARTWORK_SECTION.cover}
+              description="The first thing people see: in your library, on exhibition pages, in grids and when shared. Use your best photo, on a calm background."
+            >
+              <ImageUploader
+                tone="admin"
+                align="start"
+                imageUrl={imageUrl}
+                onUpload={handleCoverUpload}
+                onRemove={onImageRemove}
+                onMetaChange={handleImageMetaChange}
+                displayMeta={pendingClientMeta ?? serverMeta}
+                uploading={uploading}
+                loadingText={loadingText}
+                aspectRatio="4 / 5"
+                objectFit="contain"
+                maxSizeBytes={OBJECT_COVER_MAX_BYTES}
+                minWidth={OBJECT_COVER_MIN_SIDE}
+                minHeight={OBJECT_COVER_MIN_SIDE}
+                overlay={
+                  coverSize && (
+                    <CoverCropFrame
+                      size={coverSize}
+                      crop={{ x: formData.coverCropX, y: formData.coverCropY }}
+                      onChange={({ x, y }) => {
+                        onFormChange('coverCropX', x)
+                        onFormChange('coverCropY', y)
+                      }}
+                    />
+                  )
+                }
+                note={
+                  <>
+                    {imageUrl && (
+                      <CoverPreviews
+                        imageUrl={imageUrl}
+                        size={coverSize}
+                        crop={{ x: formData.coverCropX, y: formData.coverCropY }}
+                      />
+                    )}
+                    {imageUrl && coverSize && coverSize.width !== coverSize.height && (
+                      <span>Drag the dashed square to choose what grids and lists show.</span>
+                    )}
+                    <span>
+                      At least {OBJECT_COVER_MIN_SIDE} px on the short side. JPG, PNG or TIFF, up to{' '}
+                      {OBJECT_COVER_MAX_BYTES / (1024 * 1024)} MB.
+                    </span>
+                  </>
+                }
+              />
+            </EditorPanel>
+          )}
+
+          {/* An Object's Photos & reels: uploads are immediate, so only once it exists. */}
+          {isObject && artworkId && (
+            <EditorPanel
+              section={ARTWORK_SECTION.objectMedia}
+              description="Show it from every side, up close and in a room. Visitors swipe through these on the artwork page. Drag to change the order."
+            >
+              <ObjectMediaManager artworkId={artworkId} />
+            </EditorPanel>
+          )}
+
           {/* Open-edition go-live. Sits after the printing options because, for an
               open edition, those options stay editable for the life of the work —
               the ONLY thing "Ready to Sell" freezes is the series type (so an
@@ -1426,7 +1555,7 @@ export const ArtworkEditForm = ({
               </div>
 
               {/* Author + Year */}
-              {isImageOrVideo && (
+              {hasArtDetails && (
                 <div className={styles.authorYear}>
                   <div className={styles.field}>
                     <label htmlFor="author" className={styles.label}>
@@ -1457,11 +1586,11 @@ export const ArtworkEditForm = ({
                 </div>
               )}
 
-              {/* Technique / Medium */}
-              {isImageOrVideo && (
+              {/* Technique / Medium (an Object's materials) */}
+              {hasArtDetails && (
                 <div className={styles.field}>
                   <span id="technique-label" className={styles.label}>
-                    Technique / medium
+                    {isObject ? 'Materials / technique' : 'Technique / medium'}
                   </span>
                   <RichTextEditor
                     tone="admin"
@@ -1469,15 +1598,31 @@ export const ArtworkEditForm = ({
                     content={formData.technique}
                     onChange={(content) => onFormChange('technique', content)}
                     onReady={(html) => onRichTextReady?.('technique', html)}
-                    placeholder="e.g. Oil on canvas, mixed media…"
+                    placeholder={
+                      isObject
+                        ? 'e.g. Bronze, lost-wax cast, brown patina…'
+                        : 'e.g. Oil on canvas, mixed media…'
+                    }
                   />
                 </div>
               )}
+
+              {/* An Object's size and edition: the structured size is the truth (docs/objects). */}
+              {isObject && <ObjectSizeAndEdition fields={formData} onChange={onFormChange} />}
 
               {/* No Dimensions field (owner, 2026-11-17): every work is a print, and its size line is
                   worked out from the file or the limited variants (`getArtworkSizes`). The stored
                   `dimensions` stays in the form state, so a save sends it back untouched. */}
             </EditorPanel>
+
+            {isObject && (
+              <EditorPanel
+                section={ARTWORK_SECTION.technical}
+                description="For collectors and curators. Every field is optional, and only filled ones are shown."
+              >
+                <ObjectTechnicalInfo fields={formData} onChange={onFormChange} />
+              </EditorPanel>
+            )}
 
             {/* Text content - for text artworks (plain text only for 3D) */}
             {formData.artworkType === 'text' && (
@@ -1507,8 +1652,8 @@ export const ArtworkEditForm = ({
               </EditorPanel>
             )}
 
-            {/* Description - for image and video artworks (supports rich text) */}
-            {isImageOrVideo && (
+            {/* Description - for image, video and object artworks (supports rich text) */}
+            {hasArtDetails && (
               <EditorPanel section={ARTWORK_SECTION.description}>
                 <RichTextEditor
                   tone="admin"
@@ -1522,7 +1667,7 @@ export const ArtworkEditForm = ({
             )}
 
             {/* Featured + exhibition membership */}
-            {isImageOrVideo && (
+            {hasArtDetails && (
               <EditorPanel section={ARTWORK_SECTION.where}>
                 <AdminCheckbox
                   id="artwork-featured"

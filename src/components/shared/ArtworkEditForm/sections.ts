@@ -21,6 +21,10 @@ export const ARTWORK_SECTION = {
   description: { id: 'artwork-section-description', title: 'Description' },
   where: { id: 'artwork-section-where', title: 'Where it shows' },
   media: { id: 'artwork-section-media', title: 'Supplementary media' },
+  // Objects (docs/objects, objects-editor.dc.html).
+  cover: { id: 'artwork-section-image', title: 'Cover photo' },
+  objectMedia: { id: 'artwork-section-object-media', title: 'Photos & reels' },
+  technical: { id: 'artwork-section-technical', title: 'Technical info' },
 } as const satisfies Record<string, ArtworkSection>
 
 export const panelTitleId = (section: ArtworkSection) => `${section.id}-title`

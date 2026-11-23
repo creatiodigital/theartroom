@@ -170,7 +170,8 @@ const toNote = (value: unknown, label: string, multiline: boolean): string | nul
  * are returned (an absent key leaves the stored value as it is); `null` or '' clears a field.
  * Sizes are cm on the 0.1 cm grid every stored size uses; weight is kg to 10 g.
  *
- * "unique" clears the edition numbers. Number N of M is checked when both arrive together.
+ * "unique" (or clearing the edition) clears the edition numbers. Number N of M is checked when
+ * both arrive together.
  */
 export function parseObjectFields(body: Record<string, unknown>): ParsedObjectFields {
   const has = (key: string) => key in body && body[key] !== undefined
@@ -188,7 +189,8 @@ export function parseObjectFields(body: Record<string, unknown>): ParsedObjectFi
     if (has('objectEdition')) {
       data.objectEdition = toChoice(body.objectEdition, OBJECT_EDITIONS, 'Edition')
     }
-    if (data.objectEdition === 'unique') {
+    // The numbers belong to an edition: "unique", or no edition at all, clears them.
+    if (data.objectEdition === 'unique' || (has('objectEdition') && data.objectEdition === null)) {
       data.objectEditionNo = null
       data.objectEditionOf = null
       data.objectArtistProofs = null
@@ -306,4 +308,52 @@ export function objectMediaSummary({ photos, videos, reels }: ObjectMediaCounts)
     videos > 0 && plural(videos, 'video', 'videos'),
   ].filter((part): part is string => Boolean(part))
   return parts.length ? parts.join(' · ') : null
+}
+
+/**
+ * The edition as the editor's help line writes it (docs/objects "Details"): "Edition 3/8 + 2 AP",
+ * "Edition of 8", "Unique piece". Null when there is nothing to say yet.
+ */
+export function objectEditionText(edition: {
+  objectEdition?: string | null
+  objectEditionNo?: number | null
+  objectEditionOf?: number | null
+  objectArtistProofs?: number | null
+}): string | null {
+  if (edition.objectEdition === 'unique') return 'Unique piece'
+  if (edition.objectEdition !== 'edition') return null
+  const { objectEditionNo: no, objectEditionOf: of, objectArtistProofs: aps } = edition
+  if (!of) return null
+  const base = no ? `Edition ${no}/${of}` : `Edition of ${of}`
+  return aps ? `${base} + ${aps} AP` : base
+}
+
+type CropCentre = { x?: number | null; y?: number | null }
+type PixelSize = { width?: number | null; height?: number | null }
+
+/**
+ * The square crop of a cover: its side, as a fraction of the photo's width and height (the
+ * largest square, so 1 on the short side), and its centre clamped so the square stays inside.
+ */
+export function coverSquare(crop: CropCentre, size: PixelSize) {
+  const { width: w, height: h } = size
+  const sx = w && h ? Math.min(w, h) / w : 1
+  const sy = w && h ? Math.min(w, h) / h : 1
+  const clamp = (c: number | null | undefined, side: number) =>
+    Math.min(1 - side / 2, Math.max(side / 2, c ?? 0.5))
+  return { sx, sy, x: clamp(crop.x, sx), y: clamp(crop.y, sy) }
+}
+
+/**
+ * The CSS `object-position` that shows a cover's square crop in a square box with
+ * `object-fit: cover` (grids, library rows, lists). The stored value is the square's centre;
+ * CSS positions by the fraction of the overflow, hence the conversion. Without the photo's
+ * size, the centre is used as is.
+ */
+export function coverObjectPosition(crop: CropCentre, size: PixelSize): string {
+  if (!size.width || !size.height) return `${(crop.x ?? 0.5) * 100}% ${(crop.y ?? 0.5) * 100}%`
+  const { sx, sy, x, y } = coverSquare(crop, size)
+  const toPosition = (centre: number, side: number) =>
+    side >= 1 ? 50 : ((centre - side / 2) / (1 - side)) * 100
+  return `${toPosition(x, sx)}% ${toPosition(y, sy)}%`
 }

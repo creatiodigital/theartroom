@@ -1,0 +1,1 @@
+export { ObjectSpaceChip } from './ObjectSpaceChip'

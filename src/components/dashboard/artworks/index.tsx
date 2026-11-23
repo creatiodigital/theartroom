@@ -22,6 +22,7 @@ import c from 'classnames'
 
 import { isSafeImageSrc } from '@/lib/imageSafety'
 import {
+  coverObjectPosition,
   objectDimensionsText,
   objectMediaSummary,
   type ObjectMediaCounts,
@@ -45,6 +46,7 @@ import { SORTABLE_KEYBOARD_HINT, SortableList } from '@/components/admin/ui/Sort
 import { StatusPill } from '@/components/admin/ui/StatusPill'
 import { Button } from '@/components/ui/Button'
 import { AddArtworkModal } from '@/components/dashboard/AddArtworkModal'
+import { ObjectSpaceChip } from '@/components/dashboard/artworks/ObjectSpaceChip'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 
 import styles from './artworks.module.scss'
@@ -116,22 +118,14 @@ type Artwork = {
   // photo / video / reel counts GET /api/artworks adds for them.
   coverCropX?: number | null
   coverCropY?: number | null
+  originalWidth?: number | null
+  originalHeight?: number | null
   heightCm?: number | null
   widthCm?: number | null
   depthCm?: number | null
   modelStatus?: string
   objectMedia?: ObjectMediaCounts
 }
-
-/** The 3D chip of an Object's row: only once a model is asked for. */
-const SPACE_CHIP: Record<string, { label: string; className: string } | undefined> = {
-  ready: { label: 'In the 3D space', className: styles.spaceReady },
-  requested: { label: '3D model in preparation', className: styles.spacePreparing },
-}
-
-/** A crop centre (0..1, null = middle) as a CSS position. */
-const cropPosition = (x?: number | null, y?: number | null) =>
-  `${(x ?? 0.5) * 100}% ${(y ?? 0.5) * 100}%`
 
 // Extracts first frame from a video URL and renders it as a thumbnail
 function VideoThumbnail({ videoUrl, alt }: { videoUrl: string; alt: string }) {
@@ -222,7 +216,12 @@ function ArtworkThumb({ artwork, title, isPlaying, onTogglePlay }: ArtworkThumbP
             height={64}
             unoptimized
             className={styles.thumbCover}
-            style={{ objectPosition: cropPosition(artwork.coverCropX, artwork.coverCropY) }}
+            style={{
+              objectPosition: coverObjectPosition(
+                { x: artwork.coverCropX, y: artwork.coverCropY },
+                { width: artwork.originalWidth, height: artwork.originalHeight },
+              ),
+            }}
           />
         </span>
       )
@@ -644,7 +643,6 @@ export const ArtworkLibraryPage = () => {
                 ].filter(Boolean)
                 const mediaSummary =
                   isObject && artwork.objectMedia ? objectMediaSummary(artwork.objectMedia) : null
-                const spaceChip = isObject ? SPACE_CHIP[artwork.modelStatus ?? ''] : undefined
                 return {
                   id: artwork.id,
                   title,
@@ -666,12 +664,7 @@ export const ArtworkLibraryPage = () => {
                           <StatusPill label="Selling prints" tone="green" shape="tag" dot />
                         )}
                         {mediaSummary && <span>{mediaSummary}</span>}
-                        {spaceChip && (
-                          <span className={c(styles.space, spaceChip.className)}>
-                            <Cube size={12} weight="regular" aria-hidden />
-                            {spaceChip.label}
-                          </span>
-                        )}
+                        {isObject && <ObjectSpaceChip modelStatus={artwork.modelStatus} />}
                       </span>
                       {/* Not drawn, kept (questions.md Q105): the library's only way
                         to take a work out of an exhibition. */}
