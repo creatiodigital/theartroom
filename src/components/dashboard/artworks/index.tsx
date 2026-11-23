@@ -6,6 +6,7 @@ import Image from 'next/image'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
 import {
+  Cube,
   Image as ImageIcon,
   PencilSimple,
   Play,
@@ -20,6 +21,11 @@ import {
 import c from 'classnames'
 
 import { isSafeImageSrc } from '@/lib/imageSafety'
+import {
+  objectDimensionsText,
+  objectMediaSummary,
+  type ObjectMediaCounts,
+} from '@/lib/artwork/objectArtwork'
 import {
   ARTWORK_TYPE_FILTERS,
   readArtworkTypeFilter,
@@ -44,7 +50,7 @@ import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 import styles from './artworks.module.scss'
 
 const TITLE = 'Artwork library'
-const DESCRIPTION = 'Everything you can hang in your exhibitions. Drag to change the order.'
+const DESCRIPTION = 'Everything you can show in your exhibitions. Drag to change the order.'
 
 /** How each media type reads in the type filter and in a row's meta line. */
 const TYPE_LABEL: Record<string, string> = {
@@ -106,7 +112,26 @@ type Artwork = {
    *  GET /api/artworks with the same rule the checkout enforces. Only images
    *  can ever be true. */
   sellingNow?: boolean
+  // Objects (docs/objects): the cover's square crop, the size, the 3D model's state, and the
+  // photo / video / reel counts GET /api/artworks adds for them.
+  coverCropX?: number | null
+  coverCropY?: number | null
+  heightCm?: number | null
+  widthCm?: number | null
+  depthCm?: number | null
+  modelStatus?: string
+  objectMedia?: ObjectMediaCounts
 }
+
+/** The 3D chip of an Object's row: only once a model is asked for. */
+const SPACE_CHIP: Record<string, { label: string; className: string } | undefined> = {
+  ready: { label: 'In the 3D space', className: styles.spaceReady },
+  requested: { label: '3D model in preparation', className: styles.spacePreparing },
+}
+
+/** A crop centre (0..1, null = middle) as a CSS position. */
+const cropPosition = (x?: number | null, y?: number | null) =>
+  `${(x ?? 0.5) * 100}% ${(y ?? 0.5) * 100}%`
 
 // Extracts first frame from a video URL and renders it as a thumbnail
 function VideoThumbnail({ videoUrl, alt }: { videoUrl: string; alt: string }) {
@@ -184,6 +209,31 @@ type ArtworkThumbProps = {
  * square, and cropping hid whether a work is landscape or portrait.
  */
 function ArtworkThumb({ artwork, title, isPlaying, onTogglePlay }: ArtworkThumbProps) {
+  // An Object shows its cover, CROPPED square at the artist's crop centre (docs/objects: the
+  // cover's square crop is what grids show), else a cube on the warm tile.
+  if (artwork.artworkType === 'object') {
+    if (artwork.imageUrl && isSafeImageSrc(artwork.imageUrl)) {
+      return (
+        <span className={styles.thumb}>
+          <Image
+            src={artwork.imageUrl}
+            alt=""
+            width={64}
+            height={64}
+            unoptimized
+            className={styles.thumbCover}
+            style={{ objectPosition: cropPosition(artwork.coverCropX, artwork.coverCropY) }}
+          />
+        </span>
+      )
+    }
+    return (
+      <span aria-hidden className={c(styles.thumb, styles.tile)}>
+        <Cube size={22} weight="light" />
+      </span>
+    )
+  }
+
   if (
     (artwork.artworkType === 'image' || artwork.artworkType === 'video') &&
     artwork.imageUrl &&
@@ -585,9 +635,16 @@ export const ArtworkLibraryPage = () => {
               sortable={dragEnabled}
               rows={sortedArtworks.map((artwork) => {
                 const title = artwork.title || 'Artwork'
-                const meta = [artwork.year?.trim() ?? '', plainText(artwork.technique)].filter(
-                  Boolean,
-                )
+                const isObject = artwork.artworkType === 'object'
+                // An Object adds its size: "2025 · Patinated bronze · 64 × 38 × 31 cm".
+                const meta = [
+                  artwork.year?.trim() ?? '',
+                  plainText(artwork.technique),
+                  isObject ? (objectDimensionsText(artwork) ?? '') : '',
+                ].filter(Boolean)
+                const mediaSummary =
+                  isObject && artwork.objectMedia ? objectMediaSummary(artwork.objectMedia) : null
+                const spaceChip = isObject ? SPACE_CHIP[artwork.modelStatus ?? ''] : undefined
                 return {
                   id: artwork.id,
                   title,
@@ -607,6 +664,13 @@ export const ArtworkLibraryPage = () => {
                         {meta.length > 0 && <span>{meta.join(' · ')}</span>}
                         {artwork.sellingNow && (
                           <StatusPill label="Selling prints" tone="green" shape="tag" dot />
+                        )}
+                        {mediaSummary && <span>{mediaSummary}</span>}
+                        {spaceChip && (
+                          <span className={c(styles.space, spaceChip.className)}>
+                            <Cube size={12} weight="regular" aria-hidden />
+                            {spaceChip.label}
+                          </span>
                         )}
                       </span>
                       {/* Not drawn, kept (questions.md Q105): the library's only way

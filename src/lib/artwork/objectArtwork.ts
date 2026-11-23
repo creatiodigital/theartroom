@@ -269,3 +269,41 @@ export function objectWriteData(fields: ObjectFieldsInput, stored: StoredSize | 
     }),
   }
 }
+
+/** An Object's photos and videos, counted for its library row. */
+export type ObjectMediaCounts = { photos: number; videos: number; reels: number }
+
+/**
+ * A reel is a vertical video (9:16) or one labelled Reel; any other video is a video. Photos are
+ * the images (the cover is not one of them: it is the artwork's own image).
+ */
+export function countObjectMedia(
+  items: readonly {
+    kind: string
+    role?: string | null
+    width?: number | null
+    height?: number | null
+  }[],
+): ObjectMediaCounts {
+  const counts: ObjectMediaCounts = { photos: 0, videos: 0, reels: 0 }
+  for (const item of items) {
+    if (item.kind === 'image') counts.photos += 1
+    if (item.kind !== 'video') continue
+    const vertical = !!item.width && !!item.height && item.height > item.width
+    if (item.role === 'reel' || vertical) counts.reels += 1
+    else counts.videos += 1
+  }
+  return counts
+}
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
+
+/** "8 photos · 2 reels", "5 photos · 1 video"; null when there is nothing. */
+export function objectMediaSummary({ photos, videos, reels }: ObjectMediaCounts): string | null {
+  const parts = [
+    photos > 0 && plural(photos, 'photo', 'photos'),
+    reels > 0 && plural(reels, 'reel', 'reels'),
+    videos > 0 && plural(videos, 'video', 'videos'),
+  ].filter((part): part is string => Boolean(part))
+  return parts.length ? parts.join(' · ') : null
+}

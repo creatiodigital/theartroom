@@ -3,7 +3,9 @@ import { test, expect } from '@playwright/test'
 import { hangsOnWall, isArtworkKind } from '../src/lib/artwork/artworkKinds'
 import { mediaLimitsFor } from '../src/lib/artwork/artworkMediaTypes'
 import {
+  countObjectMedia,
   objectDimensionsText,
+  objectMediaSummary,
   objectWriteData,
   parseObjectFields,
 } from '../src/lib/artwork/objectArtwork'
@@ -122,4 +124,24 @@ test('kinds: object is known and never hangs on a wall', () => {
 test('media limits per type: Objects 40 photos / 6 videos, the rest 60 / 2', () => {
   expect(mediaLimitsFor('object')).toEqual({ maxItems: 46, maxImages: 40, maxVideos: 6 })
   expect(mediaLimitsFor('image')).toEqual({ maxItems: 60, maxImages: 60, maxVideos: 2 })
+})
+
+test('media counts: images are photos; vertical or Reel-labelled videos are reels', () => {
+  expect(
+    countObjectMedia([
+      { kind: 'image', role: 'front' },
+      { kind: 'image', role: null },
+      { kind: 'video', role: null, width: 1080, height: 1920 },
+      { kind: 'video', role: 'reel', width: null, height: null },
+      { kind: 'video', role: 'process', width: 1920, height: 1080 },
+      { kind: 'audio' },
+    ]),
+  ).toEqual({ photos: 2, reels: 2, videos: 1 })
+})
+
+test('media summary reads as on the board', () => {
+  expect(objectMediaSummary({ photos: 8, reels: 2, videos: 0 })).toBe('8 photos · 2 reels')
+  expect(objectMediaSummary({ photos: 5, reels: 0, videos: 1 })).toBe('5 photos · 1 video')
+  expect(objectMediaSummary({ photos: 1, reels: 1, videos: 2 })).toBe('1 photo · 1 reel · 2 videos')
+  expect(objectMediaSummary({ photos: 0, reels: 0, videos: 0 })).toBeNull()
 })

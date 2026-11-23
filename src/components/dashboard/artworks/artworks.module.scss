@@ -67,7 +67,15 @@
   object-fit: contain;
 }
 
-// Text, sound, video without a picture: an icon on the warm tile.
+// An Object's cover is the exception: CROPPED square (docs/objects, objects-library.dc.html), at
+// the artist's crop centre (set inline from coverCropX / coverCropY).
+.thumbCover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+// Text, sound, video, an Object without a picture: an icon on the warm tile.
 .tile {
   background: var(--studio-nav-active);
   color: var(--color-text-secondary);
@@ -103,6 +111,28 @@
   gap: 6px var(--space-3);
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
+}
+
+// An Object's 3D chip (objects-library.dc.html): "In the 3D space" once its model is ready,
+// "3D model in preparation" while it is asked for. The tag's geometry, the 3D room's tints.
+.space {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: calc(var(--space-1) / 2) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-semibold);
+  white-space: nowrap;
+}
+
+.spaceReady {
+  background: var(--editor-tint-bake);
+  color: var(--editor-tint-bake-icon);
+}
+
+.spacePreparing {
+  background: var(--editor-tint-benches);
+  color: var(--editor-tint-benches-icon);
 }
 
 .exhibitions {

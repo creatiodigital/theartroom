@@ -48,3 +48,99 @@
     outline: none;
   }
 }
+
+// ── Type: a row of cards (docs/objects, objects-add-artwork.dc.html) ──
+.types {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  > legend {
+    padding: 0;
+    margin-bottom: var(--space-2);
+  }
+}
+
+// Five across in the dialog; they wrap on a phone rather than squeeze.
+.typeCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--space-18), 1fr));
+  gap: var(--space-2);
+}
+
+.typeCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-2);
+  box-sizing: border-box;
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--color-gray-65);
+  }
+
+  // The radio is hidden; its focus shows on the card.
+  &:has(input:focus-visible) {
+    outline: 2px solid var(--color-dark-surface);
+    outline-offset: 2px;
+  }
+}
+
+// Selected: the 2px dark edge, drawn inside so the card keeps its size.
+.typeCard.checked {
+  border-color: var(--color-dark-surface);
+  box-shadow: inset 0 0 0 1px var(--color-dark-surface);
+  background: var(--color-gray-10);
+  color: var(--color-black);
+}
+
+// Choosing Object explains it, in one panel under the cards.
+.explainer {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--studio-nav-active);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+}
+
+.explainerFigure {
+  width: var(--space-14);
+  height: var(--space-14);
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--studio-avatar);
+
+  path {
+    fill: var(--color-text-secondary);
+  }
+}
+
+.explainerText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+
+  strong {
+    font-weight: var(--font-semibold);
+    color: var(--color-black);
+  }
+}
