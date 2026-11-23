@@ -213,9 +213,10 @@ on a `--color-gray-20` track, width relative to the first (largest) row. Used fo
 artworks" (as a table: Artwork / Share / Views, artist on the second line, "no prints" flag in
 `--color-yellow-70`) and "Visitors by country".
 
-- **Built** · `ui/BarList.tsx` · `{ rows: { key; label; sublabel?; value }[]; emptyMessage;
+- **Built** · `ui/BarList.tsx` · `{ rows: { key; label; sublabel?; media?; value }[]; emptyMessage;
   variant?: 'list' | 'table'; columns?: { label; share; value } }`; `table` renders the desktop table
-  and the phone's stacked rows. The bar itself is `ui/Bar.tsx` (`{ value; max; size?: 'regular' | 'thin' }`,
+  and the phone's stacked rows. `media` (2026-11-20, `table` only): a picture before the row's text, 12 px
+  apart (Analytics › Artworks: the work's 40 px thumbnail). The bar itself is `ui/Bar.tsx` (`{ value; max; size?: 'regular' | 'thin' }`,
   min 3% when > 0).
 
 ### `DonutChart`
@@ -554,7 +555,8 @@ like the real Pause switch). Logic and dialogs unchanged.
 
 ### Analytics (Q-AN1, built ahead of a design)
 - **Built** · `analytics/LineChart.tsx` · `{ dates: string[] ('YYYY-MM-DD'); series: { key; label; color; values: number[] }[];
-  unit; label }`. Measures its width (ResizeObserver), 4 round gridlines, 2–6 date labels by width, crosshair + one
+  unit; label; partialLast? }`. `partialLast` (2026-11-20): the last day is still going, so its stretch is dashed
+  (4 4) and its date reads "20 Nov, so far" in the tooltip and table. Measures its width (ResizeObserver), 4 round gridlines, 2–6 date labels by width, crosshair + one
   tooltip on hover / focus (arrows, Home / End), legend with totals, a `sr-only` table of every value.
 - **Built** · `analytics/FunnelChart.tsx` · `{ steps: FunnelStep[]; segments: { label; color }[]; periodLabel }`. One row
   per step (text · bar · numbers; bar under the text below 900 px), bar length = people ÷ first step, split by segment

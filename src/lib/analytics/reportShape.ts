@@ -46,6 +46,7 @@ export type AnalyticsReport = {
     leftWhileLoading: number
     avgLoadMs: number | null
     avgSecondsInRoom: number | null
+    /** Works framed (`room_artwork_view`) per room that loaded. */
     avgWorksViewed: number | null
     detailsOpened: number
     errors: { reason: string; count: number }[]

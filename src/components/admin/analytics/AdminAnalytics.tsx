@@ -187,6 +187,8 @@ export function AdminAnalytics({ result, range, split }: AdminAnalyticsProps) {
           }))}
           unit="visits"
           label={`Visits per day over the last ${periodLabel}, one line per ${split}`}
+          // The period ends today, which is still going.
+          partialLast
         />
       </Panel>
 
@@ -283,6 +285,12 @@ export function AdminAnalytics({ result, range, split }: AdminAnalyticsProps) {
             columns={{ label: 'Artwork', share: '', value: 'People' }}
             rows={data.artworks.map((a) => ({
               key: a.slug,
+              // The work itself: titles repeat (ten works are called "La memoria de las puertas").
+              media: a.imageUrl ? (
+                <img src={a.imageUrl} alt="" loading="lazy" className={styles.thumb} />
+              ) : (
+                <span className={styles.thumb} />
+              ),
               label: a.title,
               sublabel: `${a.artistName} · ${a.configurator} opened the configurator`,
               value: a.viewers,
@@ -321,10 +329,10 @@ export function AdminAnalytics({ result, range, split }: AdminAnalyticsProps) {
       </Panel>
 
       <p className={styles.note}>
-        Google Analytics, live site. Visits the site marks as internal (signed-in admins and
-        artists) are left out. GA4 counts mostly visitors who accepted cookies, so read trends
-        rather than exact counts. Checkout and 3D-room events since {EVENTS_SINCE}. Updated{' '}
-        {updated}.
+        Google Analytics, live site. Visits marked as internal (signed-in admins and artists, the
+        gallery’s home connection) and Meta’s crawlers (which open every link posted on Facebook)
+        are left out. GA4 counts mostly visitors who accepted cookies, so read trends rather than
+        exact counts. Checkout and 3D-room events since {EVENTS_SINCE}. Updated {updated}.
       </p>
     </div>
   )
