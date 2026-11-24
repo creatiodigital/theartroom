@@ -59,6 +59,29 @@ Copy in the boards is final unless marked "(board note)".
     Default: Painted, White, Matte. Wood reuses the frames' wood textures where they match.
 - Objects: move, rotate (Y), scale proportionally only. **Snap to pedestals**: drop on a pedestal → sits on its top and
   moves with it; slide/raise while attached; Detach or drag off; Alt skips the snap.
+- **Snapping, exactly** (owner, 2026-11-23):
+  - What touches the top is the Object's **bounding-box bottom centre** (from `modelBoundsCm`), not the mesh origin,
+    so a slightly-off origin never sinks or floats the piece. The origin (centre of the base) is the **rotation
+    pivot**, which is why the upload checker tests it.
+  - First drop: **centred** on the top. Then it slides on the top with snaps to centre, edges and centre lines.
+    The top follows the pedestal's shape (round for Cylinder/Disc, smaller for Tapered, upper tier for Stepped,
+    tabletop for Table, the outline for Half round/Corner).
+  - Overhang is allowed (amber footprint outline as a warning). It **detaches** when the footprint's centre leaves
+    the top; Alt-drag never snaps.
+  - **Several Objects per pedestal** (owner): each snaps and slides on its own; footprints avoid overlapping each
+    other.
+  - Stored **relative to the pedestal** (offset from the top's centre, rotation, lift). Moving or rotating the
+    pedestal carries its Objects; changing its height keeps them on the top; resizing keeps their offset and
+    re-centres any that would fall off. **Lift** works while attached ("On Pedestal 1 + 10 cm").
+  - **Un-snap**: drag off the top (lands on the floor where dropped), **Detach** in the Object's panel (stays in place,
+    free), or Alt-drag. To re-attach, drag it back onto a top.
+- **Grouping**, two kinds:
+  - Pedestal + its Objects (automatic): the pedestal leads. In the list the Objects are indented under it. Clicking
+    the pedestal selects it and its Objects (move/rotate together); clicking an Object selects only it. Deleting a
+    pedestal asks "Also remove <Object>, or keep it on the floor?".
+  - Groups you make (as on walls): select several, **Group** ⌘G / **Ungroup** ⇧⌘G, double-click to work inside;
+    one collapsible row in the list; a group moves/rotates/aligns as one block and carries its pedestals' Objects.
+    Autofocus groups work as on walls. Positions are stored Object → pedestal → group → room.
 - Plan tools mirror the wall view: snap to align, rulers/guides, groups, align/distribute, person for scale, plus
   snaps to walls and to wall artworks. No camera collisions with Objects. Tapping an Object opens its info.
 - Lighting: Objects respond to room light (probes), cast/receive shadows, and are included in the room bake.
@@ -69,7 +92,8 @@ Copy in the boards is final unless marked "(board note)".
 - Add artwork: type becomes cards (Image, Object, Text, Sound, Video); choosing Object explains it in one panel.
 
 ## Open questions
-- **Q-O1** Media limits for Objects (40 photos / 6 videos proposed) vs today's 60 / 2.
+- ~~Q-O1~~ **Answered 2026-11-24 (owner, via Design Claude): keep 40 photos and 6 videos per Object** (reels ≤ 60 s,
+  landscape ≤ 3 min, videos ≤ 50 MB); image artworks keep 60 items / 2 videos. No code change.
 - ~~Q-O2~~ Visitor artwork page: designed 2026-11-23 (O5).
 - **Q-O3** Who can request a 3D model and whether it costs anything (business logic later).
 - **Q-O4** Owner to confirm the pedestal shapes and materials on `objects-pedestals`, and send any GLB pedestals/tables.
@@ -88,6 +112,9 @@ Copy in the boards is final unless marked "(board note)".
   Details size; base resting on y = 0 and centred; Upload is enabled only with no fail. (2) The server checks the same
   again with `@gltf-transform` (already a dependency) and refuses a fail. Open: also run the official Khronos glTF
   Validator (npm `gltf-validator`, a new package) for spec-level breakage? Needs the owner's OK.
+- **Q-O9** (Code, O5) Sizes on the visitor page follow `units.md` ("one decimal, always"): "64.0 × 38.0 × 31.0 cm";
+  the boards show "64 × 38 × 31 cm". And the weight follows the cm | in switch: kg with cm, lb with inches ("18 kg",
+  "39.7 lb"; `units.md` covers lengths only). Keep both? (Owner.)
 
 ## Data (one migration, phase 1)
 On **`Artwork`** (all nullable / defaulted, so nothing changes for existing types):
@@ -123,7 +150,7 @@ modelReadyAt       DateTime?
 - On **`ArtworkMedia`**: `role String?` = "front" | "back" | "side" | "detail" | "room" | "process" | "reel"
   (labels in the editor: Front, Back, Side, Detail, In a room, Process, Reel). A reel is `kind: "video"` with a
   9:16 frame; store width/height as today so the page knows it is vertical.
-- Object media limits (Q-O1, proposal until the owner answers): 40 images, 6 videos (reels ≤ 60 s, landscape
+- Object media limits (Q-O1, confirmed 2026-11-24): 40 images, 6 videos (reels ≤ 60 s, landscape
   ≤ 3 min). Image artworks keep today's 60 / 2. Put the per-type limits in `artworkMediaTypes.ts`.
 
 ## Order of work
@@ -321,3 +348,25 @@ and loaded only when the upload dialog opens).
   the e2e artist and admin (emails off): a request with an STL, a broken .glb (four fails, Upload off), a real .glb
   (Ready to upload · 2 warnings, stored at 44.9 × 185.3 × 40.6 cm, size check matches), the artist's ready view, the
   artist refused the team's file list (403), and after deleting the Object both files answer 404.
+
+**O5 · Visitors, without the 3D room** (2026-11-24, same branch).
+- Objects show where images show: the exhibition page's grid (`getPublicExhibitionByUrl`), the artist page and More
+  by the artist (`getPublicArtistByHandler`), with their cover cropped square at the artist's crop and "2025 ·
+  Object" on the year line; never Order print (no sale). The share image is the cover's square crop.
+  `/api/exhibitions/by-url/[url]` stays image-only: it is the 3D room's data (placed works only, O6).
+- The artwork page for an Object (`components/artwork/object/`), in the approved page's frame and styles: the stage
+  (the cover, then the labelled photos Front, Back, Side, Detail, In a room, Process, in the editor's order; contain
+  on the grey) with 72 px tiles under it and the view's label · caption; the info column (artist, title, year, size
+  · weight with cm | in, materials, "Base included in the size", "Edition 3 of 8 + 2 AP"; the ask line, Inquire in
+  black, Turn it around in 3D, Share; no price). The 3D model loads only on that click (or the 3D tile): drag to turn,
+  scroll to come closer, Reset view, Real size. Below: About the work, Materials, Details (only filled rows), In
+  motion (reels four across, a landscape film two; silent while in view, a tap for sound; none for visitors who ask
+  for less motion), Photographs (the unlabelled photos, 3 across 4:5), More by the artist. Phones: the 4:5 stage
+  swipes, "1 / 5" and the 3D / Photos button on it, the progress bar under it; the sections stacked.
+- Differs from the board: the info column is not sticky (the artwork page's own rule since 2026-11-12); the 3D model
+  is a mode of the stage, not one more swipe on phones ("Photos" goes back); labelled photos appear once, as views,
+  and the Photographs are the unlabelled ones (the board shows some in both); Display reads "On a pedestal".
+- The 3D room's overlay never opens an Object in phase 1 (Objects are not placed until O6), so it is unchanged.
+- Checked: `e2e/object-fields.spec.ts` (+ sizes, weight, edition wording, card crop); in Chrome with a full test
+  Object (cover, four views, two photographs, a reel, the real .glb): desktop page, the 3D mode, the phone page,
+  the artist page's card and the share image; then deleted.
