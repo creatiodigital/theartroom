@@ -126,6 +126,9 @@ export function FloorPlan({
     return () => observer.disconnect()
   }, [viewW, viewH])
   const text = { fontSize: TEXT_PX * px }
+  const carrying = new Set(
+    placed.flatMap(({ item }) => (item.kind === 'object' && item.pedestalId ? [item.pedestalId] : [])),
+  )
 
   /** A pointer event → plan cm, and how many cm one screen pixel is. */
   const toPlan = (clientX: number, clientY: number) => {
@@ -398,12 +401,13 @@ export function FloorPlan({
           )
         })}
 
-      {/* Names, upright whatever the turn. */}
+      {/* Names, upright whatever the turn. A pedestal that carries an Object writes its name a
+          line lower, so the two never print over each other. */}
       {placed.map(({ item, at }) => (
         <text
           key={`n-${item.id}`}
           x={at.x * 100}
-          y={at.z * 100}
+          y={at.z * 100 + (carrying.has(item.id) ? TEXT_PX * 1.4 * px : 0)}
           className={styles.planTag}
           style={text}
           textAnchor="middle"

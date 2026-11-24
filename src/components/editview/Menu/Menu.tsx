@@ -281,7 +281,7 @@ export const Menu = () => {
         />
         {/* docs/objects O6: the floor's plan, to place Objects and pedestals. */}
         <Tool
-          label="Floor"
+          label="Floor plan"
           tooltip="Place Objects and pedestals on the floor"
           icon={Cylinder}
           onClick={() => dispatch(showFloorView({ room: 0 }))}
