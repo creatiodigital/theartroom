@@ -373,3 +373,6 @@ and loaded only when the upload dialog opens).
 - Q-O9 applied 2026-11-24 (the design Claude's proposal, from the owner): sizes in cm as entered, no forced ".0"
   ("64 × 38 × 31 cm", "64.5 × 38 × 31 cm"); inches with one decimal ("25.2 × 15.0 × 12.2 in"); weight always in kg
   ("Prices, weights and anything not a dimension are unchanged", units.md).
+- Before release (2026-11-24): full E2E 1044 passed, 0 failed (17 skipped, as before); source lint and type check
+  clean; the three emails rendered and read (not sent); "Ask for a change" clicked through (an empty note refused,
+  the model kept, a second request while In preparation refused); the editor checked at phone width.
