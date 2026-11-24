@@ -389,7 +389,7 @@ till the end", so built from the draft board and the rules above).
   their colours, finish), Objects from their `.glb` (bounding-box bottom centre on the spot, turn, scale). Meshes,
   so the bake counts them as casters, as it does the benches ("Casts a shadow" off: skipped). A click on an Object
   opens its page in the room's window (`/api/artworks/by-slug/[slug]/object`).
-- **Floor view**: the 3D editor's new **Floor** tool. Left: the room (a picker when there are several), Cancel /
+- **Floor view**: the 3D editor's new **Floor plan** tool ("Floor" was taken: the floor's material). Left: the room (a picker when there are several), Cancel /
   Save / Save & close, undo / redo, zoom and Fit, the helpers (rulers, snap to align, snap to pedestals, person for
   scale), On this floor (Objects under their pedestal, filters). Middle: the plan (walls from the hanging walls,
   footprints and outlines turned as they stand, distances to the west and north walls, a turning handle) beside the
@@ -401,11 +401,16 @@ till the end", so built from the draft board and the rules above).
 - **Snapping**: on release an Object lands on the pedestal under its centre (the highest top), centred the first
   time and sliding afterwards; Alt never snaps; off the top it stands on the floor; overhang outlined in amber.
   While dragging: snap to the other items' centres, the room's centre lines and the walls.
-- Differs from the board: the Floor tool opens room 1 (a picker for the others) rather than "click a room's floor,
+- Differs from the board: the Floor plan tool opens room 1 (a picker for the others) rather than "click a room's floor,
   then Edit floor" (a clickable floor would stop click-to-walk); the 3D side is the editor's camera (walk as usual),
   no "Eye level / Orbit" switch yet; the board's word "Plinth" is "Pedestal" (owner).
 - **Not built yet**: images, text, shapes, video and sound on the floor (the board's other add buttons: they live in
   the wall rows' save flow, a larger change); snapping to wall artworks; autofocus groups on the floor;
   double-click to work inside a group; footprints on one pedestal avoiding each other; Objects receiving baked
   light (they are lit by the room's environment and cast in the bake); "More from the gallery" GLB pedestals.
-- **Not yet seen in a browser**: the dev database needs the `floorLayout` column first (owner's schema step).
+- **Seen in a browser** (2026-11-24, dev DB with `floorLayout`, a draft exhibition in Paris): a pedestal added, an
+  Object from the library added in the middle lands on it centred at 90 cm; the pedestal made a Ø 120 cm walnut
+  cylinder and moved 3 m from its panel, the Object rides along; Save keeps both (shape, material, colour,
+  attachment); the live 3D draws the pedestal and the Object's model at true size on its top. Dragging the Object
+  off every top puts it back on the floor (height 0). On the plan a pedestal carrying an Object writes its name a
+  line lower. Not clicked in a browser: an Object in the visitor's room (WebGL clicks are not scripted).
