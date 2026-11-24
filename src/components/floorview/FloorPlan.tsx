@@ -6,8 +6,8 @@ import c from 'classnames'
 
 import type { FloorArtwork } from '@/lib/floor/floorArtworks'
 import type { FloorItem, FloorLayout } from '@/lib/floor/floorLayout'
-import { pedestalUnder, placeAll, type Placed } from '@/lib/floor/floorPlacement'
-import { pedestalOutline } from '@/lib/floor/pedestals'
+import { pedestalUnder, placeAll, rotateOffset, type Placed } from '@/lib/floor/floorPlacement'
+import { insideOutline, pedestalOutline, pedestalTop } from '@/lib/floor/pedestals'
 import type { RootState } from '@/redux/store'
 
 import type { FloorEditor } from './useFloorEditor'
@@ -49,6 +49,31 @@ export const footprintOf = (item: FloorItem, artworks: Record<string, FloorArtwo
   if (item.kind === 'pedestal') return { w: item.w, d: item.d }
   const b = artworks[item.artworkId]?.boundsCm
   return { w: (b?.w ?? 40) * item.scale, d: (b?.d ?? 40) * item.scale }
+}
+
+/**
+ * An Object on a pedestal whose footprint reaches past the top (allowed; owner: an amber outline as
+ * a warning). Checked in the pedestal's frame: the footprint's corners, turned and offset.
+ */
+const overhangs = (
+  item: FloorItem,
+  layout: FloorLayout,
+  artworks: Record<string, FloorArtwork>,
+) => {
+  if (item.kind !== 'object' || !item.pedestalId) return false
+  const p = layout.items.find((i) => i.id === item.pedestalId)
+  if (!p || p.kind !== 'pedestal') return false
+  const top = pedestalTop(p.shape, p.w, p.d, p.h).outline
+  const { w, d } = footprintOf(item, artworks)
+  return [
+    [-w / 2, -d / 2],
+    [w / 2, -d / 2],
+    [w / 2, d / 2],
+    [-w / 2, d / 2],
+  ].some(([x, z]) => {
+    const [rx, rz] = rotateOffset(x, z, item.rotY)
+    return !insideOutline(top, item.offsetX + rx, item.offsetZ + rz)
+  })
 }
 
 export function FloorPlan({
@@ -354,7 +379,11 @@ export function FloorPlan({
             <g
               key={item.id}
               transform={`translate(${at.x * 100} ${at.z * 100}) rotate(${-at.rotY})`}
-              className={c(styles.planItem, selected && styles.planSelected)}
+              className={c(
+                styles.planItem,
+                selected && styles.planSelected,
+                overhangs(item, layout, artworks) && styles.planOverhang,
+              )}
               onPointerDown={(e) => onItemDown(e, item)}
             >
               <polygon

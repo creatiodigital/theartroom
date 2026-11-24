@@ -431,6 +431,12 @@
   stroke-width: 2px;
 }
 
+// Reaching past its pedestal's top: allowed, outlined in amber.
+.planOverhang .planObject {
+  stroke: var(--studio-3d-preparing-dot);
+  stroke-width: 2px;
+}
+
 .planMeasure {
   stroke: var(--editor-row-selected-edge);
   stroke-width: 1px;
