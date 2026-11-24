@@ -39,19 +39,26 @@ export type ObjectPageData = ObjectPageArtwork &
  * are the stage's views after the cover, in the editor's order; the unlabelled ones are the
  * Photographs; the videos are In motion.
  */
-export function ObjectDetailPage({
-  artwork,
-  artist,
-  media,
-  more,
-  neighbours,
-}: {
+export type ObjectPageProps = {
   artwork: ObjectPageData
   artist: { name: string; lastName: string; handler: string }
   media: ArtworkMediaItem[]
   more: PublicArtistArtwork[]
   neighbours?: ArtworkNeighbours | null
-}) {
+}
+
+export function ObjectDetailPage(props: ObjectPageProps) {
+  return (
+    <PageLayout>
+      <div className={detail.standaloneContent}>
+        <ObjectPageContent {...props} />
+      </div>
+    </PageLayout>
+  )
+}
+
+/** The page's content, without the site's frame: the artwork page, and the 3D room's window. */
+export function ObjectPageContent({ artwork, artist, media, more, neighbours }: ObjectPageProps) {
   const title = artwork.title || artwork.name || 'Artwork'
   const images = media.filter((m) => m.kind === 'image' && m.url)
   const labelled = images.filter((m) => isObjectMediaRole(m.role) && m.role !== 'reel')
@@ -83,54 +90,52 @@ export function ObjectDetailPage({
   ]
 
   return (
-    <PageLayout>
-      <div className={detail.standaloneContent}>
-        <ObjectDetailBody
-          artwork={artwork}
-          artist={artist}
-          views={views}
-          neighbours={neighbours}
-          technique={artwork.technique ? <ArtworkTechnique technique={artwork.technique} /> : null}
-        />
+    <>
+      <ObjectDetailBody
+        artwork={artwork}
+        artist={artist}
+        views={views}
+        neighbours={neighbours}
+        technique={artwork.technique ? <ArtworkTechnique technique={artwork.technique} /> : null}
+      />
 
-        <ArtworkStorySection description={artwork.description} />
-        {!isRichTextEmpty(artwork.technique) && (
-          <TextSection label="Materials" className={styles.belowSection}>
-            <RichText content={artwork.technique!} variant="page" />
-          </TextSection>
-        )}
-        <ObjectDetails fields={artwork} />
-        <ObjectInMotion videos={videos} title={title} />
+      <ArtworkStorySection description={artwork.description} />
+      {!isRichTextEmpty(artwork.technique) && (
+        <TextSection label="Materials" className={styles.belowSection}>
+          <RichText content={artwork.technique!} variant="page" />
+        </TextSection>
+      )}
+      <ObjectDetails fields={artwork} />
+      <ObjectInMotion videos={videos} title={title} />
 
-        {photographs.length > 0 && (
-          <section className={styles.mediaSection} aria-labelledby="object-photographs">
-            <div className={styles.mediaHead}>
-              <h2 id="object-photographs" className={styles.eyebrow}>
-                Photographs
-              </h2>
-            </div>
-            <div className={styles.photoGrid}>
-              {photographs.map((photo, i) => (
-                <figure key={photo.id} className={styles.photo}>
-                  <img
-                    src={photo.url}
-                    alt={photo.caption || `${title}, photograph ${i + 1}`}
-                    className={styles.photoImage}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  {photo.caption && (
-                    <figcaption className={styles.figcaption}>{photo.caption}</figcaption>
-                  )}
-                </figure>
-              ))}
-            </div>
-          </section>
-        )}
+      {photographs.length > 0 && (
+        <section className={styles.mediaSection} aria-labelledby="object-photographs">
+          <div className={styles.mediaHead}>
+            <h2 id="object-photographs" className={styles.eyebrow}>
+              Photographs
+            </h2>
+          </div>
+          <div className={styles.photoGrid}>
+            {photographs.map((photo, i) => (
+              <figure key={photo.id} className={styles.photo}>
+                <img
+                  src={photo.url}
+                  alt={photo.caption || `${title}, photograph ${i + 1}`}
+                  className={styles.photoImage}
+                  loading="lazy"
+                  decoding="async"
+                />
+                {photo.caption && (
+                  <figcaption className={styles.figcaption}>{photo.caption}</figcaption>
+                )}
+              </figure>
+            ))}
+          </div>
+        </section>
+      )}
 
-        {/* Only More by the artist: the story is above, and an Object's media are its own. */}
-        <ArtworkBelowTheWork media={[]} more={more} artist={artist} />
-      </div>
-    </PageLayout>
+      {/* Only More by the artist: the story is above, and an Object's media are its own. */}
+      <ArtworkBelowTheWork media={[]} more={more} artist={artist} />
+    </>
   )
 }

@@ -12,6 +12,19 @@ type FloorState = {
   selectedIds: string[]
   /** An Object's info open over the visitor's room: its artwork slug. */
   openObjectSlug: string | null
+  /** The Floor view's helpers (the board's switches). */
+  helpers: FloorHelpers
+}
+
+export type FloorHelpers = {
+  /** Snap to edges, centres and walls while dragging. */
+  snapAlign: boolean
+  /** Objects stick to a pedestal's top. */
+  snapPedestals: boolean
+  /** A 1.70 m figure in the room. */
+  person: boolean
+  /** Rulers along the plan. */
+  rulers: boolean
 }
 
 const initialState: FloorState = {
@@ -19,6 +32,7 @@ const initialState: FloorState = {
   room: 0,
   selectedIds: [],
   openObjectSlug: null,
+  helpers: { snapAlign: true, snapPedestals: true, person: false, rulers: false },
 }
 
 const floorSlice = createSlice({
@@ -47,6 +61,9 @@ const floorSlice = createSlice({
     closeFloorObject: (state) => {
       state.openObjectSlug = null
     },
+    setFloorHelper: (state, action: PayloadAction<{ key: keyof FloorHelpers; on: boolean }>) => {
+      state.helpers[action.payload.key] = action.payload.on
+    },
   },
 })
 
@@ -57,6 +74,7 @@ export const {
   selectFloorItems,
   openFloorObject,
   closeFloorObject,
+  setFloorHelper,
 } = floorSlice.actions
 
 export default floorSlice.reducer

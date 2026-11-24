@@ -10,6 +10,7 @@ import {
   Columns,
   Cube,
   FrameCorners,
+  Cylinder,
   GridFour,
   Lightbulb,
   PaintRoller,
@@ -41,6 +42,7 @@ import {
   showBakePanel,
   hideBakePanel,
 } from '@/redux/slices/dashboardSlice'
+import { showFloorView } from '@/redux/slices/floorSlice'
 import { hidePlaceholders, showPlaceholders } from '@/redux/slices/sceneSlice'
 import { resetWallView } from '@/redux/slices/wallViewSlice'
 import type { RootState } from '@/redux/store'
@@ -276,6 +278,13 @@ export const Menu = () => {
           icon={FrameCorners}
           pressed={isPlaceholdersShown}
           onClick={() => togglePlaceholders()}
+        />
+        {/* docs/objects O6: the floor's plan, to place Objects and pedestals. */}
+        <Tool
+          label="Floor"
+          tooltip="Place Objects and pedestals on the floor"
+          icon={Cylinder}
+          onClick={() => dispatch(showFloorView({ room: 0 }))}
         />
         <span aria-hidden className={styles.divider} />
         <div role="group" aria-labelledby={roomCaptionId} className={styles.group}>

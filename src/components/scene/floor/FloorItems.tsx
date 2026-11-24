@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useGLTF } from '@react-three/drei'
+import { Line, useGLTF } from '@react-three/drei'
 import { useThree, type ThreeEvent } from '@react-three/fiber'
 import { Box3, type Mesh, type Object3D, type WebGLRenderer } from 'three'
 // drei's GLTFLoader is three-stdlib's: its KTX2 loader must be too.
@@ -12,7 +12,8 @@ import { useBenchRooms } from '@/components/scene/spaces/objects/Bench/benchSett
 import type { FloorArtwork } from '@/lib/floor/floorArtworks'
 import type { FloorObject, FloorPedestal } from '@/lib/floor/floorLayout'
 import { placeAll, type Placed } from '@/lib/floor/floorPlacement'
-import { FINISH_ROUGHNESS, pedestalMaterial } from '@/lib/floor/pedestals'
+import { FINISH_ROUGHNESS, pedestalMaterial, pedestalOutline } from '@/lib/floor/pedestals'
+import { useFloorRooms } from '@/components/floorview/useFloorRooms'
 import { openFloorObject } from '@/redux/slices/floorSlice'
 import type { RootState } from '@/redux/store'
 
@@ -124,6 +125,66 @@ function FloorModel({
   )
 }
 
+/** The Floor view's picked items, outlined on the floor in the live 3D (the board's blue ring). */
+function Selection({
+  placed,
+  artworks,
+  floorY,
+}: {
+  placed: { item: FloorObject | FloorPedestal; at: Placed }[]
+  artworks: Record<string, FloorArtwork>
+  floorY: number
+}) {
+  const selectedIds = useSelector((state: RootState) => state.floor.selectedIds)
+  return (
+    <>
+      {placed
+        .filter(({ item }) => selectedIds.includes(item.id))
+        .map(({ item, at }) => {
+          const b = item.kind === 'object' ? artworks[item.artworkId]?.boundsCm : null
+          const outline =
+            item.kind === 'pedestal'
+              ? pedestalOutline(item.shape, item.w, item.d)
+              : pedestalOutline('box', (b?.w ?? 40) * item.scale, (b?.d ?? 40) * item.scale)
+          const points = [...outline, outline[0]].map(
+            ([x, z]) => [x / 100, 0, z / 100] as [number, number, number],
+          )
+          return (
+            <Line
+              key={item.id}
+              points={points}
+              color="#3b6fd8"
+              lineWidth={2}
+              position={[at.x, floorY + at.y + 0.004, at.z]}
+              rotation={[0, at.rotY * RAD, 0]}
+              userData={{ bakeCaster: false }}
+            />
+          )
+        })}
+    </>
+  )
+}
+
+/** "Person for scale": a 1.70 m figure where the plan shows it; never baked. */
+function PersonForScale({ floorY }: { floorY: number }) {
+  const { rooms } = useFloorRooms()
+  const room = useSelector((state: RootState) => state.floor.room)
+  const r = rooms[Math.min(room, rooms.length - 1)]
+  if (!r) return null
+  return (
+    <group position={[r.centreX + 1.2, floorY, r.centreZ + 1.2]}>
+      <mesh position={[0, 0.72, 0]} userData={{ bakeCaster: false }}>
+        <capsuleGeometry args={[0.19, 1.06, 6, 16]} />
+        <meshStandardMaterial color="#c8c8c4" roughness={0.9} />
+      </mesh>
+      <mesh position={[0, 1.58, 0]} userData={{ bakeCaster: false }}>
+        <sphereGeometry args={[0.11, 16, 12]} />
+        <meshStandardMaterial color="#c8c8c4" roughness={0.9} />
+      </mesh>
+    </group>
+  )
+}
+
 // Models whose download has started (outside render: see Benches).
 const started = new Set<string>()
 
@@ -132,6 +193,8 @@ const FloorItems = () => {
   const artworks = useSelector((state: RootState) => state.exhibition.floorArtworks)
   const gl = useThree((state) => state.gl)
   const { floorY } = useBenchRooms()
+  const isFloorView = useSelector((state: RootState) => state.floor.isFloorView)
+  const person = useSelector((state: RootState) => state.floor.helpers.person)
   const placed = useMemo(() => (layout ? placeAll(layout) : []), [layout])
 
   const urls = useMemo(
@@ -159,6 +222,8 @@ const FloorItems = () => {
 
   return (
     <group name="floorItems">
+      {isFloorView && <Selection placed={placed} artworks={artworks ?? {}} floorY={floorY} />}
+      {isFloorView && person && <PersonForScale floorY={floorY} />}
       {placed.map(({ item, at }) => {
         if (item.kind === 'pedestal') {
           return <Pedestal key={item.id} p={item} at={at} floorY={floorY} />

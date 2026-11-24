@@ -336,6 +336,8 @@ const MainCamera = () => {
   const isExitPromptOpen = useSelector((state: RootState) => state.scene.isExitPromptOpen)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
   const isArtworkModalOpen = useSelector((state: RootState) => state.dashboard.isArtworkModalOpen)
+  // The Floor view's keys move what is picked on the plan, never the camera (docs/objects O6).
+  const isFloorView = useSelector((state: RootState) => state.floor.isFloorView)
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) || 'paris'
   const spaceConfig = getSpaceConfig(spaceId)
 
@@ -354,9 +356,9 @@ const MainCamera = () => {
   const isPhone = useIsPhone()
   // A work's information (the editor's panel, or the room's details) is open over the room.
   const infoOpen = isArtworkPanelOpen || isArtworkModalOpen
-  const latest = useRef({ infoOpen, isExitPromptOpen, isPhone })
+  const latest = useRef({ infoOpen, isExitPromptOpen, isPhone, isFloorView })
   useEffect(() => {
-    latest.current = { infoOpen, isExitPromptOpen, isPhone }
+    latest.current = { infoOpen, isExitPromptOpen, isPhone, isFloorView }
   })
 
   // The room's solid surfaces, for the taps' walks and the works' taps alike (`roomRays`).
@@ -752,6 +754,7 @@ const MainCamera = () => {
         exitAsked.current = true
         return
       }
+      if (latest.current.isFloorView) return
       handleKeyPress(keysPressed, event.key, true)
     },
     [currentView],
