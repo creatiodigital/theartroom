@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { ArtworkDetailPage } from '@/components/artwork/detail'
+import { ObjectDetailPage } from '@/components/artwork/object/ObjectDetailPage'
 import type { ArtworkNeighbours } from '@/components/artwork/detail/ArtworkDetailBody'
 import { getArtworkMedia } from '@/lib/artwork/artworkMedia'
 import { getPublicExhibitionByUrl } from '@/lib/queries/getPublicExhibitionByUrl'
@@ -40,6 +41,27 @@ const getArtwork = cache((slug: string) =>
       printEnabled: true,
       printPriceCents: true,
       editionType: true,
+      // An Object's own fields (docs/objects O5): its page is its own.
+      artworkType: true,
+      coverCropX: true,
+      coverCropY: true,
+      heightCm: true,
+      widthCm: true,
+      depthCm: true,
+      weightKg: true,
+      sizeIncludesBase: true,
+      objectEdition: true,
+      objectEditionNo: true,
+      objectEditionOf: true,
+      objectArtistProofs: true,
+      placement: true,
+      displayMode: true,
+      signedNote: true,
+      certificateNote: true,
+      careNote: true,
+      modelStatus: true,
+      modelUrl: true,
+      modelBoundsCm: true,
       // Live variants only — a published-but-unblocked variant is paused from
       // sale and would refuse the reservation. Selected rather than counted so
       // the shape is the same one LIVE_VARIANT_WHERE guards everywhere else.
@@ -207,6 +229,34 @@ const ArtworkPage = async ({ params, searchParams }: ArtworkPageProps) => {
   // subtraction away from it. The server needs it to cost the sale; the browser
   // must never see it.
   const { user, limitedVariants, printPriceCents, ...artworkData } = artwork
+
+  // An Object (docs/objects O5): its own page, no print anything (Objects are not prints).
+  if (artwork.artworkType === 'object') {
+    const [media, neighbours, more] = await Promise.all([
+      getArtworkMedia(artwork.id),
+      (async () =>
+        (await getExhibitionNeighbours(slug, exhibitionSlug)) ??
+        (await getArtistNeighbours(slug, artistHandler)))(),
+      getMoreByArtist(user.handler, slug),
+    ])
+    const bounds = artwork.modelBoundsCm as { h: number; w: number; d: number } | null
+    return (
+      <ObjectDetailPage
+        artwork={{
+          // Without the artist's cut (`printPriceCents`) and the variants: never sent to the browser.
+          ...artworkData,
+          model:
+            artwork.modelStatus === 'ready' && artwork.modelUrl
+              ? { url: artwork.modelUrl, boundsCm: bounds }
+              : null,
+        }}
+        artist={user}
+        media={media}
+        more={more}
+        neighbours={neighbours}
+      />
+    )
+  }
 
   // Everything below depends only on the artwork row, so it is read in
   // parallel rather than one query after another.

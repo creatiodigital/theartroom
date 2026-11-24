@@ -104,6 +104,11 @@
   object-fit: contain;
 }
 
+// An Object's cover (docs/objects O5): the square filled, at the artist's crop (set inline).
+.cover {
+  object-fit: cover;
+}
+
 .presentationRender {
   max-width: 100cqw;
   max-height: 100cqh;

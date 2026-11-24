@@ -15,3 +15,9 @@
   color: var(--color-gray-55);
   pointer-events: none;
 }
+
+// On the artwork page's grey stage (docs/objects O5): no box of its own, square corners.
+.light {
+  border-radius: 0;
+  background: transparent;
+}

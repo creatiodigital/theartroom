@@ -50,6 +50,9 @@ type Artwork = {
   /** The work as a photo of the real print (frame or sheet), when one is current and the
    *  switch is on. Absent: the bare image, as always. */
   presentation?: PresentationView | null
+  /** An Object (docs/objects O5): its cover fills the square at the artist's crop, and the year
+   *  line says "Object". Absent for every other work. */
+  object?: { coverPosition: string } | null
 }
 
 interface ArtworkGridProps {
@@ -137,7 +140,22 @@ export const ArtworkGrid = ({
         return (
           <div key={artwork.id} className={styles.card}>
             <div className={styles.imageWrapper}>
-              {artwork.imageUrl ? (
+              {artwork.imageUrl && artwork.object ? (
+                // An Object: its cover cropped square (the artist's crop), no wall around it.
+                <Link
+                  href={`/artworks/${artwork.slug}${context}`}
+                  className={styles.viewDetailsLink}
+                >
+                  <ProtectedImage
+                    src={artwork.imageUrl}
+                    alt={artwork.title || artwork.name || 'Artwork'}
+                    fill
+                    className={styles.cover}
+                    style={{ objectPosition: artwork.object.coverPosition }}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                </Link>
+              ) : artwork.imageUrl ? (
                 <Link
                   href={`/artworks/${artwork.slug}${context}`}
                   className={styles.viewDetailsLink}
@@ -195,7 +213,9 @@ export const ArtworkGrid = ({
                 {(() => {
                   const edition =
                     showEdition && artwork.sale ? editionTypeLabel(artwork.sale) : null
-                  const line = [artwork.year, edition].filter(Boolean).join(' · ')
+                  const line = [artwork.year, edition, artwork.object ? 'Object' : null]
+                    .filter(Boolean)
+                    .join(' · ')
                   return line ? <p className={styles.year}>{line}</p> : null
                 })()}
                 {/* The price under the caption (owner, 2026-11-18, White Cube's card): see

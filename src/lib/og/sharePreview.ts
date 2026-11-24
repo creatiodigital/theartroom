@@ -1,5 +1,6 @@
 import sharp from 'sharp'
 
+import { coverSquare } from '@/lib/artwork/objectArtwork'
 import { avatarCard } from '@/lib/og/avatarCard'
 
 export const SHARE_PREVIEW_SIZE = { width: 1200, height: 630 }
@@ -25,14 +26,35 @@ const CACHE_HEADERS = {
  * `imageUrl` must be the web-size copy the page already displays, never the
  * print master. With no image, or one that can't be fetched or decoded, the
  * monogram card stands in, so a shared link never loses its picture.
+ *
+ * `squareCrop`: an Object's cover (docs/objects O5) shows its square crop, centred at the artist's
+ * crop point, rather than the whole photo.
  */
-export async function renderSharePreview(imageUrl: string | null | undefined) {
+export async function renderSharePreview(
+  imageUrl: string | null | undefined,
+  squareCrop?: { x: number | null; y: number | null },
+) {
   if (imageUrl) {
     try {
       const res = await fetch(imageUrl, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
       if (res.ok) {
-        const work = await sharp(Buffer.from(await res.arrayBuffer()))
+        let source = await sharp(Buffer.from(await res.arrayBuffer()))
           .rotate()
+          .toBuffer({ resolveWithObject: true })
+        if (squareCrop) {
+          const { width, height } = source.info
+          const side = Math.min(width, height)
+          const { x, y } = coverSquare(squareCrop, { width, height })
+          source = await sharp(source.data)
+            .extract({
+              left: Math.round(x * width - side / 2),
+              top: Math.round(y * height - side / 2),
+              width: side,
+              height: side,
+            })
+            .toBuffer({ resolveWithObject: true })
+        }
+        const work = await sharp(source.data)
           .resize(SHARE_PREVIEW_SIZE.width - MARGIN * 2, SHARE_PREVIEW_SIZE.height - MARGIN * 2, {
             fit: 'inside',
           })

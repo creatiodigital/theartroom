@@ -38,6 +38,32 @@ export function formatDimensions(widthCm: number, heightCm: number, unit: Unit):
   return writePair(heightCm, widthCm, unit)
 }
 
+/**
+ * An Object's size (docs/objects O5): height, width, depth, the unit once — "64.0 × 38.0 × 31.0 cm",
+ * "25.2 × 15.0 × 12.2 in". The sizes not given are left out; null when there are none.
+ */
+export function formatObjectSize(
+  size: { heightCm?: number | null; widthCm?: number | null; depthCm?: number | null },
+  unit: Unit,
+): string | null {
+  const parts = [size.heightCm, size.widthCm, size.depthCm].filter(
+    (cm): cm is number => typeof cm === 'number' && cm > 0,
+  )
+  return parts.length ? `${parts.map((cm) => write(cm, unit)).join(' × ')} ${unit}` : null
+}
+
+export const KG_PER_LB = 0.45359237
+
+/**
+ * An Object's weight in the visitor's system: kilograms with cm, pounds with inches (docs/objects
+ * O5, Q-O9); up to one decimal, none when whole — "18 kg", "2.5 kg", "39.7 lb".
+ */
+export function formatWeight(kg: number, unit: Unit): string {
+  const value = unit === 'in' ? kg / KG_PER_LB : kg
+  const rounded = Math.round(value * 10) / 10
+  return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)} ${unit === 'in' ? 'lb' : 'kg'}`
+}
+
 /** "30.0 × 20.0 cm to 165.8 × 110.5 cm". */
 export function formatDimensionsRange(min: Dimensions, max: Dimensions, unit: Unit): string {
   return `${formatDimensions(min.widthCm, min.heightCm, unit)} to ${formatDimensions(max.widthCm, max.heightCm, unit)}`
@@ -64,15 +90,18 @@ const insideParentheses = (text: string, offset: number) => {
  * parentheses, so they never nest). Text with no "<number> cm" in it is returned as it was.
  */
 export function convertCmText(text: string, to: Unit | 'both'): string {
-  return text.replace(CM_TEXT, (_match, first: string, second: string | undefined, offset: number) => {
-    const a = Number(first)
-    const b = second === undefined ? null : Number(second)
-    const inUnit = (unit: Unit) => (b === null ? formatSize(a, unit) : writePair(a, b, unit))
-    if (to !== 'both') return inUnit(to)
-    return insideParentheses(text, offset)
-      ? `${inUnit('cm')} / ${inUnit('in')}`
-      : `${inUnit('cm')} (${inUnit('in')})`
-  })
+  return text.replace(
+    CM_TEXT,
+    (_match, first: string, second: string | undefined, offset: number) => {
+      const a = Number(first)
+      const b = second === undefined ? null : Number(second)
+      const inUnit = (unit: Unit) => (b === null ? formatSize(a, unit) : writePair(a, b, unit))
+      if (to !== 'both') return inUnit(to)
+      return insideParentheses(text, offset)
+        ? `${inUnit('cm')} / ${inUnit('in')}`
+        : `${inUnit('cm')} (${inUnit('in')})`
+    },
+  )
 }
 
 /**

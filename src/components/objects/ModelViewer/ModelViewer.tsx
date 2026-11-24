@@ -34,6 +34,8 @@ type ModelViewerProps = {
   resetKey?: number
   /** One line over the bottom left, e.g. "Drag to turn · scroll to zoom". */
   hint?: string
+  /** dark (default): the editor's preview; light: transparent, on the artwork page's grey stage. */
+  tone?: 'dark' | 'light'
   className?: string
 }
 
@@ -129,6 +131,7 @@ export default function ModelViewer({
   onResult,
   resetKey = 0,
   hint,
+  tone = 'dark',
   className,
 }: ModelViewerProps) {
   const shaderError = useRef(false)
@@ -141,7 +144,7 @@ export default function ModelViewer({
   }
 
   return (
-    <div className={`${styles.viewer} ${className ?? ''}`}>
+    <div className={`${styles.viewer} ${tone === 'light' ? styles.light : ''} ${className ?? ''}`}>
       <Canvas dpr={[1, 2]} camera={{ fov: 35, position: [2, 1.5, 3] }} onCreated={onCreated}>
         <hemisphereLight args={['#ffffff', '#444444', 1.2]} />
         <directionalLight position={[3, 5, 4]} intensity={2} />

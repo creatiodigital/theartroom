@@ -2,8 +2,11 @@ import { test, expect } from '@playwright/test'
 
 import { hangsOnWall, isArtworkKind } from '../src/lib/artwork/artworkKinds'
 import { mediaLimitsFor } from '../src/lib/artwork/artworkMediaTypes'
+import { formatObjectSize, formatWeight } from '../src/lib/units/format'
 import {
   countObjectMedia,
+  objectCardOf,
+  objectEditionLine,
   coverObjectPosition,
   coverSquare,
   objectEditionText,
@@ -180,4 +183,50 @@ test('media summary reads as on the board', () => {
   expect(objectMediaSummary({ photos: 5, reels: 0, videos: 1 })).toBe('5 photos · 1 video')
   expect(objectMediaSummary({ photos: 1, reels: 1, videos: 2 })).toBe('1 photo · 1 reel · 2 videos')
   expect(objectMediaSummary({ photos: 0, reels: 0, videos: 0 })).toBeNull()
+})
+
+test('visitor size: H × W × D in the unit, one decimal (units.md); weight in kg or lb', () => {
+  const size = { heightCm: 64, widthCm: 38, depthCm: 31 }
+  expect(formatObjectSize(size, 'cm')).toBe('64.0 × 38.0 × 31.0 cm')
+  expect(formatObjectSize(size, 'in')).toBe('25.2 × 15.0 × 12.2 in')
+  expect(formatObjectSize({ heightCm: 64 }, 'cm')).toBe('64.0 cm')
+  expect(formatObjectSize({}, 'cm')).toBeNull()
+  expect(formatWeight(18, 'cm')).toBe('18 kg')
+  expect(formatWeight(2.54, 'cm')).toBe('2.5 kg')
+  expect(formatWeight(18, 'in')).toBe('39.7 lb')
+})
+
+test('edition on the visitor page: short in the info column, long in Details', () => {
+  const e = {
+    objectEdition: 'edition',
+    objectEditionNo: 3,
+    objectEditionOf: 8,
+    objectArtistProofs: 2,
+  }
+  expect(objectEditionLine(e, 'short')).toBe('Edition 3 of 8 + 2 AP')
+  expect(objectEditionLine(e, 'long')).toBe('3 of 8 + 2 artist’s proofs')
+  expect(objectEditionLine({ ...e, objectArtistProofs: 1 }, 'long')).toBe(
+    '3 of 8 + 1 artist’s proof',
+  )
+  expect(objectEditionLine({ objectEdition: 'edition', objectEditionOf: 8 }, 'short')).toBe(
+    'Edition of 8',
+  )
+  expect(objectEditionLine({ objectEdition: 'edition', objectEditionOf: 8 }, 'long')).toBe(
+    'An edition of 8',
+  )
+  expect(objectEditionLine({ objectEdition: 'unique' }, 'long')).toBe('Unique piece')
+  expect(objectEditionLine({}, 'short')).toBeNull()
+})
+
+test('grid card: only an Object gets its cover crop', () => {
+  expect(objectCardOf({ artworkType: 'image' })).toBeNull()
+  expect(
+    objectCardOf({
+      artworkType: 'object',
+      coverCropX: 0.5,
+      coverCropY: 0.4,
+      originalWidth: 4000,
+      originalHeight: 5000,
+    }),
+  ).toEqual({ coverPosition: '50% 0%' })
 })

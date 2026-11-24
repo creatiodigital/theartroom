@@ -1,6 +1,7 @@
 import { cache } from 'react'
 
 import type { Prisma } from '@/generated/prisma'
+import { objectCardOf } from '@/lib/artwork/objectArtwork'
 import { SALE_SELECT, saleFromRow, type ArtworkSale } from '@/lib/editions/artworkSale'
 import prisma from '@/lib/prisma'
 import type { GalleryRates } from '@/lib/galleryCommission'
@@ -23,6 +24,9 @@ import { groupBySection, type SectionGroup } from '@/lib/exhibitionSections'
  * shape through `getPublicExhibitionByUrl`, and one definition is still the
  * reason the two cannot drift.
  */
+/** The types the exhibition page's grid shows: images, and Objects (docs/objects O5). */
+const GRID_TYPES = ['image', 'object']
+
 const PUBLIC_ARTWORK_SELECT = {
   id: true,
   slug: true,
@@ -34,6 +38,9 @@ const PUBLIC_ARTWORK_SELECT = {
   dimensions: true,
   imageUrl: true,
   artworkType: true,
+  // An Object's cover crop, for its card (docs/objects O5).
+  coverCropX: true,
+  coverCropY: true,
   hiddenFromExhibition: true,
   order: true,
   ...SALE_SELECT,
@@ -80,12 +87,13 @@ const getExhibition = (url: string) =>
       },
       exhibitionArtworks: {
         // Membership, not placement. A work with no coordinates at all belongs
-        // here; a work hung in the room but unchecked does not. Only images the
-        // grid shows — text, sound, video and shape placements are members too,
-        // and each would otherwise be fetched with its sale data to be dropped.
+        // here; a work hung in the room but unchecked does not. Only the images
+        // and Objects the grid shows (docs/objects O5) — text, sound, video and
+        // shape placements are members too, and each would otherwise be fetched
+        // with its sale data to be dropped.
         where: {
           showOnPage: true,
-          artwork: { hiddenFromExhibition: false, artworkType: 'image' },
+          artwork: { hiddenFromExhibition: false, artworkType: { in: GRID_TYPES } },
         },
         select: {
           pageOrder: true,
@@ -113,6 +121,8 @@ export type PublicExhibitionArtwork = {
   sale: ArtworkSale | null
   /** The work as a photo of the real print, when one is current and the switch is on. */
   presentation: PresentationView | null
+  /** An Object (docs/objects): its cover's square crop for the card. Null for an image. */
+  object: { coverPosition: string } | null
 }
 
 export type PublicExhibition = {
@@ -165,6 +175,7 @@ function toPublicArtwork(
     originalHeight: row.originalHeight,
     sale: saleFromRow(row, galleryRates),
     presentation,
+    object: objectCardOf(row),
   }
 }
 
@@ -210,7 +221,7 @@ async function loadPublicExhibition(url: string): Promise<PublicExhibition | nul
   // have taken effect until the next republish. The snapshot still exists and
   // still freezes the 3D scene for /visit; it simply has no say over the page.
   const ordered = exhibition.exhibitionArtworks
-    .filter((ea) => !ea.artwork.hiddenFromExhibition && ea.artwork.artworkType === 'image')
+    .filter((ea) => !ea.artwork.hiddenFromExhibition && GRID_TYPES.includes(ea.artwork.artworkType))
     .sort((a, b) => {
       // Per-exhibition order when the artist has set one, otherwise the
       // artist's library order. Unordered rows sink below ordered ones.

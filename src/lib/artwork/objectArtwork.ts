@@ -357,3 +357,71 @@ export function coverObjectPosition(crop: CropCentre, size: PixelSize): string {
     side >= 1 ? 50 : ((centre - side / 2) / (1 - side)) * 100
   return `${toPosition(x, sx)}% ${toPosition(y, sy)}%`
 }
+
+// ── Visitor wording (docs/objects O5, objects-artwork-page-*.dc.html) ──────────
+
+type EditionFields = {
+  objectEdition?: string | null
+  objectEditionNo?: number | null
+  objectEditionOf?: number | null
+  objectArtistProofs?: number | null
+}
+
+/**
+ * The edition on the artwork page. `short`, in the info column: "Edition 3 of 8 + 2 AP";
+ * `long`, in Details: "3 of 8 + 2 artist’s proofs". A unique piece is "Unique piece" in both.
+ * Null when nothing is said.
+ */
+export function objectEditionLine(e: EditionFields, form: 'short' | 'long'): string | null {
+  if (e.objectEdition === 'unique') return 'Unique piece'
+  if (e.objectEdition !== 'edition' || !e.objectEditionOf) return null
+  const of = e.objectEditionNo
+    ? `${e.objectEditionNo} of ${e.objectEditionOf}`
+    : `an edition of ${e.objectEditionOf}`
+  const aps = e.objectArtistProofs
+    ? form === 'short'
+      ? ` + ${e.objectArtistProofs} AP`
+      : ` + ${e.objectArtistProofs} artist’s proof${e.objectArtistProofs === 1 ? '' : 's'}`
+    : ''
+  if (form === 'short') {
+    return e.objectEditionNo
+      ? `Edition ${e.objectEditionNo} of ${e.objectEditionOf}${aps}`
+      : `Edition of ${e.objectEditionOf}${aps}`
+  }
+  return `${of.charAt(0).toUpperCase()}${of.slice(1)}${aps}`
+}
+
+/** Details › Where it can stand. */
+export const OBJECT_PLACEMENT_LABEL: Record<string, string> = {
+  indoors: 'Indoors',
+  outdoors: 'Outdoors',
+  both: 'Indoors and outdoors',
+}
+
+/** Details › Display (the owner's word is "pedestal", docs/objects). */
+export const OBJECT_DISPLAY_LABEL: Record<string, string> = {
+  floor: 'On the floor',
+  pedestal: 'On a pedestal',
+  wall: 'On a wall',
+  hanging: 'Hanging',
+}
+
+/**
+ * What a grid card needs to show an Object (docs/objects O5): its cover cropped square at the
+ * artist's crop. Null for every other type, so the card shows the work as always.
+ */
+export function objectCardOf(row: {
+  artworkType?: string | null
+  coverCropX?: number | null
+  coverCropY?: number | null
+  originalWidth?: number | null
+  originalHeight?: number | null
+}): { coverPosition: string } | null {
+  if (row.artworkType !== 'object') return null
+  return {
+    coverPosition: coverObjectPosition(
+      { x: row.coverCropX, y: row.coverCropY },
+      { width: row.originalWidth, height: row.originalHeight },
+    ),
+  }
+}
