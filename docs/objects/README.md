@@ -376,3 +376,36 @@ and loaded only when the upload dialog opens).
 - Before release (2026-11-24): full E2E 1044 passed, 0 failed (17 skipped, as before); source lint and type check
   clean; the three emails rendered and read (not sent); "Ask for a change" clicked through (an empty note refused,
   the model kept, a second request while In preparation refused); the editor checked at phone width.
+
+**O6 · The Floor view and Objects in the 3D room** (2026-11-24, same branch; owner: "proceed", "do all of them
+till the end", so built from the draft board and the rules above).
+- **Data**: `Exhibition.floorLayout` (JSON, like the benches; schema change, the owner applies it): Objects and
+  pedestals with their room, place (world metres), turn, height; an Object on a pedestal is stored relative to it
+  (offset from the top's centre, turn, lift), so the pedestal carries it. `lib/floor/*` holds the rules (pure,
+  tested in `e2e/floor-layout.spec.ts`). Saved by the exhibition PUT (only the owner's own Objects kept), frozen in
+  the snapshot, served by `/api/exhibitions/by-url` with each Object's model (`floorArtworks`), in the bake
+  fingerprint once anything stands there; deleting an Object takes it off every floor.
+- **In the room** (editor and visitors): pedestals built from their parameters (15 shapes, edges, 8 materials and
+  their colours, finish), Objects from their `.glb` (bounding-box bottom centre on the spot, turn, scale). Meshes,
+  so the bake counts them as casters, as it does the benches ("Casts a shadow" off: skipped). A click on an Object
+  opens its page in the room's window (`/api/artworks/by-slug/[slug]/object`).
+- **Floor view**: the 3D editor's new **Floor** tool. Left: the room (a picker when there are several), Cancel /
+  Save / Save & close, undo / redo, zoom and Fit, the helpers (rulers, snap to align, snap to pedestals, person for
+  scale), On this floor (Objects under their pedestal, filters). Middle: the plan (walls from the hanging walls,
+  footprints and outlines turned as they stand, distances to the west and north walls, a turning handle) beside the
+  live 3D: the editor's own canvas, so the room never reloads (resizable divider; it outlines what is picked and
+  shows the 1.70 m person). Bottom: From library (only Objects with a ready model can be added) and Pedestal; click
+  to add in the middle of the room or drag onto the plan. Right: the picked item's panel, as the boards draw it.
+  Several picked: align, distribute, Group / Ungroup (⌘G / ⇧⌘G; clicking a member picks the group). Keys: arrows
+  (Shift: 10 cm), Delete, ⌘D (pedestal), ⌘Z / ⇧⌘Z, Escape.
+- **Snapping**: on release an Object lands on the pedestal under its centre (the highest top), centred the first
+  time and sliding afterwards; Alt never snaps; off the top it stands on the floor; overhang outlined in amber.
+  While dragging: snap to the other items' centres, the room's centre lines and the walls.
+- Differs from the board: the Floor tool opens room 1 (a picker for the others) rather than "click a room's floor,
+  then Edit floor" (a clickable floor would stop click-to-walk); the 3D side is the editor's camera (walk as usual),
+  no "Eye level / Orbit" switch yet; the board's word "Plinth" is "Pedestal" (owner).
+- **Not built yet**: images, text, shapes, video and sound on the floor (the board's other add buttons: they live in
+  the wall rows' save flow, a larger change); snapping to wall artworks; autofocus groups on the floor;
+  double-click to work inside a group; footprints on one pedestal avoiding each other; Objects receiving baked
+  light (they are lit by the room's environment and cast in the bake); "More from the gallery" GLB pedestals.
+- **Not yet seen in a browser**: the dev database needs the `floorLayout` column first (owner's schema step).

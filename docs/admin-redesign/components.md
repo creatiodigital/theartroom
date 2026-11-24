@@ -586,3 +586,10 @@ like the real Pause switch). Logic and dialogs unchanged.
   .glb upload with the checker rows (`lib/objects/glb.ts`); loads the glTF validator on open.
 - **Built** · `objects/ObjectSpaceSection` · `{ artworkId; isAdmin; model; details; onModelChange }`: the editor's In the
   3D space. `EditorPanel` gained `className?`; `ObjectSpaceChip` gained `short?` ("Ready" / "In preparation" after a dot).
+- **Built** · `floorview/FloorFrame` · `{ active; children }`: lays the Floor view around the editor's own canvas
+  (kept mounted). `floorview/FloorView`, `FloorPlan` (`{ room; editor; artworks; selectedIds; onSelect; expand;
+  onDropAdd; zoom; names }`), `FloorInspector`, `useFloorEditor` (working copy, undo / redo, save / revert),
+  `useFloorRooms` (rooms in plan from the hanging walls). `scene/floor/FloorItems` (pedestals and Objects in the
+  room), `pedestalGeometry`. `exhibitions/view/FloorObjectModal` (an Object's page over the room).
+- `Scene`: `fill?: boolean` (fills its container: the Floor view's live 3D).
+
