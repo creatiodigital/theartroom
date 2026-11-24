@@ -90,7 +90,7 @@ export function ObjectDetailBody({
     typeof window !== 'undefined' ? `${window.location.origin}/artworks/${artwork.slug}` : ''
 
   const size = formatObjectSize(artwork, unit)
-  const weight = artwork.weightKg ? formatWeight(artwork.weightKg, unit) : null
+  const weight = artwork.weightKg ? formatWeight(artwork.weightKg) : null
   const sizeLine = [size, weight].filter(Boolean).join(' · ')
   const edition = objectEditionLine(artwork, 'short')
   const realSize = artwork.model?.boundsCm

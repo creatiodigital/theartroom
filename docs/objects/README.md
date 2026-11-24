@@ -370,3 +370,6 @@ and loaded only when the upload dialog opens).
 - Checked: `e2e/object-fields.spec.ts` (+ sizes, weight, edition wording, card crop); in Chrome with a full test
   Object (cover, four views, two photographs, a reel, the real .glb): desktop page, the 3D mode, the phone page,
   the artist page's card and the share image; then deleted.
+- Q-O9 applied 2026-11-24 (the design Claude's proposal, from the owner): sizes in cm as entered, no forced ".0"
+  ("64 × 38 × 31 cm", "64.5 × 38 × 31 cm"); inches with one decimal ("25.2 × 15.0 × 12.2 in"); weight always in kg
+  ("Prices, weights and anything not a dimension are unchanged", units.md).

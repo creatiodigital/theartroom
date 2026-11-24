@@ -185,15 +185,15 @@ test('media summary reads as on the board', () => {
   expect(objectMediaSummary({ photos: 0, reels: 0, videos: 0 })).toBeNull()
 })
 
-test('visitor size: H × W × D in the unit, one decimal (units.md); weight in kg or lb', () => {
+test('visitor size (Q-O9): cm as entered, inches one decimal; weight always kg', () => {
   const size = { heightCm: 64, widthCm: 38, depthCm: 31 }
-  expect(formatObjectSize(size, 'cm')).toBe('64.0 × 38.0 × 31.0 cm')
+  expect(formatObjectSize(size, 'cm')).toBe('64 × 38 × 31 cm')
+  expect(formatObjectSize({ ...size, heightCm: 64.5 }, 'cm')).toBe('64.5 × 38 × 31 cm')
   expect(formatObjectSize(size, 'in')).toBe('25.2 × 15.0 × 12.2 in')
-  expect(formatObjectSize({ heightCm: 64 }, 'cm')).toBe('64.0 cm')
+  expect(formatObjectSize({ heightCm: 64 }, 'cm')).toBe('64 cm')
   expect(formatObjectSize({}, 'cm')).toBeNull()
-  expect(formatWeight(18, 'cm')).toBe('18 kg')
-  expect(formatWeight(2.54, 'cm')).toBe('2.5 kg')
-  expect(formatWeight(18, 'in')).toBe('39.7 lb')
+  expect(formatWeight(18)).toBe('18 kg')
+  expect(formatWeight(2.54)).toBe('2.5 kg')
 })
 
 test('edition on the visitor page: short in the info column, long in Details', () => {

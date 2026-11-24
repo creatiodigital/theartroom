@@ -30,17 +30,17 @@ export type ObjectDetailsFields = {
 
 /**
  * "Details" under an Object (docs/objects O5): label / value rows, only the filled ones. The size
- * follows the visitor's cm | in (and kg | lb).
+ * follows the visitor's cm | in; the weight stays in kg (Q-O9).
  */
 export function ObjectDetails({ fields }: { fields: ObjectDetailsFields }) {
   const { unit } = useUnits()
   const size = formatObjectSize(fields, unit)
   const sizeValue = size
     ? `${size}${fields.sizeIncludesBase ? ', with base' : ''}${
-        fields.weightKg ? ` · ${formatWeight(fields.weightKg, unit)}` : ''
+        fields.weightKg ? ` · ${formatWeight(fields.weightKg)}` : ''
       }`
     : fields.weightKg
-      ? formatWeight(fields.weightKg, unit)
+      ? formatWeight(fields.weightKg)
       : null
 
   const rows = [
