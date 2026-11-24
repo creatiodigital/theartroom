@@ -1,5 +1,6 @@
 'use client'
 
+import { parseFloorLayout } from '@/lib/floor/floorLayout'
 import { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSession } from 'next-auth/react'
@@ -135,6 +136,9 @@ export const ExhibitionEditPage = ({
         trackLampSettings: exhibition.trackLampSettings ?? undefined,
         panelSettings: exhibition.panelSettings ?? undefined,
         benchSettings: exhibition.benchSettings ?? undefined,
+        // The floor (docs/objects O6) and its Objects' models.
+        floorLayout: parseFloorLayout(exhibition.floorLayout),
+        floorArtworks: exhibition.floorArtworks ?? {},
         ceilingLightMode: exhibition.ceilingLightMode ?? undefined,
         recessedLampColor: exhibition.recessedLampColor ?? undefined,
         recessedLampIntensity: exhibition.recessedLampIntensity ?? undefined,

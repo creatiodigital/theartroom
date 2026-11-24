@@ -790,6 +790,10 @@ model Exhibition {
   // Absent means no bench has ever been switched on. See
   // src/components/scene/spaces/objects/Bench/benchSettings.ts
   benchSettings          Json?
+  // The floor (docs/objects O6): Objects and pedestals standing on the rooms' floors,
+  //   { version: 1, items: [...], groups: [...] }. Absent means nothing on the floor. See
+  // src/lib/floor/floorLayout.ts
+  floorLayout            Json?
   windowLightColor       String?  @default("#ffffff")
   windowLightIntensity   Float?   @default(4.0)
   windowTransparency     Boolean? @default(false)

@@ -7,6 +7,7 @@ import { isAdminOrAbove, requireOwnership } from '@/lib/authUtils'
 import { isArtworkKind } from '@/lib/artwork/artworkKinds'
 import { OBJECT_PRINT_OFF, objectWriteData, parseObjectFields } from '@/lib/artwork/objectArtwork'
 import { PUBLIC_ARTWORK_OMIT } from '@/lib/artworkFields'
+import { floorArtworkIds, parseFloorLayout, withoutArtwork } from '@/lib/floor/floorLayout'
 import { saveLimitedVariants } from '@/lib/editions/saveLimitedVariants'
 import { parseIncomingVariants } from '@/lib/editions/parseIncomingVariants'
 import { TPS_FRAME_TYPES, TPS_PAPERS, TPS_WINDOW_MOUNTS } from '@/lib/print-providers/printspace'
@@ -679,6 +680,25 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
           await tx.exhibition.update({
             where: { id: ex.id },
             data: { autofocusGroups: cleaned as unknown as Prisma.InputJsonValue },
+          })
+        }
+        // An Object leaves the floors it stood on (docs/objects O6; the pedestals stay).
+        const floors = await tx.exhibition.findMany({
+          where: { userId: artwork.userId, floorLayout: { not: Prisma.DbNull } },
+          select: { id: true, floorLayout: true },
+        })
+        for (const ex of floors) {
+          const layout = parseFloorLayout(ex.floorLayout)
+          if (!floorArtworkIds(layout).includes(id)) continue
+          const next = withoutArtwork(layout, id)
+          await tx.exhibition.update({
+            where: { id: ex.id },
+            data: {
+              floorLayout:
+                next.items.length > 0
+                  ? (next as unknown as Prisma.InputJsonValue)
+                  : Prisma.JsonNull,
+            },
           })
         }
         await tx.artwork.delete({ where: { id } })

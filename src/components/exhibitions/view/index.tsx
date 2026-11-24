@@ -1,5 +1,6 @@
 'use client'
 
+import { parseFloorLayout } from '@/lib/floor/floorLayout'
 import { useProgress } from '@react-three/drei'
 import {
   useCallback,
@@ -951,6 +952,9 @@ export const ExhibitionViewPage = ({
         trackLampSettings: exhibition.trackLampSettings ?? undefined,
         panelSettings: exhibition.panelSettings ?? undefined,
         benchSettings: exhibition.benchSettings ?? undefined,
+        // The floor (docs/objects O6) and its Objects' models.
+        floorLayout: parseFloorLayout(exhibition.floorLayout),
+        floorArtworks: exhibition.floorArtworks ?? {},
         ceilingLightMode: exhibition.ceilingLightMode ?? undefined,
         recessedLampColor: exhibition.recessedLampColor ?? undefined,
         recessedLampIntensity: exhibition.recessedLampIntensity ?? undefined,

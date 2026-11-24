@@ -3,6 +3,8 @@ import type { AutofocusGroup } from '@/types/autofocusGroup'
 import type { ExhibitionArtworkResponse } from '@/lib/exhibitionArtworkMapper'
 import type { PanelSettings } from '@/components/scene/spaces/objects/Panel/panelSettings'
 import type { BenchSettings } from '@/components/scene/spaces/objects/Bench/benchSettings'
+import type { FloorArtwork } from '@/lib/floor/floorArtworks'
+import type { FloorLayout } from '@/lib/floor/floorLayout'
 import type { BakeRecord } from '@/lib/bake/bakeRecord'
 import type { PresentationView } from '@/lib/printPresentation/record'
 
@@ -54,6 +56,10 @@ export type TExhibition = {
   panelSettings?: Record<string, PanelSettings>
   /** Gallery benches, keyed by bench index. See benchSettings.ts. */
   benchSettings?: Record<string, BenchSettings>
+  /** The floor's Objects and pedestals (docs/objects O6). See src/lib/floor/floorLayout.ts. */
+  floorLayout?: FloorLayout
+  /** What the room needs to draw the floor's Objects (their model and size), by artwork id. */
+  floorArtworks?: Record<string, FloorArtwork>
   windowLightColor?: string
   windowLightIntensity?: number
   windowTransparency?: boolean

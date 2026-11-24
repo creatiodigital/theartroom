@@ -4,6 +4,7 @@ import artworksReducer from './slices/artworkSlice'
 import { baseApi } from './slices/baseApi'
 import dashboardReducer from './slices/dashboardSlice'
 import exhibitionReducer from './slices/exhibitionSlice'
+import floorReducer from './slices/floorSlice'
 import sceneReducer from './slices/sceneSlice'
 import userReducer from './slices/userSlice'
 import wallViewReducer from './slices/wallViewSlice'
@@ -12,6 +13,7 @@ import wizardReducer from './slices/wizardSlice'
 export const makeStore = () => {
   return configureStore({
     reducer: {
+      floor: floorReducer,
       dashboard: dashboardReducer,
       exhibition: exhibitionReducer,
       wizard: wizardReducer,
@@ -21,8 +23,7 @@ export const makeStore = () => {
       scene: sceneReducer,
       [baseApi.reducerPath]: baseApi.reducer,
     },
-    middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware().concat(baseApi.middleware),
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(baseApi.middleware),
   })
 }
 
