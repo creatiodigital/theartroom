@@ -127,7 +127,8 @@ export const ArtworkPrintDetails = ({
       {isLimited && editionLines.length === 1 && (
         <div className={styles.single}>
           <span className={styles.rowSize}>{sizeOf(editionLines[0], unit)}</span>
-          <span className={styles.rowMeta}>{stockText(editionLines[0])}</span>
+          {/* Same font and color as the size above it (owner, 2026-11-25). */}
+          <span className={styles.rowSize}>{stockText(editionLines[0])}</span>
         </div>
       )}
       {isLimited && editionLines.length > 1 && (
