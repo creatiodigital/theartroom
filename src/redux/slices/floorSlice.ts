@@ -14,6 +14,8 @@ type FloorState = {
   openObjectSlug: string | null
   /** The Floor view's helpers (the board's switches). */
   helpers: FloorHelpers
+  /** The mouse is over the Floor view's live 3D: the keys walk the room there. */
+  pointerOnRoom: boolean
 }
 
 export type FloorHelpers = {
@@ -33,6 +35,7 @@ const initialState: FloorState = {
   selectedIds: [],
   openObjectSlug: null,
   helpers: { snapAlign: true, snapPedestals: true, person: false, rulers: false },
+  pointerOnRoom: false,
 }
 
 const floorSlice = createSlice({
@@ -64,6 +67,9 @@ const floorSlice = createSlice({
     setFloorHelper: (state, action: PayloadAction<{ key: keyof FloorHelpers; on: boolean }>) => {
       state.helpers[action.payload.key] = action.payload.on
     },
+    setPointerOnRoom: (state, action: PayloadAction<boolean>) => {
+      state.pointerOnRoom = action.payload
+    },
   },
 })
 
@@ -73,6 +79,7 @@ export const {
   setFloorRoom,
   selectFloorItems,
   openFloorObject,
+  setPointerOnRoom,
   closeFloorObject,
   setFloorHelper,
 } = floorSlice.actions

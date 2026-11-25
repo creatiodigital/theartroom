@@ -189,3 +189,17 @@ test('a deleted artwork leaves the floor and its groups', () => {
   expect(next.items.map((i) => i.id)).toEqual(['o2', 'p1'])
   expect(next.groups).toEqual([])
 })
+
+test('an Object is a unique piece: a second copy of the same artwork is dropped; pedestals repeat', () => {
+  const parsed = parseFloorLayout({
+    items: [
+      object({ id: 'o1', artworkId: 'a1' }),
+      object({ id: 'o2', artworkId: 'a1', x: 3 }),
+      object({ id: 'o3', artworkId: 'a2' }),
+      pedestal({ id: 'p1' }),
+      pedestal({ id: 'p2' }),
+    ],
+  })
+  expect(parsed.items.map((i) => i.id)).toEqual(['o1', 'o3', 'p1', 'p2'])
+})
+

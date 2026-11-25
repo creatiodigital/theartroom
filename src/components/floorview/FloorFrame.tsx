@@ -1,6 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useDispatch } from 'react-redux'
+
+import { setPointerOnRoom } from '@/redux/slices/floorSlice'
 
 import { FloorView } from './FloorView'
 import styles from './FloorView.module.scss'
@@ -17,6 +20,7 @@ export function FloorFrame({ active, children }: { active: boolean; children: Re
   const [planW, setPlanW] = useState<number | null>(null)
   const frameRef = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
+  const dispatch = useDispatch()
 
   useEffect(() => {
     if (!active) return
@@ -47,7 +51,13 @@ export function FloorFrame({ active, children }: { active: boolean; children: Re
       style={active && planW ? ({ '--plan-w': `${planW}px` } as CSSProperties) : undefined}
     >
       {active ? <FloorView /> : null}
-      <div className={active ? styles.threeSlot : undefined} data-floor-three={active || undefined}>
+      {/* The mouse over the live 3D: the arrows and WASD walk the room (owner, 2026-11-25). */}
+      <div
+        className={active ? styles.threeSlot : undefined}
+        data-floor-three={active || undefined}
+        onPointerEnter={active ? () => dispatch(setPointerOnRoom(true)) : undefined}
+        onPointerLeave={active ? () => dispatch(setPointerOnRoom(false)) : undefined}
+      >
         {children}
       </div>
       {active ? (

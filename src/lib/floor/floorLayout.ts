@@ -167,12 +167,18 @@ export function parseFloorLayout(raw: unknown): FloorLayout {
   const value = raw as { items?: unknown; groups?: unknown }
   const items: FloorItem[] = []
   const seen = new Set<string>()
+  // An Object is a unique piece: once per floor (owner, 2026-11-25). Pedestals repeat freely.
+  const placedArtworks = new Set<string>()
   for (const entry of Array.isArray(value.items) ? value.items.slice(0, MAX_FLOOR_ITEMS) : []) {
     if (!entry || typeof entry !== 'object') continue
     const e = entry as Record<string, unknown>
     const item =
       e.kind === 'pedestal' ? parsePedestal(e) : e.kind === 'object' ? parseObject(e) : null
     if (!item || seen.has(item.id)) continue
+    if (item.kind === 'object') {
+      if (placedArtworks.has(item.artworkId)) continue
+      placedArtworks.add(item.artworkId)
+    }
     seen.add(item.id)
     items.push(item)
   }

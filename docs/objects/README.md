@@ -476,3 +476,11 @@ on glb", "on the 3D space, the artist will make sure to resize that glb to close
 - The artwork page shows only Details (Height × Width × Depth, weight); its "Real size" line from the model is gone.
 - In the 3D room an Object starts at the model's own size; the artist resizes it on the Floor plan ("100% is the size
   of the uploaded model").
+
+**Floor plan: once per Object; the keys walk the room** (2026-11-25; owner: "Do not allow to add more than once a 3D
+object! unless it's a pedestal", "I cannot navigate in this 3D space with the keys or arrows").
+- An Object (a unique piece) goes on an exhibition's floor once, in any room: its library row then reads "Already on
+  the floor" and is off; adding it anyway picks the one already there. The server keeps the first copy only
+  (`parseFloorLayout`). Pedestals repeat freely.
+- The arrows and WASD walk the live 3D as in the editor, except while something is picked and the mouse is not over
+  the 3D: then the arrows move the pick on the plan (Shift: 10 cm).

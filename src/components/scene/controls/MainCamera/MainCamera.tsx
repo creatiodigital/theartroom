@@ -336,8 +336,12 @@ const MainCamera = () => {
   const isExitPromptOpen = useSelector((state: RootState) => state.scene.isExitPromptOpen)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
   const isArtworkModalOpen = useSelector((state: RootState) => state.dashboard.isArtworkModalOpen)
-  // The Floor view's keys move what is picked on the plan, never the camera (docs/objects O6).
+  // The Floor view (docs/objects O6): the keys walk the room as usual, except while something is
+  // picked on the plan and the mouse is not over the 3D: then the arrows move what is picked.
   const isFloorView = useSelector((state: RootState) => state.floor.isFloorView)
+  const floorPicked = useSelector((state: RootState) => state.floor.selectedIds.length > 0)
+  const pointerOnRoom = useSelector((state: RootState) => state.floor.pointerOnRoom)
+  const floorOwnsKeys = isFloorView && floorPicked && !pointerOnRoom
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) || 'paris'
   const spaceConfig = getSpaceConfig(spaceId)
 
@@ -356,9 +360,9 @@ const MainCamera = () => {
   const isPhone = useIsPhone()
   // A work's information (the editor's panel, or the room's details) is open over the room.
   const infoOpen = isArtworkPanelOpen || isArtworkModalOpen
-  const latest = useRef({ infoOpen, isExitPromptOpen, isPhone, isFloorView })
+  const latest = useRef({ infoOpen, isExitPromptOpen, isPhone, floorOwnsKeys })
   useEffect(() => {
-    latest.current = { infoOpen, isExitPromptOpen, isPhone, isFloorView }
+    latest.current = { infoOpen, isExitPromptOpen, isPhone, floorOwnsKeys }
   })
 
   // The room's solid surfaces, for the taps' walks and the works' taps alike (`roomRays`).
@@ -754,7 +758,7 @@ const MainCamera = () => {
         exitAsked.current = true
         return
       }
-      if (latest.current.isFloorView) return
+      if (latest.current.floorOwnsKeys) return
       handleKeyPress(keysPressed, event.key, true)
     },
     [currentView],

@@ -61,6 +61,12 @@ export function FloorView() {
   const roomIndex = useSelector((state: RootState) => state.floor.room)
   const selectedIds = useSelector((state: RootState) => state.floor.selectedIds)
   const helpers = useSelector((state: RootState) => state.floor.helpers)
+  // Over the live 3D the arrows walk the room (MainCamera), so they never also move the pick.
+  const pointerOnRoom = useSelector((state: RootState) => state.floor.pointerOnRoom)
+  const pointerOnRoomRef = useRef(pointerOnRoom)
+  useEffect(() => {
+    pointerOnRoomRef.current = pointerOnRoom
+  }, [pointerOnRoom])
   const storedArtworks = useSelector((state: RootState) => state.exhibition.floorArtworks)
   const artworks = useMemo(() => storedArtworks ?? {}, [storedArtworks])
   const ownerId = useSelector((state: RootState) => state.exhibition.userId)
@@ -115,10 +121,27 @@ export function FloorView() {
       .catch(() => setLibrary([]))
   }, [libraryOpen, library, ownerId])
 
+  // An Object is a unique piece: once on this exhibition's floor, in any room (owner, 2026-11-25).
+  // Pedestals repeat freely.
+  const placedObjects = useMemo(
+    () =>
+      new Map(
+        layout.items.flatMap((i) => (i.kind === 'object' ? [[i.artworkId, i] as const] : [])),
+      ),
+    [layout.items],
+  )
+
   // ── Adding ──
   const addObject = useCallback(
     (artwork: FloorArtwork, x: number, z: number) => {
       if (!room) return
+      const already = placedObjects.get(artwork.id)
+      if (already) {
+        // Already on the floor: pick it instead (in its room).
+        if (already.room !== room.room) dispatch(setFloorRoom(already.room))
+        select([already.id])
+        return
+      }
       dispatch(addFloorArtworks([artwork]))
       const o: FloorObject = {
         kind: 'object',
@@ -140,7 +163,7 @@ export function FloorView() {
       editor.commit({ ...layout, items: [...layout.items, placed] })
       select([placed.id])
     },
-    [dispatch, editor, helpers.snapPedestals, layout, room, select],
+    [dispatch, editor, helpers.snapPedestals, layout, placedObjects, room, select],
   )
 
   const nextPedestalName = useCallback(() => {
@@ -272,7 +295,7 @@ export function FloorView() {
         ArrowUp: [0, -step],
         ArrowDown: [0, step],
       }
-      if (move[event.key] && ids.size) {
+      if (move[event.key] && ids.size && !pointerOnRoomRef.current) {
         event.preventDefault()
         const [dx, dz] = move[event.key]
         ed.update((all) =>
@@ -566,51 +589,58 @@ export function FloorView() {
                 <p className={styles.hint}>Loading your Objects…</p>
               ) : library.length === 0 ? (
                 <p className={styles.hint}>
-                  No Objects yet. Add one in your Artwork library, then ask for its 3D model.
+                  No Objects yet. Add one in your Artwork library; once its 3D model is in, it can
+                  go on the floor.
                 </p>
               ) : (
                 <ul>
-                  {library.map((a) => (
-                    <li key={a.id}>
-                      <Button
-                        variant="bare"
-                        className={styles.libraryRow}
-                        disabled={!a.ready}
-                        draggable={a.ready}
-                        onDragStart={(e) =>
-                          e.dataTransfer.setData(
-                            DRAG_TYPE,
-                            JSON.stringify({ kind: 'object', artwork: a }),
-                          )
-                        }
-                        onClick={() => {
-                          addObject(a, centre.x, centre.z)
-                          setLibraryOpen(false)
-                        }}
-                        title={
-                          a.ready
-                            ? 'Click to add it in the middle of the room, or drag it onto the plan'
-                            : undefined
-                        }
-                      >
-                        {a.imageUrl ? (
-                          <img src={a.imageUrl} alt="" className={styles.libraryThumb} />
-                        ) : (
-                          <span className={styles.libraryThumb} />
-                        )}
-                        <span className={styles.libraryText}>
-                          <b>{a.title}</b>
-                          <span className={styles.hint}>
-                            {a.ready
-                              ? a.boundsCm
-                                ? `${Math.round(a.boundsCm.w)} × ${Math.round(a.boundsCm.d)} × ${Math.round(a.boundsCm.h)} cm`
-                                : '3D model ready'
-                              : 'No 3D model yet'}
+                  {library.map((a) => {
+                    const placed = placedObjects.has(a.id)
+                    const addable = a.ready && !placed
+                    return (
+                      <li key={a.id}>
+                        <Button
+                          variant="bare"
+                          className={styles.libraryRow}
+                          disabled={!addable}
+                          draggable={addable}
+                          onDragStart={(e) =>
+                            e.dataTransfer.setData(
+                              DRAG_TYPE,
+                              JSON.stringify({ kind: 'object', artwork: a }),
+                            )
+                          }
+                          onClick={() => {
+                            addObject(a, centre.x, centre.z)
+                            setLibraryOpen(false)
+                          }}
+                          title={
+                            addable
+                              ? 'Click to add it in the middle of the room, or drag it onto the plan'
+                              : undefined
+                          }
+                        >
+                          {a.imageUrl ? (
+                            <img src={a.imageUrl} alt="" className={styles.libraryThumb} />
+                          ) : (
+                            <span className={styles.libraryThumb} />
+                          )}
+                          <span className={styles.libraryText}>
+                            <b>{a.title}</b>
+                            <span className={styles.hint}>
+                              {placed
+                                ? 'Already on the floor'
+                                : a.ready
+                                  ? a.boundsCm
+                                    ? `${Math.round(a.boundsCm.w)} × ${Math.round(a.boundsCm.d)} × ${Math.round(a.boundsCm.h)} cm`
+                                    : '3D model ready'
+                                  : 'No 3D model yet'}
+                            </span>
                           </span>
-                        </span>
-                      </Button>
-                    </li>
-                  ))}
+                        </Button>
+                      </li>
+                    )
+                  })}
                 </ul>
               )}
             </div>
