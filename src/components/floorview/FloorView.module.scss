@@ -337,6 +337,12 @@
   pointer-events: none;
 }
 
+.planHit {
+  fill: transparent;
+  stroke: none;
+  pointer-events: all;
+}
+
 .planTag {
   fill: var(--color-black);
   font-weight: var(--font-semibold);
@@ -472,6 +478,20 @@
 
 .libraryWrap {
   position: relative;
+}
+
+.libraryHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0 var(--space-1) var(--space-2);
+}
+
+// The × alone (owner: no box, no hover fill).
+.libraryClose {
+  display: inline-flex;
+  padding: var(--space-1);
+  color: var(--color-text-secondary);
 }
 
 .library {

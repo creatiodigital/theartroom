@@ -27,6 +27,8 @@ export type FloorHelpers = {
   person: boolean
   /** Rulers along the plan. */
   rulers: boolean
+  /** Each item's name under it on the plan (owner, 2026-11-25: never over the shape). */
+  names: boolean
 }
 
 const initialState: FloorState = {
@@ -34,7 +36,7 @@ const initialState: FloorState = {
   room: 0,
   selectedIds: [],
   openObjectSlug: null,
-  helpers: { snapAlign: true, snapPedestals: true, person: false, rulers: false },
+  helpers: { snapAlign: true, snapPedestals: true, person: false, rulers: false, names: true },
   pointerOnRoom: false,
 }
 

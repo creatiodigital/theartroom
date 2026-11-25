@@ -41,6 +41,11 @@ const ROTATE_STEP = 15
 const TEXT_PX = 11
 const HANDLE_GAP_PX = 26
 const HANDLE_R_PX = 7
+/** Every item can be picked within this many px of its centre, however small it is drawn. */
+const HIT_R_PX = 12
+/** A name's gap under its shape, and its height, in px. */
+const NAME_GAP_PX = 4
+const NAME_LINE_PX = 14
 
 type Props = {
   room: FloorRoom
@@ -113,7 +118,26 @@ export function FloorPlan({
     return () => observer.disconnect()
   }, [viewW, viewH])
   const text = { fontSize: TEXT_PX * px }
-  const carrying = new Set(placed.flatMap(({ item }) => (item.parentId ? [item.parentId] : [])))
+  // Names under their shapes, never over them (owner, 2026-11-25: "the name blocks me"); one that
+  // would print over another moves down a line.
+  const labels = useMemo(() => {
+    if (!helpers.names) return []
+    const out: { id: string; x: number; y: number; half: number }[] = []
+    const byTop = placed
+      .map(({ item, at }) => {
+        const outline = planOutline(item, at)
+        return { id: item.id, x: at.x * 100, y: Math.max(...outline.map(([, z]) => z)) }
+      })
+      .sort((a, b) => a.y - b.y)
+    for (const l of byTop) {
+      const half = ((names[l.id]?.length ?? 0) * TEXT_PX * 0.32 + 2) * px
+      let y = l.y + NAME_GAP_PX * px + (TEXT_PX / 2) * px
+      while (out.some((o) => Math.abs(o.y - y) < NAME_LINE_PX * px && Math.abs(o.x - l.x) < o.half + half))
+        y += NAME_LINE_PX * px
+      out.push({ id: l.id, x: l.x, y, half })
+    }
+    return out
+  }, [helpers.names, placed, names, px])
 
   /** A pointer event → plan cm, and how many cm one screen pixel is. */
   const toPlan = (clientX: number, clientY: number) => {
@@ -367,6 +391,8 @@ export function FloorPlan({
             )}
             onPointerDown={(e) => onItemDown(e, item)}
           >
+            {/* Invisible: a small item is picked as easily as a large one. */}
+            <circle cx={at.x * 100} cy={at.z * 100} r={HIT_R_PX * px} className={styles.planHit} />
             <polygon
               points={points}
               className={item.kind === 'pedestal' ? styles.planPedestal : styles.planObject}
@@ -386,19 +412,18 @@ export function FloorPlan({
         )
       })}
 
-      {/* Names, upright whatever the turn. A pedestal that carries an Object writes its name a
-          line lower, so the two never print over each other. */}
-      {placed.map(({ item, at }) => (
+      {/* Names, upright whatever the turn, under their shapes (Helpers › Names hides them). */}
+      {labels.map((l) => (
         <text
-          key={`n-${item.id}`}
-          x={at.x * 100}
-          y={at.z * 100 + (carrying.has(item.id) ? TEXT_PX * 1.4 * px : 0)}
+          key={`n-${l.id}`}
+          x={l.x}
+          y={l.y}
           className={styles.planTag}
           style={text}
           textAnchor="middle"
           dominantBaseline="central"
         >
-          {names[item.id]}
+          {names[l.id]}
         </text>
       ))}
 

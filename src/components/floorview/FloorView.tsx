@@ -13,6 +13,8 @@ import {
   Person,
   Plus,
   Ruler,
+  TextAa,
+  X,
 } from '@phosphor-icons/react'
 import c from 'classnames'
 
@@ -282,6 +284,19 @@ export function FloorView() {
     [],
   )
 
+  // The library closes on its ×, Escape, or a press anywhere outside it.
+  const libraryRef = useRef<HTMLDivElement>(null)
+  const libraryOpenRef = useRef(libraryOpen)
+  useEffect(() => {
+    libraryOpenRef.current = libraryOpen
+    if (!libraryOpen) return
+    const onDown = (event: PointerEvent) => {
+      if (!libraryRef.current?.contains(event.target as Node)) setLibraryOpen(false)
+    }
+    window.addEventListener('pointerdown', onDown)
+    return () => window.removeEventListener('pointerdown', onDown)
+  }, [libraryOpen])
+
   // ── Keys ──
   const editorRef = useRef(editor)
   editorRef.current = editor
@@ -325,7 +340,9 @@ export function FloorView() {
         return
       }
       if (event.key === 'Escape') {
-        select([])
+        // The library first, if it is open.
+        if (libraryOpenRef.current) setLibraryOpen(false)
+        else select([])
         return
       }
       if ((event.key === 'Delete' || event.key === 'Backspace') && ids.size) {
@@ -404,6 +421,12 @@ export function FloorView() {
       label: 'Snap to pedestals',
       sub: 'Objects stick to a pedestal’s top or a raised side',
       icon: <Magnet size={16} aria-hidden />,
+    },
+    {
+      key: 'names',
+      label: 'Names',
+      sub: 'Each item’s name under it on the plan',
+      icon: <TextAa size={16} aria-hidden />,
     },
     {
       key: 'person',
@@ -623,7 +646,7 @@ export function FloorView() {
       </span>
 
       <nav className={styles.addBar} aria-label="Add to the floor" data-panel-overlay>
-        <div className={styles.libraryWrap}>
+        <div className={styles.libraryWrap} ref={libraryRef}>
           <Button
             variant="bare"
             className={styles.addButton}
@@ -635,6 +658,17 @@ export function FloorView() {
           </Button>
           {libraryOpen && (
             <div className={styles.library} role="dialog" aria-label="Your Objects">
+              <div className={styles.libraryHead}>
+                <h2 className={panelGroup.title}>Your Objects</h2>
+                <Button
+                  variant="bare"
+                  className={styles.libraryClose}
+                  aria-label="Close your Objects"
+                  onClick={() => setLibraryOpen(false)}
+                >
+                  <X size={16} aria-hidden />
+                </Button>
+              </div>
               {library === null ? (
                 <p className={styles.hint}>Loading your Objects…</p>
               ) : library.length === 0 ? (
