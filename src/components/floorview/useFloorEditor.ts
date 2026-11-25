@@ -15,8 +15,8 @@ import {
   descendantsOf,
   detachItem,
   dropItem,
-  faceFrame,
   placeMap,
+  slideOnFace,
   type Placed,
 } from '@/lib/floor/floorPlacement'
 import { setFloorLayout } from '@/redux/slices/exhibitionSlice'
@@ -111,12 +111,7 @@ export function useFloorEditor() {
           const off = detachItem(d.before, item, sizes)
           return { ...off, x: start.x + dx, z: start.z + dz }
         }
-        // Slide on its face: the move seen along the face's own axes.
-        const f = faceFrame(parent, item.face)
-        const along = (v: { x: number; z: number }) => (dx * v.x + dz * v.z) * 100
-        return item.face === 'top' || item.face === 'bottom'
-          ? { ...item, offsetX: item.offsetX + along(f.across), offsetZ: item.offsetZ + along(f.up) }
-          : { ...item, offsetX: item.offsetX + along(f.across) }
+        return slideOnFace(item, parent, dx, dz)
       })
       apply({ ...d.before, items })
     },

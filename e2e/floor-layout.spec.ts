@@ -21,6 +21,7 @@ import {
   placeMap,
   removeItems,
   rotateOffset,
+  slideOnFace,
   supportUnder,
 } from '../src/lib/floor/floorPlacement'
 import type { FloorSizes } from '../src/lib/floor/floorArtworks'
@@ -479,4 +480,20 @@ test("a plank's wood runs along its length, at the frames' real board size", () 
   const span = (a: number[]) => Math.max(...a) - Math.min(...a)
   expect(span(us)).toBeCloseTo(1 / WOOD_TILE_M, 3)
   expect(span(vs)).toBeCloseTo(0.2 / WOOD_TILE_M, 3)
+})
+
+test('a move on the plan slides an attached item along its face (across only on a side)', () => {
+  const s = object({ id: 's', artworkId: 'alejandro', parentId: 'pl', face: 'front', offsetX: 2, offsetY: 7 })
+  // The plank unturned: its front faces +z, across is +x.
+  const flat = at(layoutOf(plank(), s), 'pl')
+  expect(slideOnFace(s, flat, 0.1, 0.3)).toMatchObject({ offsetX: 12, offsetY: 7 })
+  // Turned 90°: its front faces +x, across (to the right looking at it) is −z.
+  const turned = at(layoutOf(plank({ rotY: 90 }), s), 'pl')
+  expect(slideOnFace(s, turned, 0.5, 0.1).offsetX).toBeCloseTo(-8)
+  // On a top: both ways, in the parent's frame.
+  const p = pedestal({ rotY: 90 })
+  const o = object({ parentId: 'p1', offsetX: 1, offsetZ: 1 })
+  const slid = slideOnFace(o, at(layoutOf(p, o), 'p1'), 0, -0.1)
+  expect(slid.offsetX).toBeCloseTo(11)
+  expect(slid.offsetZ).toBeCloseTo(1)
 })

@@ -17,10 +17,10 @@ import {
   childrenOf,
   descendantsOf,
   detachItem,
-  faceFrame,
   keepChildrenOnFaces,
   placeMap,
   removeItems,
+  slideOnFace,
 } from '@/lib/floor/floorPlacement'
 import {
   EDGE_RADIUS,
@@ -219,15 +219,9 @@ export function FloorInspector({
       editor.patchItem(item.id, { x, z })
       return
     }
-    // Attached: the move seen along its face's own axes (on a side, only across it).
-    const f = faceFrame(parentAt, item.face)
-    const along = (v: { x: number; z: number }) => ((x - where.x) * v.x + (z - where.z) * v.z) * 100
-    editor.patchItem(
-      item.id,
-      item.face === 'top' || item.face === 'bottom'
-        ? { offsetX: item.offsetX + along(f.across), offsetZ: item.offsetZ + along(f.up) }
-        : { offsetX: item.offsetX + along(f.across) },
-    )
+    // Attached: it slides on its face (on a side, only across it).
+    const slid = slideOnFace(item, parentAt, x - where.x, z - where.z)
+    editor.patchItem(item.id, { offsetX: slid.offsetX, offsetZ: slid.offsetZ })
   }
   const place = (
     <Section title="Position">

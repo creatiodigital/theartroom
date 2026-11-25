@@ -237,6 +237,18 @@ export function faceFrame(parent: Placed, face: FloorFace) {
   }
 }
 
+/**
+ * An attached item moved on the plan by (dx, dz) metres: the move seen along its face's own axes,
+ * so it slides on the face (on a side only across it: its height stays).
+ */
+export function slideOnFace<T extends FloorItem>(item: T, parent: Placed, dx: number, dz: number): T {
+  const f = faceFrame(parent, item.face)
+  const along = (v: Vector3) => (dx * v.x + dz * v.z) * 100
+  return isSideFace(item.face)
+    ? { ...item, offsetX: item.offsetX + along(f.across) }
+    : { ...item, offsetX: item.offsetX + along(f.across), offsetZ: item.offsetZ + along(f.up) }
+}
+
 /** A world point (m) in an upright item's own plan frame (cm from its centre). */
 export function toItemFrame(at: Placed, x: number, z: number): [number, number] {
   return rotateOffset((x - at.x) * 100, (z - at.z) * 100, -at.rotY)
