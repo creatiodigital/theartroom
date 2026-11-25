@@ -50,10 +50,10 @@ const THREE_D_CAPTION = '3D model prepared by The Art Room'
 
 /**
  * The top of an Object's artwork page (docs/objects O5, objects-artwork-page-desktop/-phone):
- * the stage on the left (the cover, then the labelled photos; 72 px tiles under it on desktop, a
- * swipe with a progress bar on phones) and the info column on the right, in the approved artwork
- * page's frame and styles. "View in 3D" puts the model in the stage, loaded on that
- * click only. No price and no Order print: Objects are not prints; Inquire is the way forward.
+ * the stage on the left (the 3D model first when there is one, then the cover and the labelled
+ * photos; 72 px tiles under it on desktop, the 3D tile first; a swipe with a progress bar on
+ * phones) and the info column on the right, in the approved artwork page's frame and styles. No
+ * price and no Order print: Objects are not prints; Inquire is the way forward.
  */
 export function ObjectDetailBody({
   artwork,
@@ -72,7 +72,9 @@ export function ObjectDetailBody({
   const { unit } = useUnits()
   const [inquireOpen, setInquireOpen] = useState(false)
   const [viewIndex, setViewIndex] = useState(0)
-  const [in3d, setIn3d] = useState(false)
+  // The 3D model first when there is one (owner, 2026-11-25: "Make the 3D appear first"), then the
+  // cover, the photos and reels.
+  const [in3d, setIn3d] = useState(!!artwork.model)
   const [resetKey, setResetKey] = useState(0)
   const [wanted, setWanted] = useState<ReadonlySet<number>>(() => new Set([0, 1]))
   const stageRef = useRef<HTMLDivElement>(null)
@@ -172,12 +174,6 @@ export function ObjectDetailBody({
                 setInquireOpen(true)
               }}
             />
-            {artwork.model && (
-              <Button variant="bare" className={styles.turn} onClick={open3d}>
-                <Cube size={16} weight="regular" aria-hidden />
-                View in 3D
-              </Button>
-            )}
             <Share title={title} url={shareUrl} className={detail.share} />
           </div>
         </aside>
@@ -280,9 +276,21 @@ export function ObjectDetailBody({
             </div>
           )}
 
-          {/* Tablets and desktop: the views as 72 px tiles, the 3D model last. */}
+          {/* Tablets and desktop: the views as 72 px tiles, the 3D model first. */}
           {(views.length > 1 || artwork.model) && (
             <div role="group" aria-label="Views of the work" className={styles.thumbs}>
+              {artwork.model && (
+                <Button
+                  variant="bare"
+                  className={c(styles.thumb, styles.thumb3d, in3d && styles.thumbOn)}
+                  aria-pressed={in3d}
+                  aria-label="View in 3D"
+                  onClick={open3d}
+                >
+                  <Cube size={22} weight="light" aria-hidden />
+                  3D
+                </Button>
+              )}
               {views.map((view, i) => (
                 <Button
                   key={view.id}
@@ -302,18 +310,6 @@ export function ObjectDetailBody({
                   />
                 </Button>
               ))}
-              {artwork.model && (
-                <Button
-                  variant="bare"
-                  className={c(styles.thumb, styles.thumb3d, in3d && styles.thumbOn)}
-                  aria-pressed={in3d}
-                  aria-label="View in 3D"
-                  onClick={open3d}
-                >
-                  <Cube size={22} weight="light" aria-hidden />
-                  3D
-                </Button>
-              )}
             </div>
           )}
           {caption && <p className={styles.caption}>{caption}</p>}

@@ -162,7 +162,10 @@ function Model({
         setTimeout(() => {
           pendingRelease.delete(url)
           ktx2?.dispose()
-          useGLTF.clear(url)
+          // Only a file being checked (a blob: of the upload window) is freed: a stored model's
+          // cache is shared with the 3D room, which would load it again (and blink) after the
+          // artwork window closed.
+          if (url.startsWith('blob:')) useGLTF.clear(url)
         }, RELEASE_DELAY_MS),
       )
     }

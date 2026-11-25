@@ -222,9 +222,9 @@
   color: var(--public-secondary);
 }
 
-// Inquire, black, 48 px; then View in 3D, outlined. Through .info: outranks Button.
-.info .inquire,
-.info .turn {
+// Inquire, black, 48 px. Through .info: outranks Button. (No "View in 3D" here: the page opens
+// on the 3D model, owner 2026-11-25.)
+.info .inquire {
   width: 100%;
   min-height: var(--space-12);
   display: flex;
@@ -246,16 +246,6 @@
 
   &:hover {
     background: var(--public-dark);
-  }
-}
-
-.info .turn {
-  border: 1px solid var(--public-text);
-  background: transparent;
-  color: var(--public-text);
-
-  &:hover {
-    background: var(--public-field);
   }
 }
 
