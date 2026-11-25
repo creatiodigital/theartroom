@@ -20,10 +20,12 @@ import {
   dropItem,
   faceUnderRay,
   keepChildrenOnFaces,
+  modelOffset,
   overhangs,
   placeMap,
   removeItems,
   rotateOffset,
+  sameSpots,
   slideOnFace,
   supportUnder,
 } from '../src/lib/floor/floorPlacement'
@@ -539,4 +541,37 @@ test('the 3D drag finds the face under the pointer: the nearest box, never itsel
   expect(faceUnderRay(turned, sizes, side, 0, new Set())!.face).toBe('left')
   // Another room never counts.
   expect(faceUnderRay(layout, sizes, down, 1, new Set())).toBeNull()
+})
+
+test('review: an Alt-dragged support off a top keeps its height; only an Object off a top lands on the floor', () => {
+  const block = pedestal({ id: 'b', h: 120 })
+  const board = plank({ parentId: 'b', face: 'top', lift: 0 })
+  const off = dropItem(layoutOf(block, board), board, 5, 5, sizes, { snap: false })
+  expect([off.parentId, off.lift]).toEqual([null, 120])
+  const o = object({ parentId: 'b', face: 'top' })
+  expect(dropItem(layoutOf(block, o), o, 5, 5, sizes, { snap: false }).lift).toBe(0)
+})
+
+test('review: a click is not a move (nothing to drop)', () => {
+  const a = layoutOf(plank(), object({ id: 's', artworkId: 'alejandro', x: 0, z: -1.8 }))
+  expect(sameSpots(a, a, ['s'])).toBe(true)
+  const moved = { ...a, items: a.items.map((i) => (i.id === 's' ? { ...i, x: 0.01 } : i)) }
+  expect(sameSpots(a, moved, ['s'])).toBe(false)
+  expect(sameSpots(a, moved, ['pl'])).toBe(true)
+})
+
+test('review: a model with no measured size stands on its placed box, never in the floor', () => {
+  // A 1 m model (its own box from y −0.1 to 0.9) placed as the 40 cm fallback, at scale 1.
+  const box = { min: { x: -0.2, y: -0.1, z: -0.3 }, max: { x: 0.2, y: 0.9, z: 0.3 } }
+  const at = placeMap(layoutOf(object({ artworkId: 'nobody' })), {}).get('o1')!
+  const [x, y, z] = modelOffset(box, at, 1, false)
+  expect(x).toBeCloseTo(0)
+  expect(z).toBeCloseTo(0)
+  // Its bottom at the placed box's bottom: the group's centre is at cy, the bottom cy − 0.2.
+  expect(at.cy + (box.min.y + y)).toBeCloseTo(at.y)
+  // Measured: its box centred on the placed centre.
+  const measured = modelOffset(box, at, 1, true)
+  expect(measured[0]).toBeCloseTo(0)
+  expect(measured[1]).toBeCloseTo(-0.4)
+  expect(measured[2]).toBeCloseTo(0)
 })

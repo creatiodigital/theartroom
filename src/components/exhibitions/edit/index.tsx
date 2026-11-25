@@ -18,6 +18,7 @@ import { resetArtworks } from '@/redux/slices/artworkSlice'
 import { useGetExhibitionByUrlQuery } from '@/redux/slices/exhibitionApi'
 import { setExhibition } from '@/redux/slices/exhibitionSlice'
 import { resetScene } from '@/redux/slices/sceneSlice'
+import { hideFloorView } from '@/redux/slices/floorSlice'
 import {
   resetWallView,
   showWallView,
@@ -54,6 +55,10 @@ export const ExhibitionEditPage = ({
   useEffect(() => {
     preloadAllFloorMaterials()
   }, [])
+
+  // Leaving the editor closes the Floor view: the floor slice outlives the page, and a Floor view
+  // left "open" would keep the room's Objects in compose mode for visitors.
+  useEffect(() => () => void dispatch(hideFloorView()), [dispatch])
 
   // Reset all exhibition-related state when page loads or exhibition changes
   // This ensures complete isolation between exhibitions

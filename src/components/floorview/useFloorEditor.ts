@@ -16,6 +16,7 @@ import {
   detachItem,
   dropItem,
   placeMap,
+  sameSpots,
   slideOnFace,
   type Placed,
 } from '@/lib/floor/floorPlacement'
@@ -141,6 +142,11 @@ export function useFloorEditor() {
       const d = drag.current
       drag.current = null
       if (!d) return
+      // A click picks; it never drops (or attaches) what did not move.
+      if (sameSpots(d.before, layout, d.ids)) {
+        apply(d.before)
+        return
+      }
       const ids = new Set(d.ids)
       const moved = layout
       const before = new Map(d.before.items.map((i) => [i.id, i]))
@@ -156,7 +162,7 @@ export function useFloorEditor() {
       })
       settle(d.before, { ...moved, items })
     },
-    [layout, settle, sizes],
+    [apply, layout, settle, sizes],
   )
 
   /** Keep the preview as it is, as one undo step. */

@@ -101,11 +101,13 @@ export function useFloorDrag(layout: FloorLayout | null, sizes: FloorSizes, floo
         return new Ray(origin, raycaster.ray.direction.clone())
       }
 
+      // The last move across the room, kept while Shift raises or lowers.
+      let across = { dx: 0, dz: 0 }
       const move = (e: PointerEvent) => {
         const editor = floorBridge.editor
         if (!editor || !moved(e)) return
         const ray = rayAt(e)
-        if (!group && !e.altKey) {
+        if (!group && !e.altKey && !e.shiftKey) {
           const hit = faceUnderRay(before, sizes, ray, item.room, exclude)
           if (hit) {
             const on = attachTo(before, item, hit.id, hit.face, hit.point, sizes)
@@ -126,7 +128,12 @@ export function useFloorDrag(layout: FloorLayout | null, sizes: FloorSizes, floo
           editor.previewItems((items) =>
             items.map((i) =>
               ids.includes(i.id) && !i.parentId
-                ? { ...i, lift: Math.max(0, Math.min(1000, i.lift + dy)) }
+                ? {
+                    ...i,
+                    x: i.x + across.dx,
+                    z: i.z + across.dz,
+                    lift: Math.max(0, Math.min(1000, i.lift + dy)),
+                  }
                 : i,
             ),
           )
@@ -135,7 +142,9 @@ export function useFloorDrag(layout: FloorLayout | null, sizes: FloorSizes, floo
         // Across the room: by where the pointer meets the floor (a level plane near the eye would
         // throw it far), or the level it was grabbed at when the pointer is above the horizon.
         const p = levelHit(ray)
-        if (p) editor.dragTo(p.x - p.from.x, p.z - p.from.z, { free: true })
+        if (!p) return
+        across = { dx: p.x - p.from.x, dz: p.z - p.from.z }
+        editor.dragTo(across.dx, across.dz, { free: true })
       }
       const up = () => {
         cleanup.current?.()

@@ -22,6 +22,7 @@ import type { FloorLayout, FloorObject, FloorPedestal } from '@/lib/floor/floorL
 import {
   belowFloor,
   faceFrame,
+  modelOffset,
   overhangs,
   placeAll,
   type Placed,
@@ -166,16 +167,13 @@ function FloorModel({
   const { scene } = useGLTF(artwork.modelUrl, false, true, extendFor(gl))
   // A clone per Object: the cached scene can only sit in one place at a time.
   const model = useMemo(() => scene.clone(true), [scene])
-  // The bounding box's centre on the placed centre (owner: never the mesh origin).
-  const centred = useMemo<[number, number, number]>(() => {
+  // The model's box on the placed box (owner: never the mesh origin): centred, or, with no measured
+  // size, standing on its bottom.
+  const box = useMemo(() => {
     model.updateMatrixWorld(true)
-    const box = new Box3().setFromObject(model)
-    return [
-      -(box.min.x + box.max.x) / 2,
-      -(box.min.y + box.max.y) / 2,
-      -(box.min.z + box.max.z) / 2,
-    ]
+    return new Box3().setFromObject(model)
   }, [model])
+  const centred = modelOffset(box, at, o.scale, !!artwork.boundsCm)
   useEffect(() => {
     model.traverse((node: Object3D) => {
       if ((node as Mesh).isMesh) node.userData.bakeCaster = o.castShadow

@@ -495,8 +495,36 @@ export function dropItem<T extends FloorItem>(
     }
   }
   if (!item.parentId) return { ...item, x, z }
+  // An Object off a top lands on the floor (as O6); anything else keeps the height it was seen at.
   const free = detachItem(all, item, sizes)
-  return { ...free, x, z, lift: item.face === 'top' ? 0 : free.lift }
+  return { ...free, x, z, lift: item.kind === 'object' && item.face === 'top' ? 0 : free.lift }
+}
+
+/** None of these items moved or changed what it is on between two layouts (a click, not a drag). */
+export function sameSpots(before: FloorLayout, after: FloorLayout, ids: string[]): boolean {
+  const key = (i: FloorItem | undefined) =>
+    i && [i.x, i.z, i.lift, i.parentId, i.face, i.offsetX, i.offsetY, i.offsetZ].join('|')
+  return ids.every(
+    (id) =>
+      key(before.items.find((i) => i.id === id)) === key(after.items.find((i) => i.id === id)),
+  )
+}
+
+/**
+ * Where an Object's model sits in its placed (and scaled) group: its own box centred on the
+ * placed centre; with no measured size (the 40 cm fallback), its bottom on the placed box's
+ * bottom, so it never sinks into what it stands on. Model units (before the group's scale).
+ */
+export function modelOffset(
+  box: { min: { x: number; y: number; z: number }; max: { x: number; y: number; z: number } },
+  at: Placed,
+  scale: number,
+  measured: boolean,
+): [number, number, number] {
+  const x = -(box.min.x + box.max.x) / 2
+  const z = -(box.min.z + box.max.z) / 2
+  const y = measured ? -(box.min.y + box.max.y) / 2 : -box.min.y - at.size.h / 200 / scale
+  return [x, y, z]
 }
 
 /** A resized parent: its children keep their offsets, and any whose centre left its face is centred. */

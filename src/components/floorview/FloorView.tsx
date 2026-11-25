@@ -214,14 +214,16 @@ export function FloorView() {
     (x: number, z: number, from?: FloorPedestal) => {
       if (!room) return
       const shape = pedestalShape('box')
-      // A copy stands free beside the original (whatever that is attached to).
-      const p: FloorPedestal = from
+      // A copy stands free beside the original (whatever that is attached to): (x, z) are given
+      // from the original's stored spot, which goes stale once what it is on moves.
+      const free = from && detachItem(layout, from, editor.sizes)
+      const p: FloorPedestal = from && free
         ? {
-            ...detachItem(layout, from, editor.sizes),
+            ...free,
             id: newId('p'),
             name: nextPedestalName(from.shape),
-            x,
-            z,
+            x: free.x + (x - from.x),
+            z: free.z + (z - from.z),
             locked: false,
           }
         : {
