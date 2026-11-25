@@ -130,9 +130,10 @@ export const ArtworkDetailBody = ({
 }: ArtworkDetailBodyProps) => {
   const [isInquireOpen, setIsInquireOpen] = useState(false)
   // The work's four views (owner, 2026-11-20): the framed view, then three photos of the print.
-  // Artwork pages only — the 3D room's pop-up keeps the framed view alone.
+  // On the artwork page and in the 3D room's pop-up alike (owner, 2026-11-25; the pop-up kept the
+  // framed view alone until then).
   const withPhotos =
-    surface === 'page' && presentation?.photos && artwork.imageUrl
+    presentation?.photos && artwork.imageUrl
       ? { ...presentation, photos: presentation.photos }
       : null
   const strip = useViewsStrip(withPhotos ? VIEW_COUNT : 1)
