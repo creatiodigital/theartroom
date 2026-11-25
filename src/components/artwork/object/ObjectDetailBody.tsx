@@ -151,24 +151,23 @@ export function ObjectDetailBody({
               ))}
             <h1 className={detail.title}>{title}</h1>
             {artwork.year && <span className={detail.fact}>{artwork.year}</span>}
+          </div>
+
+          {/* As an image artwork's page (owner, 2026-11-25: "Why so many inconsistencies"): under
+              the divider the technical lines, then the size with its cm | in, then the same
+              outlined Inquire. */}
+          <div className={detail.purchase}>
+            {technique}
             {sizeLine && (
               <span className={styles.sizeRow}>
                 <span className={detail.fact}>{sizeLine}</span>
-                <UnitsSwitch className={styles.units} />
+                <UnitsSwitch />
               </span>
             )}
-            <span className={styles.lines}>{technique}</span>
-          </div>
-
-          <div className={detail.purchase}>
-            <p className={styles.ask}>
-              For price, availability and shipping, ask the gallery. We answer within two working
-              days.
-            </p>
             <Button
-              variant="bare"
+              variant="secondary"
               label="Inquire"
-              className={styles.inquire}
+              className={detail.inquire}
               onClick={() => {
                 track('inquire_open', { item_id: artwork.slug, surface: 'page', for_sale: false })
                 setInquireOpen(true)

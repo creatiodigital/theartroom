@@ -507,3 +507,6 @@ object! unless it's a pedestal", "I cannot navigate in this 3D space with the ke
   page (owner: "we cannot block the whole page to scroll down"). + / − buttons (top right) zoom in steps between
   75 % and 150 % of the framed distance; on the artwork page square and outlined like Reset view. Hints: "Drag to
   turn (it around)".
+- The Object page's info column is the image artwork page's (owner: "Why so many inconsistencies"): artist, title,
+  year; under the divider the materials, the size with its cm | in, then the same outlined Inquire (no black
+  Inquire, no "For price, availability and shipping…" line).

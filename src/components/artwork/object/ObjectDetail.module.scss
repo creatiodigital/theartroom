@@ -184,55 +184,6 @@
   gap: var(--space-3);
 }
 
-.units {
-  flex: 0 0 auto;
-  font-size: var(--text-xs);
-}
-
-// Materials, the base, the edition: small and quiet, under the size.
-.lines {
-  display: flex;
-  flex-direction: column;
-  margin-top: var(--space-2);
-  font-size: var(--text-xs);
-  line-height: 1.7;
-  color: var(--public-muted);
-}
-
-.ask {
-  margin: 0;
-  font-size: var(--text-sm);
-  line-height: 1.6;
-  color: var(--public-secondary);
-}
-
-// Inquire, black, 48 px. Through .info: outranks Button. (No "View in 3D" here: the page opens
-// on the 3D model, owner 2026-11-25.)
-.info .inquire {
-  width: 100%;
-  min-height: var(--space-12);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  padding: 0 var(--space-5);
-  border-radius: 0;
-  font-size: var(--text-xs);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.info .inquire {
-  border: 0;
-  background: var(--public-text);
-  color: var(--color-white);
-
-  &:hover {
-    background: var(--public-dark);
-  }
-}
-
 // ── Below the work ───────────────────────────────────────────────────────
 .belowSection {
   margin-top: var(--space-10);
