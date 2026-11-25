@@ -214,18 +214,12 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
               }
             </PrintPresentation>
           </div>
+          {/* As the artwork page: the artist in small caps, the title upright, the year bold on its
+              own line (owner, 2026-11-25). */}
           <div className={styles.workText}>
-            <span className={styles.workTitle}>
-              {/* Title italic only when the year follows (owner, 2026-11-20). */}
-              {artwork.year ? (
-                <>
-                  <cite>{artwork.title}</cite>, {artwork.year}
-                </>
-              ) : (
-                artwork.title
-              )}
-            </span>
             <span className={styles.workArtist}>{artwork.artistName}</span>
+            <span className={styles.workTitle}>{artwork.title}</span>
+            {artwork.year ? <span className={styles.workYear}>{artwork.year}</span> : null}
           </div>
         </div>
 

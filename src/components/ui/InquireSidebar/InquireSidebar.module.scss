@@ -133,7 +133,7 @@
 .workText {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-1);
   min-width: 0;
 }
 
@@ -144,10 +144,23 @@
   color: var(--public-text);
 }
 
+// As the artwork page's info column (owner, 2026-11-25: "follow the same logic as in the artwork
+// page"): the artist in small spaced capitals, the title upright, the year bold and black.
 .workArtist {
   font-family: var(--font-sans), var(--font-sans-fallback);
-  font-size: 13px;
-  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--public-secondary);
+}
+
+.workYear {
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+  line-height: var(--leading-normal);
+  color: var(--public-text);
 }
 
 .content {
