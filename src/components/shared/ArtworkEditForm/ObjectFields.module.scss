@@ -1,7 +1,7 @@
 @use '@/styles/mixins' as *;
 
-// An Object's Size, Edition and Technical info (docs/objects, objects-editor.dc.html). Labels,
-// inputs and help lines come from ArtworkEditForm.module.scss; this adds the unit boxes and grids.
+// An Object's Size (docs/objects, objects-editor.dc.html). Labels, inputs and help lines come
+// from ArtworkEditForm.module.scss; this adds the unit boxes.
 
 .group {
   min-width: 0;
@@ -76,15 +76,4 @@
   padding: 0 var(--space-3);
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
-}
-
-// Where it can stand · Display, then Signed · Certificate: two across from 900px.
-.techGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-4);
-
-  @include media-up(tablet) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }

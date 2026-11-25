@@ -24,7 +24,6 @@ export const ARTWORK_SECTION = {
   // Objects (docs/objects, objects-editor.dc.html).
   cover: { id: 'artwork-section-image', title: 'Cover photo' },
   objectMedia: { id: 'artwork-section-object-media', title: 'Photos & reels' },
-  technical: { id: 'artwork-section-technical', title: 'Technical info' },
   space: { id: 'artwork-section-space', title: 'In the 3D space' },
 } as const satisfies Record<string, ArtworkSection>
 

@@ -22,7 +22,7 @@ const parsed = (body: Record<string, unknown>) => {
 
 test('only the keys sent are returned; null and empty clear', () => {
   expect(parsed({ title: 'Bronze', heightCm: 64 })).toEqual({ heightCm: 64 })
-  expect(parsed({ heightCm: null, careNote: '' })).toEqual({ heightCm: null, careNote: null })
+  expect(parsed({ heightCm: null, weightKg: '' })).toEqual({ heightCm: null, weightKg: null })
   expect(parsed({})).toEqual({})
 })
 
@@ -41,15 +41,6 @@ test('sizes and weight must be positive numbers', () => {
   }
 })
 
-test('choices accept only their values', () => {
-  expect(parsed({ placement: 'both', displayMode: 'pedestal' })).toEqual({
-    placement: 'both',
-    displayMode: 'pedestal',
-  })
-  expect(parseObjectFields({ placement: 'garden' }).ok).toBe(false)
-  expect(parseObjectFields({ displayMode: 'shelf' }).ok).toBe(false)
-})
-
 test('no edition: an Object is always a unique piece, so edition fields are never written', () => {
   expect(
     parsed({
@@ -59,15 +50,6 @@ test('no edition: an Object is always a unique piece, so edition fields are neve
       objectArtistProofs: 2,
     }),
   ).toEqual({})
-})
-
-test('notes: one line for signed / certificate, lines kept for care, length capped', () => {
-  expect(parsed({ signedNote: 'Signed\non the base', careNote: 'Dust only.\nNo water.' })).toEqual({
-    signedNote: 'Signed on the base',
-    careNote: 'Dust only.\nNo water.',
-  })
-  expect(parseObjectFields({ certificateNote: 'x'.repeat(301) }).ok).toBe(false)
-  expect(parseObjectFields({ careNote: 42 }).ok).toBe(false)
 })
 
 test('the 3D model fields are never taken from a request', () => {
@@ -134,4 +116,16 @@ test('visitor size (Q-O9): cm as entered, inches one decimal; weight always kg',
   expect(formatObjectSize({}, 'cm')).toBeNull()
   expect(formatWeight(18)).toBe('18 kg')
   expect(formatWeight(2.54)).toBe('2.5 kg')
+})
+
+test('no technical info: placement, display and notes are never written', () => {
+  expect(
+    parsed({
+      placement: 'both',
+      displayMode: 'pedestal',
+      signedNote: 'Signed on the base',
+      certificateNote: 'Yes',
+      careNote: 'Dust only.',
+    }),
+  ).toEqual({})
 })

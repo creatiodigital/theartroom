@@ -8,27 +8,10 @@
  *
  * Client-safe: no Prisma import, so the editor can share the constants.
  */
-import type {
-  TObjectDisplayMode,
-  TObjectMediaRole,
-  TObjectModelStatus,
-  TObjectPlacement,
-} from '@/types/artwork'
-import { sanitizeLine, sanitizeMultiline } from '@/utils/sanitizeLine'
+import type { TObjectMediaRole, TObjectModelStatus } from '@/types/artwork'
 
 export const isObjectArtwork = (type: string | null | undefined): boolean => type === 'object'
 
-export const OBJECT_PLACEMENTS = [
-  'indoors',
-  'outdoors',
-  'both',
-] as const satisfies readonly TObjectPlacement[]
-export const OBJECT_DISPLAY_MODES = [
-  'floor',
-  'pedestal',
-  'wall',
-  'hanging',
-] as const satisfies readonly TObjectDisplayMode[]
 export const OBJECT_MODEL_STATUSES = [
   'none',
   'ready',
@@ -72,11 +55,6 @@ export type ObjectFieldsInput = {
   widthCm?: number | null
   depthCm?: number | null
   weightKg?: number | null
-  placement?: TObjectPlacement | null
-  displayMode?: TObjectDisplayMode | null
-  signedNote?: string | null
-  certificateNote?: string | null
-  careNote?: string | null
 }
 
 export type ParsedObjectFields =
@@ -86,8 +64,6 @@ export type ParsedObjectFields =
 /** Largest size and weight accepted: far above any real piece, there only to refuse garbage. */
 const MAX_SIZE_CM = 10_000
 const MAX_WEIGHT_KG = 100_000
-const MAX_NOTE_LINE = 300
-const MAX_CARE_NOTE = 2_000
 
 const SIZE_FIELDS = [
   ['heightCm', 'Height'],
@@ -120,25 +96,6 @@ const toPositive = (value: unknown, label: string, max: number, step: number): n
   return n
 }
 
-const toChoice = <T extends string>(
-  value: unknown,
-  choices: readonly T[],
-  label: string,
-): T | null => {
-  if (isBlank(value)) return null
-  if (typeof value === 'string' && (choices as readonly string[]).includes(value)) return value as T
-  throw new FieldError(`${label} must be one of: ${choices.join(', ')}.`)
-}
-
-const toNote = (value: unknown, label: string, multiline: boolean): string | null => {
-  if (isBlank(value)) return null
-  if (typeof value !== 'string') throw new FieldError(`${label} must be text.`)
-  const clean = multiline ? sanitizeMultiline(value).trim() : sanitizeLine(value)
-  const max = multiline ? MAX_CARE_NOTE : MAX_NOTE_LINE
-  if (clean.length > max) throw new FieldError(`${label} is too long (at most ${max} characters).`)
-  return clean || null
-}
-
 /**
  * The Object fields of a request body, validated and normalised. Only the keys the body carries
  * are returned (an absent key leaves the stored value as it is); `null` or '' clears a field.
@@ -155,17 +112,6 @@ export function parseObjectFields(body: Record<string, unknown>): ParsedObjectFi
       if (has(key)) data[key] = toPositive(body[key], label, MAX_SIZE_CM, 0.1)
     }
     if (has('weightKg')) data.weightKg = toPositive(body.weightKg, 'Weight', MAX_WEIGHT_KG, 0.01)
-    if (has('placement')) {
-      data.placement = toChoice(body.placement, OBJECT_PLACEMENTS, 'Where it can stand')
-    }
-    if (has('displayMode')) {
-      data.displayMode = toChoice(body.displayMode, OBJECT_DISPLAY_MODES, 'Display')
-    }
-    if (has('signedNote')) data.signedNote = toNote(body.signedNote, 'Signed', false)
-    if (has('certificateNote')) {
-      data.certificateNote = toNote(body.certificateNote, 'Certificate', false)
-    }
-    if (has('careNote')) data.careNote = toNote(body.careNote, 'Care and installation', true)
   } catch (error) {
     if (error instanceof FieldError) return { ok: false, error: error.message }
     throw error
@@ -257,18 +203,3 @@ export function objectMediaSummary({ photos, videos, reels }: ObjectMediaCounts)
 }
 
 // ── Visitor wording (docs/objects O5, objects-artwork-page-*.dc.html) ──────────
-
-/** Details › Where it can stand. */
-export const OBJECT_PLACEMENT_LABEL: Record<string, string> = {
-  indoors: 'Indoors',
-  outdoors: 'Outdoors',
-  both: 'Indoors and outdoors',
-}
-
-/** Details › Display (the owner's word is "pedestal", docs/objects). */
-export const OBJECT_DISPLAY_LABEL: Record<string, string> = {
-  floor: 'On the floor',
-  pedestal: 'On a pedestal',
-  wall: 'On a wall',
-  hanging: 'Hanging',
-}

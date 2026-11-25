@@ -36,7 +36,6 @@ import { LimitedVariantsEditor } from './LimitedVariantsEditor'
 import { ArtworkMediaManager } from './ArtworkMediaManager'
 import {
   ObjectSize,
-  ObjectTechnicalInfo,
   objectFormFields,
   type ObjectFormFields,
 } from './ObjectFields'
@@ -162,11 +161,6 @@ export type Artwork = {
   widthCm?: number | null
   depthCm?: number | null
   weightKg?: number | null
-  placement?: string | null
-  displayMode?: string | null
-  signedNote?: string | null
-  certificateNote?: string | null
-  careNote?: string | null
 }
 
 /** The form's fields; an Object's own (`ObjectFormFields`) are empty for the other types. */
@@ -789,7 +783,6 @@ export const ArtworkEditForm = ({
     showOpenPrintOptions && ARTWORK_SECTION.ready,
     formData.artworkType === 'sound' && ARTWORK_SECTION.audioFile,
     ARTWORK_SECTION.details,
-    isObject && ARTWORK_SECTION.technical,
     formData.artworkType === 'text' && ARTWORK_SECTION.text,
     hasArtDetails && ARTWORK_SECTION.description,
     hasArtDetails && ARTWORK_SECTION.where,
@@ -1587,15 +1580,6 @@ export const ArtworkEditForm = ({
                   worked out from the file or the limited variants (`getArtworkSizes`). The stored
                   `dimensions` stays in the form state, so a save sends it back untouched. */}
             </EditorPanel>
-
-            {isObject && (
-              <EditorPanel
-                section={ARTWORK_SECTION.technical}
-                description="For collectors and curators. Every field is optional, and only filled ones are shown."
-              >
-                <ObjectTechnicalInfo fields={formData} onChange={onFormChange} />
-              </EditorPanel>
-            )}
 
             {/* Text content - for text artworks (plain text only for 3D) */}
             {formData.artworkType === 'text' && (

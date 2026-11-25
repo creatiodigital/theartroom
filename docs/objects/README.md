@@ -455,3 +455,9 @@ uploader just for 3D objects", "it's a cover image, same as the rest").
 just for the sculptures, not supplementary bases"). Removed the editor's checkbox, the visitor page's "Base included
 in the size" / ", with base", and `Artwork.sizeIncludesBase` (one column fewer; the dev database keeps it until the
 owner's next push). H × W × D is always the sculpture alone.
+
+**No Technical info** (2026-11-25, same branch; owner: "Remove this too. We will not fill that info here").
+Removed the editor's Technical info section (Where it can stand, Display, Signed / marked, Certificate, Care and
+installation), its rows on the visitor page (Details keeps Size · weight), and `Artwork.placement`, `displayMode`,
+`signedNote`, `certificateNote`, `careNote` (five columns fewer; the dev database keeps them until the owner's
+next push).

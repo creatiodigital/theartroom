@@ -256,11 +256,6 @@ model Artwork {
   widthCm            Float?
   depthCm            Float?
   weightKg           Float?
-  placement          String? // "indoors" | "outdoors" | "both"
-  displayMode        String? // "floor" | "pedestal" | "wall" | "hanging"
-  signedNote         String?
-  certificateNote    String?
-  careNote           String?
   // The 3D model: one cleaned .glb uploaded by the gallery team (step O4), stored in R2 under
   // the artwork. Written only by the dedicated model routes, never by the artwork routes.
   modelUrl           String?

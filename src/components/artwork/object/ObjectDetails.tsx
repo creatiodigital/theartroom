@@ -1,7 +1,6 @@
 'use client'
 
 import { TextSection } from '@/components/ui/TextSection'
-import { OBJECT_DISPLAY_LABEL, OBJECT_PLACEMENT_LABEL } from '@/lib/artwork/objectArtwork'
 import { formatObjectSize, formatWeight } from '@/lib/units/format'
 import { useUnits } from '@/lib/units/UnitsProvider'
 
@@ -12,11 +11,6 @@ export type ObjectDetailsFields = {
   widthCm: number | null
   depthCm: number | null
   weightKg: number | null
-  placement: string | null
-  displayMode: string | null
-  signedNote: string | null
-  certificateNote: string | null
-  careNote: string | null
 }
 
 /**
@@ -32,20 +26,9 @@ export function ObjectDetails({ fields }: { fields: ObjectDetailsFields }) {
       ? formatWeight(fields.weightKg)
       : null
 
-  const rows = [
-    { label: 'Size', value: sizeValue },
-    {
-      label: 'Where it can stand',
-      value: fields.placement ? (OBJECT_PLACEMENT_LABEL[fields.placement] ?? null) : null,
-    },
-    {
-      label: 'Display',
-      value: fields.displayMode ? (OBJECT_DISPLAY_LABEL[fields.displayMode] ?? null) : null,
-    },
-    { label: 'Signed', value: fields.signedNote },
-    { label: 'Certificate', value: fields.certificateNote },
-    { label: 'Care', value: fields.careNote },
-  ].filter((row): row is { label: string; value: string } => Boolean(row.value))
+  const rows = [{ label: 'Size', value: sizeValue }].filter(
+    (row): row is { label: string; value: string } => Boolean(row.value),
+  )
 
   if (rows.length === 0) return null
 

@@ -573,7 +573,7 @@ like the real Pause switch). Logic and dialogs unchanged.
   "3D model in preparation" (`requested`), else nothing; library rows and the artwork editor's header.
 - **Removed 2026-11-25** · `shared/ArtworkEditForm/ObjectCover.tsx` (`CoverCropFrame`, `CoverPreviews`): an Object's
   cover is the image upload itself (owner: "it's a cover image, same as the rest"), shown whole everywhere.
-- **Built** · `shared/ArtworkEditForm/ObjectFields.tsx` · `ObjectSize` / `ObjectTechnicalInfo { fields; onChange }` (2026-11-25: no Edition)
+- **Built** · `shared/ArtworkEditForm/ObjectFields.tsx` · `ObjectSize { fields; onChange }` (2026-11-25: no Edition, no Technical info)
   and `objectFormFields(stored)`.
 - **Built** · `shared/ArtworkEditForm/ObjectMediaManager.tsx` · `{ artworkId }`: Photos & reels (labels, captions, drag to
   reorder, the Object limits). Upload helpers in `uploadArtworkMedia.ts` (`uploadArtworkMediaFile`, `measureMedia`),

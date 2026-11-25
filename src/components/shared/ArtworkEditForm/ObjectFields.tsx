@@ -1,6 +1,5 @@
 'use client'
 
-import { SegmentedControl } from '@/components/admin/ui/SegmentedControl'
 import { Input } from '@/components/ui/Input'
 import { objectDimensionsText } from '@/lib/artwork/objectArtwork'
 
@@ -16,13 +15,6 @@ export type ObjectFormFields = {
   widthCm: string
   depthCm: string
   weightKg: string
-  /** '' | 'indoors' | 'outdoors' | 'both' */
-  placement: string
-  /** '' | 'floor' | 'pedestal' | 'wall' | 'hanging' */
-  displayMode: string
-  signedNote: string
-  certificateNote: string
-  careNote: string
 }
 
 type Stored = {
@@ -30,11 +22,6 @@ type Stored = {
   widthCm?: number | null
   depthCm?: number | null
   weightKg?: number | null
-  placement?: string | null
-  displayMode?: string | null
-  signedNote?: string | null
-  certificateNote?: string | null
-  careNote?: string | null
 }
 
 const text = (n: number | null | undefined) => (typeof n === 'number' ? String(n) : '')
@@ -45,11 +32,6 @@ export const objectFormFields = (data: Stored): ObjectFormFields => ({
   widthCm: text(data.widthCm),
   depthCm: text(data.depthCm),
   weightKg: text(data.weightKg),
-  placement: data.placement ?? '',
-  displayMode: data.displayMode ?? '',
-  signedNote: data.signedNote ?? '',
-  certificateNote: data.certificateNote ?? '',
-  careNote: data.careNote ?? '',
 })
 
 /** A typed amount, for the help lines only (the server validates what is saved). */
@@ -62,9 +44,6 @@ type FieldsProps = {
   fields: ObjectFormFields
   onChange: (field: keyof ObjectFormFields, value: string | boolean) => void
 }
-
-/** Clicking the pressed option clears it: every choice here is optional. */
-const toggle = (current: string, next: string) => (current === next ? '' : next)
 
 function UnitField({
   id,
@@ -160,84 +139,6 @@ export function ObjectSize({ fields, onChange }: FieldsProps) {
           </span>
         )}
       </fieldset>
-    </>
-  )
-}
-
-/** Technical info (objects-editor.dc.html): every field optional; only filled ones show. */
-export function ObjectTechnicalInfo({ fields, onChange }: FieldsProps) {
-  return (
-    <>
-      <div className={styles.techGrid}>
-        <div className={styles.group}>
-          <span className={formStyles.label}>Where it can stand</span>
-          <SegmentedControl
-            label="Where it can stand"
-            options={[
-              { id: 'indoors', label: 'Indoors' },
-              { id: 'outdoors', label: 'Outdoors' },
-              { id: 'both', label: 'Both' },
-            ]}
-            value={fields.placement}
-            onChange={(id) => onChange('placement', toggle(fields.placement, id))}
-          />
-        </div>
-        <div className={styles.group}>
-          <span className={formStyles.label}>Display</span>
-          <SegmentedControl
-            label="Display"
-            options={[
-              { id: 'floor', label: 'Floor' },
-              { id: 'pedestal', label: 'Pedestal' },
-              { id: 'wall', label: 'Wall' },
-              { id: 'hanging', label: 'Hanging' },
-            ]}
-            value={fields.displayMode}
-            onChange={(id) => onChange('displayMode', toggle(fields.displayMode, id))}
-          />
-        </div>
-        <div className={formStyles.field}>
-          <label htmlFor="object-signed" className={formStyles.label}>
-            Signed / marked
-          </label>
-          <Input
-            id="object-signed"
-            type="text"
-            size="bare"
-            inputClassName={formStyles.input}
-            maxLength={300}
-            value={fields.signedNote}
-            onChange={(e) => onChange('signedNote', e.target.value)}
-          />
-        </div>
-        <div className={formStyles.field}>
-          <label htmlFor="object-certificate" className={formStyles.label}>
-            Certificate
-          </label>
-          <Input
-            id="object-certificate"
-            type="text"
-            size="bare"
-            inputClassName={formStyles.input}
-            maxLength={300}
-            value={fields.certificateNote}
-            onChange={(e) => onChange('certificateNote', e.target.value)}
-          />
-        </div>
-      </div>
-      <div className={formStyles.field}>
-        <label htmlFor="object-care" className={formStyles.label}>
-          Care and installation
-        </label>
-        <textarea
-          id="object-care"
-          className={formStyles.textarea}
-          rows={3}
-          maxLength={2000}
-          value={fields.careNote}
-          onChange={(e) => onChange('careNote', e.target.value)}
-        />
-      </div>
     </>
   )
 }
