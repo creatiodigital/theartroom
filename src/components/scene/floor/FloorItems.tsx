@@ -9,11 +9,12 @@ import { Box3, type Mesh, type Object3D, type WebGLRenderer } from 'three'
 import { KTX2Loader } from 'three-stdlib'
 
 import { useBenchRooms } from '@/components/scene/spaces/objects/Bench/benchSettings'
-import { floorSizes, type FloorArtwork } from '@/lib/floor/floorArtworks'
-import type { FloorObject, FloorPedestal } from '@/lib/floor/floorLayout'
-import { placeAll, type Placed } from '@/lib/floor/floorPlacement'
+import { floorSizes, type FloorArtwork, type FloorSizes } from '@/lib/floor/floorArtworks'
+import type { FloorLayout, FloorObject, FloorPedestal } from '@/lib/floor/floorLayout'
+import { belowFloor, overhangs, placeAll, type Placed } from '@/lib/floor/floorPlacement'
 import { clickedSide, sideFace, toObject, toWorld } from '@/lib/floor/objectSide'
-import { FINISH_ROUGHNESS, pedestalMaterial, pedestalOutline } from '@/lib/floor/pedestals'
+import { FINISH_ROUGHNESS, pedestalMaterial } from '@/lib/floor/pedestals'
+import { woodMapSet } from '@/components/scene/spaces/objects/Frame/woodTextures'
 import { useFloorRooms } from '@/components/floorview/useFloorRooms'
 import { DOUBLE_TAP_MS, useTapTracker } from '@/components/scene/spaces/objects/tapTracker'
 import { openFloorObject } from '@/redux/slices/floorSlice'
@@ -28,8 +29,9 @@ const CLICK_MAX_MS = 300
 
 /**
  * Everything standing on the floor (docs/objects O6): the exhibition's pedestals, built from their
- * parameters, and its Objects, each its own .glb at real size (× its scale) with the bottom centre
- * of its bounding box on its spot. Mounted beside the benches, in the editor and for visitors.
+ * parameters, and its Objects, each its own .glb at real size (× its scale), each one's bounding
+ * box centred where `placeAll` puts it, turned as it says (floor composing: attached to each other's
+ * faces, tilted). Mounted beside the benches, in the editor and for visitors.
  * Meshes, so the light bake counts them as casters, as it does the benches (an Object whose
  * "Casts a shadow" is off is marked `bakeCaster: false`).
  */
@@ -51,17 +53,39 @@ const extendFor = (gl: WebGLRenderer) => (loader: { setKTX2Loader: (l: KTX2Loade
 /** A pedestal's colour, roughness, metalness and opacity from its material and finish. */
 export function pedestalLook(p: FloorPedestal) {
   const material = pedestalMaterial(p.material)
-  const colour = p.colour.startsWith('#')
-    ? p.colour
-    : (material.colours.find((c) => c.id === p.colour)?.hex ?? material.colours[0].hex)
+  const colour = material.colours.find((c) => c.id === p.colour)
   return {
-    color: colour,
+    // Wood: the texture is the colour.
+    color: colour?.texture ? '#ffffff' : p.colour.startsWith('#') ? p.colour : (colour?.hex ?? material.colours[0].hex),
     roughness: material.finishes ? FINISH_ROUGHNESS[p.finish] : material.roughness,
     metalness: material.metalness,
     transparent: material.opacity !== undefined,
     opacity: material.opacity ?? 1,
   }
 }
+
+/** Where an item is drawn: its box's centre, turned (`placeAll`). */
+const transformOf = (at: Placed, floorY: number) => ({
+  position: [at.x, floorY + at.cy, at.z] as [number, number, number],
+  quaternion: at.quaternion,
+})
+
+/** Wood (the frames' PBR maps, owner 2026-11-25): its own clones of the shared maps, grain seeded by id. */
+function useWood(p: FloorPedestal) {
+  const texture = pedestalMaterial(p.material).colours.find((c) => c.id === p.colour)?.texture
+  const maps = useMemo(() => (texture ? woodMapSet(texture, p.id) : null), [texture, p.id])
+  useEffect(
+    () => () => {
+      maps?.map.dispose()
+      maps?.normalMap.dispose()
+      maps?.roughnessMap.dispose()
+    },
+    [maps],
+  )
+  return maps
+}
+
+const WOOD_NORMAL_SCALE: [number, number] = [0.5, 0.5]
 
 function Pedestal({ p, at, floorY }: { p: FloorPedestal; at: Placed; floorY: number }) {
   const geometry = useMemo(
@@ -70,16 +94,23 @@ function Pedestal({ p, at, floorY }: { p: FloorPedestal; at: Placed; floorY: num
   )
   useEffect(() => () => geometry.dispose(), [geometry])
   const look = pedestalLook(p)
+  const wood = useWood(p)
   return (
-    <mesh
-      name={`pedestal-${p.id}`}
-      geometry={geometry}
-      position={[at.x, floorY + at.y, at.z]}
-      rotation={[0, at.rotY * RAD, 0]}
-      userData={{ floorItemId: p.id }}
-    >
-      <meshStandardMaterial {...look} depthWrite={!look.transparent} />
-    </mesh>
+    <group name={`pedestal-${p.id}`} {...transformOf(at, floorY)} userData={{ floorItemId: p.id }}>
+      {/* The geometry stands on y = 0: its centre to the group's. */}
+      <mesh geometry={geometry} position={[0, -p.h / 200, 0]} userData={{ floorItemId: p.id }}>
+        {wood ? (
+          <meshStandardMaterial
+            key="wood"
+            {...look}
+            {...wood}
+            normalScale={WOOD_NORMAL_SCALE}
+          />
+        ) : (
+          <meshStandardMaterial key="flat" {...look} depthWrite={!look.transparent} />
+        )}
+      </mesh>
+    </group>
   )
 }
 
@@ -100,11 +131,15 @@ function FloorModel({
   const { scene } = useGLTF(artwork.modelUrl, false, true, extendFor(gl))
   // A clone per Object: the cached scene can only sit in one place at a time.
   const model = useMemo(() => scene.clone(true), [scene])
-  // The bounding box's bottom centre sits on the spot (owner: never the mesh origin).
-  const base = useMemo<[number, number, number]>(() => {
+  // The bounding box's centre on the placed centre (owner: never the mesh origin).
+  const centred = useMemo<[number, number, number]>(() => {
     model.updateMatrixWorld(true)
     const box = new Box3().setFromObject(model)
-    return [-(box.min.x + box.max.x) / 2, -box.min.y, -(box.min.z + box.max.z) / 2]
+    return [
+      -(box.min.x + box.max.x) / 2,
+      -(box.min.y + box.max.y) / 2,
+      -(box.min.z + box.max.z) / 2,
+    ]
   }, [model])
   useEffect(() => {
     model.traverse((node: Object3D) => {
@@ -129,11 +164,13 @@ function FloorModel({
   const openPage = () => dispatch(openFloorObject(artwork.slug))
   // The side of its box that was clicked (the top or bottom: the nearest side facing the camera):
   // the camera comes to stand in front of it (owner, 2026-11-25).
+  // A tilted Object: its box as the room's axes see it.
   const comeNearer = (hit: { x: number; y: number; z: number }) => {
-    const b = artwork.boundsCm
-    const [w, d, h] = b ? [b.w, b.d, b.h].map((cm) => (cm / 100) * o.scale) : [1, 1, 1]
+    const [w, d, h] = at.upright
+      ? [at.size.w / 100, at.size.d / 100, at.size.h / 100]
+      : [at.max.x - at.min.x, at.max.z - at.min.z, at.max.y - at.min.y]
     const origin = { x: at.x, y: floorY + at.y, z: at.z }
-    const turn = at.rotY * RAD
+    const turn = at.upright ? at.rotY * RAD : 0
     const half = { w: w / 2, d: d / 2 }
     const side = clickedSide(
       toObject(hit, origin, turn),
@@ -198,27 +235,48 @@ function FloorModel({
   return (
     <group
       name={`floorObject-${o.id}`}
-      position={[at.x, floorY + at.y, at.z]}
-      rotation={[0, at.rotY * RAD, 0]}
+      {...transformOf(at, floorY)}
       scale={o.scale}
       userData={{ floorItemId: o.id }}
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
       onDoubleClick={onDoubleClick}
     >
-      <primitive object={model} position={base} />
+      <primitive object={model} position={centred} />
     </group>
   )
 }
 
-/** The Floor view's picked items, outlined on the floor in the live 3D (the board's blue ring). */
+/** The editor's blue (`--editor-row-selected-edge`) and the overhang's amber (`--studio-3d-caution-edge`). */
+const PICKED = '#3b6fd8'
+const CAUTION = '#c49a2c'
+
+/** A box's 12 edges as line segments, around its centre (m). */
+function boxEdges(w: number, h: number, d: number): [number, number, number][] {
+  const c = [-1, 1]
+  const pts: [number, number, number][] = []
+  for (const a of c)
+    for (const b of c) {
+      pts.push([-w / 2, (a * h) / 2, (b * d) / 2], [w / 2, (a * h) / 2, (b * d) / 2])
+      pts.push([(a * w) / 2, -h / 2, (b * d) / 2], [(a * w) / 2, h / 2, (b * d) / 2])
+      pts.push([(a * w) / 2, (b * h) / 2, -d / 2], [(a * w) / 2, (b * h) / 2, d / 2])
+    }
+  return pts
+}
+
+/**
+ * The Floor view's picked items, their boxes outlined in the live 3D (the board's blue); amber when
+ * one reaches past its face or under the floor.
+ */
 function Selection({
   placed,
-  artworks,
+  layout,
+  sizes,
   floorY,
 }: {
   placed: { item: FloorObject | FloorPedestal; at: Placed }[]
-  artworks: Record<string, FloorArtwork>
+  layout: FloorLayout
+  sizes: FloorSizes
   floorY: number
 }) {
   const selectedIds = useSelector((state: RootState) => state.floor.selectedIds)
@@ -227,22 +285,17 @@ function Selection({
       {placed
         .filter(({ item }) => selectedIds.includes(item.id))
         .map(({ item, at }) => {
-          const b = item.kind === 'object' ? artworks[item.artworkId]?.boundsCm : null
-          const outline =
-            item.kind === 'pedestal'
-              ? pedestalOutline(item.shape, item.w, item.d)
-              : pedestalOutline('box', (b?.w ?? 40) * item.scale, (b?.d ?? 40) * item.scale)
-          const points = [...outline, outline[0]].map(
-            ([x, z]) => [x / 100, 0, z / 100] as [number, number, number],
-          )
+          const warn = overhangs(layout, item, sizes) || belowFloor(at)
+          // A hair outside the box, so the lines never sink into its faces.
+          const [w, h, d] = [at.size.w, at.size.h, at.size.d].map((cm) => cm / 100 + 0.004)
           return (
             <Line
               key={item.id}
-              points={points}
-              color="#3b6fd8"
+              points={boxEdges(w, h, d)}
+              segments
+              color={warn ? CAUTION : PICKED}
               lineWidth={2}
-              position={[at.x, floorY + at.y + 0.004, at.z]}
-              rotation={[0, at.rotY * RAD, 0]}
+              {...transformOf(at, floorY)}
               userData={{ bakeCaster: false }}
             />
           )
@@ -281,10 +334,8 @@ const FloorItems = () => {
   const { floorY } = useBenchRooms()
   const isFloorView = useSelector((state: RootState) => state.floor.isFloorView)
   const person = useSelector((state: RootState) => state.floor.helpers.person)
-  const placed = useMemo(
-    () => (layout ? placeAll(layout, floorSizes(artworks)) : []),
-    [layout, artworks],
-  )
+  const sizes = useMemo(() => floorSizes(artworks), [artworks])
+  const placed = useMemo(() => (layout ? placeAll(layout, sizes) : []), [layout, sizes])
 
   const urls = useMemo(
     () => [
@@ -311,7 +362,9 @@ const FloorItems = () => {
 
   return (
     <group name="floorItems">
-      {isFloorView && <Selection placed={placed} artworks={artworks ?? {}} floorY={floorY} />}
+      {isFloorView && layout && (
+        <Selection placed={placed} layout={layout} sizes={sizes} floorY={floorY} />
+      )}
       {isFloorView && person && <PersonForScale floorY={floorY} />}
       {placed.map(({ item, at }) => {
         if (item.kind === 'pedestal') {

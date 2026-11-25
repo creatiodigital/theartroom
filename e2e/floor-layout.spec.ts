@@ -1,4 +1,8 @@
 import { test, expect } from '@playwright/test'
+import { BoxGeometry } from 'three'
+
+import { boardUVs } from '../src/components/scene/floor/boardUVs'
+import { WOOD_TILE_M } from '../src/components/scene/spaces/objects/Frame/woodTextures'
 
 import {
   parseFloorLayout,
@@ -456,4 +460,23 @@ test("parse: old wood ids map to the frames' three woods; a plank keeps 3 cm", (
   const plank = items[6] as FloorPedestal
   expect([plank.shape, plank.w, plank.d, plank.h, plank.finish]).toEqual(['plank', 20, 3, 100, 'gloss'])
   expect(pedestalShape('plank').defaults).toEqual({ w: 20, d: 3, h: 100 })
+})
+
+test("a plank's wood runs along its length, at the frames' real board size", () => {
+  // A plank's mesh: 20 × 100 × 3 cm, as pedestalGeometry builds it (non-indexed, any position).
+  const g = boardUVs(new BoxGeometry(0.2, 1, 0.03).toNonIndexed())
+  const uv = g.getAttribute('uv')
+  const pos = g.getAttribute('position')
+  expect(uv?.count).toBe(pos.count)
+  // The front (facing +z): u along the 100 cm height, v across its 20 cm.
+  const us: number[] = []
+  const vs: number[] = []
+  for (let i = 0; i < pos.count; i++) {
+    if (Math.abs(pos.getZ(i) - 0.015) > 1e-6) continue
+    us.push(uv.getX(i))
+    vs.push(uv.getY(i))
+  }
+  const span = (a: number[]) => Math.max(...a) - Math.min(...a)
+  expect(span(us)).toBeCloseTo(1 / WOOD_TILE_M, 3)
+  expect(span(vs)).toBeCloseTo(0.2 / WOOD_TILE_M, 3)
 })
