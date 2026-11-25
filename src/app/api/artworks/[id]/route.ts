@@ -6,6 +6,7 @@ import { deleteArtworkPresentationFolder } from '@/lib/printPresentation/storage
 import { isAdminOrAbove, requireOwnership } from '@/lib/authUtils'
 import { isArtworkKind } from '@/lib/artwork/artworkKinds'
 import { OBJECT_PRINT_OFF, objectWriteData, parseObjectFields } from '@/lib/artwork/objectArtwork'
+import { saleModeAfterPrintSwitch } from '@/lib/artwork/saleMode'
 import { PUBLIC_ARTWORK_OMIT } from '@/lib/artworkFields'
 import { floorArtworkIds, parseFloorLayout, withoutArtwork } from '@/lib/floor/floorLayout'
 import { saveLimitedVariants } from '@/lib/editions/saveLimitedVariants'
@@ -264,6 +265,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         heightCm: true,
         widthCm: true,
         depthCm: true,
+        saleMode: true,
       },
     })
     if (!existing) return NextResponse.json({ error: 'Artwork not found' }, { status: 404 })
@@ -383,7 +385,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
     // Base update data (fields that definitely exist)
     // Sync name with title so all consumers see the updated label
-    const baseData = {
+    const fieldsData = {
       name: body.title || body.name,
       artworkType: body.artworkType,
       title: body.title,
@@ -411,6 +413,12 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
           ? Prisma.DbNull
           : (printRecommendations as unknown as Prisma.InputJsonValue),
       ...objectData,
+    }
+    // How it is sold follows the print switch until the editor's Sales tab writes it, so
+    // `printEnabled` and `saleMode` never disagree (docs/unique-sales U1).
+    const baseData = {
+      ...fieldsData,
+      saleMode: saleModeAfterPrintSwitch(existing.saleMode, fieldsData.printEnabled),
     }
 
     // Exhibition membership. The client sends the full desired set, so this is
