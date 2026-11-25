@@ -47,7 +47,7 @@ import styles from './FloorView.module.scss'
 const newId = (prefix: string) =>
   `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
 
-type LibraryArtwork = FloorArtwork & { ready: boolean; status: string }
+type LibraryArtwork = FloorArtwork & { ready: boolean }
 
 export function FloorView() {
   const dispatch = useDispatch()
@@ -104,7 +104,6 @@ export function FloorView() {
             modelUrl: (r.modelUrl as string) || '',
             boundsCm: (r.modelBoundsCm as FloorArtwork['boundsCm']) ?? null,
             ready: r.modelStatus === 'ready' && !!r.modelUrl,
-            status: r.modelStatus as string,
           })),
         ),
       )
@@ -604,9 +603,7 @@ export function FloorView() {
                               ? a.boundsCm
                                 ? `${Math.round(a.boundsCm.w)} × ${Math.round(a.boundsCm.d)} × ${Math.round(a.boundsCm.h)} cm`
                                 : '3D model ready'
-                              : a.status === 'requested'
-                                ? '3D model in preparation'
-                                : 'No 3D model yet'}
+                              : 'No 3D model yet'}
                           </span>
                         </span>
                       </Button>

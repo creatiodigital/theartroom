@@ -36,7 +36,6 @@ export type UploadedModel = {
   modelBoundsCm: { h: number; w: number; d: number } | null
   modelStatus: string
   modelReadyAt: string
-  modelRequestedAt: string | null
 }
 
 type BaseFacts = Omit<GlbFacts, 'bounds' | 'opened'>

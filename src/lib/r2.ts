@@ -327,26 +327,6 @@ export async function buildArtworkModelKey(userId: string, artworkId: string): P
   return `${getEnvPrefix()}/artists/${handler}/${artworkId}/model/${randomSuffix()}.glb`
 }
 
-/**
- * The scans and models an artist sends with a 3D model request (docs/objects O4), for the team
- * only: `model-requests/<env>/<artworkId>/…`. In this bucket like the print masters (the key is
- * the protection; only admins are ever given it), so the browser can upload straight to it.
- * No database row points at them: they are listed and deleted by this prefix.
- */
-export const modelRequestPrefix = (artworkId: string) =>
-  `model-requests/${getEnvPrefix()}/${artworkId}/`
-
-export function buildModelRequestKey(artworkId: string, fileName: string, ext: string): string {
-  const slug =
-    fileName
-      .replace(/\.[^.]*$/, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-      .slice(0, 40) || 'file'
-  return `${modelRequestPrefix(artworkId)}${Date.now()}-${randomSuffix()}-${slug}.${ext}`
-}
-
 /** Fetch a main-bucket object's bytes (server-side only), e.g. an uploaded .glb to check it. */
 export async function getPublicBucketObjectBuffer(key: string): Promise<Buffer> {
   const res = await r2.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }))

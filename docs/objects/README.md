@@ -92,10 +92,13 @@ Copy in the boards is final unless marked "(board note)".
 - Add artwork: type becomes cards (Image, Object, Text, Sound, Video); choosing Object explains it in one panel.
 
 ## Open questions
-- ~~Q-O1~~ **Answered 2026-11-24 (owner, via Design Claude): keep 40 photos and 6 videos per Object** (reels ≤ 60 s,
-  landscape ≤ 3 min, videos ≤ 50 MB); image artworks keep 60 items / 2 videos. No code change.
+- **Q-O1** Media limits for Objects: 40 photos / 6 videos (built). Design Claude recommends keeping them;
+  **waiting for the owner's confirmation** (an earlier note here wrongly marked it answered).
 - ~~Q-O2~~ Visitor artwork page: designed 2026-11-23 (O5).
-- **Q-O3** Who can request a 3D model and whether it costs anything (business logic later).
+- ~~Q-O3~~ **Answered 2026-11-25 (owner, to Code): artists never request a 3D model; they send their .glb files to
+  the gallery directly**, and the gallery team uploads them. The request flow is removed (Built, 2026-11-25). The
+  sections above that describe "Ask for a 3D model", "In preparation", "Ask for a change", the request files and the
+  two emails are the old design.
 - **Q-O4** Owner to confirm the pedestal shapes and materials on `objects-pedestals`, and send any GLB pedestals/tables.
 - **Q-O5** (Code, O2) The boards' sand / stone colours (Object tile `#ece9e3`, explainer `#f6f4f0`, its figure
   `#6f685f`, the 3D chips `#e8eef8`/`#1f3b6b` and `#f4f1ea`/`#6b5a2e`) are not design tokens. O2 uses the nearest
@@ -150,7 +153,7 @@ modelReadyAt       DateTime?
 - On **`ArtworkMedia`**: `role String?` = "front" | "back" | "side" | "detail" | "room" | "process" | "reel"
   (labels in the editor: Front, Back, Side, Detail, In a room, Process, Reel). A reel is `kind: "video"` with a
   9:16 frame; store width/height as today so the page knows it is vertical.
-- Object media limits (Q-O1, confirmed 2026-11-24): 40 images, 6 videos (reels ≤ 60 s, landscape
+- Object media limits (Q-O1, built; owner to confirm): 40 images, 6 videos (reels ≤ 60 s, landscape
   ≤ 3 min). Image artworks keep today's 60 / 2. Put the per-type limits in `artworkMediaTypes.ts`.
 
 ## Order of work
@@ -414,3 +417,16 @@ till the end", so built from the draft board and the rules above).
   attachment); the live 3D draws the pedestal and the Object's model at true size on its top. Dragging the Object
   off every top puts it back on the floor (height 0). On the plan a pedestal carrying an Object writes its name a
   line lower. Not clicked in a browser: an Object in the visitor's room (WebGL clicks are not scripted).
+
+**No requests: "In preparation" removed** (2026-11-25, same branch; owner: "remove that whole feature 'in
+preparation'. Artists will not request for this. They will send me directly the glb files"; Q-O3).
+- The editor's In the 3D space has two states: **Not in the 3D space yet** ("Send the 3D model of your piece (a .glb
+  file) to The Art Room. Once we add it, visitors can walk around it in the 3D exhibition.") and the ready model
+  (preview, file, real size, size check, "Added by The Art Room · date"). The Gallery team box (Upload / Replace
+  .glb through the checker) is unchanged. The section now sits right after the Cover photo (owner, same day: "the
+  most important part"), and the upload window scrolls (title and Cancel · Upload stay).
+- Removed: "Ask for a 3D model" and "Ask for a change" (and their window), the In preparation box and chip, the
+  request files (`model-requests/<env>/<artworkId>/`, the `/api/artworks/[id]/model-request` route), the gallery's
+  request email and the artist's "ready" email (uploading a model sends no email), and `Artwork.modelRequestedAt`.
+  `modelStatus` is "none" | "ready". The size check reads "Matches / Differs from the size in Details".
+- Schema: one column fewer (`modelRequestedAt`); the dev database still has it until the owner's next push.

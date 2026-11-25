@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { deleteFromR2, deleteR2KeyDirect, listAllR2Keys, modelRequestPrefix } from '@/lib/r2'
+import { deleteFromR2 } from '@/lib/r2'
 import { deleteArtworkPresentationFolder } from '@/lib/printPresentation/storage'
 
 import { isAdminOrAbove, requireOwnership } from '@/lib/authUtils'
@@ -739,16 +739,8 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     await deleteFile(artwork.soundUrl, 'sound blob')
     await deleteFile(artwork.videoUrl, 'video blob')
     for (const { url } of artwork.media) await deleteFile(url, 'artwork media blob')
-    // An Object's 3D model, and the scans / models its artist sent with a request (no row points
-    // at those: they live under the artwork's request prefix).
+    // An Object's 3D model.
     await deleteFile(artwork.modelUrl, '3D model')
-    try {
-      for (const key of await listAllR2Keys(modelRequestPrefix(artwork.id))) {
-        await deleteR2KeyDirect(key)
-      }
-    } catch (error) {
-      console.warn('Failed to delete 3D model request files:', error)
-    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

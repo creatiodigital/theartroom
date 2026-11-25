@@ -273,8 +273,7 @@ model Artwork {
   modelUrl           String?
   modelSizeBytes     Int?
   modelBoundsCm      Json? // { h, w, d } read from the GLB on upload
-  modelStatus        String    @default("none") // "none" | "requested" | "ready"
-  modelRequestedAt   DateTime?
+  modelStatus        String    @default("none") // "none" | "ready"
   modelReadyAt       DateTime?
 
   // The gallery's curated /prints entry, if this work is in the selection.

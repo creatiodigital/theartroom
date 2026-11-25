@@ -433,7 +433,7 @@
 
 // Reaching past its pedestal's top: allowed, outlined in amber.
 .planOverhang .planObject {
-  stroke: var(--studio-3d-preparing-dot);
+  stroke: var(--studio-3d-caution-edge);
   stroke-width: 2px;
 }
 
@@ -462,7 +462,7 @@
 
 .planSnap {
   fill: none;
-  stroke: var(--studio-3d-preparing-dot);
+  stroke: var(--studio-3d-caution-edge);
   stroke-width: 2px;
   stroke-dasharray: 5 3;
   pointer-events: none;
@@ -860,7 +860,7 @@
   gap: var(--space-2);
   padding: var(--space-3);
   border-radius: var(--radius-md);
-  background: var(--studio-3d-preparing);
+  background: var(--studio-3d-caution);
   font-size: var(--text-xs);
 
   p {

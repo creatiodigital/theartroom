@@ -585,7 +585,8 @@ like the real Pause switch). Logic and dialogs unchanged.
 - **Built** · `objects/ModelChecker` · `{ artworkId; details; replacing; onClose; onUploaded }` (next/dynamic): the team's
   .glb upload with the checker rows (`lib/objects/glb.ts`); loads the glTF validator on open.
 - **Built** · `objects/ObjectSpaceSection` · `{ artworkId; isAdmin; model; details; onModelChange }`: the editor's In the
-  3D space. `EditorPanel` gained `className?`; `ObjectSpaceChip` gained `short?` ("Ready" / "In preparation" after a dot).
+  3D space (2026-11-25: right after the cover; two states, Not in the 3D space yet / the ready model; no requests).
+  `EditorPanel` gained `className?`; `ObjectSpaceChip` gained `short?` ("Ready" after a dot; "In preparation" removed).
 - **Built** · `floorview/FloorFrame` · `{ active; children }`: lays the Floor view around the editor's own canvas
   (kept mounted). `floorview/FloorView`, `FloorPlan` (`{ room; editor; artworks; selectedIds; onSelect; expand;
   onDropAdd; zoom; names }`), `FloorInspector`, `useFloorEditor` (working copy, undo / redo, save / revert),

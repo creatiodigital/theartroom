@@ -162,7 +162,6 @@ export type Artwork = {
   modelUrl?: string | null
   modelSizeBytes?: number | null
   modelBoundsCm?: { h: number; w: number; d: number } | null
-  modelRequestedAt?: string | null
   modelReadyAt?: string | null
   coverCropX?: number | null
   coverCropY?: number | null

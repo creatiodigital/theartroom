@@ -33,7 +33,6 @@ export const OBJECT_DISPLAY_MODES = [
 ] as const satisfies readonly TObjectDisplayMode[]
 export const OBJECT_MODEL_STATUSES = [
   'none',
-  'requested',
   'ready',
 ] as const satisfies readonly TObjectModelStatus[]
 

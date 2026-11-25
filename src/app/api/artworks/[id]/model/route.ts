@@ -3,8 +3,6 @@ import type { NextRequest } from 'next/server'
 
 import { auth } from '@/auth'
 import { isAdminOrAbove } from '@/lib/authUtils'
-import { EMAIL_BRAND } from '@/lib/emails/brand'
-import { sendModelReadyArtistEmail } from '@/lib/emails/objectModel'
 import { captureError } from '@/lib/observability/captureError'
 import { boundsToCm, checkGlb, GLB_MAX_BYTES, glbPasses } from '@/lib/objects/glb'
 import { gatherServerGlbFacts } from '@/lib/objects/glbFacts.server'
@@ -29,7 +27,8 @@ export const maxDuration = 60
  *  3. `{ type: 'complete', key }` → the server reads the file back and runs the SAME checks
  *     (`checkGlb`, owner Q-O8) on its own facts. A fail deletes the file and answers 422 with the
  *     rows; a pass stores it: `modelUrl`, size, bounds, `modelStatus: 'ready'`, `modelReadyAt`,
- *     removes the model it replaces, and emails the artist when they had asked for it.
+ *     removes the model it replaces. Artists send their .glb files to the gallery directly (owner,
+ *     2026-11-25): there is no request, and no email.
  */
 const KEY_RE = /^[a-z0-9-]+\/artists\/[a-z0-9-]+\/[a-zA-Z0-9_-]+\/model\/[a-f0-9]+\.glb$/
 
@@ -59,14 +58,11 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       select: {
         id: true,
         userId: true,
-        title: true,
         artworkType: true,
         heightCm: true,
         widthCm: true,
         depthCm: true,
         modelUrl: true,
-        modelStatus: true,
-        user: { select: { name: true, email: true } },
       },
     })
     if (!artwork) return NextResponse.json({ error: 'Artwork not found' }, { status: 404 })
@@ -137,7 +133,6 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           modelBoundsCm: true,
           modelStatus: true,
           modelReadyAt: true,
-          modelRequestedAt: true,
         },
       })
 
@@ -146,16 +141,6 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         await deleteFromR2(artwork.modelUrl).catch((error) =>
           console.warn('[POST /api/artworks/[id]/model] old model not removed:', error),
         )
-      }
-
-      // They asked for it (or for a change): tell them. Best-effort; the model is stored either way.
-      if (artwork.modelStatus === 'requested' && artwork.user.email) {
-        const sent = await sendModelReadyArtistEmail(artwork.user.email, {
-          artistFirstName: artwork.user.name,
-          artworkTitle: artwork.title,
-          editUrl: `${EMAIL_BRAND.siteUrl}/dashboard/artworks/${artwork.id}/edit`,
-        })
-        if (!sent.ok) console.warn('[POST /api/artworks/[id]/model] ready email:', sent.error)
       }
 
       return NextResponse.json({ model: updated, rows })

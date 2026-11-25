@@ -15,8 +15,8 @@ export type TArtworkKind = 'image' | 'text' | 'sound' | 'shape' | 'video' | 'obj
 export type TObjectEdition = 'unique' | 'edition'
 export type TObjectPlacement = 'indoors' | 'outdoors' | 'both'
 export type TObjectDisplayMode = 'floor' | 'pedestal' | 'wall' | 'hanging'
-/** The 3D model's state: none → requested ("In preparation") → ready. */
-export type TObjectModelStatus = 'none' | 'requested' | 'ready'
+/** The 3D model's state: none → ready (the gallery uploads the .glb the artist sent it). */
+export type TObjectModelStatus = 'none' | 'ready'
 /** The label of one of an Object's photos or videos (ArtworkMedia.role). */
 export type TObjectMediaRole = 'front' | 'back' | 'side' | 'detail' | 'room' | 'process' | 'reel'
 /** The GLB's bounding box in cm, read on upload. */
@@ -47,7 +47,6 @@ export type TArtworkObjectFields = {
   modelSizeBytes?: number | null
   modelBoundsCm?: TObjectBoundsCm | null
   modelStatus?: TObjectModelStatus
-  modelRequestedAt?: string | null
   modelReadyAt?: string | null
 }
 

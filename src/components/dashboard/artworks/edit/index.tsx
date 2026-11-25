@@ -933,7 +933,6 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
                 modelUrl: artwork.modelUrl ?? null,
                 modelSizeBytes: artwork.modelSizeBytes ?? null,
                 modelBoundsCm: artwork.modelBoundsCm ?? null,
-                modelRequestedAt: artwork.modelRequestedAt ?? null,
                 modelReadyAt: artwork.modelReadyAt ?? null,
               }
             : undefined
