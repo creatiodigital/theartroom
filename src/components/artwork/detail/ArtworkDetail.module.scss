@@ -218,13 +218,14 @@ a.artist:hover {
 }
 
 // The title as live since 2026-11-11 (owner, 2026-11-25: "Go back with this layout and font size"),
-// its lines a little closer ("make the title line height a little smaller": 1.1 → 1.05).
+// its lines closer (1.1 → 1, "Line height of title smaller") and the year further below it ("separate
+// more the year from the title": 4 → 16 px, clear of the last line's descenders).
 .title {
-  margin: var(--space-1) 0 0;
+  margin: var(--space-1) 0 var(--space-3);
   font-family: var(--font-serif), var(--font-serif-fallback);
   font-size: 36px;
   font-weight: var(--font-regular);
-  line-height: 1.05;
+  line-height: 1;
   color: var(--public-text);
   overflow-wrap: anywhere;
 
