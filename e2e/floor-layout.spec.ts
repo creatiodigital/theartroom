@@ -16,6 +16,7 @@ import {
   placeObject,
   rotateOffset,
 } from '../src/lib/floor/floorPlacement'
+import { clickedSide, sideFace, toObject, toWorld } from '../src/lib/floor/objectSide'
 import { insideOutline, pedestalTop } from '../src/lib/floor/pedestals'
 
 // Objects O6 (docs/objects "Snapping, exactly"): the floor's data and placement rules. Pure.
@@ -203,3 +204,36 @@ test('an Object is a unique piece: a second copy of the same artwork is dropped;
   expect(parsed.items.map((i) => i.id)).toEqual(['o1', 'o3', 'p1', 'p2'])
 })
 
+test('a click on an Object stands the camera in front of that side; the top or bottom, the nearest side facing it', () => {
+  // A trunk 180 × 87 cm on the floor, 64 cm high, unturned.
+  const half = { w: 0.9, d: 0.435 }
+  const h = 0.64
+  const camera = { x: 0.5, y: 1.6, z: 3 } // in front (+z), a little right
+  expect(clickedSide({ x: 0.2, y: 0.3, z: 0.435 }, half, h, camera)).toBe('+z')
+  expect(clickedSide({ x: 0.9, y: 0.3, z: 0.1 }, half, h, camera)).toBe('+x')
+  // On the top near its front edge: the front.
+  expect(clickedSide({ x: 0, y: 0.64, z: 0.3 }, half, h, camera)).toBe('+z')
+  // On the top near its back edge, the back facing away: the nearest side that faces the camera.
+  expect(clickedSide({ x: 0, y: 0.64, z: -0.4 }, half, h, camera)).toBe('+z')
+  expect(clickedSide({ x: 0.85, y: 0.64, z: -0.4 }, half, h, camera)).toBe('+x')
+  // The front's middle, normal and length.
+  expect(sideFace('+z', half, h)).toEqual({
+    center: { x: 0, y: 0.32, z: 0.435 },
+    normal: { x: 0, z: 1 },
+    width: 1.8,
+  })
+  expect(sideFace('-x', half, h).width).toBeCloseTo(0.87)
+})
+
+test("the Object's own coordinates and the world, turned and back", () => {
+  const origin = { x: 2, y: 0, z: -1 }
+  const turn = Math.PI / 2
+  const world = toWorld({ x: 1, y: 0.5, z: 0 }, origin, turn)
+  // Turned 90° about y, its +x faces the world's −z (three's rotation.y).
+  expect(world.x).toBeCloseTo(2)
+  expect(world.z).toBeCloseTo(-2)
+  const back = toObject(world, origin, turn)
+  expect(back.x).toBeCloseTo(1)
+  expect(back.y).toBeCloseTo(0.5)
+  expect(back.z).toBeCloseTo(0)
+})

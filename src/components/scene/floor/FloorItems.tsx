@@ -12,6 +12,7 @@ import { useBenchRooms } from '@/components/scene/spaces/objects/Bench/benchSett
 import type { FloorArtwork } from '@/lib/floor/floorArtworks'
 import type { FloorObject, FloorPedestal } from '@/lib/floor/floorLayout'
 import { placeAll, type Placed } from '@/lib/floor/floorPlacement'
+import { clickedSide, sideFace, toObject, toWorld } from '@/lib/floor/objectSide'
 import { FINISH_ROUGHNESS, pedestalMaterial, pedestalOutline } from '@/lib/floor/pedestals'
 import { useFloorRooms } from '@/components/floorview/useFloorRooms'
 import { DOUBLE_TAP_MS, useTapTracker } from '@/components/scene/spaces/objects/tapTracker'
@@ -116,24 +117,39 @@ function FloorModel({
   // stepping round to stand in front (owner, 2026-11-25).
   const camera = useThree((state) => state.camera)
   const taps = useTapTracker()
-  const pressed = useRef<{ x: number; y: number; at: number } | null>(null)
+  const pressed = useRef<{
+    x: number
+    y: number
+    at: number
+    hit: { x: number; y: number; z: number }
+  } | null>(null)
   const pending = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => () => clearTimeout(pending.current ?? undefined), [])
 
   const openPage = () => dispatch(openFloorObject(artwork.slug))
-  const comeNearer = () => {
+  // The side of its box that was clicked (the top or bottom: the nearest side facing the camera):
+  // the camera comes to stand in front of it (owner, 2026-11-25).
+  const comeNearer = (hit: { x: number; y: number; z: number }) => {
     const b = artwork.boundsCm
     const [w, d, h] = b ? [b.w, b.d, b.h].map((cm) => (cm / 100) * o.scale) : [1, 1, 1]
-    const center = { x: at.x, y: floorY + at.y + h / 2, z: at.z }
-    const toCamera = { x: camera.position.x - center.x, z: camera.position.z - center.z }
-    const length = Math.hypot(toCamera.x, toCamera.z) || 1
+    const origin = { x: at.x, y: floorY + at.y, z: at.z }
+    const turn = at.rotY * RAD
+    const half = { w: w / 2, d: d / 2 }
+    const side = clickedSide(
+      toObject(hit, origin, turn),
+      half,
+      h,
+      toObject(camera.position, origin, turn),
+    )
+    const face = sideFace(side, half, h)
+    const center = toWorld(face.center, origin, turn)
+    const tip = toWorld({ x: face.normal.x, y: 0, z: face.normal.z }, { x: 0, y: 0, z: 0 }, turn)
     dispatch(
       setFocusTarget({
         artworkId: artwork.id,
         position: center,
-        normal: { x: toCamera.x / length, y: 0, z: toCamera.z / length },
-        // Seen from any side, its footprint's diagonal is the widest it can be.
-        width: Math.hypot(w, d),
+        normal: { x: tip.x, y: 0, z: tip.z },
+        width: face.width,
         height: h,
         object: true,
       }),
@@ -145,13 +161,18 @@ function FloorModel({
     event.stopPropagation()
     clearTimeout(pending.current ?? undefined)
     pending.current = null
-    pressed.current = { x: event.clientX, y: event.clientY, at: Date.now() }
+    pressed.current = {
+      x: event.clientX,
+      y: event.clientY,
+      at: Date.now(),
+      hit: { x: event.point.x, y: event.point.y, z: event.point.z },
+    }
     taps.down(event)
   }
   const onPointerUp = (event: ThreeEvent<PointerEvent>) => {
     if (isEditMode || !pressed.current) return
     event.stopPropagation()
-    const { x, y, at: downAt } = pressed.current
+    const { x, y, at: downAt, hit } = pressed.current
     pressed.current = null
     const still = Math.hypot(event.clientX - x, event.clientY - y) < taps.slop(CLICK_MAX_MOVE_PX)
     if (taps.ignored || !still || Date.now() - downAt > CLICK_MAX_MS) return
@@ -161,7 +182,7 @@ function FloorModel({
     }
     pending.current = setTimeout(() => {
       pending.current = null
-      comeNearer()
+      comeNearer(hit)
     }, DOUBLE_TAP_MS)
   }
   const onDoubleClick = (event: ThreeEvent<MouseEvent>) => {

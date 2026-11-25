@@ -495,6 +495,7 @@ object! unless it's a pedestal", "I cannot navigate in this 3D space with the ke
   distance, and Reset view glides back to the starting angle; the model no longer blinks on a re-render (its cache
   was freed by Strict Mode's test cleanup and reloaded, hidden meanwhile).
 - In the room a click (tap) on an Object comes nearer, a double click (double tap) opens its page (owner,
-  2026-11-25). Nearer = an ordinary glide along the camera's own line of sight at its eye height, turning to face it
-  and looking down at it within the head's tilt, stopping where all of it fits with room around; never stepping
-  round to its front and never into Wall View ("Do not trigger wall view for a 3D object"; `comeNearObject`).
+  2026-11-25). Nearer = an ordinary glide (never Wall View) to stand squarely in front of the clicked side of its
+  box, at eye height, looking down at it within the head's tilt, where all of that side fits with room around and
+  short of the wall behind. A click on the top or bottom takes the nearest side facing the camera, so the way there
+  never crosses the Object (`lib/floor/objectSide.ts`, MainCamera `comeNearObject`).

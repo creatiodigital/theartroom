@@ -532,17 +532,17 @@ const MainCamera = () => {
     reshaping.current = null
   }
 
-  // A click on an Object on the floor (docs/objects, owner 2026-11-25: "Do not trigger wall view for a
-  // 3D object"): an ordinary glide nearer, along the camera's own line of sight, at its eye height,
-  // turning to face the Object and looking down at it (within the head's tilt), stopping where all of
-  // it fits with room around and low enough on the screen. Never farther than now; no Wall View.
+  // A click on an Object on the floor (docs/objects, owner 2026-11-25): an ordinary glide (never Wall
+  // View) to stand squarely in front of the clicked side of its box (`target`: the side's middle,
+  // outward normal, length and height), at eye height, looking down at it within the head's tilt,
+  // where all of the side fits with room around and its middle sits low enough on the screen; short
+  // of the wall behind.
   const comeNearObject = (target: TFocusTarget) => {
     dispatch(clearFocusTarget())
     const center = new Vector3(target.position.x, target.position.y, target.position.z)
-    const toCamera = new Vector3(camera.position.x - center.x, 0, camera.position.z - center.z)
-    const now = toCamera.length()
-    if (now < 1e-3) return
-    const n = toCamera.normalize()
+    const n = new Vector3(target.normal.x, 0, target.normal.z)
+    if (n.lengthSq() < 1e-6) return
+    n.normalize()
     const fitted = fitDistance(
       target.width,
       target.height,
@@ -555,7 +555,15 @@ const MainCamera = () => {
     // tilted down as far as it goes.
     const drop = Math.max(0, camera.position.y - center.y)
     const inSight = drop / Math.tan(PITCH_LIMIT + OBJECT_BELOW_CENTRE)
-    const depth = Math.min(now, Math.max(fitted, inSight, OBJECT_NEAREST))
+    const wanted = Math.max(fitted, inSight, OBJECT_NEAREST)
+    const behind = firstRoomHit(
+      center.clone().addScaledVector(n, 0.05),
+      n,
+      wanted + WALL_CLEARANCE,
+      meshesOfRoom(),
+    )
+    const roomLimit = behind ? behind.distance + 0.05 - WALL_CLEARANCE : Infinity
+    const depth = Math.max(0.3, Math.min(wanted, roomLimit))
     const spot = center.clone().addScaledVector(n, depth)
     const yawTo = yawOf(-n.x, -n.z)
     const turn = wrapAngle(yawTo - yaw.current)
