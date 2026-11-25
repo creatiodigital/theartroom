@@ -439,3 +439,12 @@ proofs, remove that", then "they will be sold as unique pieces", "always").
   push). Nothing says "Unique piece" on the page: every Object is one.
 - For the design Claude: `docs/unique-sales/README.md` still sells "Object editions" ("Edition 3 of 8",
   "5 of 8 available", counting casts); those parts no longer apply, an Object is always one sale.
+
+**Cover photo = the image upload, no square crop** (2026-11-25, same branch; owner: "we cannot have a different
+uploader just for 3D objects", "it's a cover image, same as the rest").
+- The editor's Cover photo is the image artworks' own panel and uploader (square preview, the photo whole, the same
+  limits and note: JPEG, PNG, TIFF, at least 1200 × 1200 px, up to 200 MB); only its title and line differ.
+- Removed: the dashed square crop and "How it shows", the 2000 px / 25 MB cover limits, `Artwork.coverCropX` /
+  `coverCropY` (two columns fewer; the dev database keeps them until the owner's next push). Grids, the studio
+  library and the share image show an Object's cover whole, like any picture; the grid's year line still says
+  "Object". On the Object page the cover's view thumbnail is centred, like the other views.

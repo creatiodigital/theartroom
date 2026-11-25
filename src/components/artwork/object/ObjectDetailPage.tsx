@@ -6,11 +6,7 @@ import { PageLayout } from '@/components/ui/PageLayout'
 import { RichText } from '@/components/ui/RichText'
 import { TextSection } from '@/components/ui/TextSection'
 import type { ArtworkMediaItem } from '@/lib/artwork/artworkMediaTypes'
-import {
-  coverObjectPosition,
-  isObjectMediaRole,
-  OBJECT_MEDIA_ROLE_LABEL,
-} from '@/lib/artwork/objectArtwork'
+import { isObjectMediaRole, OBJECT_MEDIA_ROLE_LABEL } from '@/lib/artwork/objectArtwork'
 import type { PublicArtistArtwork } from '@/lib/queries/getPublicArtistByHandler'
 import { isRichTextEmpty } from '@/lib/textUtils'
 
@@ -26,8 +22,6 @@ export type ObjectPageData = ObjectPageArtwork &
     description: string | null
     originalWidth: number | null
     originalHeight: number | null
-    coverCropX: number | null
-    coverCropY: number | null
   }
 
 /**
@@ -73,10 +67,7 @@ export function ObjectPageContent({ artwork, artist, media, more, neighbours }: 
             url: artwork.imageUrl,
             label: null,
             caption: null,
-            thumbPosition: coverObjectPosition(
-              { x: artwork.coverCropX, y: artwork.coverCropY },
-              { width: artwork.originalWidth, height: artwork.originalHeight },
-            ),
+            thumbPosition: '50% 50%',
           },
         ]
       : []),

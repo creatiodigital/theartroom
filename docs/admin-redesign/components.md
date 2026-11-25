@@ -571,9 +571,8 @@ like the real Pause switch). Logic and dialogs unchanged.
   uploading), e.g. an Object cover's square-crop frame.
 - **Built** · `dashboard/artworks/ObjectSpaceChip` · `{ modelStatus?: string | null }`: "In the 3D space" (`ready`) or
   "3D model in preparation" (`requested`), else nothing; library rows and the artwork editor's header.
-- **Built** · `shared/ArtworkEditForm/ObjectCover.tsx` · `CoverCropFrame { size; crop: { x; y }; onChange }` (the dashed
-  square over the 4:5 preview; drag or arrow keys, `role="slider"`) and `CoverPreviews { imageUrl; size; crop }` ("How it
-  shows": grid square, artwork page 4:5, list).
+- **Removed 2026-11-25** · `shared/ArtworkEditForm/ObjectCover.tsx` (`CoverCropFrame`, `CoverPreviews`): an Object's
+  cover is the image upload itself (owner: "it's a cover image, same as the rest"), shown whole everywhere.
 - **Built** · `shared/ArtworkEditForm/ObjectFields.tsx` · `ObjectSize` / `ObjectTechnicalInfo { fields; onChange }` (2026-11-25: no Edition)
   and `objectFormFields(stored)`.
 - **Built** · `shared/ArtworkEditForm/ObjectMediaManager.tsx` · `{ artworkId }`: Photos & reels (labels, captions, drag to

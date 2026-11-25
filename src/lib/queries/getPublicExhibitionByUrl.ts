@@ -1,7 +1,6 @@
 import { cache } from 'react'
 
 import type { Prisma } from '@/generated/prisma'
-import { objectCardOf } from '@/lib/artwork/objectArtwork'
 import { SALE_SELECT, saleFromRow, type ArtworkSale } from '@/lib/editions/artworkSale'
 import prisma from '@/lib/prisma'
 import type { GalleryRates } from '@/lib/galleryCommission'
@@ -39,8 +38,6 @@ const PUBLIC_ARTWORK_SELECT = {
   imageUrl: true,
   artworkType: true,
   // An Object's cover crop, for its card (docs/objects O5).
-  coverCropX: true,
-  coverCropY: true,
   hiddenFromExhibition: true,
   order: true,
   ...SALE_SELECT,
@@ -122,7 +119,7 @@ export type PublicExhibitionArtwork = {
   /** The work as a photo of the real print, when one is current and the switch is on. */
   presentation: PresentationView | null
   /** An Object (docs/objects): its cover's square crop for the card. Null for an image. */
-  object: { coverPosition: string } | null
+  isObject: boolean
 }
 
 export type PublicExhibition = {
@@ -175,7 +172,7 @@ function toPublicArtwork(
     originalHeight: row.originalHeight,
     sale: saleFromRow(row, galleryRates),
     presentation,
-    object: objectCardOf(row),
+    isObject: row.artworkType === 'object',
   }
 }
 

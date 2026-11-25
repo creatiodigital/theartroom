@@ -34,7 +34,6 @@ import type { LimitedVariantDraft } from '@/lib/editions/types'
 import { resolveArtworkAuthor } from '@/utils/artistDisplayName'
 import { LimitedVariantsEditor } from './LimitedVariantsEditor'
 import { ArtworkMediaManager } from './ArtworkMediaManager'
-import { CoverCropFrame, CoverPreviews } from './ObjectCover'
 import {
   ObjectSize,
   ObjectTechnicalInfo,
@@ -68,10 +67,6 @@ import { scrollToFirstError } from '@/lib/validation/scrollToFirstError'
 import styles from './ArtworkEditForm.module.scss'
 
 export { ARTWORK_EDIT_FORM_ID } from './sections'
-
-/** An Object's cover (docs/objects "Cover photo"): at least 2000 px on the short side, 25 MB. */
-const OBJECT_COVER_MIN_SIDE = 2000
-const OBJECT_COVER_MAX_BYTES = 25 * 1024 * 1024
 
 /** A size typed in Details, for the 3D size check (the server validates what is saved). */
 const typedCm = (value: string): number | null => {
@@ -163,8 +158,6 @@ export type Artwork = {
   modelSizeBytes?: number | null
   modelBoundsCm?: { h: number; w: number; d: number } | null
   modelReadyAt?: string | null
-  coverCropX?: number | null
-  coverCropY?: number | null
   heightCm?: number | null
   widthCm?: number | null
   depthCm?: number | null
@@ -680,20 +673,6 @@ export const ArtworkEditForm = ({
     }
   }, [])
 
-  // An Object's cover: its pixel size places the square crop; a new photo starts centred.
-  const coverSize =
-    imageMeta && imageMeta.width > 0 && imageMeta.height > 0
-      ? { width: imageMeta.width, height: imageMeta.height }
-      : null
-  const handleCoverUpload = useCallback(
-    async (file: File, previewUrl?: string) => {
-      onFormChange('coverCropX', null)
-      onFormChange('coverCropY', null)
-      await onImageUpload(file, previewUrl)
-    },
-    [onFormChange, onImageUpload],
-  )
-
   const handleSoundFileSelect = useCallback(
     async (e: ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0]
@@ -794,13 +773,18 @@ export const ArtworkEditForm = ({
     !!objectModel &&
     (isAdmin || (objectModel.modelStatus === 'ready' && !!objectModel.modelUrl))
   const isPage = variant === 'page'
-  const imageSection = isVideo ? ARTWORK_SECTION.poster : ARTWORK_SECTION.image
+  // An Object's cover is the same upload as an image's, titled Cover photo (owner, 2026-11-25:
+  // "it's a cover image, same as the rest").
+  const imageSection = isVideo
+    ? ARTWORK_SECTION.poster
+    : isObject
+      ? ARTWORK_SECTION.cover
+      : ARTWORK_SECTION.image
 
   const rendered: (ArtworkSection | false)[] = [
     isImage && ARTWORK_SECTION.printSales,
     isVideo && ARTWORK_SECTION.videoFile,
-    isImageOrVideo && imageSection,
-    isObject && ARTWORK_SECTION.cover,
+    (isImageOrVideo || isObject) && imageSection,
     showSpace && ARTWORK_SECTION.space,
     isObject && !!artworkId && ARTWORK_SECTION.objectMedia,
     showOpenPrintOptions && ARTWORK_SECTION.ready,
@@ -1125,13 +1109,15 @@ export const ArtworkEditForm = ({
           )}
 
           {/* Image - for image and video types (poster for video) */}
-          {isImageOrVideo && (
+          {(isImageOrVideo || isObject) && (
             <EditorPanel
               section={imageSection}
               description={
                 isVideo
                   ? 'Optional. Upload a poster image for this video. If not provided, the first frame of the video will be used.'
-                  : 'Upload the artwork image. This will be displayed in exhibitions and on your profile.'
+                  : isObject
+                    ? 'The first thing people see: in your library, on exhibition pages, in grids and when shared. Use your best photo, on a calm background.'
+                    : 'Upload the artwork image. This will be displayed in exhibitions and on your profile.'
               }
             >
               <ImageUploader
@@ -1340,63 +1326,6 @@ export const ArtworkEditForm = ({
                   </div>
                 </details>
               )}
-            </EditorPanel>
-          )}
-
-          {/* An Object's cover photo (docs/objects): today's image upload, a 4:5 preview with
-              the square crop the grids show, and how it shows. Not a print master: no print
-              checks; at least 2000 px on the short side, up to 25 MB. */}
-          {isObject && (
-            <EditorPanel
-              section={ARTWORK_SECTION.cover}
-              description="The first thing people see: in your library, on exhibition pages, in grids and when shared. Use your best photo, on a calm background."
-            >
-              <ImageUploader
-                tone="admin"
-                align="start"
-                imageUrl={imageUrl}
-                onUpload={handleCoverUpload}
-                onRemove={onImageRemove}
-                onMetaChange={handleImageMetaChange}
-                displayMeta={pendingClientMeta ?? serverMeta}
-                uploading={uploading}
-                loadingText={loadingText}
-                aspectRatio="4 / 5"
-                objectFit="contain"
-                maxSizeBytes={OBJECT_COVER_MAX_BYTES}
-                minWidth={OBJECT_COVER_MIN_SIDE}
-                minHeight={OBJECT_COVER_MIN_SIDE}
-                overlay={
-                  coverSize && (
-                    <CoverCropFrame
-                      size={coverSize}
-                      crop={{ x: formData.coverCropX, y: formData.coverCropY }}
-                      onChange={({ x, y }) => {
-                        onFormChange('coverCropX', x)
-                        onFormChange('coverCropY', y)
-                      }}
-                    />
-                  )
-                }
-                note={
-                  <>
-                    {imageUrl && (
-                      <CoverPreviews
-                        imageUrl={imageUrl}
-                        size={coverSize}
-                        crop={{ x: formData.coverCropX, y: formData.coverCropY }}
-                      />
-                    )}
-                    {imageUrl && coverSize && coverSize.width !== coverSize.height && (
-                      <span>Drag the dashed square to choose what grids and lists show.</span>
-                    )}
-                    <span>
-                      At least {OBJECT_COVER_MIN_SIDE} px on the short side. JPG, PNG or TIFF, up to{' '}
-                      {OBJECT_COVER_MAX_BYTES / (1024 * 1024)} MB.
-                    </span>
-                  </>
-                }
-              />
             </EditorPanel>
           )}
 

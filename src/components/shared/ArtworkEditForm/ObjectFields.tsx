@@ -10,11 +10,9 @@ import styles from './ObjectFields.module.scss'
 
 /**
  * An Object's own form fields (docs/objects "What an Object has"), as the editor holds them:
- * what was typed ('' = not set; the server reads "12,5" too), the cover's crop as numbers.
+ * what was typed ('' = not set; the server reads "12,5" too).
  */
 export type ObjectFormFields = {
-  coverCropX: number | null
-  coverCropY: number | null
   heightCm: string
   widthCm: string
   depthCm: string
@@ -30,8 +28,6 @@ export type ObjectFormFields = {
 }
 
 type Stored = {
-  coverCropX?: number | null
-  coverCropY?: number | null
   heightCm?: number | null
   widthCm?: number | null
   depthCm?: number | null
@@ -48,8 +44,6 @@ const text = (n: number | null | undefined) => (typeof n === 'number' ? String(n
 
 /** The form's Object fields from a loaded artwork (any type: the fields are simply empty). */
 export const objectFormFields = (data: Stored): ObjectFormFields => ({
-  coverCropX: data.coverCropX ?? null,
-  coverCropY: data.coverCropY ?? null,
   heightCm: text(data.heightCm),
   widthCm: text(data.widthCm),
   depthCm: text(data.depthCm),

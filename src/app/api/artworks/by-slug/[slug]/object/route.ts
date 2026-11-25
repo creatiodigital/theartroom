@@ -27,8 +27,6 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
       originalWidth: true,
       originalHeight: true,
       artworkType: true,
-      coverCropX: true,
-      coverCropY: true,
       heightCm: true,
       widthCm: true,
       depthCm: true,

@@ -252,8 +252,6 @@ model Artwork {
   // image fields above (imageUrl, originalImageUrl, originalWidth/Height). Objects never sell
   // prints: printEnabled stays false (enforced by every write route). `dimensions` above keeps a
   // "64 × 38 × 31 cm" copy of the structured size for older displays; these fields are the truth.
-  coverCropX         Float? // 0..1, centre of the square crop for grids (null = 0.5)
-  coverCropY         Float? // 0..1 (null = 0.5)
   heightCm           Float?
   widthCm            Float?
   depthCm            Float?

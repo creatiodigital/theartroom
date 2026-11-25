@@ -22,7 +22,6 @@ import c from 'classnames'
 
 import { isSafeImageSrc } from '@/lib/imageSafety'
 import {
-  coverObjectPosition,
   objectDimensionsText,
   objectMediaSummary,
   type ObjectMediaCounts,
@@ -114,10 +113,8 @@ type Artwork = {
    *  GET /api/artworks with the same rule the checkout enforces. Only images
    *  can ever be true. */
   sellingNow?: boolean
-  // Objects (docs/objects): the cover's square crop, the size, the 3D model's state, and the
+  // Objects (docs/objects): the size, the 3D model's state, and the
   // photo / video / reel counts GET /api/artworks adds for them.
-  coverCropX?: number | null
-  coverCropY?: number | null
   originalWidth?: number | null
   originalHeight?: number | null
   heightCm?: number | null
@@ -203,8 +200,8 @@ type ArtworkThumbProps = {
  * square, and cropping hid whether a work is landscape or portrait.
  */
 function ArtworkThumb({ artwork, title, isPlaying, onTogglePlay }: ArtworkThumbProps) {
-  // An Object shows its cover, CROPPED square at the artist's crop centre (docs/objects: the
-  // cover's square crop is what grids show), else a cube on the warm tile.
+  // An Object shows its cover whole, like an image (owner, 2026-11-25), else a cube on the warm
+  // tile.
   if (artwork.artworkType === 'object') {
     if (artwork.imageUrl && isSafeImageSrc(artwork.imageUrl)) {
       return (
@@ -215,13 +212,7 @@ function ArtworkThumb({ artwork, title, isPlaying, onTogglePlay }: ArtworkThumbP
             width={64}
             height={64}
             unoptimized
-            className={styles.thumbCover}
-            style={{
-              objectPosition: coverObjectPosition(
-                { x: artwork.coverCropX, y: artwork.coverCropY },
-                { width: artwork.originalWidth, height: artwork.originalHeight },
-              ),
-            }}
+            className={styles.thumbImage}
           />
         </span>
       )

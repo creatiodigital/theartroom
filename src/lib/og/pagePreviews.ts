@@ -17,15 +17,9 @@ export async function exhibitionSharePreview(artistSlug: string, exhibitionSlug:
 export async function artworkSharePreview(slug: string) {
   const artwork = await prisma.artwork.findFirst({
     where: { slug, user: { published: true } },
-    select: { imageUrl: true, artworkType: true, coverCropX: true, coverCropY: true },
+    select: { imageUrl: true },
   })
-  // An Object shares its cover's square crop (docs/objects O5).
-  return renderSharePreview(
-    artwork?.imageUrl,
-    artwork?.artworkType === 'object'
-      ? { x: artwork.coverCropX, y: artwork.coverCropY }
-      : undefined,
-  )
+  return renderSharePreview(artwork?.imageUrl)
 }
 
 export async function artistSharePreview(handler: string) {

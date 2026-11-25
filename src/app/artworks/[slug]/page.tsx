@@ -43,8 +43,6 @@ const getArtwork = cache((slug: string) =>
       editionType: true,
       // An Object's own fields (docs/objects O5): its page is its own.
       artworkType: true,
-      coverCropX: true,
-      coverCropY: true,
       heightCm: true,
       widthCm: true,
       depthCm: true,

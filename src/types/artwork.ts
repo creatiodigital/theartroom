@@ -26,8 +26,6 @@ export type TObjectBoundsCm = { h: number; w: number; d: number }
  * the artwork's ordinary image (`imageUrl`, `originalWidth`/`Height`).
  */
 export type TArtworkObjectFields = {
-  coverCropX?: number | null
-  coverCropY?: number | null
   heightCm?: number | null
   widthCm?: number | null
   depthCm?: number | null

@@ -68,8 +68,6 @@ export const OBJECT_PRINT_OFF = {
  * them, so no client can point an artwork at a file it did not upload.
  */
 export type ObjectFieldsInput = {
-  coverCropX?: number | null
-  coverCropY?: number | null
   heightCm?: number | null
   widthCm?: number | null
   depthCm?: number | null
@@ -123,12 +121,6 @@ const toPositive = (value: unknown, label: string, max: number, step: number): n
   return n
 }
 
-/** A crop centre, 0..1. Clamped: the adjuster can overshoot by a pixel at an edge. */
-const toCrop = (value: unknown, label: string): number | null => {
-  if (isBlank(value)) return null
-  return Math.min(1, Math.max(0, toNumber(value, label)))
-}
-
 const toChoice = <T extends string>(
   value: unknown,
   choices: readonly T[],
@@ -160,8 +152,6 @@ export function parseObjectFields(body: Record<string, unknown>): ParsedObjectFi
   const has = (key: string) => key in body && body[key] !== undefined
   const data: ObjectFieldsInput = {}
   try {
-    if (has('coverCropX')) data.coverCropX = toCrop(body.coverCropX, 'Cover crop')
-    if (has('coverCropY')) data.coverCropY = toCrop(body.coverCropY, 'Cover crop')
     for (const [key, label] of SIZE_FIELDS) {
       if (has(key)) data[key] = toPositive(body[key], label, MAX_SIZE_CM, 0.1)
     }
@@ -270,36 +260,6 @@ export function objectMediaSummary({ photos, videos, reels }: ObjectMediaCounts)
   return parts.length ? parts.join(' · ') : null
 }
 
-type CropCentre = { x?: number | null; y?: number | null }
-type PixelSize = { width?: number | null; height?: number | null }
-
-/**
- * The square crop of a cover: its side, as a fraction of the photo's width and height (the
- * largest square, so 1 on the short side), and its centre clamped so the square stays inside.
- */
-export function coverSquare(crop: CropCentre, size: PixelSize) {
-  const { width: w, height: h } = size
-  const sx = w && h ? Math.min(w, h) / w : 1
-  const sy = w && h ? Math.min(w, h) / h : 1
-  const clamp = (c: number | null | undefined, side: number) =>
-    Math.min(1 - side / 2, Math.max(side / 2, c ?? 0.5))
-  return { sx, sy, x: clamp(crop.x, sx), y: clamp(crop.y, sy) }
-}
-
-/**
- * The CSS `object-position` that shows a cover's square crop in a square box with
- * `object-fit: cover` (grids, library rows, lists). The stored value is the square's centre;
- * CSS positions by the fraction of the overflow, hence the conversion. Without the photo's
- * size, the centre is used as is.
- */
-export function coverObjectPosition(crop: CropCentre, size: PixelSize): string {
-  if (!size.width || !size.height) return `${(crop.x ?? 0.5) * 100}% ${(crop.y ?? 0.5) * 100}%`
-  const { sx, sy, x, y } = coverSquare(crop, size)
-  const toPosition = (centre: number, side: number) =>
-    side >= 1 ? 50 : ((centre - side / 2) / (1 - side)) * 100
-  return `${toPosition(x, sx)}% ${toPosition(y, sy)}%`
-}
-
 // ── Visitor wording (docs/objects O5, objects-artwork-page-*.dc.html) ──────────
 
 /** Details › Where it can stand. */
@@ -315,24 +275,4 @@ export const OBJECT_DISPLAY_LABEL: Record<string, string> = {
   pedestal: 'On a pedestal',
   wall: 'On a wall',
   hanging: 'Hanging',
-}
-
-/**
- * What a grid card needs to show an Object (docs/objects O5): its cover cropped square at the
- * artist's crop. Null for every other type, so the card shows the work as always.
- */
-export function objectCardOf(row: {
-  artworkType?: string | null
-  coverCropX?: number | null
-  coverCropY?: number | null
-  originalWidth?: number | null
-  originalHeight?: number | null
-}): { coverPosition: string } | null {
-  if (row.artworkType !== 'object') return null
-  return {
-    coverPosition: coverObjectPosition(
-      { x: row.coverCropX, y: row.coverCropY },
-      { width: row.originalWidth, height: row.originalHeight },
-    ),
-  }
 }

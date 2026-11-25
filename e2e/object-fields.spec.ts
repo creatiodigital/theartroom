@@ -5,9 +5,6 @@ import { mediaLimitsFor } from '../src/lib/artwork/artworkMediaTypes'
 import { formatObjectSize, formatWeight } from '../src/lib/units/format'
 import {
   countObjectMedia,
-  objectCardOf,
-  coverObjectPosition,
-  coverSquare,
   objectDimensionsText,
   objectMediaSummary,
   objectWriteData,
@@ -44,10 +41,6 @@ test('sizes and weight must be positive numbers', () => {
   }
 })
 
-test('the cover crop is clamped to 0..1', () => {
-  expect(parsed({ coverCropX: 1.02, coverCropY: -0.1 })).toEqual({ coverCropX: 1, coverCropY: 0 })
-})
-
 test('choices accept only their values', () => {
   expect(parsed({ placement: 'both', displayMode: 'pedestal' })).toEqual({
     placement: 'both',
@@ -66,19 +59,6 @@ test('no edition: an Object is always a unique piece, so edition fields are neve
       objectArtistProofs: 2,
     }),
   ).toEqual({})
-})
-
-test('cover crop: centre to CSS position, clamped inside the photo', () => {
-  // Portrait 4000 × 5000: the square is 4000 tall, so it moves vertically only.
-  const size = { width: 4000, height: 5000 }
-  expect(coverObjectPosition({ x: 0.5, y: 0.5 }, size)).toBe('50% 50%')
-  expect(coverObjectPosition({ x: 0.5, y: 0.4 }, size)).toBe('50% 0%')
-  expect(coverObjectPosition({ x: 0.5, y: 0.6 }, size)).toBe('50% 100%')
-  expect(coverObjectPosition({ x: 0.5, y: 0.1 }, size)).toBe('50% 0%')
-  expect(coverObjectPosition({ x: 0.9, y: 0.5 }, size)).toBe('50% 50%')
-  expect(coverSquare({ x: null, y: 0.9 }, size)).toEqual({ sx: 1, sy: 0.8, x: 0.5, y: 0.6 })
-  // Without the photo's size the centre is used as is.
-  expect(coverObjectPosition({ x: 0.3, y: null }, {})).toBe('30% 50%')
 })
 
 test('notes: one line for signed / certificate, lines kept for care, length capped', () => {
@@ -154,17 +134,4 @@ test('visitor size (Q-O9): cm as entered, inches one decimal; weight always kg',
   expect(formatObjectSize({}, 'cm')).toBeNull()
   expect(formatWeight(18)).toBe('18 kg')
   expect(formatWeight(2.54)).toBe('2.5 kg')
-})
-
-test('grid card: only an Object gets its cover crop', () => {
-  expect(objectCardOf({ artworkType: 'image' })).toBeNull()
-  expect(
-    objectCardOf({
-      artworkType: 'object',
-      coverCropX: 0.5,
-      coverCropY: 0.4,
-      originalWidth: 4000,
-      originalHeight: 5000,
-    }),
-  ).toEqual({ coverPosition: '50% 0%' })
 })

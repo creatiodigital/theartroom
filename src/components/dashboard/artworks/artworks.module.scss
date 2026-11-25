@@ -67,14 +67,6 @@
   object-fit: contain;
 }
 
-// An Object's cover is the exception: CROPPED square (docs/objects, objects-library.dc.html), at
-// the artist's crop centre (set inline from coverCropX / coverCropY).
-.thumbCover {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 // Text, sound, video, an Object without a picture: an icon on the warm tile.
 .tile {
   background: var(--studio-nav-active);

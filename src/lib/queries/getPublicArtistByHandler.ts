@@ -1,6 +1,5 @@
 import { cache } from 'react'
 
-import { objectCardOf } from '@/lib/artwork/objectArtwork'
 import { SALE_SELECT, saleFromRow, type ArtworkSale } from '@/lib/editions/artworkSale'
 import prisma from '@/lib/prisma'
 import { getGalleryCommissionRates } from '@/lib/settings'
@@ -27,7 +26,7 @@ export type PublicArtistArtwork = {
   /** The work as a photo of the real print, when one is current and the switch is on. */
   presentation: PresentationView | null
   /** An Object (docs/objects): its cover's square crop for the card. Null for an image. */
-  object: { coverPosition: string } | null
+  isObject: boolean
 }
 
 export type PublicArtistExhibition = {
@@ -102,8 +101,6 @@ export const getPublicArtistByHandler = cache(async function getPublicArtistByHa
           dimensions: true,
           imageUrl: true,
           artworkType: true,
-          coverCropX: true,
-          coverCropY: true,
           ...SALE_SELECT,
         },
         orderBy: { order: 'asc' },
@@ -128,15 +125,13 @@ export const getPublicArtistByHandler = cache(async function getPublicArtistByHa
         printEnabled,
         printPriceCents,
         limitedVariants,
-        artworkType: _artworkType,
-        coverCropX: _coverCropX,
-        coverCropY: _coverCropY,
+        artworkType,
         ...artwork
       } = row
       return {
         ...artwork,
         presentation: presentations[artwork.id] ?? null,
-        object: objectCardOf(row),
+        isObject: artworkType === 'object',
         sale: saleFromRow(
           {
             editionType,
