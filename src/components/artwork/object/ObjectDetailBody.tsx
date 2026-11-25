@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
-import { CaretLeft, CaretRight, Cube, HandGrabbing } from '@phosphor-icons/react'
+import { CaretLeft, CaretRight, Cube } from '@phosphor-icons/react'
 import c from 'classnames'
 
 import { SHOW_NEIGHBOUR_ARROWS } from '@/components/artwork/detail/neighbourArrows'
@@ -207,10 +207,6 @@ export function ObjectDetailBody({
                   resetKey={resetKey}
                   className={styles.viewer}
                 />
-                <span className={styles.dragHint}>
-                  <HandGrabbing size={18} weight="light" aria-hidden />
-                  Drag to turn it around
-                </span>
                 <Button
                   variant="bare"
                   label="Reset view"
