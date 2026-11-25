@@ -243,25 +243,24 @@ a.artist:hover {
   color: var(--public-text);
 }
 
-// The technique's lines (camera, lens, ISO…; an Object's materials), as entered: their own block
-// under the divider (artwork.md "Info column, refined"), set close ("lines look too separated": 1.5).
-// Through .info: outranks RichText's own rules whatever the stylesheet order (the room overlay
-// loads them in another order than the page).
-.info .technique {
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--color-text-secondary);
+// The technique's lines (camera, lens, ISO…; an Object's materials), as entered, then the size in
+// their format (owner, 2026-11-25: "Move the sizes where the technical info is", "materials first,
+// sizes later"), a bit bigger and black ("a bit bigger this font and black": 13 px grey → 14 px).
+// Set close ("lines look too separated": 1.5). Through .info: outranks RichText's own rules whatever
+// the stylesheet order (the room overlay loads them in another order than the page).
+.info .technique,
+.info .technique p,
+.info .technique li,
+.info .makingSize {
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--public-text);
 }
 
-// The size, in the technical lines' format, right after them (owner, 2026-11-25: "Move the sizes
-// where the technical info is", "move the materials first, sizes later").
 .info .technique p,
 .info .technique li,
 .info .makingSize {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--color-text-secondary);
 }
 
 // The action, right under the year's divider (owner, 2026-11-25): the price and Order a print, or
