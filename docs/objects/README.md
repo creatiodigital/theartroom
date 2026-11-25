@@ -448,3 +448,5 @@ uploader just for 3D objects", "it's a cover image, same as the rest").
   `coverCropY` (two columns fewer; the dev database keeps them until the owner's next push). Grids, the studio
   library and the share image show an Object's cover whole, like any picture; the grid's year line still says
   "Object". On the Object page the cover's view thumbnail is centred, like the other views.
+- The gallery team's upload box has no "Gallery team only" eyebrow (owner, same day: "remove this"); only admins see
+  it anyway.

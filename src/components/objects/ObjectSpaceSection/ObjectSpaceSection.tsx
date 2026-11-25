@@ -100,7 +100,6 @@ export function ObjectSpaceSection({
 
       {isAdmin && (
         <div className={styles.team}>
-          <span className={styles.teamEyebrow}>Gallery team only</span>
           <span className={styles.teamText}>
             Upload the cleaned .glb (textures inside, 1 unit = 1 m, base at 0). It is checked before
             it is sent; we check the size against the one in Details.
