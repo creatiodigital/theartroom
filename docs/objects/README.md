@@ -579,3 +579,14 @@ differences: a 3D viewer and a cover. The rest SHOULD BE the same", and `artwork
 (`purchasableArtworkWhere`) leaves Objects out, checkout refuses one, every save of an Object writes
 `printEnabled: false`. So the O5b item 4 line "No print block until the Sales tab work (unique-sales U6)" becomes
 "never": an Object's page has no print block at all.
+
+**O5b, the owner's review the same evening (2026-11-25).**
+- The photos are views in the grey box, after the cover, with their thumbnails in the info column ("add them to
+  the top carousel, and thumbnails on the side bar"; on phones the row under the box). Only the videos and reels
+  stay in the carousel below the work.
+- The 3D model is the **last** view ("Make the 3D view last"): the page opens on the cover, and the model loads only
+  when its tile is picked or swiped to (no 3D canvas before, also in the 3D room's window). Its tile is the cover
+  with "3D" in the bottom-left corner as a small label in the site's own type (bold spaced capitals, white on the
+  near-black, square): the cube icon and the 3D icon were turned down.
+- Info column as image works (`docs/public-redesign/artwork.md`, "Built: the owner's review"): Inquire right under
+  the year's divider, then the materials and the size ("29 × 39 × 14 cm · 15 kg"), then the tiles.

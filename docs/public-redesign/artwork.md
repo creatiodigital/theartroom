@@ -105,3 +105,19 @@ One rule for image works and Objects, in the shared `ArtworkInfoColumn`:
 - 3D zoom (`ModelViewer` `.light .zoom`): one joined pair, white, `--color-gray-55` outline and divider (#d0d0d0, the
   nearest token to #d6d6d2), cells `--space-10` (40 px: the nearest token to 36 that keeps the 44 px hit area in
   reach), 16 px in from the top right. Reset view unchanged.
+
+**Built: the owner's review of the column, later on 2026-11-25** (supersedes parts of the note above).
+- Title and year: back to the live title (36 px, phones 30 px, 4 px above and below; no balance), its line
+  height 1.1 → 1.05 ("a little smaller"). The year a little bigger, bolder and black: `--text-md`, Lato bold (the
+  only weight above regular), `--public-text`.
+- Order of the blocks, one rule for every work: who and what (artist, title, year) · divider · **the action**
+  (`ArtworkInfoColumn` `action`): for sale, the price and Available, then Order a print, **no Inquire** (owner:
+  "remove the Inquire button if we show an order print"; Inquire comes back only when sold out); not for sale and
+  Objects, Inquire · divider · the technique / materials, **then the size** in their format (owner: "Move the sizes
+  where the technical info is", "materials first, sizes later") · divider · the print's kind and sizes, the views,
+  Share.
+- The print card is two parts: `ArtworkPurchase` (price + Order a print) and `ArtworkPrintDetails` (kind, sizes,
+  edition rows). The price line: open "From €338", one-size limited "€284", several sizes the in-stock range
+  "€445–€653" as the grids write it; the rows keep their own prices, "Available" is no longer repeated under them.
+- Specs adjusted: the artwork page's CTA check matches "Order a print"; the views grid sits below the action;
+  the inquiry form spec opens Inquire on its own throwaway not-for-sale work.
