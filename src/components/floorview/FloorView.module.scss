@@ -61,7 +61,6 @@
 }
 
 // ── Buttons (two classes: Button's bare reset would win over one) ──
-.frame .btn,
 .frame .iconButton {
   display: inline-flex;
   align-items: center;
@@ -87,16 +86,6 @@
 .frame .iconButton {
   width: var(--space-8);
   padding: 0;
-}
-
-.frame .dark {
-  border-color: var(--color-dark-surface);
-  background: var(--color-dark-surface);
-  color: var(--color-white);
-}
-
-.frame .danger {
-  color: var(--color-red-50);
 }
 
 .frame .link {
@@ -565,6 +554,12 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+
+  // The lock and View details keep their size; the title wraps instead.
+  > :not(:first-child) {
+    flex: none;
+    white-space: nowrap;
+  }
 }
 
 .inspectorTitle {

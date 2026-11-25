@@ -252,8 +252,9 @@ export function FloorInspector({
           onChange={(v) => editor.patchItem(item.id, { rotY: item.rotY + (v - where.rotY) })}
         />
         <Button
-          variant="bare"
-          className={styles.btn}
+          variant="secondary"
+          size="small"
+          font="dashboard"
           aria-label="Turn 90° left"
           disabled={item.locked}
           onClick={() => editor.patchItem(item.id, { rotY: item.rotY + 90 })}
@@ -261,8 +262,9 @@ export function FloorInspector({
           <ArrowCounterClockwise size={16} aria-hidden />
         </Button>
         <Button
-          variant="bare"
-          className={styles.btn}
+          variant="secondary"
+          size="small"
+          font="dashboard"
           aria-label="Turn 90° right"
           disabled={item.locked}
           onClick={() => editor.patchItem(item.id, { rotY: item.rotY - 90 })}
@@ -280,10 +282,14 @@ export function FloorInspector({
   if (item.kind === 'object') {
     const artwork = artworks[item.artworkId]
     const b = artwork?.boundsCm
-    const real = b ? `${Math.round(b.w)} × ${Math.round(b.d)} × ${Math.round(b.h)} cm` : null
-    const now = b
-      ? `${Math.round(b.w * item.scale)} × ${Math.round(b.d * item.scale)} × ${Math.round(b.h * item.scale)} cm`
-      : ''
+    // Sizes as everywhere else: Height × Width × Depth (owner, 2026-11-25: "I need to know at all
+    // time the size of the object"). The uploaded model is 100%; the artist sets the real size.
+    const cm = (n: number) => Math.round(n * 10) / 10
+    const sizeText = (k: number) => (b ? `${cm(b.h * k)} × ${cm(b.w * k)} × ${cm(b.d * k)} cm` : '')
+    const now = sizeText(item.scale)
+    const uploaded = b ? sizeText(1) : null
+    const scaleTo = (target: number, side: number) =>
+      editor.patchItem(item.id, { scale: Math.min(20, Math.max(0.05, target / side)) })
     const pedestal = item.pedestalId
       ? (layout.items.find((i) => i.id === item.pedestalId) as FloorPedestal | undefined)
       : undefined
@@ -297,7 +303,12 @@ export function FloorInspector({
           </span>
           {lock}
           {artwork && (
-            <Button variant="bare" href={`/artworks/${artwork.slug}`} className={styles.btn}>
+            <Button
+              variant="secondary"
+              size="small"
+              font="dashboard"
+              href={`/artworks/${artwork.slug}`}
+            >
               View details
             </Button>
           )}
@@ -309,8 +320,9 @@ export function FloorInspector({
               <span>Moves with the pedestal</span>
             </span>
             <Button
-              variant="bare"
-              className={styles.btn}
+              variant="secondary"
+              size="small"
+              font="dashboard"
               onClick={() =>
                 editor.update((all) =>
                   all.map((i) => (i.id === item.id ? detachObject(layout, item) : i)),
@@ -340,17 +352,47 @@ export function FloorInspector({
         </Section>
         {rotation}
         <Section title="Size">
-          <NumberField
-            label="Size"
-            unit="%"
-            value={item.scale * 100}
-            min={5}
-            max={2000}
-            disabled={item.locked}
-            onChange={(v) => editor.patchItem(item.id, { scale: v / 100 })}
-          />
+          {b ? (
+            <div className={styles.triple}>
+              <NumberField
+                label="Height"
+                unit="cm"
+                value={b.h * item.scale}
+                min={0.1}
+                disabled={item.locked}
+                onChange={(v) => scaleTo(v, b.h)}
+              />
+              <NumberField
+                label="Width"
+                unit="cm"
+                value={b.w * item.scale}
+                min={0.1}
+                disabled={item.locked}
+                onChange={(v) => scaleTo(v, b.w)}
+              />
+              <NumberField
+                label="Depth"
+                unit="cm"
+                value={b.d * item.scale}
+                min={0.1}
+                disabled={item.locked}
+                onChange={(v) => scaleTo(v, b.d)}
+              />
+            </div>
+          ) : (
+            <NumberField
+              label="Size"
+              unit="%"
+              value={item.scale * 100}
+              min={5}
+              max={2000}
+              disabled={item.locked}
+              onChange={(v) => editor.patchItem(item.id, { scale: v / 100 })}
+            />
+          )}
           <span className={styles.hint}>
-            Always in proportion. 100% is the size of the uploaded model{real ? `: ${real}` : ''}.
+            Always in proportion: change one, the others follow.
+            {uploaded ? ` The uploaded model is ${uploaded}.` : ''}
           </span>
           {item.scale !== 1 && (
             <Button
@@ -358,7 +400,7 @@ export function FloorInspector({
               className={styles.link}
               onClick={() => editor.patchItem(item.id, { scale: 1 })}
             >
-              Back to 100%
+              Back to the uploaded size
             </Button>
           )}
         </Section>
@@ -378,8 +420,9 @@ export function FloorInspector({
         </Section>
         <div className={styles.inspectorFoot}>
           <Button
-            variant="bare"
-            className={styles.btn}
+            variant="secondary"
+            size="small"
+            font="dashboard"
             onClick={() => {
               editor.update((all) => all.filter((i) => i.id !== item.id))
               onSelect([])
@@ -617,12 +660,13 @@ export function FloorInspector({
         )}
       </Section>
       <div className={styles.inspectorFoot}>
-        <Button variant="bare" className={styles.btn} onClick={() => onDuplicate(p)}>
+        <Button variant="secondary" size="small" font="dashboard" onClick={() => onDuplicate(p)}>
           Duplicate
         </Button>
         <Button
-          variant="bare"
-          className={styles.btn}
+          variant="secondary"
+          size="small"
+          font="dashboard"
           onClick={() => (onTop.length ? setConfirmRemove(p) : removePedestal(false))}
         >
           Remove
@@ -635,15 +679,26 @@ export function FloorInspector({
             {onTop.length === 1 ? 'it' : 'them'} on the floor?
           </p>
           <div className={styles.confirmActions}>
-            <Button variant="bare" className={styles.btn} onClick={() => setConfirmRemove(null)}>
+            <Button
+              variant="secondary"
+              size="small"
+              font="dashboard"
+              onClick={() => setConfirmRemove(null)}
+            >
               Cancel
             </Button>
-            <Button variant="bare" className={styles.btn} onClick={() => removePedestal(false)}>
+            <Button
+              variant="secondary"
+              size="small"
+              font="dashboard"
+              onClick={() => removePedestal(false)}
+            >
               Keep on the floor
             </Button>
             <Button
-              variant="bare"
-              className={c(styles.btn, styles.danger)}
+              variant="danger"
+              size="small"
+              font="dashboard"
               onClick={() => removePedestal(true)}
             >
               Remove too
@@ -704,24 +759,54 @@ function Several({
       </div>
       <Section title="Align">
         <div className={styles.buttonRow}>
-          <Button variant="bare" className={styles.btn} onClick={() => align('x', 'min')}>
+          <Button
+            variant="secondary"
+            size="small"
+            font="dashboard"
+            onClick={() => align('x', 'min')}
+          >
             West
           </Button>
-          <Button variant="bare" className={styles.btn} onClick={() => align('x', 'mid')}>
+          <Button
+            variant="secondary"
+            size="small"
+            font="dashboard"
+            onClick={() => align('x', 'mid')}
+          >
             Centre
           </Button>
-          <Button variant="bare" className={styles.btn} onClick={() => align('x', 'max')}>
+          <Button
+            variant="secondary"
+            size="small"
+            font="dashboard"
+            onClick={() => align('x', 'max')}
+          >
             East
           </Button>
         </div>
         <div className={styles.buttonRow}>
-          <Button variant="bare" className={styles.btn} onClick={() => align('z', 'min')}>
+          <Button
+            variant="secondary"
+            size="small"
+            font="dashboard"
+            onClick={() => align('z', 'min')}
+          >
             North
           </Button>
-          <Button variant="bare" className={styles.btn} onClick={() => align('z', 'mid')}>
+          <Button
+            variant="secondary"
+            size="small"
+            font="dashboard"
+            onClick={() => align('z', 'mid')}
+          >
             Middle
           </Button>
-          <Button variant="bare" className={styles.btn} onClick={() => align('z', 'max')}>
+          <Button
+            variant="secondary"
+            size="small"
+            font="dashboard"
+            onClick={() => align('z', 'max')}
+          >
             South
           </Button>
         </div>
@@ -729,16 +814,18 @@ function Several({
       <Section title="Distribute">
         <div className={styles.buttonRow}>
           <Button
-            variant="bare"
-            className={styles.btn}
+            variant="secondary"
+            size="small"
+            font="dashboard"
             disabled={movable.length < 3}
             onClick={() => distribute('x')}
           >
             West to east
           </Button>
           <Button
-            variant="bare"
-            className={styles.btn}
+            variant="secondary"
+            size="small"
+            font="dashboard"
             disabled={movable.length < 3}
             onClick={() => distribute('z')}
           >
@@ -750,8 +837,9 @@ function Several({
       <div className={styles.inspectorFoot}>
         {group ? (
           <Button
-            variant="bare"
-            className={styles.btn}
+            variant="secondary"
+            size="small"
+            font="dashboard"
             onClick={() =>
               editor.commit({ ...layout, groups: layout.groups.filter((g) => g !== group) })
             }
@@ -760,8 +848,9 @@ function Several({
           </Button>
         ) : (
           <Button
-            variant="bare"
-            className={styles.btn}
+            variant="secondary"
+            size="small"
+            font="dashboard"
             onClick={() =>
               editor.commit({
                 ...layout,
@@ -785,8 +874,9 @@ function Several({
           </Button>
         )}
         <Button
-          variant="bare"
-          className={styles.btn}
+          variant="secondary"
+          size="small"
+          font="dashboard"
           onClick={() => {
             const gone = new Set(items.map((i) => i.id))
             editor.update((all) =>

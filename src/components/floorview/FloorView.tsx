@@ -23,6 +23,7 @@ import { type FloorItem, type FloorObject, type FloorPedestal } from '@/lib/floo
 import { detachObject, dropObject } from '@/lib/floor/floorPlacement'
 import { PEDESTAL_DEFAULT_LOOK, pedestalShape } from '@/lib/floor/pedestals'
 import { addFloorArtworks } from '@/redux/slices/exhibitionSlice'
+import { hidePlaceholders, showPlaceholders } from '@/redux/slices/sceneSlice'
 import {
   hideFloorView,
   selectFloorItems,
@@ -56,6 +57,18 @@ type LibraryArtwork = FloorArtwork & { ready: boolean }
 
 export function FloorView() {
   const dispatch = useDispatch()
+
+  // The live 3D is a helper for placing Objects, not for walls: no wall placeholders while the
+  // Floor plan is open (owner, 2026-11-25); they come back as they were when it closes.
+  const placeholdersShown = useSelector((state: RootState) => state.scene.isPlaceholdersShown)
+  const hadPlaceholders = useRef(placeholdersShown)
+  useEffect(() => {
+    const had = hadPlaceholders.current
+    if (had) dispatch(hidePlaceholders())
+    return () => {
+      if (had) dispatch(showPlaceholders())
+    }
+  }, [dispatch])
   const editor = useFloorEditor()
   const { rooms } = useFloorRooms()
   const roomIndex = useSelector((state: RootState) => state.floor.room)
@@ -395,20 +408,22 @@ export function FloorView() {
             )}
           </div>
           <div className={styles.saveRow}>
-            <Button variant="bare" className={styles.btn} onClick={cancel}>
+            <Button variant="secondary" size="small" font="dashboard" onClick={cancel}>
               Cancel
             </Button>
             <Button
-              variant="bare"
-              className={styles.btn}
+              variant="secondary"
+              size="small"
+              font="dashboard"
               disabled={editor.saving}
               onClick={() => save(false)}
             >
               Save
             </Button>
             <Button
-              variant="bare"
-              className={c(styles.btn, styles.dark)}
+              variant="primary"
+              size="small"
+              font="dashboard"
               disabled={editor.saving}
               onClick={() => save(true)}
             >
@@ -459,7 +474,7 @@ export function FloorView() {
           >
             <Plus size={15} aria-hidden />
           </Button>
-          <Button variant="bare" className={styles.btn} onClick={() => setZoom(1)}>
+          <Button variant="secondary" size="small" font="dashboard" onClick={() => setZoom(1)}>
             <CornersOut size={14} aria-hidden />
             Fit
           </Button>
@@ -632,7 +647,7 @@ export function FloorView() {
                                 ? 'Already on the floor'
                                 : a.ready
                                   ? a.boundsCm
-                                    ? `${Math.round(a.boundsCm.w)} × ${Math.round(a.boundsCm.d)} × ${Math.round(a.boundsCm.h)} cm`
+                                    ? `${Math.round(a.boundsCm.h)} × ${Math.round(a.boundsCm.w)} × ${Math.round(a.boundsCm.d)} cm`
                                     : '3D model ready'
                                   : 'No 3D model yet'}
                             </span>

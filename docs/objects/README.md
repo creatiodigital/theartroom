@@ -484,3 +484,13 @@ object! unless it's a pedestal", "I cannot navigate in this 3D space with the ke
   (`parseFloorLayout`). Pedestals repeat freely.
 - The arrows and WASD walk the live 3D as in the editor, except while something is picked and the mouse is not over
   the 3D: then the arrows move the pick on the plan (Shift: 10 cm).
+
+**Floor plan and the 3D viewer, 2026-11-25 (owner's review)**
+- The Floor plan's live 3D is a helper for placing Objects: no wall placeholders while it is open (put back on close).
+  The keys and mouse walk it as in the 3D editor (W levels the head while walking, as everywhere).
+- The picked Object's size is shown and set in cm, Height × Width × Depth (in proportion: change one, the others
+  follow; "Back to the uploaded size"); the header shows it at all times.
+- Every text button in the Floor plan is the library Button (secondary / primary / danger, small).
+- The artwork page's 3D button reads "View in 3D". The 3D viewer zooms between 75 % and 150 % of the framed
+  distance, and Reset view glides back to the starting angle; the model no longer blinks on a re-render (its cache
+  was freed by Strict Mode's test cleanup and reloaded, hidden meanwhile).

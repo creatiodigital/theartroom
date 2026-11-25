@@ -52,7 +52,7 @@ const THREE_D_CAPTION = '3D model prepared by The Art Room'
  * The top of an Object's artwork page (docs/objects O5, objects-artwork-page-desktop/-phone):
  * the stage on the left (the cover, then the labelled photos; 72 px tiles under it on desktop, a
  * swipe with a progress bar on phones) and the info column on the right, in the approved artwork
- * page's frame and styles. "Turn it around in 3D" puts the model in the stage, loaded on that
+ * page's frame and styles. "View in 3D" puts the model in the stage, loaded on that
  * click only. No price and no Order print: Objects are not prints; Inquire is the way forward.
  */
 export function ObjectDetailBody({
@@ -175,7 +175,7 @@ export function ObjectDetailBody({
             {artwork.model && (
               <Button variant="bare" className={styles.turn} onClick={open3d}>
                 <Cube size={16} weight="regular" aria-hidden />
-                Turn it around in 3D
+                View in 3D
               </Button>
             )}
             <Share title={title} url={shareUrl} className={detail.share} />
@@ -307,7 +307,7 @@ export function ObjectDetailBody({
                   variant="bare"
                   className={c(styles.thumb, styles.thumb3d, in3d && styles.thumbOn)}
                   aria-pressed={in3d}
-                  aria-label="Turn it around in 3D"
+                  aria-label="View in 3D"
                   onClick={open3d}
                 >
                   <Cube size={22} weight="light" aria-hidden />
