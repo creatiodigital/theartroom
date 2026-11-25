@@ -91,7 +91,7 @@ export function useFloorEditor() {
   )
 
   /**
-   * Preview a move of the dragged items by (dx, dz) metres from where they started. What is
+   * Preview a move of the dragged items by (dx, dz) meters from where they started. What is
    * attached to a dragged item rides along. A free item moves across the floor; an Object on a top
    * comes off while dragged (it lands on release, as O6); any other attached item slides on its
    * face, unless `free` (Alt): then it comes off too, at the height it was seen at.

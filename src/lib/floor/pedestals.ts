@@ -4,7 +4,7 @@
  * base, the top an Object sits on). Pure and client-safe: the meshes are built from these in
  * `components/scene/floor/PedestalMesh.tsx`.
  *
- * Units: cm. Plan coordinates: x across (width), z in depth, origin at the pedestal's centre.
+ * Units: cm. Plan coordinates: x across (width), z in depth, origin at the pedestal's center.
  */
 
 export type PedestalShapeId =
@@ -201,7 +201,7 @@ const roundedRect = (w: number, d: number, r: number): Pt[] => {
 }
 
 /**
- * The outline at the base, in plan (cm, around the centre). Half round: the flat back along −z
+ * The outline at the base, in plan (cm, around the center). Half round: the flat back along −z
  * (to sit against a wall), the curve toward +z. Corner: the right angle at the back left.
  */
 export function pedestalOutline(shape: PedestalShapeId, w: number, d: number): Pt[] {
@@ -238,7 +238,7 @@ export function pedestalOutline(shape: PedestalShapeId, w: number, d: number): P
 }
 
 /**
- * The surface an Object stands on: its outline in plan (around the pedestal's centre) and its
+ * The surface an Object stands on: its outline in plan (around the pedestal's center) and its
  * height (cm). The top follows the shape: smaller for Tapered, the upper tier for Stepped, the
  * tabletop for Table, the base outline otherwise.
  */
@@ -262,7 +262,7 @@ export function pedestalTop(
   }
 }
 
-/** True when a point (cm, around the pedestal's centre) is on a top's outline (ray casting). */
+/** True when a point (cm, around the pedestal's center) is on a top's outline (ray casting). */
 export function insideOutline(outline: Pt[], x: number, z: number): boolean {
   let inside = false
   for (let i = 0, j = outline.length - 1; i < outline.length; j = i++) {
@@ -278,7 +278,7 @@ export function insideOutline(outline: Pt[], x: number, z: number): boolean {
 export type PedestalFinish = 'matte' | 'satin' | 'gloss'
 export type PedestalEdges = 'sharp' | 'soft' | 'round'
 
-export type PedestalColour = {
+export type PedestalColor = {
   id: string
   label: string
   hex: string
@@ -292,11 +292,11 @@ export type WoodTexture = 'dark' | 'medium' | 'light'
 export type PedestalMaterial = {
   id: 'painted' | 'wood' | 'plastic' | 'concrete' | 'stone' | 'metal' | 'acrylic' | 'mirror'
   label: string
-  /** The colour picker's title: "Colour", "Wood", "Tone", "Stone", "Metal", "Tint", "Finish". */
-  colourTitle: string
-  colours: PedestalColour[]
-  /** Any colour (a custom hex) as well as the list. */
-  anyColour: boolean
+  /** The color picker's title: "Color", "Wood", "Tone", "Stone", "Metal", "Tint", "Finish". */
+  colorTitle: string
+  colors: PedestalColor[]
+  /** Any color (a custom hex) as well as the list. */
+  anyColor: boolean
   /** Matte / Satin / Gloss. */
   finishes: boolean
   /** The PBR basics a renderer starts from. */
@@ -306,12 +306,12 @@ export type PedestalMaterial = {
   opacity?: number
 }
 
-const PAINT: PedestalColour[] = [
+const PAINT: PedestalColor[] = [
   { id: 'white', label: 'White', hex: '#f7f7f5' },
   { id: 'offWhite', label: 'Off-white', hex: '#ece7dc' },
   { id: 'sand', label: 'Sand', hex: '#d8c9ad' },
-  { id: 'lightGrey', label: 'Light grey', hex: '#c9c9c7' },
-  { id: 'darkGrey', label: 'Dark grey', hex: '#5a5a5a' },
+  { id: 'lightGray', label: 'Light gray', hex: '#c9c9c7' },
+  { id: 'darkGray', label: 'Dark gray', hex: '#5a5a5a' },
   { id: 'black', label: 'Black', hex: '#1c1c1c' },
   { id: 'terracotta', label: 'Terracotta', hex: '#b8644a' },
   { id: 'ochre', label: 'Ochre', hex: '#c99a3e' },
@@ -325,9 +325,9 @@ export const PEDESTAL_MATERIALS: readonly PedestalMaterial[] = [
   {
     id: 'painted',
     label: 'Painted',
-    colourTitle: 'Colour',
-    colours: PAINT,
-    anyColour: true,
+    colorTitle: 'Color',
+    colors: PAINT,
+    anyColor: true,
     finishes: true,
     roughness: 0.85,
     metalness: 0,
@@ -335,14 +335,14 @@ export const PEDESTAL_MATERIALS: readonly PedestalMaterial[] = [
   {
     id: 'wood',
     label: 'Wood',
-    colourTitle: 'Wood',
-    anyColour: false,
+    colorTitle: 'Wood',
+    anyColor: false,
     // The finish scales the wood's roughness map.
     finishes: true,
     roughness: 0.7,
     metalness: 0,
     // The frames' real wood (diffuse, normal, roughness); the hex is only the swatch's fallback.
-    colours: [
+    colors: [
       { id: 'dark', label: 'Dark wood', hex: '#4a3326', texture: 'dark' },
       { id: 'medium', label: 'Medium wood', hex: '#8a5f3f', texture: 'medium' },
       { id: 'light', label: 'Light wood', hex: '#cdb08a', texture: 'light' },
@@ -351,9 +351,9 @@ export const PEDESTAL_MATERIALS: readonly PedestalMaterial[] = [
   {
     id: 'plastic',
     label: 'Plastic',
-    colourTitle: 'Colour',
-    colours: PAINT,
-    anyColour: true,
+    colorTitle: 'Color',
+    colors: PAINT,
+    anyColor: true,
     finishes: true,
     roughness: 0.45,
     metalness: 0,
@@ -361,12 +361,12 @@ export const PEDESTAL_MATERIALS: readonly PedestalMaterial[] = [
   {
     id: 'concrete',
     label: 'Concrete',
-    colourTitle: 'Tone',
-    anyColour: false,
+    colorTitle: 'Tone',
+    anyColor: false,
     finishes: false,
     roughness: 0.95,
     metalness: 0,
-    colours: [
+    colors: [
       { id: 'light', label: 'Light', hex: '#c1bdb7' },
       { id: 'mid', label: 'Mid', hex: '#a29e97' },
       { id: 'dark', label: 'Dark', hex: '#6e6a65' },
@@ -375,12 +375,12 @@ export const PEDESTAL_MATERIALS: readonly PedestalMaterial[] = [
   {
     id: 'stone',
     label: 'Stone',
-    colourTitle: 'Stone',
-    anyColour: false,
+    colorTitle: 'Stone',
+    anyColor: false,
     finishes: false,
     roughness: 0.35,
     metalness: 0,
-    colours: [
+    colors: [
       { id: 'whiteMarble', label: 'White marble', hex: '#eeece8' },
       { id: 'travertine', label: 'Travertine', hex: '#dac8a9' },
       { id: 'greenMarble', label: 'Green marble', hex: '#334a3e' },
@@ -390,12 +390,12 @@ export const PEDESTAL_MATERIALS: readonly PedestalMaterial[] = [
   {
     id: 'metal',
     label: 'Metal',
-    colourTitle: 'Metal',
-    anyColour: false,
+    colorTitle: 'Metal',
+    anyColor: false,
     finishes: false,
     roughness: 0.35,
     metalness: 1,
-    colours: [
+    colors: [
       { id: 'brushedSteel', label: 'Brushed steel', hex: '#bcbfc2' },
       { id: 'blackSteel', label: 'Black steel', hex: '#38393b' },
       { id: 'brass', label: 'Brass', hex: '#c6a35b' },
@@ -406,13 +406,13 @@ export const PEDESTAL_MATERIALS: readonly PedestalMaterial[] = [
   {
     id: 'acrylic',
     label: 'Acrylic',
-    colourTitle: 'Tint',
-    anyColour: true,
+    colorTitle: 'Tint',
+    anyColor: true,
     finishes: false,
     roughness: 0.05,
     metalness: 0,
     opacity: 0.35,
-    colours: [
+    colors: [
       { id: 'clear', label: 'Clear', hex: '#e4edf3' },
       { id: 'frosted', label: 'Frosted', hex: '#e7ebee' },
       { id: 'smoke', label: 'Smoke', hex: '#707070' },
@@ -422,12 +422,12 @@ export const PEDESTAL_MATERIALS: readonly PedestalMaterial[] = [
   {
     id: 'mirror',
     label: 'Mirror',
-    colourTitle: 'Finish',
-    anyColour: false,
+    colorTitle: 'Finish',
+    anyColor: false,
     finishes: false,
     roughness: 0.04,
     metalness: 1,
-    colours: [
+    colors: [
       { id: 'silver', label: 'Silver', hex: '#dfe3e7' },
       { id: 'smoked', label: 'Smoked', hex: '#6f757b' },
       { id: 'gold', label: 'Gold', hex: '#d6b56a' },
@@ -461,7 +461,7 @@ export const WOOD_ALIASES: Record<string, WoodTexture> = {
 /** A Plank's look: dark wood, satin (close to the frames' roughness). */
 export const PLANK_LOOK = {
   material: 'wood' as const,
-  colour: 'dark',
+  color: 'dark',
   finish: 'satin' as PedestalFinish,
   edges: 'soft' as PedestalEdges,
 }
@@ -469,7 +469,7 @@ export const PLANK_LOOK = {
 /** Default for a new pedestal (owner: Painted, White, Matte). */
 export const PEDESTAL_DEFAULT_LOOK = {
   material: 'painted' as const,
-  colour: 'white',
+  color: 'white',
   finish: 'matte' as PedestalFinish,
   edges: 'soft' as PedestalEdges,
 }

@@ -47,7 +47,7 @@ const ROTATE_STEP = 15
 const TEXT_PX = 11
 const HANDLE_GAP_PX = 26
 const HANDLE_R_PX = 7
-/** Every item can be picked within this many px of its centre, however small it is drawn. */
+/** Every item can be picked within this many px of its center, however small it is drawn. */
 const HIT_R_PX = 12
 
 type Props = {
@@ -57,18 +57,18 @@ type Props = {
   onSelect: (ids: string[]) => void
   /** A picked group member brings its group (Shift picks single items). */
   expand: (ids: string[]) => string[]
-  /** Something dragged in from the add bar landed at (x, z) metres. */
+  /** Something dragged in from the add bar landed at (x, z) meters. */
   onDropAdd: (payload: string, x: number, z: number) => void
   zoom: number
   /** Picked in the list: the map never picks another item (owner, 2026-11-25: "lock it"). */
   lockPick: boolean
-  /** The view's centre (plan cm); null: the room's centre. */
-  centre: PlanPoint | null
-  /** A pinch or a scroll on the plan, or a drag on its background: the new zoom and centre. */
-  onView: (zoom: number, centre: PlanPoint) => void
+  /** The view's center (plan cm); null: the room's center. */
+  center: PlanPoint | null
+  /** A pinch or a scroll on the plan, or a drag on its background: the new zoom and center. */
+  onView: (zoom: number, center: PlanPoint) => void
 }
 
-/** How far the turning handle stands from the centre (cm): past the item's reach toward its back. */
+/** How far the turning handle stands from the center (cm): past the item's reach toward its back. */
 const reachOf = (at: Placed) =>
   at.upright ? at.size.d / 2 : Math.max(at.max.x - at.min.x, at.max.z - at.min.z) * 50
 
@@ -81,7 +81,7 @@ export function FloorPlan({
   onDropAdd,
   zoom,
   lockPick,
-  centre,
+  center,
   onView,
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
@@ -104,12 +104,12 @@ export function FloorPlan({
   )
   const atById = useMemo(() => new Map(placed.map(({ item, at }) => [item.id, at])), [placed])
 
-  // The view: the room and a margin, zoomed, around `centre` (the room's centre until moved).
+  // The view: the room and a margin, zoomed, around `center` (the room's center until moved).
   const fullW = (room.maxX - room.minX) * 100 + MARGIN_CM * 2
   const fullH = (room.maxZ - room.minZ) * 100 + MARGIN_CM * 2
   const viewW = fullW / zoom
   const viewH = fullH / zoom
-  const c0 = centre ?? { x: room.centreX * 100, z: room.centreZ * 100 }
+  const c0 = center ?? { x: room.centerX * 100, z: room.centerZ * 100 }
   const viewBox = `${c0.x - viewW / 2} ${c0.z - viewH / 2} ${viewW} ${viewH}`
   // For the wheel and pan listeners: the view as it is now, never past the room's walls.
   const viewRef = useRef({ zoom, c: c0, room })
@@ -219,7 +219,7 @@ export function FloorPlan({
   }, [])
 
   // ── Moving ──
-  // `others`: the centres a drag snaps to, taken when it starts, never what it moves (an item
+  // `others`: the centers a drag snaps to, taken when it starts, never what it moves (an item
   // riding along on the dragged one would pull it back to where it just was: the guides blinked).
   const moveStart = useRef<{
     x: number
@@ -267,20 +267,20 @@ export function FloorPlan({
       let dz = p.z - start.z
       const next = { x: null as number | null, z: null as number | null }
       if (helpersRef.current.snapAlign && !event.altKey) {
-        // The lead item's centre to other centres, the room's centre lines and its walls.
+        // The lead item's center to other centers, the room's center lines and its walls.
         const tol = SNAP_PX * p.perPx
         const cx = start.lead.x * 100 + dx
         const cz = start.lead.z * 100 + dz
-        // Flush with a wall: the lead's own reach from its centre, as it is turned.
+        // Flush with a wall: the lead's own reach from its center, as it is turned.
         const { lead } = start
         const xs = [
-          room.centreX * 100,
+          room.centerX * 100,
           room.minX * 100 + (lead.x - lead.min.x) * 100,
           room.maxX * 100 - (lead.max.x - lead.x) * 100,
           ...start.others.map((o) => o.x),
         ]
         const zs = [
-          room.centreZ * 100,
+          room.centerZ * 100,
           room.minZ * 100 + (lead.z - lead.min.z) * 100,
           room.maxZ * 100 - (lead.max.z - lead.z) * 100,
           ...start.others.map((o) => o.z),
@@ -420,7 +420,7 @@ export function FloorPlan({
         />
       ))}
       <text
-        x={room.centreX * 100}
+        x={room.centerX * 100}
         y={room.minZ * 100 - 22 * px}
         className={styles.planDim}
         style={text}
@@ -430,11 +430,11 @@ export function FloorPlan({
       </text>
       <text
         x={room.minX * 100 - 22 * px}
-        y={room.centreZ * 100}
+        y={room.centerZ * 100}
         className={styles.planDim}
         style={text}
         textAnchor="middle"
-        transform={`rotate(-90 ${room.minX * 100 - 22 * px} ${room.centreZ * 100})`}
+        transform={`rotate(-90 ${room.minX * 100 - 22 * px} ${room.centerZ * 100})`}
       >
         {roomD} cm
       </text>
@@ -458,7 +458,7 @@ export function FloorPlan({
         />
       )}
 
-      {/* Under every shape: an invisible circle round each item's centre, so a small item is
+      {/* Under every shape: an invisible circle round each item's center, so a small item is
           picked as easily as a large one, but only where no shape is (owner, 2026-11-25: "very
           hard to move the pedestal if the artwork is close"). What is picked comes last. */}
       {[...placed]
@@ -580,7 +580,7 @@ export function FloorPlan({
 
       {helpers.person && (
         <g
-          transform={`translate(${room.centreX * 100 + 120} ${room.centreZ * 100 + 120})`}
+          transform={`translate(${room.centerX * 100 + 120} ${room.centerZ * 100 + 120})`}
           className={styles.planPerson}
         >
           <circle r={22} />
@@ -629,16 +629,16 @@ function SnapPreview({
   const half = f.across.clone().multiplyScalar(f.width / 2)
   return (
     <line
-      x1={(f.centre.x - half.x) * 100}
-      y1={(f.centre.z - half.z) * 100}
-      x2={(f.centre.x + half.x) * 100}
-      y2={(f.centre.z + half.z) * 100}
+      x1={(f.center.x - half.x) * 100}
+      y1={(f.center.z - half.z) * 100}
+      x2={(f.center.x + half.x) * 100}
+      y2={(f.center.z + half.z) * 100}
       className={styles.planSnapSide}
     />
   )
 }
 
-/** Ticks every 50 cm along the room's north and west walls, numbers every metre. */
+/** Ticks every 50 cm along the room's north and west walls, numbers every meter. */
 function Rulers({ room, px }: { room: FloorRoom; px: number }) {
   const ticks: { x: number; label: boolean }[] = []
   for (let cm = 0; cm <= (room.maxX - room.minX) * 100; cm += 50)

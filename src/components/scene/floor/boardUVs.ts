@@ -30,11 +30,7 @@ export function boardUVs(geometry: BufferGeometry): BufferGeometry {
     const facing = abs.indexOf(Math.max(...abs))
     const inPlane = [0, 1, 2].filter((k) => k !== facing)
     const along =
-      longest !== facing
-        ? longest
-        : ext[inPlane[0]] >= ext[inPlane[1]]
-          ? inPlane[0]
-          : inPlane[1]
+      longest !== facing ? longest : ext[inPlane[0]] >= ext[inPlane[1]] ? inPlane[0] : inPlane[1]
     const across = inPlane.find((k) => k !== along)!
     for (let k = 0; k < 3; k++) {
       const p = [a, b, c][k]

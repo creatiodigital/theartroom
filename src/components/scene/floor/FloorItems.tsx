@@ -40,7 +40,7 @@ const CLICK_MAX_MS = 300
 /**
  * Everything standing on the floor (docs/objects O6): the exhibition's pedestals, built from their
  * parameters, and its Objects, each its own .glb at real size (× its scale), each one's bounding
- * box centred where `placeAll` puts it, turned as it says (floor composing: attached to each other's
+ * box centered where `placeAll` puts it, turned as it says (floor composing: attached to each other's
  * faces, tilted). Mounted beside the benches, in the editor and for visitors.
  * Meshes, so the light bake counts them as casters, as it does the benches (an Object whose
  * "Casts a shadow" is off is marked `bakeCaster: false`).
@@ -60,17 +60,17 @@ const ktx2For = (gl: WebGLRenderer) => {
 const extendFor = (gl: WebGLRenderer) => (loader: { setKTX2Loader: (l: KTX2Loader) => unknown }) =>
   loader.setKTX2Loader(ktx2For(gl))
 
-/** A pedestal's colour, roughness, metalness and opacity from its material and finish. */
+/** A pedestal's color, roughness, metalness and opacity from its material and finish. */
 export function pedestalLook(p: FloorPedestal) {
   const material = pedestalMaterial(p.material)
-  const colour = material.colours.find((c) => c.id === p.colour)
+  const color = material.colors.find((c) => c.id === p.color)
   return {
-    // Wood: the texture is the colour.
-    color: colour?.texture
+    // Wood: the texture is the color.
+    color: color?.texture
       ? '#ffffff'
-      : p.colour.startsWith('#')
-        ? p.colour
-        : (colour?.hex ?? material.colours[0].hex),
+      : p.color.startsWith('#')
+        ? p.color
+        : (color?.hex ?? material.colors[0].hex),
     roughness: material.finishes ? FINISH_ROUGHNESS[p.finish] : material.roughness,
     metalness: material.metalness,
     transparent: material.opacity !== undefined,
@@ -78,7 +78,7 @@ export function pedestalLook(p: FloorPedestal) {
   }
 }
 
-/** Where an item is drawn: its box's centre, turned (`placeAll`). */
+/** Where an item is drawn: its box's center, turned (`placeAll`). */
 const transformOf = (at: Placed, floorY: number) => ({
   position: [at.x, floorY + at.cy, at.z] as [number, number, number],
   quaternion: at.quaternion,
@@ -86,7 +86,7 @@ const transformOf = (at: Placed, floorY: number) => ({
 
 /** Wood (the frames' PBR maps, owner 2026-11-25): its own clones of the shared maps, grain seeded by id. */
 function useWood(p: FloorPedestal) {
-  const texture = pedestalMaterial(p.material).colours.find((c) => c.id === p.colour)?.texture
+  const texture = pedestalMaterial(p.material).colors.find((c) => c.id === p.color)?.texture
   const maps = useMemo(() => (texture ? woodMapSet(texture, p.id) : null), [texture, p.id])
   useEffect(
     () => () => {
@@ -126,7 +126,7 @@ function Pedestal({
       userData={{ floorItemId: p.id }}
       onPointerDown={onFloorDown && ((event) => onFloorDown(event, p.id))}
     >
-      {/* The geometry stands on y = 0: its centre to the group's. */}
+      {/* The geometry stands on y = 0: its center to the group's. */}
       <mesh geometry={geometry} position={[0, -p.h / 200, 0]} userData={{ floorItemId: p.id }}>
         {wood ? (
           <meshStandardMaterial key="wood" {...look} {...wood} normalScale={WOOD_NORMAL_SCALE} />
@@ -157,13 +157,13 @@ function FloorModel({
   const { scene } = useGLTF(artwork.modelUrl, false, true, extendFor(gl))
   // A clone per Object: the cached scene can only sit in one place at a time.
   const model = useMemo(() => scene.clone(true), [scene])
-  // The model's box on the placed box (owner: never the mesh origin): centred, or, with no measured
+  // The model's box on the placed box (owner: never the mesh origin): centered, or, with no measured
   // size, standing on its bottom.
   const box = useMemo(() => {
     model.updateMatrixWorld(true)
     return new Box3().setFromObject(model)
   }, [model])
-  const centred = modelOffset(box, at, o.scale, !!artwork.boundsCm)
+  const centered = modelOffset(box, at, o.scale, !!artwork.boundsCm)
   useEffect(() => {
     model.traverse((node: Object3D) => {
       if ((node as Mesh).isMesh) node.userData.bakeCaster = o.castShadow
@@ -269,7 +269,7 @@ function FloorModel({
       onPointerUp={onPointerUp}
       onDoubleClick={onDoubleClick}
     >
-      <primitive object={model} position={centred} />
+      <primitive object={model} position={centered} />
     </group>
   )
 }
@@ -278,7 +278,7 @@ function FloorModel({
 const PICKED = '#3b6fd8'
 const CAUTION = '#c49a2c'
 
-/** A box's 12 edges as line segments, around its centre (m). */
+/** A box's 12 edges as line segments, around its center (m). */
 function boxEdges(w: number, h: number, d: number): [number, number, number][] {
   const c = [-1, 1]
   const pts: [number, number, number][] = []
@@ -338,7 +338,7 @@ function PersonForScale({ floorY }: { floorY: number }) {
   const r = rooms[Math.min(room, rooms.length - 1)]
   if (!r) return null
   return (
-    <group position={[r.centreX + 1.2, floorY, r.centreZ + 1.2]}>
+    <group position={[r.centerX + 1.2, floorY, r.centerZ + 1.2]}>
       <mesh position={[0, 0.72, 0]} userData={{ bakeCaster: false }}>
         <capsuleGeometry args={[0.19, 1.06, 6, 16]} />
         <meshStandardMaterial color="#c8c8c4" roughness={0.9} />

@@ -59,7 +59,7 @@ const pedestal = (patch: Partial<FloorPedestal> = {}): FloorPedestal => ({
   h: 90,
   edges: 'soft',
   material: 'painted',
-  colour: 'white',
+  color: 'white',
   finish: 'matte',
   locked: false,
   ...patch,
@@ -96,7 +96,18 @@ const at = (layout: { items: FloorItem[] }, id: string, s: FloorSizes = sizes) =
 
 /** A 20 × 3 × 100 cm plank against a wall at z = −2, raised 100 cm. */
 const plank = (patch: Partial<FloorPedestal> = {}) =>
-  pedestal({ id: 'pl', name: 'Plank 1', shape: 'plank', w: 20, d: 3, h: 100, x: 0, z: -2, lift: 100, ...patch })
+  pedestal({
+    id: 'pl',
+    name: 'Plank 1',
+    shape: 'plank',
+    w: 20,
+    d: 3,
+    h: 100,
+    x: 0,
+    z: -2,
+    lift: 100,
+    ...patch,
+  })
 
 test('parse: drops what is malformed, clamps numbers, frees Objects whose pedestal is gone', () => {
   const parsed = parseFloorLayout({
@@ -117,7 +128,7 @@ test('parse: drops what is malformed, clamps numbers, frees Objects whose pedest
         w: 50,
         d: 80,
         material: 'metal',
-        colour: '#ff0000',
+        color: '#ff0000',
       },
       { kind: 'mystery', id: 'x' },
       { kind: 'object', id: 'o1', artworkId: 'dup' },
@@ -132,9 +143,9 @@ test('parse: drops what is malformed, clamps numbers, frees Objects whose pedest
   expect(o.parentId).toBeNull()
   expect(o.offsetX).toBe(0)
   const p = parsed.items[1] as FloorPedestal
-  // Round: the diameter twice. Metal takes no custom colour: its first one.
+  // Round: the diameter twice. Metal takes no custom color: its first one.
   expect([p.w, p.d]).toEqual([50, 50])
-  expect(p.colour).toBe('brushedSteel')
+  expect(p.color).toBe('brushedSteel')
   // A group needs two members that exist.
   expect(parsed.groups).toEqual([])
   expect(parseFloorLayout(null)).toEqual({ version: 1, items: [], groups: [] })
@@ -144,8 +155,28 @@ test('old layout: an Object on a pedestal places exactly as before (pedestalId)'
   // As O6 saved it: no parentId, face, rotX / rotZ or offsetY.
   const layout = parseFloorLayout({
     items: [
-      { kind: 'pedestal', id: 'p1', x: 2, z: 3, rotY: 90, lift: 10, shape: 'box', w: 40, d: 40, h: 90 },
-      { kind: 'object', id: 'o1', artworkId: 'a1', pedestalId: 'p1', offsetX: 10, offsetZ: 0, rotY: 30, lift: 5 },
+      {
+        kind: 'pedestal',
+        id: 'p1',
+        x: 2,
+        z: 3,
+        rotY: 90,
+        lift: 10,
+        shape: 'box',
+        w: 40,
+        d: 40,
+        h: 90,
+      },
+      {
+        kind: 'object',
+        id: 'o1',
+        artworkId: 'a1',
+        pedestalId: 'p1',
+        offsetX: 10,
+        offsetZ: 0,
+        rotY: 30,
+        lift: 5,
+      },
     ],
   })
   const o = layout.items[1] as FloorObject
@@ -167,7 +198,14 @@ test('old layout: an Object on a pedestal places exactly as before (pedestalId)'
 })
 
 test("a sculpture on a raised plank's front: back against it, touching, at the offsets", () => {
-  const s = object({ id: 's', artworkId: 'alejandro', parentId: 'pl', face: 'front', offsetX: 5, offsetY: 10 })
+  const s = object({
+    id: 's',
+    artworkId: 'alejandro',
+    parentId: 'pl',
+    face: 'front',
+    offsetX: 5,
+    offsetY: 10,
+  })
   const flat = layoutOf(plank(), s)
   const where = at(flat, 's')
   // The plank's front is at z = −2 + 1.5 cm; the sculpture's back touches it.
@@ -277,7 +315,7 @@ test('parse frees loops, missing parents, itself and other rooms', () => {
   expect(byId.get('o')!.face).toBe('top')
 })
 
-test('drop: onto a pedestal centred the first time, then it slides; Alt never snaps', () => {
+test('drop: onto a pedestal centered the first time, then it slides; Alt never snaps', () => {
   const p = pedestal()
   const layout = layoutOf(p, object())
   const first = dropItem(layout, object(), 2.1, 3.05, sizes)
@@ -298,18 +336,34 @@ test('drop: only Objects snap; a side only of an item off the floor, at its midd
   expect(dropItem(layoutOf(p, other), other, 2, 3, sizes).parentId).toBeNull()
   // Beside a pedestal standing on the floor: no side attach.
   const near = object({ id: 's', artworkId: 'alejandro' })
-  const beside = dropItem(layoutOf(p, near), near, 2 + 0.2 + 0.077 + 0.01, 3, sizes, { sideTolCm: 5 })
+  const beside = dropItem(layoutOf(p, near), near, 2 + 0.2 + 0.077 + 0.01, 3, sizes, {
+    sideTolCm: 5,
+  })
   expect(beside.parentId).toBeNull()
   // Against the raised plank's front, 1 cm off it: on its front, its middle height, facing out.
   const turned = { ...near, rotY: 30 }
-  const onPlank = dropItem(layoutOf(plank(), turned), turned, 0.03, -2 + 0.015 + 0.077 + 0.01, sizes, {
-    sideTolCm: 5,
-  })
-  expect([onPlank.parentId, onPlank.face, onPlank.offsetY, onPlank.rotY]).toEqual(['pl', 'front', 0, 0])
+  const onPlank = dropItem(
+    layoutOf(plank(), turned),
+    turned,
+    0.03,
+    -2 + 0.015 + 0.077 + 0.01,
+    sizes,
+    {
+      sideTolCm: 5,
+    },
+  )
+  expect([onPlank.parentId, onPlank.face, onPlank.offsetY, onPlank.rotY]).toEqual([
+    'pl',
+    'front',
+    0,
+    0,
+  ])
   expect(onPlank.offsetX).toBeCloseTo(3)
   // A low plank: raised so nothing ends below the floor.
   const low = plank({ lift: 5, h: 20 })
-  const onLow = dropItem(layoutOf(low, near), near, 0, -2 + 0.015 + 0.077 + 0.01, sizes, { sideTolCm: 5 })
+  const onLow = dropItem(layoutOf(low, near), near, 0, -2 + 0.015 + 0.077 + 0.01, sizes, {
+    sideTolCm: 5,
+  })
   expect(onLow.parentId).toBe('pl')
   expect(at(layoutOf(low, onLow), 's').y).toBeCloseTo(0, 2)
   // Too far from the face: free.
@@ -329,13 +383,22 @@ test('the highest top wins where tops overlap; another room, itself and its own 
 test('attaching: on a new side it faces out; on a top it keeps the turn it was seen with', () => {
   const s = object({ id: 's', artworkId: 'alejandro', rotY: 30, rotX: 10 })
   const onSide = attachTo(layoutOf(plank(), s), s, 'pl', 'front', null, sizes)
-  expect([onSide.rotX, onSide.rotY, onSide.rotZ, onSide.offsetX, onSide.offsetY]).toEqual([0, 0, 0, 0, 0])
+  expect([onSide.rotX, onSide.rotY, onSide.rotZ, onSide.offsetX, onSide.offsetY]).toEqual([
+    0, 0, 0, 0, 0,
+  ])
   const p = pedestal({ rotY: 10 })
   const onTop = attachTo(layoutOf(p, s), s, 'p1', 'top', null, sizes)
   expect(onTop.rotY).toBeCloseTo(20)
   expect(onTop.rotX).toBe(10)
-  // At a point: its centre lands there on the face.
-  const there = attachTo(layoutOf(plank(), s), s, 'pl', 'front', { x: -0.04, y: 1.3, z: -1.98 }, sizes)
+  // At a point: its center lands there on the face.
+  const there = attachTo(
+    layoutOf(plank(), s),
+    s,
+    'pl',
+    'front',
+    { x: -0.04, y: 1.3, z: -1.98 },
+    sizes,
+  )
   expect(there.offsetX).toBeCloseTo(-4)
   expect(there.offsetY).toBeCloseTo(-20)
   // An item never attaches to itself or below itself.
@@ -344,7 +407,7 @@ test('attaching: on a new side it faces out; on a top it keeps the turn it was s
   expect(attachTo(layoutOf(board, child), board, 's', 'top', null, sizes)).toBe(board)
 })
 
-test('resizing keeps children that still fit, re-centres the others (tops and sides)', () => {
+test('resizing keeps children that still fit, re-centers the others (tops and sides)', () => {
   const p = pedestal({ w: 100, d: 100 })
   const near = object({ id: 'near', parentId: 'p1', offsetX: 10 })
   const far = object({ id: 'far', parentId: 'p1', offsetX: 45 })
@@ -352,7 +415,14 @@ test('resizing keeps children that still fit, re-centres the others (tops and si
   const kept = keepChildrenOnFaces(layoutOf(smaller, near, far), 'p1', sizes)
   expect((kept.items.find((i) => i.id === 'near') as FloorObject).offsetX).toBe(10)
   expect((kept.items.find((i) => i.id === 'far') as FloorObject).offsetX).toBe(0)
-  const s = object({ id: 's', artworkId: 'alejandro', parentId: 'pl', face: 'front', offsetX: 8, offsetY: 30 })
+  const s = object({
+    id: 's',
+    artworkId: 'alejandro',
+    parentId: 'pl',
+    face: 'front',
+    offsetX: 8,
+    offsetY: 30,
+  })
   const thin = plank({ w: 10 })
   const onThin = keepChildrenOnFaces(layoutOf(thin, s), 'pl', sizes).items[1]
   expect([onThin.offsetX, onThin.offsetY]).toEqual([0, 0])
@@ -445,10 +515,10 @@ test("the Object's own coordinates and the world, turned and back", () => {
 })
 
 test("parse: old wood ids map to the frames' three woods; a plank keeps 3 cm", () => {
-  const raw = (id: string, colour: string, patch: Record<string, unknown> = {}) => ({
+  const raw = (id: string, color: string, patch: Record<string, unknown> = {}) => ({
     ...pedestal({ id }),
     material: 'wood',
-    colour,
+    color,
     ...patch,
   })
   const { items } = parseFloorLayout({
@@ -462,10 +532,16 @@ test("parse: old wood ids map to the frames' three woods; a plank keeps 3 cm", (
       raw('p7', 'dark', { shape: 'plank', w: 20, d: 3, h: 100, finish: 'gloss' }),
     ],
   })
-  const colours = (items as FloorPedestal[]).map((p) => p.colour)
-  expect(colours).toEqual(['dark', 'dark', 'medium', 'medium', 'light', 'light', 'dark'])
+  const colors = (items as FloorPedestal[]).map((p) => p.color)
+  expect(colors).toEqual(['dark', 'dark', 'medium', 'medium', 'light', 'light', 'dark'])
   const plank = items[6] as FloorPedestal
-  expect([plank.shape, plank.w, plank.d, plank.h, plank.finish]).toEqual(['plank', 20, 3, 100, 'gloss'])
+  expect([plank.shape, plank.w, plank.d, plank.h, plank.finish]).toEqual([
+    'plank',
+    20,
+    3,
+    100,
+    'gloss',
+  ])
   expect(pedestalShape('plank').defaults).toEqual({ w: 20, d: 3, h: 100 })
 })
 
@@ -489,7 +565,14 @@ test("a plank's wood runs along its length, at the frames' real board size", () 
 })
 
 test('a move on the plan slides an attached item along its face (across only on a side)', () => {
-  const s = object({ id: 's', artworkId: 'alejandro', parentId: 'pl', face: 'front', offsetX: 2, offsetY: 7 })
+  const s = object({
+    id: 's',
+    artworkId: 'alejandro',
+    parentId: 'pl',
+    face: 'front',
+    offsetX: 2,
+    offsetY: 7,
+  })
   // The plank unturned: its front faces +z, across is +x.
   const flat = at(layoutOf(plank(), s), 'pl')
   expect(slideOnFace(s, flat, 0.1, 0.3)).toMatchObject({ offsetX: 12, offsetY: 7 })
@@ -509,7 +592,12 @@ test('switching to Plank gives its size and dark wood; an automatic name follows
   const other = pedestal({ id: 'x', name: 'Plank 1', shape: 'plank' })
   const board = withShape(p, 'plank', [other, p])
   expect([board.shape, board.w, board.d, board.h]).toEqual(['plank', 20, 3, 100])
-  expect([board.material, board.colour, board.finish, board.name]).toEqual(['wood', 'dark', 'satin', 'Plank 2'])
+  expect([board.material, board.color, board.finish, board.name]).toEqual([
+    'wood',
+    'dark',
+    'satin',
+    'Plank 2',
+  ])
   // Back to a box: its sizes stay (as any shape change), its name follows.
   const back = withShape(board, 'box', [other, board])
   expect([back.shape, back.name, back.w, back.d, back.h]).toEqual(['box', 'Pedestal 1', 20, 3, 100])
@@ -546,9 +634,9 @@ test('review: a model with no measured size stands on its placed box, never in t
   const [x, y, z] = modelOffset(box, at, 1, false)
   expect(x).toBeCloseTo(0)
   expect(z).toBeCloseTo(0)
-  // Its bottom at the placed box's bottom: the group's centre is at cy, the bottom cy − 0.2.
+  // Its bottom at the placed box's bottom: the group's center is at cy, the bottom cy − 0.2.
   expect(at.cy + (box.min.y + y)).toBeCloseTo(at.y)
-  // Measured: its box centred on the placed centre.
+  // Measured: its box centered on the placed center.
   const measured = modelOffset(box, at, 1, true)
   expect(measured[0]).toBeCloseTo(0)
   expect(measured[1]).toBeCloseTo(-0.4)
@@ -573,4 +661,19 @@ test('the 3D moves only up and down: free = height, side = Up, top = gap above, 
   expect(raiseBy(object({ parentId: 'p1', face: 'top', lift: 2 }), 8).lift).toBe(10)
   expect(raiseBy(object({ parentId: 'p1', face: 'bottom', lift: 2 }), -8).lift).toBe(10)
   expect(raiseBy(object({ parentId: 'p1', face: 'bottom', lift: 2 }), 8).lift).toBe(0)
+})
+
+test('American spelling: a pedestal saved with "colour" and the grey ids reads as color and gray', () => {
+  const { items } = parseFloorLayout({
+    items: [
+      { kind: 'pedestal', id: 'a', material: 'painted', colour: 'darkGrey' },
+      { kind: 'pedestal', id: 'b', material: 'plastic', colour: 'lightGrey' },
+      { kind: 'pedestal', id: 'c', material: 'painted', color: 'sand' },
+    ],
+  })
+  expect(items.map((i) => (i as unknown as { color: string }).color)).toEqual([
+    'darkGray',
+    'lightGray',
+    'sand',
+  ])
 })

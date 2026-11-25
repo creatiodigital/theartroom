@@ -342,7 +342,6 @@
   pointer-events: all;
 }
 
-
 .planGuide {
   stroke: var(--editor-row-selected-edge);
   stroke-width: 1px;
@@ -384,7 +383,7 @@
   stroke-width: 2px;
 }
 
-// Drawn over the picked item and ending at its centre: never in the way of a press on it.
+// Drawn over the picked item and ending at its center: never in the way of a press on it.
 .planMeasure {
   stroke: var(--editor-row-selected-edge);
   stroke-width: 1px;
@@ -759,7 +758,7 @@
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-black) 12%, transparent);
 }
 
-.colourGrid {
+.colorGrid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: var(--space-1);
@@ -778,7 +777,7 @@
   box-shadow: inset 0 0 0 1px var(--color-dark-surface);
 }
 
-.anyColour {
+.anyColor {
   display: flex;
 
   input {

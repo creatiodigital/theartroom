@@ -37,7 +37,7 @@ import {
   pedestalMaterial,
   pedestalOutline,
   pedestalShape,
-  type PedestalColour,
+  type PedestalColor,
   type PedestalEdges,
   type PedestalFinish,
 } from '@/lib/floor/pedestals'
@@ -53,7 +53,7 @@ import styles from './FloorView.module.scss'
 /**
  * The picked item's panel (docs/objects O6, objects-floor-view-draft / objects-pedestals): an
  * Object's place, height, turn, size and shadow, or a pedestal's shape, size, edges, material,
- * colour and place. Several picked: align, distribute, group.
+ * color and place. Several picked: align, distribute, group.
  */
 const RAD = Math.PI / 180
 
@@ -66,7 +66,7 @@ const FACE_LABEL: Record<FloorFace, string> = {
   right: 'Right',
 }
 
-/** The three turns, each about the item's own centre ('YXZ': Turn first, then tilt and lean). */
+/** The three turns, each about the item's own center ('YXZ': Turn first, then tilt and lean). */
 const TURNS = [
   { key: 'rotX', label: 'Tilt forward / back', step: 15 },
   { key: 'rotY', label: 'Turn', step: 90 },
@@ -79,8 +79,8 @@ const normDeg = (a: number) => {
   return d > 180 ? d - 360 : d
 }
 
-/** A colour swatch: a wood shows its own texture (the frames' diffuse map). */
-const swatchStyle = (col: PedestalColour): CSSProperties =>
+/** A color swatch: a wood shows its own texture (the frames' diffuse map). */
+const swatchStyle = (col: PedestalColor): CSSProperties =>
   col.texture
     ? {
         backgroundColor: col.hex,
@@ -237,7 +237,7 @@ export function FloorInspector({
   const children = childrenOf(layout, item.id)
   const setItem = (next: FloorItem) =>
     editor.update((all) => all.map((i) => (i.id === item.id ? next : i)))
-  // A new size: what is attached to it stays on its faces (re-centred if it fell off).
+  // A new size: what is attached to it stays on its faces (re-centered if it fell off).
   const resized = (next: FloorItem) =>
     editor.commit(
       keepChildrenOnFaces(
@@ -446,7 +446,7 @@ export function FloorInspector({
       <span className={styles.hint}>
         {parent
           ? `From its rest on ${names[parent.id]}; whatever the turn, it keeps touching it.`
-          : 'About its own centre; tilted, it still rests on its lowest point. On the plan, the handle turns it (15° steps; Shift: freely).'}
+          : 'About its own center; tilted, it still rests on its lowest point. On the plan, the handle turns it (15° steps; Shift: freely).'}
       </span>
     </Section>
   )
@@ -729,39 +729,35 @@ export function FloorInspector({
               variant="bare"
               className={c(styles.materialChip, m.id === p.material && styles.shapeOn)}
               aria-pressed={m.id === p.material}
-              onClick={() => editor.patchItem(p.id, { material: m.id, colour: m.colours[0].id })}
+              onClick={() => editor.patchItem(p.id, { material: m.id, color: m.colors[0].id })}
             >
-              <span
-                className={styles.materialDot}
-                style={swatchStyle(m.colours[0])}
-                aria-hidden
-              />
+              <span className={styles.materialDot} style={swatchStyle(m.colors[0])} aria-hidden />
               {m.label}
             </Button>
           ))}
         </div>
       </Section>
-      <Section title={material.colourTitle}>
-        <div className={styles.colourGrid} role="group" aria-label={material.colourTitle}>
-          {material.colours.map((col) => (
+      <Section title={material.colorTitle}>
+        <div className={styles.colorGrid} role="group" aria-label={material.colorTitle}>
+          {material.colors.map((col) => (
             <Button
               key={col.id}
               variant="bare"
-              className={c(styles.swatch, col.id === p.colour && styles.swatchOn)}
+              className={c(styles.swatch, col.id === p.color && styles.swatchOn)}
               style={swatchStyle(col)}
               aria-label={col.label}
-              aria-pressed={col.id === p.colour}
+              aria-pressed={col.id === p.color}
               title={col.label}
-              onClick={() => editor.patchItem(p.id, { colour: col.id })}
+              onClick={() => editor.patchItem(p.id, { color: col.id })}
             />
           ))}
-          {material.anyColour && (
-            <label className={styles.anyColour} title="Any colour">
+          {material.anyColor && (
+            <label className={styles.anyColor} title="Any color">
               <input
                 type="color"
-                value={p.colour.startsWith('#') ? p.colour : '#ffffff'}
-                onChange={(e) => editor.patchItem(p.id, { colour: e.target.value })}
-                aria-label="Any colour"
+                value={p.color.startsWith('#') ? p.color : '#ffffff'}
+                onChange={(e) => editor.patchItem(p.id, { color: e.target.value })}
+                aria-label="Any color"
               />
             </label>
           )}
@@ -858,7 +854,7 @@ function Several({
             font="dashboard"
             onClick={() => align('x', 'mid')}
           >
-            Centre
+            Center
           </Button>
           <Button
             variant="secondary"

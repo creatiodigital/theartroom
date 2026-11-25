@@ -10,18 +10,18 @@ import { spaceGltfUrl } from '@/components/scene/spaceAsset'
 import { groupNodesByRoom, worldMatrixOf } from '@/components/scene/spaces/objects/nodeIndices'
 import type { RootState } from '@/redux/store'
 
-/** One wall in plan: a segment, world metres. */
+/** One wall in plan: a segment, world meters. */
 export type PlanWall = { name: string; x1: number; z1: number; x2: number; z2: number }
 
-/** A room as the Floor view draws it (world metres, the floor's height in y). */
+/** A room as the Floor view draws it (world meters, the floor's height in y). */
 export type FloorRoom = {
   room: number
   minX: number
   maxX: number
   minZ: number
   maxZ: number
-  centreX: number
-  centreZ: number
+  centerX: number
+  centerZ: number
   walls: PlanWall[]
 }
 
@@ -81,8 +81,8 @@ export function useFloorRooms(): { rooms: FloorRoom[]; floorY: number } {
         maxX,
         minZ,
         maxZ,
-        centreX: (minX + maxX) / 2,
-        centreZ: (minZ + maxZ) / 2,
+        centerX: (minX + maxX) / 2,
+        centerZ: (minZ + maxZ) / 2,
         walls,
       }
     })

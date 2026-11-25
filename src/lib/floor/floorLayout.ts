@@ -5,13 +5,13 @@
  *
  * Positions are the room's world coordinates in METRES (x, z; y up), as the 3D scene uses them.
  * Turns are degrees (three.js Euler order 'YXZ': the turn about the vertical, then the tilt and the
- * lean in the item's own frame), about the item's bounding-box centre.
+ * lean in the item's own frame), about the item's bounding-box center.
  *
  * Floor composing (2026-11-25, docs/superpowers/specs/2026-11-25-floor-attach-any-side-design.md):
  * any item (an Object or a pedestal) is free in the room or attached to one FACE of another item's
  * bounding box, stored RELATIVE to it, so moving or turning the parent carries it (chains too):
- * - free: `x` / `z` its box centre, `lift` its lowest point above the floor (cm), turns in room axes;
- * - attached: `parentId` + `face`; on a top / bottom `offsetX` / `offsetZ` from the face's centre in
+ * - free: `x` / `z` its box center, `lift` its lowest point above the floor (cm), turns in room axes;
+ * - attached: `parentId` + `face`; on a top / bottom `offsetX` / `offsetZ` from the face's center in
  *   the parent's frame, on a side `offsetX` across (to the right looking at the face) and `offsetY`
  *   up (cm); `lift` the gap off the face; turns relative to its rest on the face (on a side: its back
  *   against it). `floorPlacement.ts` resolves where everything is.
@@ -79,8 +79,8 @@ export type FloorPedestal = FloorPlacementFields & {
   h: number
   edges: PedestalEdges
   material: string
-  /** A colour id from the material's list, or '#rrggbb' where any colour is allowed. */
-  colour: string
+  /** A color id from the material's list, or '#rrggbb' where any color is allowed. */
+  color: string
   finish: PedestalFinish
 }
 
@@ -156,13 +156,15 @@ function parsePedestal(raw: Record<string, unknown>): FloorPedestal | null {
   if (!id) return null
   const shape = PEDESTAL_SHAPES.find((s) => s.id === raw.shape) ?? PEDESTAL_SHAPES[1]
   const material = PEDESTAL_MATERIALS.find((m) => m.id === raw.material) ?? PEDESTAL_MATERIALS[0]
-  const colourRaw =
-    material.id === 'wood' ? (WOOD_ALIASES[str(raw.colour, 16)] ?? str(raw.colour, 16)) : str(raw.colour, 16)
-  const colour =
-    material.colours.some((c) => c.id === colourRaw) ||
-    (material.anyColour && /^#[0-9a-fA-F]{6}$/.test(colourRaw))
-      ? colourRaw
-      : material.colours[0].id
+  // Saved before American spelling (2026-11-25): `colour`, and the grey ids.
+  const saved = str(raw.color ?? raw.colour, 16)
+  const colorRaw =
+    material.id === 'wood' ? (WOOD_ALIASES[saved] ?? saved) : (OLD_COLOR_IDS[saved] ?? saved)
+  const color =
+    material.colors.some((c) => c.id === colorRaw) ||
+    (material.anyColor && /^#[0-9a-fA-F]{6}$/.test(colorRaw))
+      ? colorRaw
+      : material.colors[0].id
   // Down to 1 cm across: a plank is 3 cm deep.
   const w = num(raw.w, 1, MAX_PEDESTAL_CM, shape.defaults.w)
   const d = shape.round || shape.equal ? w : num(raw.d, 1, MAX_PEDESTAL_CM, shape.defaults.d)
@@ -184,10 +186,13 @@ function parsePedestal(raw: Record<string, unknown>): FloorPedestal | null {
     h,
     edges,
     material: material.id,
-    colour,
+    color,
     finish,
   }
 }
+
+/** Color ids saved before American spelling. */
+const OLD_COLOR_IDS: Record<string, string> = { lightGrey: 'lightGray', darkGrey: 'darkGray' }
 
 /** Free where it was last placed: its own x / z / lift and turns, no parent. */
 const freed = (item: FloorItem): FloorItem => ({
@@ -288,7 +293,11 @@ const AUTO_NAME = /^(Pedestal|Plank) \d+$/
  * except a Plank, which takes a plank's size and look (dark wood). An automatic name follows the
  * shape ("Pedestal 3" → "Plank 1"); a name the artist chose stays. `all` is every pedestal on the floor.
  */
-export function withShape(p: FloorPedestal, shapeId: PedestalShapeId, all: FloorPedestal[]): FloorPedestal {
+export function withShape(
+  p: FloorPedestal,
+  shapeId: PedestalShapeId,
+  all: FloorPedestal[],
+): FloorPedestal {
   const s = pedestalShape(shapeId)
   const sized =
     s.id === 'plank' && p.shape !== 'plank'

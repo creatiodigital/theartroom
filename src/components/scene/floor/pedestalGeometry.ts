@@ -22,8 +22,8 @@ import {
 import { boardUVs } from './boardUVs'
 
 /**
- * A pedestal's mesh (docs/objects O6, objects-pedestals.dc.html), in metres, standing on y = 0 and
- * centred on x/z. Built from the same outlines the plan and the snapping use (`lib/floor/pedestals`).
+ * A pedestal's mesh (docs/objects O6, objects-pedestals.dc.html), in meters, standing on y = 0 and
+ * centered on x/z. Built from the same outlines the plan and the snapping use (`lib/floor/pedestals`).
  * Plan z (depth) maps to the scene's z. Every shape carries board UVs (`boardUVs`), for wood.
  */
 

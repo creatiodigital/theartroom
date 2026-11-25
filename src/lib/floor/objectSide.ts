@@ -3,7 +3,7 @@
  * 2026-11-25: "if I click on any side, position the camera near that side; on the top or bottom,
  * just approach the closest horizontal box side"). Pure: the room's camera does the moving.
  *
- * Coordinates are the Object's own, in metres: x and z across its footprint, centred (its turn
+ * Coordinates are the Object's own, in meters: x and z across its footprint, centered (its turn
  * taken out), y up from its base. `half` is the box's half width (x) and half depth (z), `height`
  * its height, all at the Object's size on the floor.
  */

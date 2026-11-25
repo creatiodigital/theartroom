@@ -4,10 +4,10 @@
  * the editor, the live 3D, the visitors' room and the bake all read the same answer.
  *
  * Every item is a box (a pedestal's w × h × d, an Object's model size × its scale), turned about its
- * centre (Euler 'YXZ').
- * - Free: its centre over (x, z), its lowest point `lift` cm above the floor, so a tilt never sinks it.
+ * center (Euler 'YXZ').
+ * - Free: its center over (x, z), its lowest point `lift` cm above the floor, so a tilt never sinks it.
  * - Attached to a face of its parent's box: turned as the parent × its rest on that face (on a side:
- *   its back against it, facing out) × its own turn; its centre at the face's centre moved by the
+ *   its back against it, facing out) × its own turn; its center at the face's center moved by the
  *   offsets in the face's plane, pushed out along the face's normal until it touches (+ `lift`).
  * Chains resolve through their parents, so moving or turning the root carries everything on it.
  */
@@ -33,17 +33,17 @@ export const FALLBACK_CM = 40
 export type Size = { w: number; h: number; d: number }
 
 export type Placed = {
-  /** World metres: the box's centre over the floor. */
+  /** World meters: the box's center over the floor. */
   x: number
   z: number
-  /** The box's lowest point above the floor, metres (an upright item's base). */
+  /** The box's lowest point above the floor, meters (an upright item's base). */
   y: number
-  /** The box centre's height above the floor, metres. */
+  /** The box center's height above the floor, meters. */
   cy: number
   /** World degrees: the way its front faces, seen from above. */
   rotY: number
   quaternion: Quaternion
-  /** World bounds, metres (y from the floor). */
+  /** World bounds, meters (y from the floor). */
   min: Vector3
   max: Vector3
   size: Size
@@ -84,10 +84,10 @@ const REST_TURN: Record<FloorFace, number> = {
   left: -90,
 }
 
-/** Half sizes in metres, along the item's own x, y, z. */
+/** Half sizes in meters, along the item's own x, y, z. */
 const halfOf = (s: Size) => [s.w / 200, s.h / 200, s.d / 200] as const
 
-/** How far a turned box reaches from its centre along a direction. */
+/** How far a turned box reaches from its center along a direction. */
 const extent = (q: Quaternion, half: readonly number[], n: Vector3) =>
   AXES.reduce((sum, axis, k) => sum + Math.abs(axis.clone().applyQuaternion(q).dot(n)) * half[k], 0)
 
@@ -116,22 +116,22 @@ export function worldTurns(q: Quaternion) {
   return { rotX: tidy(e.x * DEG), rotY: tidy(e.y * DEG), rotZ: tidy(e.z * DEG) }
 }
 
-function finish(centre: Vector3, q: Quaternion, size: Size): Placed {
+function finish(center: Vector3, q: Quaternion, size: Size): Placed {
   const [hx, hy, hz] = halfOf(size)
   const min = new Vector3(Infinity, Infinity, Infinity)
   const max = new Vector3(-Infinity, -Infinity, -Infinity)
   for (const sx of [-1, 1])
     for (const sy of [-1, 1])
       for (const sz of [-1, 1]) {
-        const p = new Vector3(sx * hx, sy * hy, sz * hz).applyQuaternion(q).add(centre)
+        const p = new Vector3(sx * hx, sy * hy, sz * hz).applyQuaternion(q).add(center)
         min.min(p)
         max.max(p)
       }
   return {
-    x: centre.x,
-    z: centre.z,
+    x: center.x,
+    z: center.z,
     y: min.y,
-    cy: centre.y,
+    cy: center.y,
     rotY: headingOf(q),
     quaternion: q,
     min,
@@ -143,35 +143,37 @@ function finish(centre: Vector3, q: Quaternion, size: Size): Placed {
 
 function freePlace(item: FloorItem, size: Size): Placed {
   const q = ownTurn(item)
-  const centre = new Vector3(item.x, item.lift / 100 + extent(q, halfOf(size), UP), item.z)
-  return finish(centre, q, size)
+  const center = new Vector3(item.x, item.lift / 100 + extent(q, halfOf(size), UP), item.z)
+  return finish(center, q, size)
 }
 
-/** The face's normal, its centre and the offsets' axes in the parent's own frame (metres). */
+/** The face's normal, its center and the offsets' axes in the parent's own frame (meters). */
 function faceLocal(parent: Placed, face: FloorFace) {
   const n = new Vector3(...FACE_NORMAL[face])
   const [hx, hy, hz] = halfOf(parent.size)
-  const centre = new Vector3(n.x * hx, n.y * hy, n.z * hz)
+  const center = new Vector3(n.x * hx, n.y * hy, n.z * hz)
   // On a side: across = to the right looking at the face from outside, up = the parent's up.
   // On a top or bottom: the parent's own x and z.
   const across = isSideFace(face) ? UP.clone().cross(n) : AXES[0].clone()
   const up = isSideFace(face) ? UP.clone() : AXES[2].clone()
-  return { n, centre, across, up }
+  return { n, center, across, up }
 }
 
-const parentCentre = (p: Placed) => new Vector3(p.x, p.cy, p.z)
+const parentCenter = (p: Placed) => new Vector3(p.x, p.cy, p.z)
 
 function attachedPlace(item: FloorItem, parent: Placed, size: Size): Placed {
   const local = faceLocal(parent, item.face)
   const q = parent.quaternion.clone().multiply(restOf(item.face)).multiply(ownTurn(item))
   const n = local.n.clone().applyQuaternion(parent.quaternion)
   const offset = isSideFace(item.face)
-    ? local.across.multiplyScalar(item.offsetX / 100).add(UP.clone().multiplyScalar(item.offsetY / 100))
+    ? local.across
+        .multiplyScalar(item.offsetX / 100)
+        .add(UP.clone().multiplyScalar(item.offsetY / 100))
     : new Vector3(item.offsetX / 100, 0, item.offsetZ / 100)
-  const centre = parentCentre(parent)
-    .add(local.centre.add(offset).applyQuaternion(parent.quaternion))
+  const center = parentCenter(parent)
+    .add(local.center.add(offset).applyQuaternion(parent.quaternion))
     .add(n.clone().multiplyScalar(extent(q, halfOf(size), n) + item.lift / 100))
-  return finish(centre, q, size)
+  return finish(center, q, size)
 }
 
 /** Every item with where it is, by id. Roots first, children through their parents. */
@@ -198,7 +200,10 @@ export function placeMap(layout: FloorLayout, sizes: FloorSizes): Map<string, Pl
 }
 
 /** Every item with where it is, in the layout's order. */
-export function placeAll(layout: FloorLayout, sizes: FloorSizes): { item: FloorItem; at: Placed }[] {
+export function placeAll(
+  layout: FloorLayout,
+  sizes: FloorSizes,
+): { item: FloorItem; at: Placed }[] {
   const at = placeMap(layout, sizes)
   return layout.items.map((item) => ({ item, at: at.get(item.id)! }))
 }
@@ -226,13 +231,13 @@ export function descendantsOf(layout: FloorLayout, id: string): Set<string> {
 export const movingWith = (layout: FloorLayout, ids: string[]): Set<string> =>
   new Set(ids.flatMap((id) => [id, ...descendantsOf(layout, id)]))
 
-/** A face in the world: its centre, outward normal, the offsets' axes (unit) and its size (m). */
+/** A face in the world: its center, outward normal, the offsets' axes (unit) and its size (m). */
 export function faceFrame(parent: Placed, face: FloorFace) {
   const local = faceLocal(parent, face)
   const q = parent.quaternion
   const [w, h, d] = [parent.size.w / 100, parent.size.h / 100, parent.size.d / 100]
   return {
-    centre: parentCentre(parent).add(local.centre.applyQuaternion(q)),
+    center: parentCenter(parent).add(local.center.applyQuaternion(q)),
     normal: local.n.applyQuaternion(q),
     across: local.across.applyQuaternion(q),
     up: local.up.applyQuaternion(q),
@@ -242,10 +247,15 @@ export function faceFrame(parent: Placed, face: FloorFace) {
 }
 
 /**
- * An attached item moved on the plan by (dx, dz) metres: the move seen along its face's own axes,
+ * An attached item moved on the plan by (dx, dz) meters: the move seen along its face's own axes,
  * so it slides on the face (on a side only across it: its height stays).
  */
-export function slideOnFace<T extends FloorItem>(item: T, parent: Placed, dx: number, dz: number): T {
+export function slideOnFace<T extends FloorItem>(
+  item: T,
+  parent: Placed,
+  dx: number,
+  dz: number,
+): T {
   const f = faceFrame(parent, item.face)
   const along = (v: Vector3) => (dx * v.x + dz * v.z) * 100
   return isSideFace(item.face)
@@ -265,7 +275,7 @@ export function raiseBy<T extends FloorItem>(item: T, dyCm: number): T {
   return { ...item, offsetY: Math.round((item.offsetY + dyCm) * 10) / 10 }
 }
 
-/** A world point (m) in an upright item's own plan frame (cm from its centre). */
+/** A world point (m) in an upright item's own plan frame (cm from its center). */
 export function toItemFrame(at: Placed, x: number, z: number): [number, number] {
   return rotateOffset((x - at.x) * 100, (z - at.z) * 100, -at.rotY)
 }
@@ -289,8 +299,8 @@ function current<T extends FloorItem>(layout: FloorLayout, item: T, sizes: Floor
 }
 
 /**
- * Attach an item to a face of another, its centre at `point` on that face (world m; null: the
- * face's centre, or where it was when it only changes nothing but its gap). On the same face it
+ * Attach an item to a face of another, its center at `point` on that face (world m; null: the
+ * face's center, or where it was when it only changes nothing but its gap). On the same face it
  * keeps its turns, offsets and gap; on a new side it starts facing out (turns 0); on a new top or
  * bottom it keeps the turn about the vertical it was seen with (as O6 did). Never onto itself or
  * onto what is attached to it.
@@ -322,9 +332,9 @@ export function attachTo<T extends FloorItem>(
   if (point) {
     const local = faceLocal(p, face)
     const v = new Vector3(point.x, point.y, point.z)
-      .sub(parentCentre(p))
+      .sub(parentCenter(p))
       .applyQuaternion(p.quaternion.clone().invert())
-      .sub(local.centre)
+      .sub(local.center)
     const cm = (m: number) => Math.round(m * 1000) / 10 + 0
     offsets = isSideFace(face)
       ? { offsetX: cm(v.dot(local.across)), offsetY: cm(v.dot(UP)), offsetZ: 0 }
@@ -346,7 +356,11 @@ export function attachTo<T extends FloorItem>(
 }
 
 /** Detach: it stays exactly where it is, free (its height now from the floor); its own children stay on it. */
-export function detachItem<T extends FloorItem>(layout: FloorLayout, item: T, sizes: FloorSizes): T {
+export function detachItem<T extends FloorItem>(
+  layout: FloorLayout,
+  item: T,
+  sizes: FloorSizes,
+): T {
   if (!item.parentId) return item
   const at = placeMap(withItem(layout, item), sizes).get(item.id)!
   return {
@@ -393,7 +407,7 @@ const OFF_FLOOR_M = 0.01
 
 /**
  * A side of an item OFF the floor that an item dropped at (x, z) would rest against: its back (as it
- * will face out) within `tolCm` of the face, from outside, its centre across the face. The nearest wins.
+ * will face out) within `tolCm` of the face, from outside, its center across the face. The nearest wins.
  */
 export function sideAgainst(
   layout: FloorLayout,
@@ -432,7 +446,7 @@ export function sideAgainst(
 
 /**
  * A plan drop (docs: "Builder check: calls made" 1): only Objects attach, onto the highest support
- * top under (x, z) (centred the first time, then where it was dragged to), else against the side of
+ * top under (x, z) (centered the first time, then where it was dragged to), else against the side of
  * an item off the floor (`sideTolCm`), at that face's middle, raised if it would end below the
  * floor. Otherwise free at (x, z), as seen; off a top it lands on the floor. `snap` false (Alt)
  * never attaches. `item` is the item as it was before the drag.
@@ -445,16 +459,16 @@ export function dropItem<T extends FloorItem>(
   sizes: FloorSizes,
   {
     snap = true,
-    centre = false,
+    center = false,
     sideTolCm = 0,
-  }: { snap?: boolean; centre?: boolean; sideTolCm?: number } = {},
+  }: { snap?: boolean; center?: boolean; sideTolCm?: number } = {},
 ): T {
   const all = withItem(layout, item)
   const exclude = new Set([item.id, ...descendantsOf(all, item.id)])
   if (snap && item.kind === 'object') {
     const top = supportUnder(all, sizes, item.room, x, z, exclude)
     if (top) {
-      const slide = !centre && item.parentId === top.id && item.face === 'top'
+      const slide = !center && item.parentId === top.id && item.face === 'top'
       const p = placeMap(all, sizes).get(top.id)!
       return attachTo(all, item, top.id, 'top', slide ? { x, y: p.max.y, z } : null, sizes)
     }
@@ -462,7 +476,7 @@ export function dropItem<T extends FloorItem>(
     if (side) {
       const p = placeMap(all, sizes).get(side.parent.id)!
       const f = faceFrame(p, side.face)
-      const point = f.centre.add(f.across.multiplyScalar(side.across))
+      const point = f.center.add(f.across.multiplyScalar(side.across))
       const on = attachTo(all, { ...item, parentId: null }, side.parent.id, side.face, point, sizes)
       const low = placeMap(withItem(all, on), sizes).get(on.id)!.y
       return low < 0 ? { ...on, offsetY: Math.ceil(on.offsetY * 10 - low * 1000) / 10 } : on
@@ -485,8 +499,8 @@ export function sameSpots(before: FloorLayout, after: FloorLayout, ids: string[]
 }
 
 /**
- * Where an Object's model sits in its placed (and scaled) group: its own box centred on the
- * placed centre; with no measured size (the 40 cm fallback), its bottom on the placed box's
+ * Where an Object's model sits in its placed (and scaled) group: its own box centered on the
+ * placed center; with no measured size (the 40 cm fallback), its bottom on the placed box's
  * bottom, so it never sinks into what it stands on. Model units (before the group's scale).
  */
 export function modelOffset(
@@ -501,7 +515,7 @@ export function modelOffset(
   return [x, y, z]
 }
 
-/** A resized parent: its children keep their offsets, and any whose centre left its face is centred. */
+/** A resized parent: its children keep their offsets, and any whose center left its face is centered. */
 export function keepChildrenOnFaces(
   layout: FloorLayout,
   parentId: string,
@@ -545,7 +559,7 @@ export function overhangs(layout: FloorLayout, item: FloorItem, sizes: FloorSize
   if (!parent || !p || !at) return false
   const toParent = p.quaternion.clone().invert()
   const [hx, hy, hz] = halfOf(at.size)
-  const pc = parentCentre(p)
+  const pc = parentCenter(p)
   const ph = halfOf(p.size).map((m) => m * 100)
   const EPS = 0.05
   for (const sx of [-1, 1])

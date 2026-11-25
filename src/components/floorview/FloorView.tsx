@@ -109,7 +109,7 @@ export function FloorView() {
   const ownerId = useSelector((state: RootState) => state.exhibition.userId)
   const room = rooms[Math.min(roomIndex, rooms.length - 1)]
   const [zoom, setZoom] = useState(1)
-  // Where the plan is centred once moved (pinch, scroll, drag): per room; Fit goes back to the room.
+  // Where the plan is centered once moved (pinch, scroll, drag): per room; Fit goes back to the room.
   const [planView, setPlanView] = useState<{ room: number; x: number; z: number } | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [libraryOpen, setLibraryOpen] = useState(false)
@@ -207,7 +207,7 @@ export function FloorView() {
         x,
         z,
         { ...editor.sizes, [artwork.id]: artwork.boundsCm },
-        { snap: helpers.snapPedestals, centre: true },
+        { snap: helpers.snapPedestals, center: true },
       )
       editor.commit({ ...layout, items: [...layout.items, placed] })
       select([placed.id])
@@ -425,13 +425,13 @@ export function FloorView() {
     {
       key: 'rulers',
       label: 'Rulers & guides',
-      sub: 'Metres along the walls',
+      sub: 'Meters along the walls',
       icon: <Ruler size={16} aria-hidden />,
     },
     {
       key: 'snapAlign',
       label: 'Snap to align',
-      sub: 'Snap to centres and walls',
+      sub: 'Snap to centers and walls',
       icon: <Magnet size={16} aria-hidden />,
     },
     {
@@ -448,7 +448,7 @@ export function FloorView() {
     },
   ]
 
-  const centre = { x: room.centreX, z: room.centreZ }
+  const center = { x: room.centerX, z: room.centerZ }
 
   return (
     <>
@@ -661,7 +661,7 @@ export function FloorView() {
           onDropAdd={onDropAdd}
           zoom={zoom}
           lockPick={listPick}
-          centre={planView && planView.room === room.room ? planView : null}
+          center={planView && planView.room === room.room ? planView : null}
           onView={(z, c) => {
             setZoom(z)
             setPlanView({ room: room.room, ...c })
@@ -723,7 +723,7 @@ export function FloorView() {
                             )
                           }
                           onClick={() => {
-                            addObject(a, centre.x, centre.z)
+                            addObject(a, center.x, center.z)
                             setLibraryOpen(false)
                           }}
                           title={
@@ -766,7 +766,7 @@ export function FloorView() {
           onDragStart={(e) =>
             e.dataTransfer.setData(DRAG_TYPE, JSON.stringify({ kind: 'pedestal' }))
           }
-          onClick={() => addPedestal(centre.x, centre.z)}
+          onClick={() => addPedestal(center.x, center.z)}
           title="Add a pedestal: click to add it in the middle of the room, or drag it onto the plan"
         >
           <Cube size={20} aria-hidden />
