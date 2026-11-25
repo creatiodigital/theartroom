@@ -17,6 +17,7 @@ import {
 import c from 'classnames'
 
 import { Button } from '@/components/ui/Button'
+import { SegmentStrip } from '@/components/wallview/chrome'
 import type { FloorArtwork } from '@/lib/floor/floorArtworks'
 import { type FloorItem, type FloorObject, type FloorPedestal } from '@/lib/floor/floorLayout'
 import { detachObject, dropObject } from '@/lib/floor/floorPlacement'
@@ -35,6 +36,10 @@ import { FloorInspector } from './FloorInspector'
 import { DRAG_TYPE, FloorPlan } from './FloorPlan'
 import { useFloorEditor } from './useFloorEditor'
 import { useFloorRooms } from './useFloorRooms'
+
+// The wall editor's headings (eyebrow, title, captions), so both editors read the same.
+import panelGroup from '@/components/wallview/chrome/PanelGroup.module.scss'
+import wallPanel from '@/components/wallview/LeftPanel/LeftPanel.module.scss'
 import styles from './FloorView.module.scss'
 
 /**
@@ -345,7 +350,7 @@ export function FloorView() {
       <aside className={styles.left} aria-label="Floor options" data-panel-overlay>
         <header className={styles.leftHead}>
           <div className={styles.leftTitle}>
-            <span className={styles.cap}>Editing floor</span>
+            <span className={wallPanel.eyebrow}>Editing floor</span>
             {rooms.length > 1 ? (
               <select
                 className={styles.roomSelect}
@@ -361,7 +366,7 @@ export function FloorView() {
                 ))}
               </select>
             ) : (
-              <h1 className={styles.roomTitle}>
+              <h1 className={wallPanel.title}>
                 Room {room.room + 1} · {roomW} × {roomD} cm
               </h1>
             )}
@@ -438,7 +443,7 @@ export function FloorView() {
         </div>
 
         <section className={styles.helpers} aria-labelledby="floor-helpers">
-          <h2 id="floor-helpers" className={styles.cap}>
+          <h2 id="floor-helpers" className={panelGroup.title}>
             Helpers
           </h2>
           {helperRows.map((h) => (
@@ -465,26 +470,23 @@ export function FloorView() {
 
         <section className={styles.list} aria-labelledby="floor-items">
           <div className={styles.listHead}>
-            <h2 id="floor-items" className={styles.cap}>
+            <h2 id="floor-items" className={panelGroup.title}>
               On this floor
             </h2>
             <span className={styles.hint}>
               {inRoom.length} item{inRoom.length === 1 ? '' : 's'}
             </span>
           </div>
-          <div role="group" aria-label="Show" className={styles.filter}>
-            {(['all', 'object', 'pedestal'] as const).map((f) => (
-              <Button
-                key={f}
-                variant="bare"
-                className={c(styles.filterButton, filter === f && styles.filterOn)}
-                aria-pressed={filter === f}
-                onClick={() => setFilter(f)}
-              >
-                {f === 'all' ? 'All' : f === 'object' ? 'Objects' : 'Pedestals'}
-              </Button>
-            ))}
-          </div>
+          {/* The wall editor's own Show strip (consistency, owner 2026-11-25). */}
+          <SegmentStrip
+            label="Show"
+            segments={(['all', 'object', 'pedestal'] as const).map((f) => ({
+              key: f,
+              label: f === 'all' ? 'All' : f === 'object' ? 'Objects' : 'Pedestals',
+              pressed: filter === f,
+              onClick: () => setFilter(f),
+            }))}
+          />
           <ul className={styles.items}>
             {rows.map(({ item, child }) => (
               <li key={item.id}>

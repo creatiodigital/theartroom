@@ -10,6 +10,7 @@ import {
 import c from 'classnames'
 
 import { Button } from '@/components/ui/Button'
+import { SegmentStrip } from '@/components/wallview/chrome'
 import type { FloorArtwork } from '@/lib/floor/floorArtworks'
 import type { FloorItem, FloorObject, FloorPedestal } from '@/lib/floor/floorLayout'
 import {
@@ -32,6 +33,9 @@ import {
 
 import type { FloorEditor } from './useFloorEditor'
 import type { FloorRoom } from './useFloorRooms'
+
+// The wall editor's section captions, so both editors read the same.
+import panelGroup from '@/components/wallview/chrome/PanelGroup.module.scss'
 import styles from './FloorView.module.scss'
 
 /**
@@ -100,7 +104,7 @@ function NumberField({
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className={styles.inspectorSection}>
-      <h3 className={styles.cap}>{title}</h3>
+      <h3 className={panelGroup.title}>{title}</h3>
       {children}
     </section>
   )
@@ -117,20 +121,17 @@ function Segments<T extends string>({
   value: T
   onChange: (id: T) => void
 }) {
+  // The wall editor's own segmented strip (consistency, owner 2026-11-25).
   return (
-    <div role="group" aria-label={label} className={styles.segments}>
-      {options.map((o) => (
-        <Button
-          key={o.id}
-          variant="bare"
-          className={c(styles.segment, o.id === value && styles.segmentOn)}
-          aria-pressed={o.id === value}
-          onClick={() => onChange(o.id)}
-        >
-          {o.label}
-        </Button>
-      ))}
-    </div>
+    <SegmentStrip
+      label={label}
+      segments={options.map((o) => ({
+        key: o.id,
+        label: o.label,
+        pressed: o.id === value,
+        onClick: () => onChange(o.id),
+      }))}
+    />
   )
 }
 
