@@ -18,7 +18,8 @@ export type TFocusTarget = {
   group?: boolean
   /**
    * An Object on the floor (docs/objects, owner 2026-11-25): the camera comes nearer along its own
-   * line of sight at its own eye height, never stepping round to stand in front as for a photo.
+   * line of sight at its own eye height, never stepping round to stand in front as for a photo, and
+   * never into Wall View (`comeNearObject`).
    */
   object?: boolean
 }

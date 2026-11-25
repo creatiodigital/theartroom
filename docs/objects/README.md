@@ -494,7 +494,7 @@ object! unless it's a pedestal", "I cannot navigate in this 3D space with the ke
 - The artwork page's 3D button reads "View in 3D". The 3D viewer zooms between 75 % and 150 % of the framed
   distance, and Reset view glides back to the starting angle; the model no longer blinks on a re-render (its cache
   was freed by Strict Mode's test cleanup and reloaded, hidden meanwhile).
-- In the room an Object answers like a photo on a wall (owner, 2026-11-25): a click (tap) comes nearer, a double
-  click (double tap) opens its page. Nearer along the camera's own line of sight at its eye height (the lens shift
-  centres it), never stepping round to stand in front; Exit Wall View steps back as for a photo
-  (`TFocusTarget.object`).
+- In the room a click (tap) on an Object comes nearer, a double click (double tap) opens its page (owner,
+  2026-11-25). Nearer = an ordinary glide along the camera's own line of sight at its eye height, turning to face it
+  and looking down at it within the head's tilt, stopping where all of it fits with room around; never stepping
+  round to its front and never into Wall View ("Do not trigger wall view for a 3D object"; `comeNearObject`).
