@@ -13,7 +13,6 @@ import {
   Person,
   Plus,
   Ruler,
-  TextAa,
   X,
 } from '@phosphor-icons/react'
 import c from 'classnames'
@@ -423,12 +422,6 @@ export function FloorView() {
       icon: <Magnet size={16} aria-hidden />,
     },
     {
-      key: 'names',
-      label: 'Names',
-      sub: 'Each item’s name under it on the plan',
-      icon: <TextAa size={16} aria-hidden />,
-    },
-    {
       key: 'person',
       label: 'Person for scale',
       sub: 'A 1.70 m figure in the room',
@@ -637,7 +630,6 @@ export function FloorView() {
           expand={expand}
           onDropAdd={onDropAdd}
           zoom={zoom}
-          names={names}
         />
       </section>
 

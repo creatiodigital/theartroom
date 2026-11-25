@@ -328,7 +328,6 @@
 }
 
 .planDim,
-.planTag,
 .planMeasureText,
 .planRuler text,
 .planPerson text {
@@ -343,13 +342,6 @@
   pointer-events: all;
 }
 
-.planTag {
-  fill: var(--color-black);
-  font-weight: var(--font-semibold);
-  paint-order: stroke;
-  stroke: var(--color-white);
-  stroke-width: 2px;
-}
 
 .planGuide {
   stroke: var(--editor-row-selected-edge);

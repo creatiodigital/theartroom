@@ -43,9 +43,6 @@ const HANDLE_GAP_PX = 26
 const HANDLE_R_PX = 7
 /** Every item can be picked within this many px of its centre, however small it is drawn. */
 const HIT_R_PX = 12
-/** A name's gap under its shape, and its height, in px. */
-const NAME_GAP_PX = 4
-const NAME_LINE_PX = 14
 
 type Props = {
   room: FloorRoom
@@ -57,7 +54,6 @@ type Props = {
   /** Something dragged in from the add bar landed at (x, z) metres. */
   onDropAdd: (payload: string, x: number, z: number) => void
   zoom: number
-  names: Record<string, string>
 }
 
 /** How far the turning handle stands from the centre (cm): past the item's reach toward its back. */
@@ -72,7 +68,6 @@ export function FloorPlan({
   expand,
   onDropAdd,
   zoom,
-  names,
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const helpers = useSelector((state: RootState) => state.floor.helpers)
@@ -118,26 +113,6 @@ export function FloorPlan({
     return () => observer.disconnect()
   }, [viewW, viewH])
   const text = { fontSize: TEXT_PX * px }
-  // Names under their shapes, never over them (owner, 2026-11-25: "the name blocks me"); one that
-  // would print over another moves down a line.
-  const labels = useMemo(() => {
-    if (!helpers.names) return []
-    const out: { id: string; x: number; y: number; half: number }[] = []
-    const byTop = placed
-      .map(({ item, at }) => {
-        const outline = planOutline(item, at)
-        return { id: item.id, x: at.x * 100, y: Math.max(...outline.map(([, z]) => z)) }
-      })
-      .sort((a, b) => a.y - b.y)
-    for (const l of byTop) {
-      const half = ((names[l.id]?.length ?? 0) * TEXT_PX * 0.32 + 2) * px
-      let y = l.y + NAME_GAP_PX * px + (TEXT_PX / 2) * px
-      while (out.some((o) => Math.abs(o.y - y) < NAME_LINE_PX * px && Math.abs(o.x - l.x) < o.half + half))
-        y += NAME_LINE_PX * px
-      out.push({ id: l.id, x: l.x, y, half })
-    }
-    return out
-  }, [helpers.names, placed, names, px])
 
   /** A pointer event → plan cm, and how many cm one screen pixel is. */
   const toPlan = (clientX: number, clientY: number) => {
@@ -412,20 +387,6 @@ export function FloorPlan({
         )
       })}
 
-      {/* Names, upright whatever the turn, under their shapes (Helpers › Names hides them). */}
-      {labels.map((l) => (
-        <text
-          key={`n-${l.id}`}
-          x={l.x}
-          y={l.y}
-          className={styles.planTag}
-          style={text}
-          textAnchor="middle"
-          dominantBaseline="central"
-        >
-          {names[l.id]}
-        </text>
-      ))}
 
       {/* The picked item: its distances to the west and north walls, and the turning handle. */}
       {single && (
