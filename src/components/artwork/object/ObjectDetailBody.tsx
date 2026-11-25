@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import Link from 'next/link'
 import { CaretLeft, CaretRight, Cube } from '@phosphor-icons/react'
 import c from 'classnames'
 
@@ -10,8 +9,9 @@ import type { ArtworkNeighbours } from '@/components/artwork/detail/ArtworkDetai
 import { ModelViewer } from '@/components/objects/ModelViewer'
 import { Button } from '@/components/ui/Button'
 import { InquireSidebar } from '@/components/ui/InquireSidebar'
-import { Share } from '@/components/ui/Share'
 import { UnitsSwitch } from '@/components/ui/UnitsSwitch'
+import { ArtworkInfoColumn } from '@/components/artwork/detail/ArtworkInfoColumn'
+import { ArtworkInquire } from '@/components/artwork/detail/ArtworkInquire'
 import { track } from '@/lib/analytics/track'
 import { formatObjectSize, formatWeight } from '@/lib/units/format'
 import { useUnits } from '@/lib/units/UnitsProvider'
@@ -139,44 +139,29 @@ export function ObjectDetailBody({
   return (
     <>
       <div className={detail.layout}>
-        <aside className={c(detail.info, styles.info)}>
-          <div className={detail.identity}>
-            {author &&
-              (artist.handler ? (
-                <Link href={`/artists/${artist.handler}`} className={detail.artist}>
-                  {author}
-                </Link>
-              ) : (
-                <span className={detail.artist}>{author}</span>
-              ))}
-            <h1 className={detail.title}>{title}</h1>
-            {artwork.year && <span className={detail.fact}>{artwork.year}</span>}
-          </div>
-
-          {/* As an image artwork's page (owner, 2026-11-25: "Why so many inconsistencies"): under
-              the divider the technical lines, then the size with its cm | in, then the same
-              outlined Inquire. */}
-          <div className={detail.purchase}>
-            {technique}
-            {sizeLine && (
-              <span className={styles.sizeRow}>
-                <span className={detail.fact}>{sizeLine}</span>
-                <UnitsSwitch />
-              </span>
-            )}
-            <span aria-hidden className={styles.divider} />
-            <Button
-              variant="secondary"
-              label="Inquire"
-              className={detail.inquire}
-              onClick={() => {
-                track('inquire_open', { item_id: artwork.slug, surface: 'page', for_sale: false })
-                setInquireOpen(true)
-              }}
-            />
-            <Share title={title} url={shareUrl} className={detail.share} />
-          </div>
-        </aside>
+        <ArtworkInfoColumn
+          author={author}
+          artistHandler={artist.handler}
+          title={title}
+          year={artwork.year}
+          technique={technique}
+          shareUrl={shareUrl}
+          className={styles.info}
+        >
+          {sizeLine && (
+            <span className={styles.sizeRow}>
+              <span className={detail.fact}>{sizeLine}</span>
+              <UnitsSwitch />
+            </span>
+          )}
+          <ArtworkInquire
+            divided
+            onClick={() => {
+              track('inquire_open', { item_id: artwork.slug, surface: 'page', for_sale: false })
+              setInquireOpen(true)
+            }}
+          />
+        </ArtworkInfoColumn>
 
         <div className={styles.stageColumn}>
           <div ref={stageRef} className={c(detail.imageArea, styles.stage)}>

@@ -177,13 +177,6 @@
 }
 
 // ── The info column ──────────────────────────────────────────────────────
-// A divider above Inquire (owner, 2026-11-25), as the image page's above its price.
-.divider {
-  display: block;
-  margin-top: var(--space-1);
-  border-top: 1px solid var(--color-gray-30);
-}
-
 .sizeRow {
   display: flex;
   align-items: center;

@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import Link from 'next/link'
 import { CaretLeft, CaretRight } from '@phosphor-icons/react'
 
 import c from 'classnames'
@@ -9,7 +8,6 @@ import c from 'classnames'
 import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
 import { Button } from '@/components/ui/Button'
 import { InquireSidebar } from '@/components/ui/InquireSidebar'
-import { Share } from '@/components/ui/Share'
 import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
 import { artworkToGa, CURRENCY, euros } from '@/lib/analytics/events'
 import { track } from '@/lib/analytics/track'
@@ -21,6 +19,8 @@ import { SHOW_NEIGHBOUR_ARROWS } from './neighbourArrows'
 import { reportImageError } from '@/lib/observability/reportImageError'
 import { PHOTO_VIEWS, type PresentationView } from '@/lib/printPresentation/record'
 
+import { ArtworkInfoColumn } from './ArtworkInfoColumn'
+import { ArtworkInquire } from './ArtworkInquire'
 import styles from './ArtworkDetail.module.scss'
 
 export type Artist = {
@@ -215,17 +215,10 @@ export const ArtworkDetailBody = ({
     })
   }, [forSale, commerce, artwork.slug, displayTitle, displayAuthor, surface])
 
-  const inquireButton = (
-    <Button
-      variant="secondary"
-      label="Inquire"
-      onClick={() => {
-        track('inquire_open', { item_id: artwork.slug, surface, for_sale: forSale })
-        setIsInquireOpen(true)
-      }}
-      className={styles.inquire}
-    />
-  )
+  const openInquire = () => {
+    track('inquire_open', { item_id: artwork.slug, surface, for_sale: forSale })
+    setIsInquireOpen(true)
+  }
 
   // With its photos, the grey box is a strip of the four views: the framed view, then the photos,
   // each filling the box (cover: it's the same space, owner 2026-11-20). Moved by the grid below
@@ -261,88 +254,79 @@ export const ArtworkDetailBody = ({
   return (
     <>
       <div className={c(styles.layout, surface === 'room' && styles.layoutRoom)}>
-        <aside className={styles.info}>
-          <div className={styles.identity}>
-            {displayAuthor &&
-              (artist.handler ? (
-                <Link href={`/artists/${artist.handler}`} className={styles.artist}>
-                  {displayAuthor}
-                </Link>
-              ) : (
-                <span className={styles.artist}>{displayAuthor}</span>
-              ))}
-            {/* The work leads, and it is the <h1>: this page is about the artwork. */}
-            {displayTitle && <h1 className={styles.title}>{displayTitle}</h1>}
-            {artwork.year && <span className={styles.fact}>{artwork.year}</span>}
-          </div>
-
-          <div className={styles.purchase}>
-            {/* The technical lines open the print block, under the divider: apart from the year,
-                just above the print's kind and size (owner, 2026-11-20). */}
-            {artwork.technique && technique}
-            {commerce && !purchasesPaused ? (
-              <ArtworkAvailabilityCard
-                editionType={commerce.editionType}
-                sizes={artwork.sizes}
-                minPriceCents={commerce.minPriceCents}
-                editionLines={commerce.editionLines}
-                artworkSlug={artwork.slug}
-                inquire={inquireButton}
-              />
-            ) : (
-              // Not for sale (or purchases paused): the print's kind and sizes, then enquiring is
-              // the only route forward.
-              <ArtworkPrintFacts sizes={artwork.sizes} inquire={inquireButton} />
-            )}
-            {withPhotos && (
-              <ArtworkViews
-                presentation={withPhotos}
-                imageUrl={artwork.imageUrl!}
-                title={displayTitle || 'Artwork'}
-                selected={viewIndex}
-                onSelect={showView}
-                layout="grid"
-                className={styles.viewsGrid}
-              />
-            )}
-            <Share title={displayTitle || 'Artwork'} url={shareUrl} className={styles.share} />
-          </div>
-        </aside>
+        <ArtworkInfoColumn
+          author={displayAuthor}
+          artistHandler={artist.handler}
+          title={displayTitle}
+          year={artwork.year}
+          technique={artwork.technique ? technique : null}
+          shareUrl={shareUrl}
+        >
+          {commerce && !purchasesPaused ? (
+            <ArtworkAvailabilityCard
+              editionType={commerce.editionType}
+              sizes={artwork.sizes}
+              minPriceCents={commerce.minPriceCents}
+              editionLines={commerce.editionLines}
+              artworkSlug={artwork.slug}
+              inquire={<ArtworkInquire onClick={openInquire} />}
+            />
+          ) : (
+            // Not for sale (or purchases paused): the print's kind and sizes, then enquiring is
+            // the only route forward.
+            <ArtworkPrintFacts
+              sizes={artwork.sizes}
+              inquire={<ArtworkInquire divided onClick={openInquire} />}
+            />
+          )}
+          {withPhotos && (
+            <ArtworkViews
+              presentation={withPhotos}
+              imageUrl={artwork.imageUrl!}
+              title={displayTitle || 'Artwork'}
+              selected={viewIndex}
+              onSelect={showView}
+              layout="grid"
+              className={styles.viewsGrid}
+            />
+          )}
+        </ArtworkInfoColumn>
 
         <div className={c(styles.imageArea, isPortrait && styles.imageAreaPortrait)}>
           {inViews(
             artwork.imageUrl && (
-            // Raw <img> (not next/image): reuses the image the 3D scene already cached, and
-            // sidesteps the known next/image + R2 prod issue. crossOrigin matches THREE's
-            // texture request so the same browser-cache entry is reused.
-            // As a photo of the print, cropped to the piece and a thin border of wall so it can be
-            // as large as the grey box allows; the image sits in its window, filling it.
-            <PrintPresentation
-              view={presentation}
-              size="large"
-              crop
-              className={styles.presentation}
-              renderClassName={styles.fit}
-            >
-              {(placement) => (
-                <img
-                  src={artwork.imageUrl ?? undefined}
-                  alt={displayTitle || 'Artwork'}
-                  width={imgWidth}
-                  height={imgHeight}
-                  className={placement === 'window' ? undefined : styles.fit}
-                  crossOrigin="anonymous"
-                  decoding="async"
-                  onError={() =>
-                    reportImageError(artwork.imageUrl, {
-                      surface: 'artwork-detail',
-                      alt: displayTitle || undefined,
-                    })
-                  }
-                />
-              )}
-            </PrintPresentation>
-          ))}
+              // Raw <img> (not next/image): reuses the image the 3D scene already cached, and
+              // sidesteps the known next/image + R2 prod issue. crossOrigin matches THREE's
+              // texture request so the same browser-cache entry is reused.
+              // As a photo of the print, cropped to the piece and a thin border of wall so it can be
+              // as large as the grey box allows; the image sits in its window, filling it.
+              <PrintPresentation
+                view={presentation}
+                size="large"
+                crop
+                className={styles.presentation}
+                renderClassName={styles.fit}
+              >
+                {(placement) => (
+                  <img
+                    src={artwork.imageUrl ?? undefined}
+                    alt={displayTitle || 'Artwork'}
+                    width={imgWidth}
+                    height={imgHeight}
+                    className={placement === 'window' ? undefined : styles.fit}
+                    crossOrigin="anonymous"
+                    decoding="async"
+                    onError={() =>
+                      reportImageError(artwork.imageUrl, {
+                        surface: 'artwork-detail',
+                        alt: displayTitle || undefined,
+                      })
+                    }
+                  />
+                )}
+              </PrintPresentation>
+            ),
+          )}
 
           {/* Previous / next in the set the visitor came from: round buttons on the image's
               edges, plain links to the neighbouring works (artwork.md "Below the work"). */}
