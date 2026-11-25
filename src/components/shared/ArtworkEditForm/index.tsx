@@ -36,7 +36,7 @@ import { LimitedVariantsEditor } from './LimitedVariantsEditor'
 import { ArtworkMediaManager } from './ArtworkMediaManager'
 import { CoverCropFrame, CoverPreviews } from './ObjectCover'
 import {
-  ObjectSizeAndEdition,
+  ObjectSize,
   ObjectTechnicalInfo,
   objectFormFields,
   type ObjectFormFields,
@@ -170,10 +170,6 @@ export type Artwork = {
   depthCm?: number | null
   weightKg?: number | null
   sizeIncludesBase?: boolean
-  objectEdition?: string | null
-  objectEditionNo?: number | null
-  objectEditionOf?: number | null
-  objectArtistProofs?: number | null
   placement?: string | null
   displayMode?: string | null
   signedNote?: string | null
@@ -790,7 +786,13 @@ export const ArtworkEditForm = ({
   const showSupplementary = isAdmin && !!artworkId && !isObject
   // In the 3D space (docs/objects O4): right after the cover, where the .glb goes (owner,
   // 2026-11-25: "the most important part"); its actions save on their own, outside the form.
-  const showSpace = isObject && !!artworkId && !!objectModel
+  // The gallery team always (it uploads the .glb); the artist once the model is in (owner,
+  // 2026-11-25: no "Not in the 3D space yet" box, so nothing to show before).
+  const showSpace =
+    isObject &&
+    !!artworkId &&
+    !!objectModel &&
+    (isAdmin || (objectModel.modelStatus === 'ready' && !!objectModel.modelUrl))
   const isPage = variant === 'page'
   const imageSection = isVideo ? ARTWORK_SECTION.poster : ARTWORK_SECTION.image
 
@@ -1651,7 +1653,7 @@ export const ArtworkEditForm = ({
               )}
 
               {/* An Object's size and edition: the structured size is the truth (docs/objects). */}
-              {isObject && <ObjectSizeAndEdition fields={formData} onChange={onFormChange} />}
+              {isObject && <ObjectSize fields={formData} onChange={onFormChange} />}
 
               {/* No Dimensions field (owner, 2026-11-17): every work is a print, and its size line is
                   worked out from the file or the limited variants (`getArtworkSizes`). The stored

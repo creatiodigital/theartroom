@@ -420,9 +420,9 @@ till the end", so built from the draft board and the rules above).
 
 **No requests: "In preparation" removed** (2026-11-25, same branch; owner: "remove that whole feature 'in
 preparation'. Artists will not request for this. They will send me directly the glb files"; Q-O3).
-- The editor's In the 3D space has two states: **Not in the 3D space yet** ("Send the 3D model of your piece (a .glb
-  file) to The Art Room. Once we add it, visitors can walk around it in the 3D exhibition.") and the ready model
-  (preview, file, real size, size check, "Added by The Art Room · date"). The Gallery team box (Upload / Replace
+- The editor's In the 3D space shows the ready model (preview, file, real size, size check, "Added by The Art Room ·
+  date"); no "Not in the 3D space yet" box (owner, same day: "remove this"), so the artist sees the section only once
+  the model is in; the gallery team always sees it. The Gallery team box (Upload / Replace
   .glb through the checker) is unchanged. The section now sits right after the Cover photo (owner, same day: "the
   most important part"), and the upload window scrolls (title and Cancel · Upload stay).
 - Removed: "Ask for a 3D model" and "Ask for a change" (and their window), the In preparation box and chip, the
@@ -430,3 +430,12 @@ preparation'. Artists will not request for this. They will send me directly the 
   request email and the artist's "ready" email (uploading a model sends no email), and `Artwork.modelRequestedAt`.
   `modelStatus` is "none" | "ready". The size check reads "Matches / Differs from the size in Details".
 - Schema: one column fewer (`modelRequestedAt`); the dev database still has it until the owner's next push.
+
+**Always a unique piece: no Edition, no artist's proofs** (2026-11-25, same branch; owner: "We don't have artist's
+proofs, remove that", then "they will be sold as unique pieces", "always").
+- Removed: the editor's Edition row (Unique piece / Edition, Number / of, + artist's proofs), the "Shown as …" line,
+  the visitor page's edition (info column and Details), and `Artwork.objectEdition`, `objectEditionNo`,
+  `objectEditionOf`, `objectArtistProofs` (four columns fewer; the dev database keeps them until the owner's next
+  push). Nothing says "Unique piece" on the page: every Object is one.
+- For the design Claude: `docs/unique-sales/README.md` still sells "Object editions" ("Edition 3 of 8",
+  "5 of 8 available", counting casts); those parts no longer apply, an Object is always one sale.

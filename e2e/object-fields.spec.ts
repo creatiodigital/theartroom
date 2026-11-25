@@ -6,10 +6,8 @@ import { formatObjectSize, formatWeight } from '../src/lib/units/format'
 import {
   countObjectMedia,
   objectCardOf,
-  objectEditionLine,
   coverObjectPosition,
   coverSquare,
-  objectEditionText,
   objectDimensionsText,
   objectMediaSummary,
   objectWriteData,
@@ -57,10 +55,9 @@ test('choices accept only their values', () => {
   })
   expect(parseObjectFields({ placement: 'garden' }).ok).toBe(false)
   expect(parseObjectFields({ displayMode: 'shelf' }).ok).toBe(false)
-  expect(parseObjectFields({ objectEdition: 'limited' }).ok).toBe(false)
 })
 
-test('an edition is number N of M plus proofs; N never above M', () => {
+test('no edition: an Object is always a unique piece, so edition fields are never written', () => {
   expect(
     parsed({
       objectEdition: 'edition',
@@ -68,44 +65,7 @@ test('an edition is number N of M plus proofs; N never above M', () => {
       objectEditionOf: '8',
       objectArtistProofs: 2,
     }),
-  ).toEqual({
-    objectEdition: 'edition',
-    objectEditionNo: 3,
-    objectEditionOf: 8,
-    objectArtistProofs: 2,
-  })
-  expect(parseObjectFields({ objectEditionNo: 9, objectEditionOf: 8 }).ok).toBe(false)
-  expect(parseObjectFields({ objectEditionNo: 2.5 }).ok).toBe(false)
-  expect(parseObjectFields({ objectEditionNo: 0 }).ok).toBe(false)
-})
-
-test('"unique" clears the edition numbers', () => {
-  expect(parsed({ objectEdition: 'unique', objectEditionNo: 3, objectEditionOf: 8 })).toEqual({
-    objectEdition: 'unique',
-    objectEditionNo: null,
-    objectEditionOf: null,
-    objectArtistProofs: null,
-  })
-})
-
-test('no edition at all clears the numbers too', () => {
-  expect(parsed({ objectEdition: '', objectEditionNo: '3', objectEditionOf: '8' })).toEqual({
-    objectEdition: null,
-    objectEditionNo: null,
-    objectEditionOf: null,
-    objectArtistProofs: null,
-  })
-})
-
-test('edition text, as the editor shows it', () => {
-  const t = (o: Record<string, unknown>) => objectEditionText(o)
-  expect(
-    t({ objectEdition: 'edition', objectEditionNo: 3, objectEditionOf: 8, objectArtistProofs: 2 }),
-  ).toBe('Edition 3/8 + 2 AP')
-  expect(t({ objectEdition: 'edition', objectEditionOf: 8 })).toBe('Edition of 8')
-  expect(t({ objectEdition: 'unique' })).toBe('Unique piece')
-  expect(t({ objectEdition: 'edition' })).toBeNull()
-  expect(t({})).toBeNull()
+  ).toEqual({})
 })
 
 test('cover crop: centre to CSS position, clamped inside the photo', () => {
@@ -194,28 +154,6 @@ test('visitor size (Q-O9): cm as entered, inches one decimal; weight always kg',
   expect(formatObjectSize({}, 'cm')).toBeNull()
   expect(formatWeight(18)).toBe('18 kg')
   expect(formatWeight(2.54)).toBe('2.5 kg')
-})
-
-test('edition on the visitor page: short in the info column, long in Details', () => {
-  const e = {
-    objectEdition: 'edition',
-    objectEditionNo: 3,
-    objectEditionOf: 8,
-    objectArtistProofs: 2,
-  }
-  expect(objectEditionLine(e, 'short')).toBe('Edition 3 of 8 + 2 AP')
-  expect(objectEditionLine(e, 'long')).toBe('3 of 8 + 2 artist’s proofs')
-  expect(objectEditionLine({ ...e, objectArtistProofs: 1 }, 'long')).toBe(
-    '3 of 8 + 1 artist’s proof',
-  )
-  expect(objectEditionLine({ objectEdition: 'edition', objectEditionOf: 8 }, 'short')).toBe(
-    'Edition of 8',
-  )
-  expect(objectEditionLine({ objectEdition: 'edition', objectEditionOf: 8 }, 'long')).toBe(
-    'An edition of 8',
-  )
-  expect(objectEditionLine({ objectEdition: 'unique' }, 'long')).toBe('Unique piece')
-  expect(objectEditionLine({}, 'short')).toBeNull()
 })
 
 test('grid card: only an Object gets its cover crop', () => {

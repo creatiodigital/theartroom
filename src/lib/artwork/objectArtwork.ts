@@ -10,7 +10,6 @@
  */
 import type {
   TObjectDisplayMode,
-  TObjectEdition,
   TObjectMediaRole,
   TObjectModelStatus,
   TObjectPlacement,
@@ -19,7 +18,6 @@ import { sanitizeLine, sanitizeMultiline } from '@/utils/sanitizeLine'
 
 export const isObjectArtwork = (type: string | null | undefined): boolean => type === 'object'
 
-export const OBJECT_EDITIONS = ['unique', 'edition'] as const satisfies readonly TObjectEdition[]
 export const OBJECT_PLACEMENTS = [
   'indoors',
   'outdoors',
@@ -77,10 +75,6 @@ export type ObjectFieldsInput = {
   depthCm?: number | null
   weightKg?: number | null
   sizeIncludesBase?: boolean
-  objectEdition?: TObjectEdition | null
-  objectEditionNo?: number | null
-  objectEditionOf?: number | null
-  objectArtistProofs?: number | null
   placement?: TObjectPlacement | null
   displayMode?: TObjectDisplayMode | null
   signedNote?: string | null
@@ -95,7 +89,6 @@ export type ParsedObjectFields =
 /** Largest size and weight accepted: far above any real piece, there only to refuse garbage. */
 const MAX_SIZE_CM = 10_000
 const MAX_WEIGHT_KG = 100_000
-const MAX_EDITION = 9_999
 const MAX_NOTE_LINE = 300
 const MAX_CARE_NOTE = 2_000
 
@@ -127,15 +120,6 @@ const toPositive = (value: unknown, label: string, max: number, step: number): n
   const rounded = Math.round(toNumber(value, label) / step) * step
   const n = Number(rounded.toFixed(2))
   if (n <= 0 || n > max) throw new FieldError(`${label} must be greater than 0 and at most ${max}.`)
-  return n
-}
-
-const toCount = (value: unknown, label: string, min: number): number | null => {
-  if (isBlank(value)) return null
-  const n = toNumber(value, label)
-  if (!Number.isInteger(n) || n < min || n > MAX_EDITION) {
-    throw new FieldError(`${label} must be a whole number from ${min} to ${MAX_EDITION}.`)
-  }
   return n
 }
 
@@ -184,29 +168,6 @@ export function parseObjectFields(body: Record<string, unknown>): ParsedObjectFi
     if (has('weightKg')) data.weightKg = toPositive(body.weightKg, 'Weight', MAX_WEIGHT_KG, 0.01)
     if (has('sizeIncludesBase')) {
       data.sizeIncludesBase = body.sizeIncludesBase === true || body.sizeIncludesBase === 'true'
-    }
-    if (has('objectEdition')) {
-      data.objectEdition = toChoice(body.objectEdition, OBJECT_EDITIONS, 'Edition')
-    }
-    // The numbers belong to an edition: "unique", or no edition at all, clears them.
-    if (data.objectEdition === 'unique' || (has('objectEdition') && data.objectEdition === null)) {
-      data.objectEditionNo = null
-      data.objectEditionOf = null
-      data.objectArtistProofs = null
-    } else {
-      if (has('objectEditionNo')) {
-        data.objectEditionNo = toCount(body.objectEditionNo, 'Edition number', 1)
-      }
-      if (has('objectEditionOf')) {
-        data.objectEditionOf = toCount(body.objectEditionOf, 'Edition size', 1)
-      }
-      if (has('objectArtistProofs')) {
-        data.objectArtistProofs = toCount(body.objectArtistProofs, "Artist's proofs", 0)
-      }
-      const { objectEditionNo: no, objectEditionOf: of } = data
-      if (typeof no === 'number' && typeof of === 'number' && no > of) {
-        throw new FieldError('The edition number cannot be higher than the edition size.')
-      }
     }
     if (has('placement')) {
       data.placement = toChoice(body.placement, OBJECT_PLACEMENTS, 'Where it can stand')
@@ -309,24 +270,6 @@ export function objectMediaSummary({ photos, videos, reels }: ObjectMediaCounts)
   return parts.length ? parts.join(' · ') : null
 }
 
-/**
- * The edition as the editor's help line writes it (docs/objects "Details"): "Edition 3/8 + 2 AP",
- * "Edition of 8", "Unique piece". Null when there is nothing to say yet.
- */
-export function objectEditionText(edition: {
-  objectEdition?: string | null
-  objectEditionNo?: number | null
-  objectEditionOf?: number | null
-  objectArtistProofs?: number | null
-}): string | null {
-  if (edition.objectEdition === 'unique') return 'Unique piece'
-  if (edition.objectEdition !== 'edition') return null
-  const { objectEditionNo: no, objectEditionOf: of, objectArtistProofs: aps } = edition
-  if (!of) return null
-  const base = no ? `Edition ${no}/${of}` : `Edition of ${of}`
-  return aps ? `${base} + ${aps} AP` : base
-}
-
 type CropCentre = { x?: number | null; y?: number | null }
 type PixelSize = { width?: number | null; height?: number | null }
 
@@ -358,37 +301,6 @@ export function coverObjectPosition(crop: CropCentre, size: PixelSize): string {
 }
 
 // ── Visitor wording (docs/objects O5, objects-artwork-page-*.dc.html) ──────────
-
-type EditionFields = {
-  objectEdition?: string | null
-  objectEditionNo?: number | null
-  objectEditionOf?: number | null
-  objectArtistProofs?: number | null
-}
-
-/**
- * The edition on the artwork page. `short`, in the info column: "Edition 3 of 8 + 2 AP";
- * `long`, in Details: "3 of 8 + 2 artist’s proofs". A unique piece is "Unique piece" in both.
- * Null when nothing is said.
- */
-export function objectEditionLine(e: EditionFields, form: 'short' | 'long'): string | null {
-  if (e.objectEdition === 'unique') return 'Unique piece'
-  if (e.objectEdition !== 'edition' || !e.objectEditionOf) return null
-  const of = e.objectEditionNo
-    ? `${e.objectEditionNo} of ${e.objectEditionOf}`
-    : `an edition of ${e.objectEditionOf}`
-  const aps = e.objectArtistProofs
-    ? form === 'short'
-      ? ` + ${e.objectArtistProofs} AP`
-      : ` + ${e.objectArtistProofs} artist’s proof${e.objectArtistProofs === 1 ? '' : 's'}`
-    : ''
-  if (form === 'short') {
-    return e.objectEditionNo
-      ? `Edition ${e.objectEditionNo} of ${e.objectEditionOf}${aps}`
-      : `Edition of ${e.objectEditionOf}${aps}`
-  }
-  return `${of.charAt(0).toUpperCase()}${of.slice(1)}${aps}`
-}
 
 /** Details › Where it can stand. */
 export const OBJECT_PLACEMENT_LABEL: Record<string, string> = {

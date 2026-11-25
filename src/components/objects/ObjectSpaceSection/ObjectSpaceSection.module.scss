@@ -1,27 +1,13 @@
 @use '@/styles/mixins' as *;
 
-// The editor's "In the 3D space" (docs/objects O4, objects-editor.dc.html): not in it yet, or the
-// ready model (preview beside its facts); the gallery team's box.
+// The editor's "In the 3D space" (docs/objects O4, objects-editor.dc.html): the ready model
+// (preview beside its facts); the gallery team's box.
 .space {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
   font-size: var(--text-sm);
   line-height: var(--leading-normal);
-}
-
-.notYet {
-  display: flex;
-  flex-direction: column;
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
-  background: var(--color-gray-15);
-  color: var(--color-text-secondary);
-
-  strong {
-    font-weight: var(--font-semibold);
-    color: var(--color-black);
-  }
 }
 
 .ready {

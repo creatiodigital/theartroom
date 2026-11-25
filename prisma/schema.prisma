@@ -259,10 +259,6 @@ model Artwork {
   depthCm            Float?
   weightKg           Float?
   sizeIncludesBase   Boolean   @default(false)
-  objectEdition      String? // "unique" | "edition" (NOT editionType: that one is the print edition)
-  objectEditionNo    Int? // 3 → "Edition 3/8 + 2 AP"
-  objectEditionOf    Int? // 8
-  objectArtistProofs Int? // 2
   placement          String? // "indoors" | "outdoors" | "both"
   displayMode        String? // "floor" | "pedestal" | "wall" | "hanging"
   signedNote         String?

@@ -13,7 +13,6 @@ import { InquireSidebar } from '@/components/ui/InquireSidebar'
 import { Share } from '@/components/ui/Share'
 import { UnitsSwitch } from '@/components/ui/UnitsSwitch'
 import { track } from '@/lib/analytics/track'
-import { objectEditionLine } from '@/lib/artwork/objectArtwork'
 import { formatObjectSize, formatWeight } from '@/lib/units/format'
 import { useUnits } from '@/lib/units/UnitsProvider'
 
@@ -43,10 +42,6 @@ export type ObjectPageArtwork = {
   depthCm: number | null
   weightKg: number | null
   sizeIncludesBase: boolean
-  objectEdition: string | null
-  objectEditionNo: number | null
-  objectEditionOf: number | null
-  objectArtistProofs: number | null
   imageUrl: string | null
   /** The ready 3D model, if any (docs/objects O4). */
   model: { url: string; boundsCm: { h: number; w: number; d: number } | null } | null
@@ -92,7 +87,6 @@ export function ObjectDetailBody({
   const size = formatObjectSize(artwork, unit)
   const weight = artwork.weightKg ? formatWeight(artwork.weightKg) : null
   const sizeLine = [size, weight].filter(Boolean).join(' · ')
-  const edition = objectEditionLine(artwork, 'short')
   const realSize = artwork.model?.boundsCm
     ? formatObjectSize(
         {
@@ -175,7 +169,6 @@ export function ObjectDetailBody({
             <span className={styles.lines}>
               {technique}
               {artwork.sizeIncludesBase && <span>Base included in the size</span>}
-              {edition && <span>{edition}</span>}
             </span>
           </div>
 

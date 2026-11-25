@@ -32,8 +32,9 @@ const longDate = (iso: string | null) =>
 /**
  * The editor's "In the 3D space" (docs/objects O4, objects-editor.dc.html): an extra. Artists send
  * their .glb files to the gallery directly (owner, 2026-11-25: no requests from the editor, no "In
- * preparation"); the gallery team uploads the file here through the checker. Then a preview to
- * turn, the real size and the size check against Details.
+ * preparation", no "Not in the 3D space yet"); the gallery team uploads the file here through the
+ * checker. Then a preview to turn, the real size and the size check against Details. The editor
+ * shows the section to the artist only once the model is in.
  */
 export function ObjectSpaceSection({
   artworkId,
@@ -57,16 +58,6 @@ export function ObjectSpaceSection({
   return (
     <div className={styles.space}>
       {notice && <Callout tone="info">{notice}</Callout>}
-
-      {!ready && (
-        <div className={styles.notYet}>
-          <strong>Not in the 3D space yet</strong>
-          <span>
-            Send the 3D model of your piece (a .glb file) to The Art Room. Once we add it, visitors
-            can walk around it in the 3D exhibition.
-          </span>
-        </div>
-      )}
 
       {ready && model.modelUrl && (
         <div className={styles.ready}>

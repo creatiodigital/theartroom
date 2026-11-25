@@ -12,7 +12,6 @@ import type { TFontFamily, TFontWeight, TOption } from '@/types/fonts'
 export type TArtworkKind = 'image' | 'text' | 'sound' | 'shape' | 'video' | 'object'
 
 /** An Object's edition (docs/objects): one of a kind, or number N of M (+ APs). */
-export type TObjectEdition = 'unique' | 'edition'
 export type TObjectPlacement = 'indoors' | 'outdoors' | 'both'
 export type TObjectDisplayMode = 'floor' | 'pedestal' | 'wall' | 'hanging'
 /** The 3D model's state: none → ready (the gallery uploads the .glb the artist sent it). */
@@ -34,10 +33,6 @@ export type TArtworkObjectFields = {
   depthCm?: number | null
   weightKg?: number | null
   sizeIncludesBase?: boolean
-  objectEdition?: TObjectEdition | null
-  objectEditionNo?: number | null
-  objectEditionOf?: number | null
-  objectArtistProofs?: number | null
   placement?: TObjectPlacement | null
   displayMode?: TObjectDisplayMode | null
   signedNote?: string | null

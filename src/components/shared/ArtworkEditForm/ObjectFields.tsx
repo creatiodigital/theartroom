@@ -3,7 +3,7 @@
 import { SegmentedControl } from '@/components/admin/ui/SegmentedControl'
 import { AdminCheckbox } from '@/components/admin/ui/AdminCheckbox'
 import { Input } from '@/components/ui/Input'
-import { objectDimensionsText, objectEditionText } from '@/lib/artwork/objectArtwork'
+import { objectDimensionsText } from '@/lib/artwork/objectArtwork'
 
 import formStyles from './ArtworkEditForm.module.scss'
 import styles from './ObjectFields.module.scss'
@@ -20,11 +20,6 @@ export type ObjectFormFields = {
   depthCm: string
   weightKg: string
   sizeIncludesBase: boolean
-  /** '' | 'unique' | 'edition' */
-  objectEdition: string
-  objectEditionNo: string
-  objectEditionOf: string
-  objectArtistProofs: string
   /** '' | 'indoors' | 'outdoors' | 'both' */
   placement: string
   /** '' | 'floor' | 'pedestal' | 'wall' | 'hanging' */
@@ -42,10 +37,6 @@ type Stored = {
   depthCm?: number | null
   weightKg?: number | null
   sizeIncludesBase?: boolean
-  objectEdition?: string | null
-  objectEditionNo?: number | null
-  objectEditionOf?: number | null
-  objectArtistProofs?: number | null
   placement?: string | null
   displayMode?: string | null
   signedNote?: string | null
@@ -64,10 +55,6 @@ export const objectFormFields = (data: Stored): ObjectFormFields => ({
   depthCm: text(data.depthCm),
   weightKg: text(data.weightKg),
   sizeIncludesBase: data.sizeIncludesBase ?? false,
-  objectEdition: data.objectEdition ?? '',
-  objectEditionNo: text(data.objectEditionNo),
-  objectEditionOf: text(data.objectEditionOf),
-  objectArtistProofs: text(data.objectArtistProofs),
   placement: data.placement ?? '',
   displayMode: data.displayMode ?? '',
   signedNote: data.signedNote ?? '',
@@ -129,20 +116,16 @@ function UnitField({
   )
 }
 
-/** Details › Size and Edition (objects-editor.dc.html). */
-export function ObjectSizeAndEdition({ fields, onChange }: FieldsProps) {
+/**
+ * Details › Size (objects-editor.dc.html). No Edition: an Object is always sold as a unique piece
+ * (owner, 2026-11-25), so there are no edition numbers or artist's proofs.
+ */
+export function ObjectSize({ fields, onChange }: FieldsProps) {
   const size = objectDimensionsText({
     heightCm: typed(fields.heightCm),
     widthCm: typed(fields.widthCm),
     depthCm: typed(fields.depthCm),
   })
-  const edition = objectEditionText({
-    objectEdition: fields.objectEdition,
-    objectEditionNo: typed(fields.objectEditionNo),
-    objectEditionOf: typed(fields.objectEditionOf),
-    objectArtistProofs: typed(fields.objectArtistProofs),
-  })
-
   return (
     <>
       <fieldset className={styles.group}>
@@ -193,76 +176,6 @@ export function ObjectSizeAndEdition({ fields, onChange }: FieldsProps) {
           </span>
         )}
       </fieldset>
-
-      <div className={styles.group}>
-        <span className={formStyles.label}>Edition</span>
-        <div className={styles.editionRow}>
-          <SegmentedControl
-            label="Edition"
-            options={[
-              { id: 'unique', label: 'Unique piece' },
-              { id: 'edition', label: 'Edition' },
-            ]}
-            value={fields.objectEdition}
-            onChange={(id) => onChange('objectEdition', toggle(fields.objectEdition, id))}
-          />
-          {fields.objectEdition === 'edition' && (
-            <>
-              <label className={styles.inline}>
-                Number
-                <span className={styles.unit}>
-                  <Input
-                    type="text"
-                    inputMode="numeric"
-                    size="bare"
-                    className={styles.unitControl}
-                    inputClassName={styles.numberInput}
-                    aria-label="This is number"
-                    value={fields.objectEditionNo}
-                    onChange={(e) => onChange('objectEditionNo', e.target.value)}
-                  />
-                  <span aria-hidden className={styles.unitName}>
-                    /
-                  </span>
-                </span>
-              </label>
-              <label className={styles.inline}>
-                of
-                <span className={styles.unit}>
-                  <Input
-                    type="text"
-                    inputMode="numeric"
-                    size="bare"
-                    className={styles.unitControl}
-                    inputClassName={styles.numberInput}
-                    aria-label="Edition size"
-                    value={fields.objectEditionOf}
-                    onChange={(e) => onChange('objectEditionOf', e.target.value)}
-                  />
-                </span>
-              </label>
-              <label className={styles.inline}>
-                + artist’s proofs
-                <span className={styles.unit}>
-                  <Input
-                    type="text"
-                    inputMode="numeric"
-                    size="bare"
-                    className={styles.unitControl}
-                    inputClassName={styles.numberInput}
-                    aria-label="Artist's proofs"
-                    value={fields.objectArtistProofs}
-                    onChange={(e) => onChange('objectArtistProofs', e.target.value)}
-                  />
-                </span>
-              </label>
-            </>
-          )}
-        </div>
-        {edition && fields.objectEdition === 'edition' && (
-          <span className={formStyles.help}>Shown as “{edition}”.</span>
-        )}
-      </div>
     </>
   )
 }

@@ -1,11 +1,7 @@
 'use client'
 
 import { TextSection } from '@/components/ui/TextSection'
-import {
-  OBJECT_DISPLAY_LABEL,
-  OBJECT_PLACEMENT_LABEL,
-  objectEditionLine,
-} from '@/lib/artwork/objectArtwork'
+import { OBJECT_DISPLAY_LABEL, OBJECT_PLACEMENT_LABEL } from '@/lib/artwork/objectArtwork'
 import { formatObjectSize, formatWeight } from '@/lib/units/format'
 import { useUnits } from '@/lib/units/UnitsProvider'
 
@@ -17,10 +13,6 @@ export type ObjectDetailsFields = {
   depthCm: number | null
   weightKg: number | null
   sizeIncludesBase: boolean
-  objectEdition: string | null
-  objectEditionNo: number | null
-  objectEditionOf: number | null
-  objectArtistProofs: number | null
   placement: string | null
   displayMode: string | null
   signedNote: string | null
@@ -45,7 +37,6 @@ export function ObjectDetails({ fields }: { fields: ObjectDetailsFields }) {
 
   const rows = [
     { label: 'Size', value: sizeValue },
-    { label: 'Edition', value: objectEditionLine(fields, 'long') },
     {
       label: 'Where it can stand',
       value: fields.placement ? (OBJECT_PLACEMENT_LABEL[fields.placement] ?? null) : null,

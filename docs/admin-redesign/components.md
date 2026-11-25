@@ -574,7 +574,7 @@ like the real Pause switch). Logic and dialogs unchanged.
 - **Built** · `shared/ArtworkEditForm/ObjectCover.tsx` · `CoverCropFrame { size; crop: { x; y }; onChange }` (the dashed
   square over the 4:5 preview; drag or arrow keys, `role="slider"`) and `CoverPreviews { imageUrl; size; crop }` ("How it
   shows": grid square, artwork page 4:5, list).
-- **Built** · `shared/ArtworkEditForm/ObjectFields.tsx` · `ObjectSizeAndEdition` / `ObjectTechnicalInfo { fields; onChange }`
+- **Built** · `shared/ArtworkEditForm/ObjectFields.tsx` · `ObjectSize` / `ObjectTechnicalInfo { fields; onChange }` (2026-11-25: no Edition)
   and `objectFormFields(stored)`.
 - **Built** · `shared/ArtworkEditForm/ObjectMediaManager.tsx` · `{ artworkId }`: Photos & reels (labels, captions, drag to
   reorder, the Object limits). Upload helpers in `uploadArtworkMedia.ts` (`uploadArtworkMediaFile`, `measureMedia`),
@@ -585,7 +585,8 @@ like the real Pause switch). Logic and dialogs unchanged.
 - **Built** · `objects/ModelChecker` · `{ artworkId; details; replacing; onClose; onUploaded }` (next/dynamic): the team's
   .glb upload with the checker rows (`lib/objects/glb.ts`); loads the glTF validator on open.
 - **Built** · `objects/ObjectSpaceSection` · `{ artworkId; isAdmin; model; details; onModelChange }`: the editor's In the
-  3D space (2026-11-25: right after the cover; two states, Not in the 3D space yet / the ready model; no requests).
+  3D space (2026-11-25: right after the cover; the ready model and the team's upload; no requests, no "Not yet" box;
+  the artist sees it once the model is in).
   `EditorPanel` gained `className?`; `ObjectSpaceChip` gained `short?` ("Ready" after a dot; "In preparation" removed).
 - **Built** · `floorview/FloorFrame` · `{ active; children }`: lays the Floor view around the editor's own canvas
   (kept mounted). `floorview/FloorView`, `FloorPlan` (`{ room; editor; artworks; selectedIds; onSelect; expand;
