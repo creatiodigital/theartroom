@@ -173,6 +173,13 @@ function detectCollisions(
 // rays reach 0.7 m, so a step this short can never carry the camera past a wall they have not seen.
 const MAX_STEP = 0.15
 
+/** Coming nearer an Object on the floor (comeNearObject): no nearer than this (m), all of it framed
+ * with this much room around (wider than a photo's: an Object is seen in its space), and its middle
+ * this far under the screen's middle at most, the head tilted down. */
+const OBJECT_NEAREST = 1
+const OBJECT_PADDING = 1.6
+const OBJECT_BELOW_CENTRE = (12 * Math.PI) / 180
+
 /** A mouse event this soon after a touch (ms) is the browser's echo of the tap, not a mouse. */
 const TOUCH_ECHO_MS = 800
 
@@ -193,6 +200,8 @@ type Glide = {
   yawFrom: number
   yawTo: number
   pitchFrom: number
+  /** The head's tilt at the end (0, level, unless said: coming nearer an Object looks down at it). */
+  pitchTo?: number
   shiftFrom: LensShift
   shiftTo: LensShift
   /**
@@ -428,6 +437,10 @@ const MainCamera = () => {
   // placeholder (`wallViewLimits`): a work hung beyond them, the lens shift centers the rest. Leaving
   // Wall View floats the eye back down (`exitArtworkView`).
   const focusOn = (target: TFocusTarget) => {
+    if (target.object) {
+      comeNearObject(target)
+      return
+    }
     const { position, normal, width, height } = target
 
     const n = new Vector3(normal.x, 0, normal.z)
@@ -477,10 +490,7 @@ const MainCamera = () => {
       min: FLOOR_Y + WALL_VIEW_FLOOR_GAP,
       max: cameraElevation + WALL_VIEW_UNKNOWN_RISE,
     }
-    // An Object on the floor keeps the eye where it is (the lens shift centres the Object).
-    const eyeHeight = target.object
-      ? clamp(camera.position.y, heights.min, heights.max)
-      : clamp(center.y, heights.min, heights.max)
+    const eyeHeight = clamp(center.y, heights.min, heights.max)
     const spot = settleBeside(
       new Vector3(center.x + n.x * depth, eyeHeight, center.z + n.z * depth),
       new Vector3(right.x, 0, right.z),
@@ -519,6 +529,64 @@ const MainCamera = () => {
       },
     }
     framed.current = { target, aspect: camera.aspect, moved: false }
+    reshaping.current = null
+  }
+
+  // A click on an Object on the floor (docs/objects, owner 2026-11-25: "Do not trigger wall view for a
+  // 3D object"): an ordinary glide nearer, along the camera's own line of sight, at its eye height,
+  // turning to face the Object and looking down at it (within the head's tilt), stopping where all of
+  // it fits with room around and low enough on the screen. Never farther than now; no Wall View.
+  const comeNearObject = (target: TFocusTarget) => {
+    dispatch(clearFocusTarget())
+    const center = new Vector3(target.position.x, target.position.y, target.position.z)
+    const toCamera = new Vector3(camera.position.x - center.x, 0, camera.position.z - center.z)
+    const now = toCamera.length()
+    if (now < 1e-3) return
+    const n = toCamera.normalize()
+    const fitted = fitDistance(
+      target.width,
+      target.height,
+      cameraFOV,
+      camera.aspect,
+      OBJECT_NEAREST,
+      OBJECT_PADDING,
+    )
+    // Far enough that its middle sits OBJECT_BELOW_CENTRE under the screen's middle, the head
+    // tilted down as far as it goes.
+    const drop = Math.max(0, camera.position.y - center.y)
+    const inSight = drop / Math.tan(PITCH_LIMIT + OBJECT_BELOW_CENTRE)
+    const depth = Math.min(now, Math.max(fitted, inSight, OBJECT_NEAREST))
+    const spot = center.clone().addScaledVector(n, depth)
+    const yawTo = yawOf(-n.x, -n.z)
+    const turn = wrapAngle(yawTo - yaw.current)
+    const distance = Math.hypot(spot.x - camera.position.x, spot.z - camera.position.z)
+    const interrupted = !!glide.current
+    turnVelocity.current = 0
+    tiltVelocity.current = 0
+    artworkView.current = null
+    glide.current = {
+      kind: 'focus',
+      fromX: camera.position.x,
+      fromZ: camera.position.z,
+      toX: spot.x,
+      toZ: spot.z,
+      elapsed: 0,
+      duration: Math.max(
+        glideDuration(distance, FOCUS_GLIDE_MIN_S),
+        (Math.abs(turn) / Math.PI) * GLIDE_MAX_S,
+      ),
+      ease: interrupted ? easeOutCubic : easeInOutCubic,
+      yawFrom: yaw.current,
+      yawTo: yaw.current + turn,
+      pitchFrom: pitch.current,
+      pitchTo: -Math.min(PITCH_LIMIT, Math.atan2(drop, depth)),
+      shiftFrom: shift.current,
+      shiftTo: NO_SHIFT,
+      heightFrom: null,
+      heightTo: camera.position.y,
+      view: null,
+    }
+    framed.current = null
     reshaping.current = null
   }
 
@@ -1116,7 +1184,7 @@ const MainCamera = () => {
         touchGrab.current = { x: 0, y: 0 }
       }
       if (g.heightFrom !== null) cam.position.y = g.heightFrom + (g.heightTo - g.heightFrom) * e
-      pitch.current = pitchTarget.current = g.pitchFrom * (1 - e)
+      pitch.current = pitchTarget.current = g.pitchFrom + ((g.pitchTo ?? 0) - g.pitchFrom) * e
       shift.current = lerpShift(g.shiftFrom, g.shiftTo, e)
       if (t >= 1 && glide.current === g) {
         glide.current = null
