@@ -2,5 +2,7 @@
 .divider {
   display: block;
   margin-top: var(--space-1);
+  // A little more air between the divider and the button (owner, 2026-11-25).
+  margin-bottom: var(--space-2);
   border-top: 1px solid var(--color-gray-30);
 }
