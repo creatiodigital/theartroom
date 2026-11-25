@@ -603,3 +603,22 @@ send them to me", "we will be doing this a lot").
 - Real size: phone scans (RealityScan with AR tracking / LiDAR) are metric; the first one, *Alejandro* (layered
   paper torso, RealityScan OBJ, 110k triangles, two 8192 px maps, 19 MB) came out 57.8 × 22.4 × 15.4 cm (H × W × D)
   after `--turn -90`, 2.9 MB, every check passing; uploaded through the model route and seen in the 3D viewer.
+
+**Floor composing** (2026-11-25, owner: "compose the artwork and any other mesh together on any of each other's
+bounding box sides"; design docs/superpowers/specs/2026-11-25-floor-attach-any-side-design.md, local only):
+- Data (`floorLayout.ts`, JSON only): every item (Object or pedestal) is free or attached to one face (top / bottom /
+  front / back / left / right) of another's box: `parentId`, `face`, `offsetX/Y/Z`, `lift` (= gap), turns
+  `rotX/rotY/rotZ` ('YXZ'). O6 layouts (`pedestalId`) read as on that pedestal's top and place as before; parse frees
+  loops, missing or other-room parents. Old wood tones map to the frames' three woods.
+- Placement (`floorPlacement.ts`, three.js math, pure): one `placeAll(layout, sizes)` for plan, Inspector, editor,
+  live 3D, room and bake; attached items always touch their face whatever their turn; free items rest by their
+  lowest point; `attachTo`, `detachItem`, `dropItem`, `slideOnFace`, `keepChildrenOnFaces`, `removeItems`,
+  `overhangs`, `belowFloor`, `planOutline`, `faceUnderRay`. 24 pure tests in e2e/floor-layout.spec.ts.
+- Plank (20 × 3 × 100 cm, dark wood satin) in the shape picker; wood = the frames' PBR maps (`Frame/woodTextures.ts`,
+  shared with Display), board UVs at real size, grain along the longest side.
+- Editing: live 3D — click picks, drag a picked item onto any face (highlighted) to attach; slide on its face; over
+  nothing it moves across the room; Shift up / down; Alt never attaches; Escape puts it back. Plan — Objects drop
+  onto a top or against a side of an item off the floor (middle height); attached items slide on their face.
+  Inspector — On … · Face card, face picker, Across / Up / Gap, Rotation X / Y / Z with Reset, Attached list.
+- Calls to check (spec "Builder check: calls made"): plan side attach only for Objects against raised items; 3D drag
+  only for an already picked item; Tilt / Lean step 15°, Turn 90°; switching to Plank applies its size and look.
