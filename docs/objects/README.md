@@ -590,3 +590,16 @@ differences: a 3D viewer and a cover. The rest SHOULD BE the same", and `artwork
   near-black, square): the cube icon and the 3D icon were turned down.
 - Info column as image works (`docs/public-redesign/artwork.md`, "Built: the owner's review"): Inquire right under
   the year's divider, then the materials and the size ("29 × 39 × 14 cm · 15 kg"), then the tiles.
+
+**Scans → .glb: `scripts/objects/scan-to-glb.ts`** (2026-11-25; owner: "artists will be scanning their 3D objects and
+send them to me", "we will be doing this a lot").
+- `npx tsx scripts/objects/scan-to-glb.ts <folder or file> [--name] [--turn 90] [--texture 2048] [--max-triangles
+  500000] [--out ~/Desktop/objects-glb]`. Takes what scanning apps export (OBJ + .mtl + textures, FBX, GLB / glTF,
+  USDZ untested). Needs Blender (`/Applications/Blender.app` or `BLENDER=`).
+- Blender (`prep-scan.py`): one mesh, loose scan debris removed, +Y up in metres, base on y = 0 centred, `--turn`
+  so the front faces the room (check `-preview-front.png`), MikkTSpace tangents; then simplified above
+  `--max-triangles`; each material's colour and normal maps at 2048 px WebP (`EXT_texture_webp`), metallic 0,
+  meshopt lossless; then the upload window's own checks on the server's facts, and the real size printed.
+- Real size: phone scans (RealityScan with AR tracking / LiDAR) are metric; the first one, *Alejandro* (layered
+  paper torso, RealityScan OBJ, 110k triangles, two 8192 px maps, 19 MB) came out 57.8 × 22.4 × 15.4 cm (H × W × D)
+  after `--turn -90`, 2.9 MB, every check passing; uploaded through the model route and seen in the 3D viewer.
