@@ -49,7 +49,8 @@ export function useFloorDrag(layout: FloorLayout | null, sizes: FloorSizes, floo
         // Not picked: a click picks it; a drag looks around, as anywhere in the room.
         const up = (e: PointerEvent) => {
           cleanup.current?.()
-          if (!moved(e) && Date.now() - start.at < CLICK_MAX_MS)
+          // A pick from the list holds: the 3D never picks another (owner, 2026-11-25).
+          if (!moved(e) && Date.now() - start.at < CLICK_MAX_MS && !floorBridge.lockPick)
             dispatch(selectFloorItems(floorBridge.expand([id])))
         }
         window.addEventListener('pointerup', up)

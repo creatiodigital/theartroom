@@ -34,6 +34,11 @@ import styles from './FloorView.module.scss'
  */
 export const DRAG_TYPE = 'application/x-floor-add'
 
+/** The plan's zoom range (×): 20 shows a 3 cm plank's depth. */
+export const PLAN_ZOOM = { min: 0.5, max: 20 }
+
+type PlanPoint = { x: number; z: number }
+
 const MARGIN_CM = 80
 const SNAP_PX = 8
 const ROTATE_STEP = 15
@@ -54,6 +59,12 @@ type Props = {
   /** Something dragged in from the add bar landed at (x, z) metres. */
   onDropAdd: (payload: string, x: number, z: number) => void
   zoom: number
+  /** Picked in the list: the map never picks another item (owner, 2026-11-25: "lock it"). */
+  lockPick: boolean
+  /** The view's centre (plan cm); null: the room's centre. */
+  centre: PlanPoint | null
+  /** A pinch or a scroll on the plan, or a drag on its background: the new zoom and centre. */
+  onView: (zoom: number, centre: PlanPoint) => void
 }
 
 /** How far the turning handle stands from the centre (cm): past the item's reach toward its back. */
@@ -68,6 +79,9 @@ export function FloorPlan({
   expand,
   onDropAdd,
   zoom,
+  lockPick,
+  centre,
+  onView,
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const helpers = useSelector((state: RootState) => state.floor.helpers)
@@ -89,14 +103,29 @@ export function FloorPlan({
   )
   const atById = useMemo(() => new Map(placed.map(({ item, at }) => [item.id, at])), [placed])
 
-  // The view: the room and a margin, zoomed around its centre.
-  const cmX0 = room.minX * 100 - MARGIN_CM
-  const cmZ0 = room.minZ * 100 - MARGIN_CM
+  // The view: the room and a margin, zoomed, around `centre` (the room's centre until moved).
   const fullW = (room.maxX - room.minX) * 100 + MARGIN_CM * 2
   const fullH = (room.maxZ - room.minZ) * 100 + MARGIN_CM * 2
   const viewW = fullW / zoom
   const viewH = fullH / zoom
-  const viewBox = `${cmX0 + (fullW - viewW) / 2} ${cmZ0 + (fullH - viewH) / 2} ${viewW} ${viewH}`
+  const c0 = centre ?? { x: room.centreX * 100, z: room.centreZ * 100 }
+  const viewBox = `${c0.x - viewW / 2} ${c0.z - viewH / 2} ${viewW} ${viewH}`
+  // For the wheel and pan listeners: the view as it is now, never past the room's walls.
+  const viewRef = useRef({ zoom, c: c0, room })
+  viewRef.current = { zoom, c: c0, room }
+  const onViewRef = useRef(onView)
+  onViewRef.current = onView
+  const onSelectRef = useRef(onSelect)
+  onSelectRef.current = onSelect
+  const lockPickRef = useRef(lockPick)
+  lockPickRef.current = lockPick
+  const setView = (z: number, c: PlanPoint) => {
+    const r = viewRef.current.room
+    onViewRef.current(z, {
+      x: Math.min(r.maxX * 100, Math.max(r.minX * 100, c.x)),
+      z: Math.min(r.maxZ * 100, Math.max(r.minZ * 100, c.z)),
+    })
+  }
 
   // How many cm one screen pixel is: labels and handles keep their size whatever the zoom.
   const [px, setPx] = useState(1)
@@ -123,12 +152,81 @@ export function FloorPlan({
     return { x: p.x, z: p.y, perPx: 1 / ctm.a }
   }
 
+  // ── Zooming and moving the view ──
+  // A pinch (or ⌘ / Ctrl + scroll) zooms at the pointer; a scroll moves the view.
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault()
+      const { zoom: z, c } = viewRef.current
+      const p = toPlan(event.clientX, event.clientY)
+      if (event.ctrlKey || event.metaKey) {
+        const next = Math.min(
+          PLAN_ZOOM.max,
+          Math.max(PLAN_ZOOM.min, z * Math.exp(-event.deltaY * 0.01)),
+        )
+        // The point under the pointer stays under it.
+        const k = z / next
+        setView(next, { x: p.x + (c.x - p.x) * k, z: p.z + (c.z - p.z) * k })
+      } else {
+        setView(z, { x: c.x + event.deltaX * p.perPx, z: c.z + event.deltaY * p.perPx })
+      }
+    }
+    svg.addEventListener('wheel', onWheel, { passive: false })
+    return () => svg.removeEventListener('wheel', onWheel)
+    // toPlan and setView read refs only.
+  }, [])
+
+  // A drag on the plan's background moves the view; a click there unpicks.
+  const panStart = useRef<{
+    x: number
+    y: number
+    c: PlanPoint
+    perPx: number
+    moved: boolean
+  } | null>(null)
+  const onBackgroundDown = (event: PointerEvent) => {
+    if (event.button !== 0) return
+    const p = toPlan(event.clientX, event.clientY)
+    panStart.current = { x: event.clientX, y: event.clientY, c: c0, perPx: p.perPx, moved: false }
+  }
+  useEffect(() => {
+    const onMove = (event: globalThis.PointerEvent) => {
+      const s = panStart.current
+      if (!s) return
+      const dx = event.clientX - s.x
+      const dy = event.clientY - s.y
+      if (!s.moved && Math.hypot(dx, dy) < 3) return
+      s.moved = true
+      setView(viewRef.current.zoom, { x: s.c.x - dx * s.perPx, z: s.c.z - dy * s.perPx })
+    }
+    const onUp = () => {
+      const s = panStart.current
+      panStart.current = null
+      // A click on the background unpicks, unless the pick came from the list (it holds until
+      // another is picked there).
+      if (s && !s.moved && !lockPickRef.current) onSelectRef.current([])
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    return () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+    }
+    // setView reads refs only.
+  }, [])
+
   // ── Moving ──
   const moveStart = useRef<{ x: number; z: number; lead: Placed; leadId: string } | null>(null)
 
-  const onItemDown = (event: PointerEvent, item: FloorItem) => {
+  const onItemDown = (event: PointerEvent, pressed: FloorItem) => {
     event.stopPropagation()
     if (event.button !== 0) return
+    // Picked in the list: a press on any item moves what is picked; the map never picks another.
+    const locked =
+      lockPick && !event.shiftKey && selectedIds.length > 0 && !selectedIds.includes(pressed.id)
+    const item = locked ? (layout.items.find((i) => i.id === selectedIds[0]) ?? pressed) : pressed
     const already = selectedIds.includes(item.id)
     const ids = event.shiftKey
       ? already
@@ -137,7 +235,7 @@ export function FloorPlan({
       : already
         ? selectedIds
         : expand([item.id])
-    onSelect(ids)
+    if (!locked) onSelect(ids)
     if (event.shiftKey || item.locked) return
     const lead = atById.get(item.id)
     if (!lead) return
@@ -288,7 +386,7 @@ export function FloorPlan({
       className={styles.planSvg}
       viewBox={viewBox}
       preserveAspectRatio="xMidYMid meet"
-      onPointerDown={() => onSelect([])}
+      onPointerDown={onBackgroundDown}
       onDragOver={onDragOver}
       onDrop={onDrop}
       role="img"
@@ -351,42 +449,66 @@ export function FloorPlan({
         />
       )}
 
-      {placed.map(({ item, at }) => {
-        const selected = selectedIds.includes(item.id)
-        const points = planOutline(item, at)
-          .map(([x, z]) => `${x},${z}`)
-          .join(' ')
-        return (
-          <g
-            key={item.id}
-            className={c(
-              styles.planItem,
-              selected && styles.planSelected,
-              (overhangs(layout, item, sizes) || belowFloor(at)) && styles.planOverhang,
-            )}
-            onPointerDown={(e) => onItemDown(e, item)}
-          >
-            {/* Invisible: a small item is picked as easily as a large one. */}
-            <circle cx={at.x * 100} cy={at.z * 100} r={HIT_R_PX * px} className={styles.planHit} />
-            <polygon
-              points={points}
-              className={item.kind === 'pedestal' ? styles.planPedestal : styles.planObject}
-            />
-            {item.kind === 'object' && at.upright && (
-              // The front: a short line toward the model's +z.
-              <line
-                x1={0}
-                y1={at.size.d / 2 - 4}
-                x2={0}
-                y2={at.size.d / 2}
-                transform={`translate(${at.x * 100} ${at.z * 100}) rotate(${-at.rotY})`}
-                className={styles.planFront}
-              />
-            )}
-          </g>
+      {/* Under every shape: an invisible circle round each item's centre, so a small item is
+          picked as easily as a large one, but only where no shape is (owner, 2026-11-25: "very
+          hard to move the pedestal if the artwork is close"). What is picked comes last. */}
+      {[...placed]
+        .sort(
+          (a, b) =>
+            Number(selectedIds.includes(a.item.id)) - Number(selectedIds.includes(b.item.id)),
         )
-      })}
+        .map(({ item, at }) => (
+          <circle
+            key={`hit-${item.id}`}
+            cx={at.x * 100}
+            cy={at.z * 100}
+            r={HIT_R_PX * px}
+            className={styles.planHit}
+            onPointerDown={(e) => onItemDown(e, item)}
+          />
+        ))}
 
+      {/* Lower items first; what is picked last of all, so a press on it always reaches it
+          (owner, 2026-11-25: picking the pedestal in the list, then dragging it on the plan,
+          picked the Bust on its front instead). */}
+      {[...placed]
+        .sort(
+          (a, b) =>
+            Number(selectedIds.includes(a.item.id)) - Number(selectedIds.includes(b.item.id)),
+        )
+        .map(({ item, at }) => {
+          const selected = selectedIds.includes(item.id)
+          const points = planOutline(item, at)
+            .map(([x, z]) => `${x},${z}`)
+            .join(' ')
+          return (
+            <g
+              key={item.id}
+              className={c(
+                styles.planItem,
+                selected && styles.planSelected,
+                (overhangs(layout, item, sizes) || belowFloor(at)) && styles.planOverhang,
+              )}
+              onPointerDown={(e) => onItemDown(e, item)}
+            >
+              <polygon
+                points={points}
+                className={item.kind === 'pedestal' ? styles.planPedestal : styles.planObject}
+              />
+              {item.kind === 'object' && at.upright && (
+                // The front: a short line toward the model's +z.
+                <line
+                  x1={0}
+                  y1={at.size.d / 2 - 4}
+                  x2={0}
+                  y2={at.size.d / 2}
+                  transform={`translate(${at.x * 100} ${at.z * 100}) rotate(${-at.rotY})`}
+                  className={styles.planFront}
+                />
+              )}
+            </g>
+          )
+        })}
 
       {/* The picked item: its distances to the west and north walls, and the turning handle. */}
       {single && (

@@ -41,7 +41,7 @@ import type { RootState } from '@/redux/store'
 
 import { floorBridge } from './floorBridge'
 import { FloorInspector } from './FloorInspector'
-import { DRAG_TYPE, FloorPlan } from './FloorPlan'
+import { DRAG_TYPE, FloorPlan, PLAN_ZOOM } from './FloorPlan'
 import { useFloorEditor } from './useFloorEditor'
 import { useFloorRooms } from './useFloorRooms'
 
@@ -109,6 +109,8 @@ export function FloorView() {
   const ownerId = useSelector((state: RootState) => state.exhibition.userId)
   const room = rooms[Math.min(roomIndex, rooms.length - 1)]
   const [zoom, setZoom] = useState(1)
+  // Where the plan is centred once moved (pinch, scroll, drag): per room; Fit goes back to the room.
+  const [planView, setPlanView] = useState<{ room: number; x: number; z: number } | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [libraryOpen, setLibraryOpen] = useState(false)
   const [library, setLibrary] = useState<LibraryArtwork[] | null>(null)
@@ -116,6 +118,17 @@ export function FloorView() {
   const { layout } = editor
 
   const select = useCallback((ids: string[]) => dispatch(selectFloorItems(ids)), [dispatch])
+  // Picked in the list ("On this floor"): the plan keeps that pick until it changes elsewhere
+  // (owner, 2026-11-25: "if I select an object on the left, lock it, don't allow selecting
+  // another one on the map").
+  const [listPick, setListPick] = useState(false)
+  const selectOnPlan = useCallback(
+    (ids: string[]) => {
+      if (ids.join() !== selectedIds.join()) setListPick(false)
+      select(ids)
+    },
+    [select, selectedIds],
+  )
 
   // Names: an Object's title, a pedestal's own name.
   const names = useMemo(() => {
@@ -218,24 +231,25 @@ export function FloorView() {
       // A copy stands free beside the original (whatever that is attached to): (x, z) are given
       // from the original's stored spot, which goes stale once what it is on moves.
       const free = from && detachItem(layout, from, editor.sizes)
-      const p: FloorPedestal = from && free
-        ? {
-            ...free,
-            id: newId('p'),
-            name: nextPedestalName(from.shape),
-            x: free.x + (x - from.x),
-            z: free.z + (z - from.z),
-            locked: false,
-          }
-        : {
-            kind: 'pedestal',
-            id: newId('p'),
-            name: nextPedestalName(),
-            ...FREE_AT(room.room, x, z),
-            shape: shape.id,
-            ...shape.defaults,
-            ...PEDESTAL_DEFAULT_LOOK,
-          }
+      const p: FloorPedestal =
+        from && free
+          ? {
+              ...free,
+              id: newId('p'),
+              name: nextPedestalName(from.shape),
+              x: free.x + (x - from.x),
+              z: free.z + (z - from.z),
+              locked: false,
+            }
+          : {
+              kind: 'pedestal',
+              id: newId('p'),
+              name: nextPedestalName(),
+              ...FREE_AT(room.room, x, z),
+              shape: shape.id,
+              ...shape.defaults,
+              ...PEDESTAL_DEFAULT_LOOK,
+            }
       editor.commit({ ...layout, items: [...layout.items, p] })
       select([p.id])
     },
@@ -275,10 +289,12 @@ export function FloorView() {
   // set on every render while the view is open, cleared when it closes.
   floorBridge.editor = editor
   floorBridge.expand = expand
+  floorBridge.lockPick = listPick && selectedIds.length > 0
   useEffect(
     () => () => {
       floorBridge.editor = null
       floorBridge.expand = (ids) => ids
+      floorBridge.lockPick = false
     },
     [],
   )
@@ -396,7 +412,10 @@ export function FloorView() {
       for (const c of inRoom.filter((i) => i.parentId === item.id)) walk(c, depth + 1)
     }
     const roots = inRoom.filter((i) => !i.parentId || !ids.has(i.parentId))
-    for (const r of [...roots.filter((i) => i.kind === 'pedestal'), ...roots.filter((i) => i.kind === 'object')])
+    for (const r of [
+      ...roots.filter((i) => i.kind === 'pedestal'),
+      ...roots.filter((i) => i.kind === 'object'),
+    ])
       walk(r, 0)
   } else {
     for (const i of listed) rows.push({ item: i, child: false })
@@ -511,7 +530,7 @@ export function FloorView() {
             variant="bare"
             className={styles.iconButton}
             aria-label="Zoom out"
-            onClick={() => setZoom((z) => Math.max(0.5, z / 1.25))}
+            onClick={() => setZoom((z) => Math.max(PLAN_ZOOM.min, z / 1.25))}
           >
             <Minus size={15} aria-hidden />
           </Button>
@@ -520,11 +539,19 @@ export function FloorView() {
             variant="bare"
             className={styles.iconButton}
             aria-label="Zoom in"
-            onClick={() => setZoom((z) => Math.min(8, z * 1.25))}
+            onClick={() => setZoom((z) => Math.min(PLAN_ZOOM.max, z * 1.25))}
           >
             <Plus size={15} aria-hidden />
           </Button>
-          <Button variant="secondary" size="small" font="dashboard" onClick={() => setZoom(1)}>
+          <Button
+            variant="secondary"
+            size="small"
+            font="dashboard"
+            onClick={() => {
+              setZoom(1)
+              setPlanView(null)
+            }}
+          >
             <CornersOut size={14} aria-hidden />
             Fit
           </Button>
@@ -586,7 +613,10 @@ export function FloorView() {
                     selectedIds.includes(item.id) && styles.itemOn,
                   )}
                   aria-current={selectedIds.includes(item.id)}
-                  onClick={() => select(expand([item.id]))}
+                  onClick={() => {
+                    select(expand([item.id]))
+                    setListPick(true)
+                  }}
                 >
                   <span className={styles.itemIcon} aria-hidden>
                     <Cube size={14} weight={item.kind === 'pedestal' ? 'regular' : 'fill'} />
@@ -620,16 +650,22 @@ export function FloorView() {
         data-floor-plan
       >
         <span className={styles.chip}>
-          <b>Plan</b> seen from above
+          <b>Plan</b> seen from above · pinch to zoom, drag the background to move
         </span>
         <FloorPlan
           room={room}
           editor={editor}
           selectedIds={selectedIds}
-          onSelect={select}
+          onSelect={selectOnPlan}
           expand={expand}
           onDropAdd={onDropAdd}
           zoom={zoom}
+          lockPick={listPick}
+          centre={planView && planView.room === room.room ? planView : null}
+          onView={(z, c) => {
+            setZoom(z)
+            setPlanView({ room: room.room, ...c })
+          }}
         />
       </section>
 

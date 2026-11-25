@@ -9,4 +9,6 @@ export const floorBridge: {
   editor: FloorEditor | null
   /** A picked group member brings its ⌘G group (as on the plan). */
   expand: (ids: string[]) => string[]
-} = { editor: null, expand: (ids) => ids }
+  /** Picked in the list: a click in the 3D never picks another (it holds until the list changes it). */
+  lockPick: boolean
+} = { editor: null, expand: (ids) => ids, lockPick: false }
