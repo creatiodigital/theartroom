@@ -461,3 +461,9 @@ Removed the editor's Technical info section (Where it can stand, Display, Signed
 installation), its rows on the visitor page (Details keeps Size · weight), and `Artwork.placement`, `displayMode`,
 `signedNote`, `certificateNote`, `careNote` (five columns fewer; the dev database keeps them until the owner's
 next push).
+
+**Upload window: more light, warnings in plain words** (2026-11-25; owner: "add more light", "explain those warnings").
+The .glb preview has a neutral studio around the model (three's RoomEnvironment, built in the browser) and a
+stronger key light plus a fill, so metal and dark materials read. The validator's warnings are grouped by kind and
+written out (e.g. normal maps without stored tangents: the room works them out; fine to upload); the size check says
+the room uses the model's own size and what to correct.

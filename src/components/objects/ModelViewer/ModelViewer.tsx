@@ -3,7 +3,8 @@
 import { Component, Suspense, useEffect, useRef, type ReactNode } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { Bounds, OrbitControls, useBounds, useGLTF } from '@react-three/drei'
-import { Box3, type Texture, type WebGLRenderer } from 'three'
+import { Box3, PMREMGenerator, type Texture, type WebGLRenderer } from 'three'
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 // drei's GLTFLoader is three-stdlib's: its KTX2 loader must be too (as drei's useKTX2).
 import { KTX2Loader } from 'three-stdlib'
 
@@ -118,6 +119,28 @@ function Model({
   return <primitive object={gltf.scene} />
 }
 
+/**
+ * A neutral studio around the model (owner, 2026-11-25: "add more light"): three's RoomEnvironment
+ * as the scene's environment, so metal and gloss have something to reflect (without it they read
+ * black). Built in the browser, nothing downloaded.
+ */
+function StudioEnvironment() {
+  const { gl, scene } = useThree()
+  useEffect(() => {
+    const pmrem = new PMREMGenerator(gl)
+    const room = new RoomEnvironment()
+    const texture = pmrem.fromScene(room, 0.04).texture
+    scene.environment = texture
+    return () => {
+      scene.environment = null
+      texture.dispose()
+      room.dispose()
+      pmrem.dispose()
+    }
+  }, [gl, scene])
+  return null
+}
+
 function Reframe({ resetKey }: { resetKey: number }) {
   const bounds = useBounds()
   useEffect(() => {
@@ -146,9 +169,11 @@ export default function ModelViewer({
   return (
     <div className={`${styles.viewer} ${tone === 'light' ? styles.light : ''} ${className ?? ''}`}>
       <Canvas dpr={[1, 2]} camera={{ fov: 35, position: [2, 1.5, 3] }} onCreated={onCreated}>
-        <hemisphereLight args={['#ffffff', '#444444', 1.2]} />
-        <directionalLight position={[3, 5, 4]} intensity={2} />
-        <ambientLight intensity={0.3} />
+        <StudioEnvironment />
+        <hemisphereLight args={['#ffffff', '#666666', 1.5]} />
+        <directionalLight position={[3, 5, 4]} intensity={2.5} />
+        <directionalLight position={[-4, 3, -3]} intensity={1} />
+        <ambientLight intensity={0.4} />
         <LoadBoundary onError={(error) => onResult?.({ ok: false, error })}>
           <Suspense fallback={null}>
             <Bounds fit clip observe margin={1.25}>

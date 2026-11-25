@@ -90,6 +90,35 @@ export function sizeCheck(
     : { status: 'differ', text: `Differs from the size in Details (${h} × ${w} × ${d} cm)` }
 }
 
+/**
+ * What a validator message means, in plain words, for the codes Objects meet (owner, 2026-11-25:
+ * "explain those warnings"). Any other code shows the validator's own message.
+ */
+const PLAIN_MESSAGE: Record<string, string> = {
+  MESH_PRIMITIVE_GENERATED_TANGENT_SPACE:
+    'The file has normal maps (fine surface detail) but no stored tangents, the directions those maps need. The 3D room works them out when it loads the model, so it looks right here; other 3D viewers may shade the detail very slightly differently. Fine to upload.',
+  KHR_MATERIALS_VOLUME_DOUBLE_SIDED:
+    'A glass material is set to double-sided, while glass thickness is meant for one-sided surfaces: the glass may look a little different from the 3D program. Fine to upload.',
+  UNUSED_OBJECT: 'The file carries a part nothing uses. Harmless.',
+}
+
+/** The validator's messages of one severity, one line per kind: plain words when known, × N. */
+function describeMessages(messages: GlbValidatorMessage[]): string {
+  const byCode = new Map<string, { message: GlbValidatorMessage; count: number }>()
+  for (const m of messages) {
+    const seen = byCode.get(m.code)
+    if (seen) seen.count += 1
+    else byCode.set(m.code, { message: m, count: 1 })
+  }
+  return [...byCode.values()]
+    .slice(0, 3)
+    .map(({ message, count }) => {
+      const words = PLAIN_MESSAGE[message.code] ?? message.message
+      return count > 1 ? `${words} (${count} parts of the model)` : words
+    })
+    .join(' · ')
+}
+
 /** The rows, in reading order. Upload only when none fails (`glbPasses`). */
 export function checkGlb(facts: GlbFacts, details: DetailsSize): GlbCheckRow[] {
   const rows: GlbCheckRow[] = []
@@ -122,25 +151,10 @@ export function checkGlb(facts: GlbFacts, details: DetailsSize): GlbCheckRow[] {
   } else {
     const errors = facts.validator.messages.filter((m) => m.severity === 0)
     const warnings = facts.validator.messages.filter((m) => m.severity === 1)
-    const list = (ms: GlbValidatorMessage[]) =>
-      ms
-        .slice(0, 3)
-        .map((m) => `${m.message}${m.pointer ? ` (${m.pointer})` : ''}`)
-        .join(' · ')
     if (facts.validator.errors > 0) {
-      row(
-        'validator',
-        'glTF validator',
-        'fail',
-        `${facts.validator.errors} error(s): ${list(errors)}`,
-      )
+      row('validator', 'glTF validator', 'fail', describeMessages(errors))
     } else if (facts.validator.warnings > 0) {
-      row(
-        'validator',
-        'glTF validator',
-        'warn',
-        `${facts.validator.warnings} warning(s): ${list(warnings)}`,
-      )
+      row('validator', 'glTF validator', 'warn', describeMessages(warnings))
     } else {
       row('validator', 'glTF validator', 'pass', 'No errors or warnings')
     }
@@ -240,7 +254,16 @@ export function checkGlb(facts: GlbFacts, details: DetailsSize): GlbCheckRow[] {
     )
 
     const check = sizeCheck(cm, details)
-    row('sizeCheck', 'Size check', check.status === 'match' ? 'pass' : 'warn', check.text)
+    row(
+      'sizeCheck',
+      'Size check',
+      check.status === 'match' ? 'pass' : 'warn',
+      check.status === 'differ'
+        ? `${check.text}. The 3D room shows the model at its own size (above), so one of the two is wrong: correct Details, or the model's scale in Blender. Fine to upload.`
+        : check.status === 'unknown'
+          ? `${check.text}. Fill in Height, Width and Depth in Details to compare.`
+          : check.text,
+    )
 
     const baseCm = round1(facts.bounds.min[1] * 100)
     row(
