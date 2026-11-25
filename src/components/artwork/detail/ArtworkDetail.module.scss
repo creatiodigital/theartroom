@@ -164,10 +164,11 @@
 }
 
 // ── The info column ──────────────────────────────────────────────────────
+// Three blocks, each carrying its own space (artwork.md "Info column, refined"): who and what, how it
+// is made, the actions.
 .info {
   display: flex;
   flex-direction: column;
-  gap: 20px;
   min-width: 0;
   padding-top: 4px;
   grid-column: 2;
@@ -198,7 +199,7 @@
 .identity {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  padding-bottom: var(--space-6);
   font-family: var(--font-sans), var(--font-sans-fallback);
 }
 
@@ -215,29 +216,35 @@ a.artist:hover {
   color: var(--public-text);
 }
 
+// Title, its line height and the year: one scale (owner, 2026-11-25: "the relation between the size
+// of the title, the line height of the title, the size of the year"). The board's 32 / 15 px are the
+// nearest tokens, 30 / 14 px: the same 2.1× between title and year. A two-line title reads as one
+// block (balanced, 1.2), and the year sits clearly under it.
 .title {
-  margin: 4px 0 0;
+  margin: var(--space-2) 0 var(--space-3);
   font-family: var(--font-serif), var(--font-serif-fallback);
-  font-size: 36px;
+  font-size: var(--text-2xl);
   font-weight: var(--font-regular);
-  line-height: 1.1;
+  line-height: var(--leading-tight);
   color: var(--public-text);
   overflow-wrap: anywhere;
+  text-wrap: balance;
 
   @include media-down(sm) {
-    font-size: 30px;
+    margin-bottom: var(--space-2);
+    font-size: var(--text-2xl-mobile);
   }
 }
 
 // Year, size: each on its own line. #666, not the drawn #888 (Q-P12).
 .fact {
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
   color: var(--color-text-secondary);
 }
 
-// The technique's lines (camera, lens, ISO…), as entered: the first lines of the print block,
-// under the divider (owner, 2026-11-20), set close ("lines look too separated": 1.5, as the year).
+// The technique's lines (camera, lens, ISO…; an Object's materials), as entered: their own block
+// under the divider (artwork.md "Info column, refined"), set close ("lines look too separated": 1.5).
 // Through .info: outranks RichText's own rules whatever the stylesheet order (the room overlay
 // loads them in another order than the page).
 .info .technique {
@@ -254,11 +261,20 @@ a.artist:hover {
   }
 }
 
-.purchase {
+// How it is made: the technical lines (an Object's materials), under a divider.
+.making {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding-top: 18px;
+  padding: var(--space-5) 0;
+  border-top: 1px solid var(--color-gray-30);
+}
+
+// The actions, under a divider: an image's print block, Inquire, the views, Share.
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-6);
   border-top: 1px solid var(--color-gray-30);
 }
 

@@ -3,7 +3,6 @@
 import type { ReactNode } from 'react'
 
 import { Button } from '@/components/ui/Button'
-import { UnitsSwitch } from '@/components/ui/UnitsSwitch'
 import type { ArtworkSizes } from '@/lib/editions/artworkSizes'
 import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
 import { editionLineText } from '@/lib/editions/editionLineText'
@@ -30,8 +29,9 @@ import styles from './ArtworkAvailabilityCard.module.scss'
  *   Visitors never see the word "variant". Two editions of one size (other paper) are "versions",
  *   and their rows name the paper.
  *
- * Sizes in the visitor's unit (the footer's cm | in); the words never change. Rendered only when
- * the work is for sale; otherwise `ArtworkPrintFacts` gives the kind and sizes alone.
+ * Sizes in the visitor's unit (the footer's cm | in, the only switch: owner, 2026-11-25); the words
+ * never change. Rendered only when the work is for sale; otherwise the column's size line under the
+ * year says the sizes (`artworkSizesText`) and Inquire follows (artwork.md "Info column, refined").
  */
 type ArtworkAvailabilityCardProps = {
   editionType: 'open' | 'limited'
@@ -127,14 +127,8 @@ export const ArtworkAvailabilityCard = ({
   )
 }
 
-/** The kind of print, with the cm | in choice at the right end of its line (owner, 2026-11-17: the
- *  footer's plain words, without "Sizes in"); the same saved choice as the footer's. */
-const KindLine = ({ kind }: { kind: string }) => (
-  <div className={styles.kindRow}>
-    <p className={styles.kind}>{kind}</p>
-    <UnitsSwitch className={styles.kindUnits} />
-  </div>
-)
+/** The kind of print. No cm | in after it: the footer's switch is the only one (owner, 2026-11-25). */
+const KindLine = ({ kind }: { kind: string }) => <p className={styles.kind}>{kind}</p>
 
 /** Smallest / Largest, then "or any size in between." Nothing when the file has no range. */
 const OpenRange = ({ sizes, unit }: { sizes?: ArtworkSizes | null; unit: Unit }) => {
@@ -179,9 +173,7 @@ const LimitedRows = ({
               <span className={styles.rowSize}>{sizeOf(line, unit)}</span>
               <span className={styles.rowMeta}>
                 {/* No size name ("Small 20"): the size itself is on the row (owner, 2026-11-20). */}
-                {[sharedSize ? line.paper : null, stockText(line)]
-                  .filter(Boolean)
-                  .join(' · ')}
+                {[sharedSize ? line.paper : null, stockText(line)].filter(Boolean).join(' · ')}
               </span>
             </span>
             {line.soldOut ? (
@@ -194,38 +186,5 @@ const LimitedRows = ({
       </ul>
       <div className={styles.statusRow}>{status}</div>
     </>
-  )
-}
-
-/**
- * A work that is not for sale (Inquire only, or purchases paused): the kind and the sizes alone,
- * then the caller's Inquire. Treated as an open edition unless it has limited sizes (owner,
- * 2026-11-17: an Inquire-only work shows its range like an open edition).
- */
-export const ArtworkPrintFacts = ({
-  sizes,
-  inquire,
-}: {
-  sizes?: ArtworkSizes | null
-  inquire?: ReactNode
-}) => {
-  const { unit } = useUnits()
-  const fixed = sizes?.kind === 'fixed' ? sizes.sizes : null
-  return (
-    <div className={styles.card}>
-      {sizes && <KindLine kind={fixed ? 'Limited edition print' : 'Open edition print'} />}
-      {fixed ? (
-        <div className={styles.single}>
-          {fixed.map((size) => (
-            <span key={`${size.widthCm}x${size.heightCm}`} className={styles.rowSize}>
-              {formatDimensions(size.widthCm, size.heightCm, unit)}
-            </span>
-          ))}
-        </div>
-      ) : (
-        <OpenRange sizes={sizes} unit={unit} />
-      )}
-      {inquire}
-    </div>
   )
 }

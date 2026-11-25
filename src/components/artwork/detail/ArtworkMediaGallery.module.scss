@@ -77,6 +77,13 @@
   background: var(--color-surface-subtle);
 }
 
+// A vertical video (an Object's reel): the same 3:2 slide, the video whole on the page grey, never
+// cut (docs/objects O5b). Images keep `cover`.
+.mediaContain {
+  object-fit: contain;
+  background: var(--public-render-wall);
+}
+
 .caption {
   margin-top: var(--space-2);
   color: var(--color-text-secondary);

@@ -80,7 +80,7 @@ export function FloorObjectModal() {
       <div className={styles.content}>
         <div className={styles.body}>
           {data ? (
-            <ObjectPageContent {...data} />
+            <ObjectPageContent {...data} surface="room" />
           ) : failed ? (
             <p>This work could not be loaded.</p>
           ) : null}

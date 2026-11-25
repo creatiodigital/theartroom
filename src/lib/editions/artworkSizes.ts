@@ -3,7 +3,7 @@ import {
   getPrintMinSize,
   type PrintSize,
 } from '@/lib/print-providers/printspace/sizeBounds'
-import { formatDimensions } from '@/lib/units/format'
+import { formatDimensions, formatDimensionsRange, type Unit } from '@/lib/units/format'
 
 /**
  * The size line of an artwork, worked out — never typed (owner, 2026-11-17: every work is a print;
@@ -44,7 +44,9 @@ export function getArtworkSizes({
       const key = formatDimensions(widthCm, heightCm, 'cm')
       if (!byText.has(key)) byText.set(key, { widthCm, heightCm })
     }
-    const sizes = [...byText.values()].sort((a, b) => a.widthCm * a.heightCm - b.widthCm * b.heightCm)
+    const sizes = [...byText.values()].sort(
+      (a, b) => a.widthCm * a.heightCm - b.widthCm * b.heightCm,
+    )
     return { kind: 'fixed', sizes }
   }
 
@@ -53,4 +55,19 @@ export function getArtworkSizes({
   const min = getPrintMinSize(meta)
   const max = getPrintMaxSize(meta)
   return min && max ? { kind: 'range', min, max } : null
+}
+
+/**
+ * The size line under the year for a work that is not for sale (docs/public-redesign/artwork.md
+ * "Info column, refined"; owner, 2026-11-25): the range ("30.0 × 20.0 cm to 165.8 × 110.5 cm") or
+ * the edition sizes ("40.0 × 60.0 cm · 60.0 × 90.0 cm"), in the visitor's unit. A work for sale
+ * says its sizes in the print block instead, so they never show twice.
+ */
+export function artworkSizesText(
+  sizes: ArtworkSizes | null | undefined,
+  unit: Unit,
+): string | null {
+  if (!sizes) return null
+  if (sizes.kind === 'range') return formatDimensionsRange(sizes.min, sizes.max, unit)
+  return sizes.sizes.map((size) => formatDimensions(size.widthCm, size.heightCm, unit)).join(' · ')
 }

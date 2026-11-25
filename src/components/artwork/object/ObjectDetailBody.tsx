@@ -1,34 +1,29 @@
 'use client'
 
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { CaretLeft, CaretRight, Cube } from '@phosphor-icons/react'
 import c from 'classnames'
 
-import { SHOW_NEIGHBOUR_ARROWS } from '@/components/artwork/detail/neighbourArrows'
 import type { ArtworkNeighbours } from '@/components/artwork/detail/ArtworkDetailBody'
+import { ArtworkInfoColumn } from '@/components/artwork/detail/ArtworkInfoColumn'
+import { ArtworkInquire } from '@/components/artwork/detail/ArtworkInquire'
+import {
+  ArtworkViews,
+  ViewTilePicture,
+  ViewTileWord,
+  type ArtworkViewTile,
+} from '@/components/artwork/detail/ArtworkViews'
+import { SHOW_NEIGHBOUR_ARROWS } from '@/components/artwork/detail/neighbourArrows'
+import { useViewsStrip } from '@/components/artwork/detail/useViewsStrip'
 import { ModelViewer } from '@/components/objects/ModelViewer'
 import { Button } from '@/components/ui/Button'
 import { InquireSidebar } from '@/components/ui/InquireSidebar'
-import { UnitsSwitch } from '@/components/ui/UnitsSwitch'
-import { ArtworkInfoColumn } from '@/components/artwork/detail/ArtworkInfoColumn'
-import { ArtworkInquire } from '@/components/artwork/detail/ArtworkInquire'
 import { track } from '@/lib/analytics/track'
 import { formatObjectSize, formatWeight } from '@/lib/units/format'
 import { useUnits } from '@/lib/units/UnitsProvider'
 
 import detail from '@/components/artwork/detail/ArtworkDetail.module.scss'
 import styles from './ObjectDetail.module.scss'
-
-/** One view in the stage: the cover, or a labelled photo (Front, Back, Side…). */
-export type ObjectView = {
-  id: string
-  url: string
-  /** "Front", "In a room"; null for the cover. */
-  label: string | null
-  caption: string | null
-  /** The 72 px tile's crop (the cover's square crop; the middle for the photos). */
-  thumbPosition: string
-}
 
 export type ObjectPageArtwork = {
   id: string
@@ -41,44 +36,40 @@ export type ObjectPageArtwork = {
   widthCm: number | null
   depthCm: number | null
   weightKg: number | null
+  /** The cover. */
   imageUrl: string | null
+  originalWidth: number | null
+  originalHeight: number | null
   /** The ready 3D model, if any (docs/objects O4). */
   model: { url: string } | null
 }
 
-const THREE_D_CAPTION = '3D model prepared by The Art Room'
-
 /**
- * The top of an Object's artwork page (docs/objects O5, objects-artwork-page-desktop/-phone):
- * the stage on the left (the 3D model first when there is one, then the cover and the labelled
- * photos; 72 px tiles under it on desktop, the 3D tile first; a swipe with a progress bar on
- * phones) and the info column on the right, in the approved artwork page's frame and styles. No
- * price and no Order print: Objects are not prints; Inquire is the way forward.
+ * The top of an Object's artwork page: the image artwork page (docs/objects O5b, owner 2026-11-25:
+ * "The differences: a 3D viewer and a cover. The rest SHOULD BE the same"). The grey box holds the
+ * 3D model first when it is ready, then the cover; the image page's view tiles (3D, Cover) switch
+ * between them, only when there is a model. The info column is the image page's: the size under
+ * the year, the materials under the divider, then Inquire. No price and no Order print: Objects
+ * never sell prints.
  */
 export function ObjectDetailBody({
   artwork,
   artist,
-  views,
   technique,
   neighbours,
+  surface = 'page',
 }: {
   artwork: ObjectPageArtwork
   artist: { name: string; lastName: string; handler: string }
-  views: ObjectView[]
-  /** The materials, already rendered on the server (as ArtworkTechnique). */
+  /** The materials, already rendered (ArtworkTechnique); null when there are none. */
   technique: ReactNode
   neighbours?: ArtworkNeighbours | null
+  /** `room`: inside the 3D room's overlay (no site header above it). */
+  surface?: 'page' | 'room'
 }) {
   const { unit } = useUnits()
   const [inquireOpen, setInquireOpen] = useState(false)
-  const [viewIndex, setViewIndex] = useState(0)
-  // The 3D model first when there is one (owner, 2026-11-25: "Make the 3D appear first"), then the
-  // cover, the photos and reels.
-  const [in3d, setIn3d] = useState(!!artwork.model)
   const [resetKey, setResetKey] = useState(0)
-  const [wanted, setWanted] = useState<ReadonlySet<number>>(() => new Set([0, 1]))
-  const stageRef = useRef<HTMLDivElement>(null)
-  const viewsTrack = useRef<HTMLDivElement>(null)
 
   const title = artwork.title || artwork.name || 'Artwork'
   const author = artwork.author || `${artist.name} ${artist.lastName}`.trim()
@@ -87,214 +78,133 @@ export function ObjectDetailBody({
 
   const size = formatObjectSize(artwork, unit)
   const weight = artwork.weightKg ? formatWeight(artwork.weightKg) : null
-  const sizeLine = [size, weight].filter(Boolean).join(' · ')
+  const sizeLine = [size, weight].filter(Boolean).join(' · ') || null
 
-  const showView = (index: number) => {
-    setIn3d(false)
-    setViewIndex(index)
-    setWanted((w) => (w.has(index) && w.has(index + 1) ? w : new Set([...w, index, index + 1])))
-    const strip = viewsTrack.current
-    if (strip) strip.scrollTo({ left: index * strip.clientWidth, behavior: 'smooth' })
-  }
-  const onViewsScroll = () => {
-    const strip = viewsTrack.current
-    if (!strip || strip.clientWidth === 0) return
-    const index = Math.round(strip.scrollLeft / strip.clientWidth)
-    if (index !== viewIndex && index >= 0 && index < views.length) {
-      setViewIndex(index)
-      setWanted((w) => (w.has(index + 1) ? w : new Set([...w, index + 1])))
-    }
-  }
-  // A resize changes the slides' width: keep the picked one in place.
-  const viewIndexRef = useRef(viewIndex)
-  useEffect(() => {
-    viewIndexRef.current = viewIndex
-  }, [viewIndex])
-  useEffect(() => {
-    const strip = viewsTrack.current
-    if (!strip || typeof ResizeObserver === 'undefined') return
-    let width = strip.clientWidth
-    const observer = new ResizeObserver(() => {
-      if (strip.clientWidth === width) return
-      width = strip.clientWidth
-      strip.scrollLeft = viewIndexRef.current * width
-    })
-    observer.observe(strip)
-    return () => observer.disconnect()
-  }, [])
+  // As an image work's picture: a portrait cover gets the taller box (4:5 on phones).
+  const isPortrait =
+    !!artwork.originalWidth &&
+    !!artwork.originalHeight &&
+    artwork.originalHeight / artwork.originalWidth > 1.05
 
-  const open3d = () => {
-    setIn3d(true)
-    // From the info column on a phone the stage is above: bring it into view.
-    stageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-  }
+  const cover = artwork.imageUrl ? (
+    <img
+      src={artwork.imageUrl}
+      alt={title}
+      width={artwork.originalWidth ?? undefined}
+      height={artwork.originalHeight ?? undefined}
+      className={detail.fit}
+      decoding="async"
+    />
+  ) : null
 
-  const current = views[viewIndex]
-  const caption = in3d
-    ? THREE_D_CAPTION
-    : current
-      ? [current.label, current.caption].filter(Boolean).join(' · ')
-      : ''
+  const three = artwork.model ? (
+    <div className={styles.three}>
+      <ModelViewer
+        url={artwork.model.url}
+        tone="light"
+        resetKey={resetKey}
+        className={styles.viewer}
+      />
+      <Button
+        variant="bare"
+        label="Reset view"
+        className={styles.reset}
+        onClick={() => setResetKey((k) => k + 1)}
+      />
+    </div>
+  ) : null
+
+  // The 3D model first (owner, 2026-11-25: "Make the 3D appear first"), then the cover.
+  const tiles: ArtworkViewTile[] | null =
+    three && artwork.imageUrl
+      ? [
+          {
+            key: '3d',
+            label: 'View in 3D',
+            content: (
+              <ViewTileWord icon={<Cube size={24} weight="light" aria-hidden />} word="3D" />
+            ),
+          },
+          { key: 'cover', label: 'Cover', content: <ViewTilePicture src={artwork.imageUrl} /> },
+        ]
+      : null
+  const strip = useViewsStrip(tiles ? tiles.length : 1)
 
   return (
     <>
-      <div className={detail.layout}>
+      <div className={c(detail.layout, surface === 'room' && detail.layoutRoom)}>
         <ArtworkInfoColumn
           author={author}
           artistHandler={artist.handler}
           title={title}
           year={artwork.year}
+          size={sizeLine}
           technique={technique}
           shareUrl={shareUrl}
-          className={styles.info}
         >
-          {sizeLine && (
-            <span className={styles.sizeRow}>
-              <span className={detail.fact}>{sizeLine}</span>
-              <UnitsSwitch />
-            </span>
-          )}
           <ArtworkInquire
-            divided
             onClick={() => {
-              track('inquire_open', { item_id: artwork.slug, surface: 'page', for_sale: false })
+              track('inquire_open', { item_id: artwork.slug, surface, for_sale: false })
               setInquireOpen(true)
             }}
           />
+          {tiles && (
+            <ArtworkViews
+              tiles={tiles}
+              label="Views of the work"
+              selected={strip.index}
+              onSelect={strip.show}
+              layout="grid"
+              className={detail.viewsGrid}
+            />
+          )}
         </ArtworkInfoColumn>
 
-        <div className={styles.stageColumn}>
-          <div ref={stageRef} className={c(detail.imageArea, styles.stage)}>
-            <div
-              ref={viewsTrack}
-              className={c(detail.viewsTrack, in3d && styles.hidden)}
-              onScroll={onViewsScroll}
-              aria-hidden={in3d}
+        <div className={c(detail.imageArea, isPortrait && detail.imageAreaPortrait)}>
+          {tiles ? (
+            <div ref={strip.track} className={detail.viewsTrack} onScroll={strip.onScroll}>
+              <div className={detail.viewSlide}>{three}</div>
+              <div className={detail.viewSlide}>{cover}</div>
+            </div>
+          ) : (
+            (three ?? cover)
+          )}
+
+          {SHOW_NEIGHBOUR_ARROWS && neighbours?.prev && (
+            <Button
+              variant="bare"
+              href={neighbours.prev.href}
+              className={c(detail.arrow, detail.arrowPrev)}
+              title={neighbours.prev.title}
+              aria-label={`Previous work: ${neighbours.prev.title}`}
             >
-              {views.map((view, i) => (
-                <div key={view.id} className={detail.viewSlide}>
-                  <img
-                    src={view.url}
-                    alt={`${title}${view.label ? `: ${view.label}` : ''}`}
-                    className={styles.stagePhoto}
-                    loading={wanted.has(i) ? 'eager' : 'lazy'}
-                    decoding="async"
-                  />
-                </div>
-              ))}
-            </div>
-
-            {in3d && artwork.model && (
-              <div className={styles.three}>
-                <ModelViewer
-                  url={artwork.model.url}
-                  tone="light"
-                  resetKey={resetKey}
-                  className={styles.viewer}
-                />
-                <Button
-                  variant="bare"
-                  label="Reset view"
-                  className={styles.reset}
-                  onClick={() => setResetKey((k) => k + 1)}
-                />
-              </div>
-            )}
-
-            {/* Phones: where you are, and the way into (and out of) the 3D model. */}
-            {!in3d && views.length > 1 && (
-              <span className={styles.counter}>
-                {viewIndex + 1} / {views.length}
-              </span>
-            )}
-            {artwork.model && (
-              <Button
-                variant="bare"
-                className={styles.stage3d}
-                onClick={() => (in3d ? setIn3d(false) : open3d())}
-              >
-                {in3d ? (
-                  'Photos'
-                ) : (
-                  <>
-                    <Cube size={16} weight="regular" aria-hidden />
-                    3D
-                  </>
-                )}
-              </Button>
-            )}
-
-            {SHOW_NEIGHBOUR_ARROWS && neighbours?.prev && (
-              <Button
-                variant="bare"
-                href={neighbours.prev.href}
-                className={c(detail.arrow, detail.arrowPrev)}
-                title={neighbours.prev.title}
-                aria-label={`Previous work: ${neighbours.prev.title}`}
-              >
-                <CaretLeft size={18} weight="light" aria-hidden />
-              </Button>
-            )}
-            {SHOW_NEIGHBOUR_ARROWS && neighbours?.next && (
-              <Button
-                variant="bare"
-                href={neighbours.next.href}
-                className={c(detail.arrow, detail.arrowNext)}
-                title={neighbours.next.title}
-                aria-label={`Next work: ${neighbours.next.title}`}
-              >
-                <CaretRight size={18} weight="light" aria-hidden />
-              </Button>
-            )}
-          </div>
-
-          {/* Phones: the progress bar under the stage. */}
-          {!in3d && views.length > 1 && (
-            <div aria-hidden className={styles.segments}>
-              {views.map((view, i) => (
-                <span key={view.id} className={c(styles.segment, i === viewIndex && styles.on)} />
-              ))}
-            </div>
+              <CaretLeft size={18} weight="light" aria-hidden />
+            </Button>
           )}
-
-          {/* Tablets and desktop: the views as 72 px tiles, the 3D model first. */}
-          {(views.length > 1 || artwork.model) && (
-            <div role="group" aria-label="Views of the work" className={styles.thumbs}>
-              {artwork.model && (
-                <Button
-                  variant="bare"
-                  className={c(styles.thumb, styles.thumb3d, in3d && styles.thumbOn)}
-                  aria-pressed={in3d}
-                  aria-label="View in 3D"
-                  onClick={open3d}
-                >
-                  <Cube size={22} weight="light" aria-hidden />
-                  3D
-                </Button>
-              )}
-              {views.map((view, i) => (
-                <Button
-                  key={view.id}
-                  variant="bare"
-                  className={c(styles.thumb, !in3d && i === viewIndex && styles.thumbOn)}
-                  aria-pressed={!in3d && i === viewIndex}
-                  aria-label={view.label ?? `${title}: cover`}
-                  onClick={() => showView(i)}
-                >
-                  <img
-                    src={view.url}
-                    alt=""
-                    className={styles.thumbImage}
-                    style={{ objectPosition: view.thumbPosition }}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </Button>
-              ))}
-            </div>
+          {SHOW_NEIGHBOUR_ARROWS && neighbours?.next && (
+            <Button
+              variant="bare"
+              href={neighbours.next.href}
+              className={c(detail.arrow, detail.arrowNext)}
+              title={neighbours.next.title}
+              aria-label={`Next work: ${neighbours.next.title}`}
+            >
+              <CaretRight size={18} weight="light" aria-hidden />
+            </Button>
           )}
-          {caption && <p className={styles.caption}>{caption}</p>}
         </div>
+
+        {/* Phones: the tiles in one row, right under the box. */}
+        {tiles && (
+          <ArtworkViews
+            tiles={tiles}
+            label="Views of the work"
+            selected={strip.index}
+            onSelect={strip.show}
+            layout="row"
+            className={detail.viewsRow}
+          />
+        )}
       </div>
 
       <InquireSidebar

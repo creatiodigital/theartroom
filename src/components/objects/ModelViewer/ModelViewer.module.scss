@@ -24,8 +24,8 @@
   background: transparent;
 }
 
-// + / −, top right (no wheel zoom). The library buttons; on the artwork page square and outlined like
-// its Reset view (visitors: no rounded corners).
+// + / −, top right (no wheel zoom). The library buttons; on the artwork page one joined pair (`.light`,
+// visitors: no rounded corners).
 .zoom {
   position: absolute;
   top: var(--space-3);
@@ -42,21 +42,24 @@
 }
 
 .light .zoom {
-  top: var(--space-5);
-  right: var(--space-6);
-
-  @include media-down(sm) {
-    top: var(--space-3);
-    right: var(--space-3);
-  }
+  // The artwork page's zoom (artwork.md "Info column, refined"): one joined + / − pair, white, a
+  // light outline round the pair and between the cells, square corners, top right.
+  top: var(--space-4);
+  right: var(--space-4);
+  gap: 0;
+  border: 1px solid var(--color-gray-55);
+  background: var(--color-white);
 }
 
 .light .zoom .zoomButton {
   width: var(--space-10);
   height: var(--space-10);
-  border: 1px solid var(--public-text);
+  border: 0;
   border-radius: 0;
-  background: var(--color-white);
+  background: transparent;
   color: var(--public-text);
 }
 
+.light .zoom .zoomButton + .zoomButton {
+  border-top: 1px solid var(--color-gray-55);
+}

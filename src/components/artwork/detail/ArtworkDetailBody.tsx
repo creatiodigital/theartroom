@@ -11,16 +11,19 @@ import { InquireSidebar } from '@/components/ui/InquireSidebar'
 import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
 import { artworkToGa, CURRENCY, euros } from '@/lib/analytics/events'
 import { track } from '@/lib/analytics/track'
-import type { ArtworkSizes } from '@/lib/editions/artworkSizes'
+import { artworkSizesText, type ArtworkSizes } from '@/lib/editions/artworkSizes'
 import type { VariantEditionLineParts } from '@/lib/editions/variantEditionLines'
-import { ArtworkAvailabilityCard, ArtworkPrintFacts } from './ArtworkAvailabilityCard'
-import { ArtworkViews, VIEW_COUNT, viewAlt } from './ArtworkViews'
+import { ArtworkAvailabilityCard } from './ArtworkAvailabilityCard'
+import { ArtworkViews, printViewTiles, VIEW_COUNT, viewAlt } from './ArtworkViews'
 import { SHOW_NEIGHBOUR_ARROWS } from './neighbourArrows'
 import { reportImageError } from '@/lib/observability/reportImageError'
 import { PHOTO_VIEWS, type PresentationView } from '@/lib/printPresentation/record'
+import { isRichTextEmpty } from '@/lib/textUtils'
+import { useUnits } from '@/lib/units/UnitsProvider'
 
 import { ArtworkInfoColumn } from './ArtworkInfoColumn'
 import { ArtworkInquire } from './ArtworkInquire'
+import { useViewsStrip } from './useViewsStrip'
 import styles from './ArtworkDetail.module.scss'
 
 export type Artist = {
@@ -132,52 +135,12 @@ export const ArtworkDetailBody = ({
     surface === 'page' && presentation?.photos && artwork.imageUrl
       ? { ...presentation, photos: presentation.photos }
       : null
-  const [viewIndex, setViewIndex] = useState(0)
-  const viewsTrack = useRef<HTMLDivElement>(null)
-  // The large photos load lazily, but the one picked and the one after it load at once: a photo
-  // first requested as it slides into the clipped strip would show a blank slide meanwhile.
-  const [wantedViews, setWantedViews] = useState<ReadonlySet<number>>(() => new Set([0, 1]))
-  const want = (...indices: number[]) =>
-    setWantedViews((w) => (indices.every((i) => w.has(i)) ? w : new Set([...w, ...indices])))
-  // Picking a view slides the box to it; on phones a swipe moves the box and the row follows.
-  const showView = (index: number) => {
-    setViewIndex(index)
-    want(index, index + 1)
-    const track = viewsTrack.current
-    if (track) track.scrollTo({ left: index * track.clientWidth, behavior: 'smooth' })
-  }
-  const onViewsScroll = () => {
-    const track = viewsTrack.current
-    if (!track || track.clientWidth === 0) return
-    const index = Math.round(track.scrollLeft / track.clientWidth)
-    if (index !== viewIndex && index >= 0 && index < VIEW_COUNT) {
-      setViewIndex(index)
-      want(index + 1)
-    }
-  }
-  // A resize changes the slides' width: keep the picked one in place (only on a real width
-  // change, so a swipe in progress is never moved).
-  const viewIndexRef = useRef(viewIndex)
-  useEffect(() => {
-    viewIndexRef.current = viewIndex
-  }, [viewIndex])
-  const hasViews = !!withPhotos
-  useEffect(() => {
-    const track = viewsTrack.current
-    if (!hasViews || !track || typeof ResizeObserver === 'undefined') return
-    let width = track.clientWidth
-    const observer = new ResizeObserver(() => {
-      if (track.clientWidth === width) return
-      width = track.clientWidth
-      track.scrollLeft = viewIndexRef.current * width
-    })
-    observer.observe(track)
-    return () => observer.disconnect()
-  }, [hasViews])
+  const strip = useViewsStrip(withPhotos ? VIEW_COUNT : 1)
 
   // Purchases kill switch (admin dashboard). The hook's cache is shared with
   // the artwork grids, so moving between a listing and a work doesn't re-read.
   const purchasesPaused = usePurchasesPaused()
+  const { unit } = useUnits()
 
   const displayTitle = artwork.title || artwork.name || ''
   const displayAuthor = artwork.author || `${artist.name} ${artist.lastName}`.trim()
@@ -195,6 +158,12 @@ export const ArtworkDetailBody = ({
   // GA4 view_item: a work shown with a print on offer, once per work, on the page or in the room's
   // details (where the offer arrives after a fetch). Works not for sale send nothing here.
   const forSale = !!commerce && !purchasesPaused
+  // Not for sale: the sizes are the size line under the year (owner, 2026-11-25); for sale, the
+  // print block says them, so they never show twice.
+  const sizeLine = forSale ? null : artworkSizesText(artwork.sizes, unit)
+  const viewTiles = withPhotos
+    ? printViewTiles(withPhotos, artwork.imageUrl!, displayTitle || 'Artwork')
+    : null
   const reportedSlug = useRef<string | null>(null)
   useEffect(() => {
     if (!forSale || !commerce || reportedSlug.current === artwork.slug) return
@@ -226,9 +195,9 @@ export const ArtworkDetailBody = ({
   const inViews = (framed: ReactNode) =>
     withPhotos ? (
       <div
-        ref={viewsTrack}
+        ref={strip.track}
         className={styles.viewsTrack}
-        onScroll={onViewsScroll}
+        onScroll={strip.onScroll}
         data-views-track=""
       >
         <div className={styles.viewSlide}>{framed}</div>
@@ -238,7 +207,7 @@ export const ArtworkDetailBody = ({
               src={withPhotos.photos[kind].large}
               alt={viewAlt(displayTitle || 'Artwork', i + 1)}
               className={styles.viewPhoto}
-              loading={wantedViews.has(i + 1) ? 'eager' : 'lazy'}
+              loading={strip.wanted.has(i + 1) ? 'eager' : 'lazy'}
               decoding="async"
             />
           </div>
@@ -259,10 +228,11 @@ export const ArtworkDetailBody = ({
           artistHandler={artist.handler}
           title={displayTitle}
           year={artwork.year}
-          technique={artwork.technique ? technique : null}
+          size={sizeLine}
+          technique={isRichTextEmpty(artwork.technique) ? null : technique}
           shareUrl={shareUrl}
         >
-          {commerce && !purchasesPaused ? (
+          {commerce && forSale ? (
             <ArtworkAvailabilityCard
               editionType={commerce.editionType}
               sizes={artwork.sizes}
@@ -272,20 +242,15 @@ export const ArtworkDetailBody = ({
               inquire={<ArtworkInquire onClick={openInquire} />}
             />
           ) : (
-            // Not for sale (or purchases paused): the print's kind and sizes, then enquiring is
-            // the only route forward.
-            <ArtworkPrintFacts
-              sizes={artwork.sizes}
-              inquire={<ArtworkInquire divided onClick={openInquire} />}
-            />
+            // Not for sale (or purchases paused): enquiring is the only route forward.
+            <ArtworkInquire onClick={openInquire} />
           )}
-          {withPhotos && (
+          {viewTiles && (
             <ArtworkViews
-              presentation={withPhotos}
-              imageUrl={artwork.imageUrl!}
-              title={displayTitle || 'Artwork'}
-              selected={viewIndex}
-              onSelect={showView}
+              tiles={viewTiles}
+              label="Views of the print"
+              selected={strip.index}
+              onSelect={strip.show}
               layout="grid"
               className={styles.viewsGrid}
             />
@@ -355,13 +320,12 @@ export const ArtworkDetailBody = ({
         </div>
 
         {/* Phones: the four views in one row, right under the photo (owner, 2026-11-20). */}
-        {withPhotos && (
+        {viewTiles && (
           <ArtworkViews
-            presentation={withPhotos}
-            imageUrl={artwork.imageUrl!}
-            title={displayTitle || 'Artwork'}
-            selected={viewIndex}
-            onSelect={showView}
+            tiles={viewTiles}
+            label="Views of the print"
+            selected={strip.index}
+            onSelect={strip.show}
             layout="row"
             className={styles.viewsRow}
           />

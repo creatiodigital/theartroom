@@ -1,6 +1,7 @@
 @use '@/styles/mixins' as *;
 
-// A work's four views (owner, 2026-11-20). Square tiles, square corners (visitor-facing rule).
+// A work's views (owner, 2026-11-20; an Object's 3D / Cover, docs/objects O5b). Square tiles, square
+// corners (visitor-facing rule).
 .views {
   display: grid;
   gap: var(--space-3);
@@ -15,7 +16,7 @@
   }
 }
 
-// Phones: one row of four, right under the photo.
+// Phones: four to a row, right under the photo (an Object's two keep the same size).
 .row {
   display: none;
 
@@ -56,12 +57,24 @@
   max-width: 100%;
 }
 
-.framedFit {
+// The framed view's picture, an Object's cover: contained, a little grey round it.
+.contained {
   display: block;
   width: auto;
   height: auto;
   max-width: 84cqw;
   max-height: 84cqh;
+}
+
+// A tile that names its view (an Object's 3D): the icon over the word, small spaced caps.
+.word {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  color: var(--public-text);
 }
 
 // The photos fill their tile (cover), as they fill the box.
