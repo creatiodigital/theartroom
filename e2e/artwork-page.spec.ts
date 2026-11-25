@@ -25,9 +25,10 @@ test('artwork page: renders + has CTA', async ({ page }) => {
 
   // Conversion CTAs are <button> elements (Button component) — not
   // anchors — so we match by accessible name. Either label is fine
-  // depending on whether the artwork is print-enabled. Both missing
-  // is the regression we're catching.
-  const buyPrintable = page.getByRole('button', { name: /order print/i })
+  // depending on whether the artwork is print-enabled (a work for sale shows
+  // Order a print alone, owner 2026-11-25). Both missing is the regression
+  // we're catching.
+  const buyPrintable = page.getByRole('button', { name: /order (a )?print/i })
   const inquire = page.getByRole('button', { name: /inquire/i })
 
   const buyVisible = await buyPrintable.isVisible().catch(() => false)

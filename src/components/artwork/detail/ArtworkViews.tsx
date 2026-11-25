@@ -28,7 +28,7 @@ export type ArtworkViewTile = {
 /**
  * A work's views as small tiles (owner, 2026-11-20); picking one shows it large in the grey box (no
  * mark on the picked tile, owner). An image work has four (the framed view, then the photos of the
- * print: `printViewTiles`); an Object two, its 3D model and its cover (docs/objects O5b). `grid`:
+ * print: `printViewTiles`); an Object its 3D model, its cover and its photos (docs/objects O5b). `grid`:
  * two to a row, below Inquire (tablets, desktop); `row`: four to a row under the box (phones), so
  * a tile keeps its size whatever the count. Square corners (visitor rule).
  */
@@ -75,12 +75,20 @@ export const ViewTilePicture = ({ src }: { src: string }) => (
   <img src={src} alt="" className={styles.contained} decoding="async" loading="lazy" />
 )
 
-/** A tile that names its view, an icon over a word (an Object's "3D"). */
-export const ViewTileWord = ({ icon, word }: { icon: ReactNode; word: string }) => (
-  <span className={styles.word}>
-    {icon}
-    {word}
-  </span>
+/** A photo filling its tile, as the box shows it at a glance: an Object's photos. */
+export const ViewTilePhoto = ({ src }: { src: string }) => (
+  <img src={src} alt="" className={styles.photo} decoding="async" loading="lazy" />
+)
+
+/** A tile's picture with a mark in its corner: an Object's 3D model, its cover and the 3D mark
+ *  (owner, 2026-11-25). Without a cover, the mark alone. */
+export const ViewTileMarked = ({ src, mark }: { src: string | null; mark: ReactNode }) => (
+  <>
+    {src && <img src={src} alt="" className={styles.contained} decoding="async" loading="lazy" />}
+    <span className={styles.mark} aria-hidden>
+      {mark}
+    </span>
+  </>
 )
 
 /** An image work's four views: the framed view, then the photos of the print, each filling its tile. */

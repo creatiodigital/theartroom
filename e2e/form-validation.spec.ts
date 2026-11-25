@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test'
 
+import prisma from '@/lib/prisma'
+
 import { fixtures, routes } from './fixtures'
 
 /**
@@ -19,9 +21,35 @@ import { fixtures, routes } from './fixtures'
 
 const SEND = /send inquiry/i
 
-// Open the inquiry sidebar on the fixture artwork page and wait for the form.
+// A work that is not for sale: Inquire is its only action (a work for sale shows Order a print
+// alone, owner 2026-11-25). A throwaway copy of the fixture artist's, deleted after.
+let inquireOnlySlug = ''
+
+test.beforeAll(async () => {
+  const base = await prisma.artwork.findUnique({
+    where: { slug: fixtures.artworkSlug },
+    select: { userId: true, imageUrl: true },
+  })
+  if (!base) throw new Error(`Fixture artwork "${fixtures.artworkSlug}" not found — check dev DB`)
+  inquireOnlySlug = `e2e-inquire-only-${Date.now().toString(36)}`
+  await prisma.artwork.create({
+    data: {
+      name: 'E2E Inquire Only',
+      title: 'E2E Inquire Only',
+      slug: inquireOnlySlug,
+      userId: base.userId,
+      imageUrl: base.imageUrl,
+    },
+  })
+})
+
+test.afterAll(async () => {
+  if (inquireOnlySlug) await prisma.artwork.deleteMany({ where: { slug: inquireOnlySlug } })
+})
+
+// Open the inquiry sidebar on that work's page and wait for the form.
 async function openInquiry(page: import('@playwright/test').Page) {
-  await page.goto(routes.artwork(fixtures.artworkSlug))
+  await page.goto(routes.artwork(inquireOnlySlug))
   await page.getByRole('button', { name: /inquire/i }).click()
   await expect(page.getByRole('button', { name: SEND })).toBeVisible()
 }

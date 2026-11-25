@@ -10,6 +10,9 @@ import { useEffect, useRef, useState } from 'react'
  * `wanted`: the slides whose picture loads at once. The large pictures load lazily, but the one
  * picked and the one after it load at once: a picture first requested as it slides into the
  * clipped strip would show a blank slide meanwhile.
+ *
+ * `seen`: the slides shown so far, for a view that should only start once it is asked for (an
+ * Object's 3D model).
  */
 export function useViewsStrip(count: number) {
   const [index, setIndex] = useState(0)
@@ -17,9 +20,12 @@ export function useViewsStrip(count: number) {
   const [wanted, setWanted] = useState<ReadonlySet<number>>(() => new Set([0, 1]))
   const want = (...indices: number[]) =>
     setWanted((w) => (indices.every((i) => w.has(i)) ? w : new Set([...w, ...indices])))
+  const [seen, setSeen] = useState<ReadonlySet<number>>(() => new Set([0]))
+  const see = (i: number) => setSeen((s) => (s.has(i) ? s : new Set([...s, i])))
 
   const show = (next: number) => {
     setIndex(next)
+    see(next)
     want(next, next + 1)
     const strip = track.current
     if (strip) strip.scrollTo({ left: next * strip.clientWidth, behavior: 'smooth' })
@@ -31,6 +37,7 @@ export function useViewsStrip(count: number) {
     const next = Math.round(strip.scrollLeft / strip.clientWidth)
     if (next !== index && next >= 0 && next < count) {
       setIndex(next)
+      see(next)
       want(next + 1)
     }
   }
@@ -55,5 +62,5 @@ export function useViewsStrip(count: number) {
     return () => observer.disconnect()
   }, [hasStrip])
 
-  return { index, track, wanted, show, onScroll }
+  return { index, track, wanted, seen, show, onScroll }
 }

@@ -66,15 +66,20 @@
   max-height: 84cqh;
 }
 
-// A tile that names its view (an Object's 3D): the icon over the word, small spaced caps.
-.word {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
+// The mark in a tile's corner (an Object's 3D model): "3D" as a label in the site's own type, the
+// small spaced capitals of Order a print, white on the near-black, square (owner, 2026-11-25: an
+// icon there was "horrible").
+.mark {
+  position: absolute;
+  left: var(--space-2);
+  bottom: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: var(--public-text);
+  color: var(--color-white);
   font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  line-height: 1;
   letter-spacing: 0.12em;
-  color: var(--public-text);
 }
 
 // The photos fill their tile (cover), as they fill the box.

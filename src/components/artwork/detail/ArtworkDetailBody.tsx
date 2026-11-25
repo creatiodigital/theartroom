@@ -13,7 +13,7 @@ import { artworkToGa, CURRENCY, euros } from '@/lib/analytics/events'
 import { track } from '@/lib/analytics/track'
 import { artworkSizesText, type ArtworkSizes } from '@/lib/editions/artworkSizes'
 import type { VariantEditionLineParts } from '@/lib/editions/variantEditionLines'
-import { ArtworkAvailabilityCard } from './ArtworkAvailabilityCard'
+import { ArtworkPrintDetails, ArtworkPurchase } from './ArtworkAvailabilityCard'
 import { ArtworkViews, printViewTiles, VIEW_COUNT, viewAlt } from './ArtworkViews'
 import { SHOW_NEIGHBOUR_ARROWS } from './neighbourArrows'
 import { reportImageError } from '@/lib/observability/reportImageError'
@@ -229,21 +229,32 @@ export const ArtworkDetailBody = ({
           title={displayTitle}
           year={artwork.year}
           size={sizeLine}
+          action={
+            commerce && forSale ? (
+              // For sale: the price and Order a print; Inquire only once nothing is left to
+              // order (owner, 2026-11-25: "remove the Inquire button if we show an order print").
+              <ArtworkPurchase
+                editionType={commerce.editionType}
+                minPriceCents={commerce.minPriceCents}
+                editionLines={commerce.editionLines}
+                artworkSlug={artwork.slug}
+                inquire={<ArtworkInquire onClick={openInquire} />}
+              />
+            ) : (
+              // Not for sale (or purchases paused): enquiring is the only route forward.
+              <ArtworkInquire onClick={openInquire} />
+            )
+          }
           technique={isRichTextEmpty(artwork.technique) ? null : technique}
           shareUrl={shareUrl}
         >
-          {commerce && forSale ? (
-            <ArtworkAvailabilityCard
+          {commerce && forSale && (
+            <ArtworkPrintDetails
               editionType={commerce.editionType}
               sizes={artwork.sizes}
               minPriceCents={commerce.minPriceCents}
               editionLines={commerce.editionLines}
-              artworkSlug={artwork.slug}
-              inquire={<ArtworkInquire onClick={openInquire} />}
             />
-          ) : (
-            // Not for sale (or purchases paused): enquiring is the only route forward.
-            <ArtworkInquire onClick={openInquire} />
           )}
           {viewTiles && (
             <ArtworkViews

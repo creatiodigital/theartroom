@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, type ReactNode } from 'react'
-import { CaretLeft, CaretRight, Cube } from '@phosphor-icons/react'
+import { CaretLeft, CaretRight } from '@phosphor-icons/react'
 import c from 'classnames'
 
 import type { ArtworkNeighbours } from '@/components/artwork/detail/ArtworkDetailBody'
@@ -9,9 +9,9 @@ import { ArtworkInfoColumn } from '@/components/artwork/detail/ArtworkInfoColumn
 import { ArtworkInquire } from '@/components/artwork/detail/ArtworkInquire'
 import {
   ArtworkViews,
+  ViewTileMarked,
+  ViewTilePhoto,
   ViewTilePicture,
-  ViewTileWord,
-  type ArtworkViewTile,
 } from '@/components/artwork/detail/ArtworkViews'
 import { SHOW_NEIGHBOUR_ARROWS } from '@/components/artwork/detail/neighbourArrows'
 import { useViewsStrip } from '@/components/artwork/detail/useViewsStrip'
@@ -44,23 +44,38 @@ export type ObjectPageArtwork = {
   model: { url: string } | null
 }
 
+/** One of the Object's photos, shown in the box after the cover. */
+export type ObjectPhoto = {
+  id: string
+  url: string
+  width: number | null
+  height: number | null
+  /** "Front", "In a room"…, or null. */
+  label: string | null
+  caption: string | null
+}
+
 /**
  * The top of an Object's artwork page: the image artwork page (docs/objects O5b, owner 2026-11-25:
  * "The differences: a 3D viewer and a cover. The rest SHOULD BE the same"). The grey box holds the
- * 3D model first when it is ready, then the cover; the image page's view tiles (3D, Cover) switch
- * between them, only when there is a model. The info column is the image page's: the size under
- * the year, the materials under the divider, then Inquire. No price and no Order print: Objects
- * never sell prints.
+ * cover, the photos (owner, 2026-11-25: "add them to the top carousel, and thumbnails on the side
+ * bar"), then the 3D model when it is ready ("Make the 3D view last"); the image page's view tiles
+ * switch between them, as soon as there are two. The info column is the image page's: Inquire under the year's divider,
+ * the materials and the size, then the tiles. No price and no Order print: Objects never sell
+ * prints.
  */
 export function ObjectDetailBody({
   artwork,
   artist,
+  photos = [],
   technique,
   neighbours,
   surface = 'page',
 }: {
   artwork: ObjectPageArtwork
   artist: { name: string; lastName: string; handler: string }
+  /** The photos, in the editor's order (the cover is not one of them). */
+  photos?: ObjectPhoto[]
   /** The materials, already rendered (ArtworkTechnique); null when there are none. */
   technique: ReactNode
   neighbours?: ArtworkNeighbours | null
@@ -114,21 +129,57 @@ export function ObjectDetailBody({
     </div>
   ) : null
 
-  // The 3D model first (owner, 2026-11-25: "Make the 3D appear first"), then the cover.
-  const tiles: ArtworkViewTile[] | null =
-    three && artwork.imageUrl
+  // The views in the box, in order: the cover, the photos, then the 3D model (owner, 2026-11-25:
+  // "Make the 3D view last"; the page opens on the cover). The model only starts once its view is
+  // picked or swiped to: no 3D canvas until a visitor asks for it (also in the 3D room's window).
+  const leading = cover ? 1 : 0
+  const threeIndex = leading + photos.length
+  const strip = useViewsStrip(threeIndex + (three ? 1 : 0))
+  const views: { key: string; label: string; tile: ReactNode; slide: ReactNode }[] = [
+    ...(cover && artwork.imageUrl
+      ? [
+          {
+            key: 'cover',
+            label: 'Cover',
+            tile: <ViewTilePicture src={artwork.imageUrl} />,
+            slide: cover,
+          },
+        ]
+      : []),
+    ...photos.map((photo, i) => {
+      const name = photo.label ?? photo.caption ?? `Photo ${i + 1}`
+      return {
+        key: photo.id,
+        label: name,
+        tile: <ViewTilePhoto src={photo.url} />,
+        slide: (
+          <img
+            src={photo.url}
+            alt={`${title}: ${name}`}
+            width={photo.width ?? undefined}
+            height={photo.height ?? undefined}
+            className={detail.fit}
+            loading={strip.wanted.has(leading + i) ? 'eager' : 'lazy'}
+            decoding="async"
+          />
+        ),
+      }
+    }),
+    ...(three
       ? [
           {
             key: '3d',
             label: 'View in 3D',
-            content: (
-              <ViewTileWord icon={<Cube size={24} weight="light" aria-hidden />} word="3D" />
-            ),
+            // The cover with "3D" in its corner (owner, 2026-11-25: the cube and "3D" were "not
+            // very nice", then the 3D icon "horrible").
+            tile: <ViewTileMarked src={artwork.imageUrl} mark="3D" />,
+            slide: strip.seen.has(threeIndex) ? three : null,
           },
-          { key: 'cover', label: 'Cover', content: <ViewTilePicture src={artwork.imageUrl} /> },
         ]
-      : null
-  const strip = useViewsStrip(tiles ? tiles.length : 1)
+      : []),
+  ]
+  const tiles =
+    views.length > 1 ? views.map(({ key, label, tile }) => ({ key, label, content: tile })) : null
 
   return (
     <>
@@ -139,15 +190,17 @@ export function ObjectDetailBody({
           title={title}
           year={artwork.year}
           size={sizeLine}
+          action={
+            <ArtworkInquire
+              onClick={() => {
+                track('inquire_open', { item_id: artwork.slug, surface, for_sale: false })
+                setInquireOpen(true)
+              }}
+            />
+          }
           technique={technique}
           shareUrl={shareUrl}
         >
-          <ArtworkInquire
-            onClick={() => {
-              track('inquire_open', { item_id: artwork.slug, surface, for_sale: false })
-              setInquireOpen(true)
-            }}
-          />
           {tiles && (
             <ArtworkViews
               tiles={tiles}
@@ -163,11 +216,14 @@ export function ObjectDetailBody({
         <div className={c(detail.imageArea, isPortrait && detail.imageAreaPortrait)}>
           {tiles ? (
             <div ref={strip.track} className={detail.viewsTrack} onScroll={strip.onScroll}>
-              <div className={detail.viewSlide}>{three}</div>
-              <div className={detail.viewSlide}>{cover}</div>
+              {views.map((view) => (
+                <div key={view.key} className={detail.viewSlide}>
+                  {view.slide}
+                </div>
+              ))}
             </div>
           ) : (
-            (three ?? cover)
+            (views[0]?.slide ?? null)
           )}
 
           {SHOW_NEIGHBOUR_ARROWS && neighbours?.prev && (

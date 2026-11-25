@@ -164,8 +164,8 @@
 }
 
 // ── The info column ──────────────────────────────────────────────────────
-// Three blocks, each carrying its own space (artwork.md "Info column, refined"): who and what, how it
-// is made, the actions.
+// Blocks under dividers, each carrying its own space (artwork.md "Info column, refined"): who and
+// what, the action, how it is made, the rest.
 .info {
   display: flex;
   flex-direction: column;
@@ -199,7 +199,8 @@
 .identity {
   display: flex;
   flex-direction: column;
-  padding-bottom: var(--space-6);
+  gap: var(--space-1);
+  padding-bottom: var(--space-5);
   font-family: var(--font-sans), var(--font-sans-fallback);
 }
 
@@ -216,31 +217,29 @@ a.artist:hover {
   color: var(--public-text);
 }
 
-// Title, its line height and the year: one scale (owner, 2026-11-25: "the relation between the size
-// of the title, the line height of the title, the size of the year"). The board's 32 / 15 px are the
-// nearest tokens, 30 / 14 px: the same 2.1× between title and year. A two-line title reads as one
-// block (balanced, 1.2), and the year sits clearly under it.
+// The title as live since 2026-11-11 (owner, 2026-11-25: "Go back with this layout and font size"),
+// its lines a little closer ("make the title line height a little smaller": 1.1 → 1.05).
 .title {
-  margin: var(--space-2) 0 var(--space-3);
+  margin: var(--space-1) 0 0;
   font-family: var(--font-serif), var(--font-serif-fallback);
-  font-size: var(--text-2xl);
+  font-size: 36px;
   font-weight: var(--font-regular);
-  line-height: var(--leading-tight);
+  line-height: 1.05;
   color: var(--public-text);
   overflow-wrap: anywhere;
-  text-wrap: balance;
 
   @include media-down(sm) {
-    margin-bottom: var(--space-2);
-    font-size: var(--text-2xl-mobile);
+    font-size: var(--text-2xl);
   }
 }
 
-// Year, size: each on its own line. #666, not the drawn #888 (Q-P12).
+// The year, on its own line: a little bigger, bolder and black, as the title (owner, 2026-11-25;
+// Lato has 400 and 700 only).
 .fact {
-  font-size: var(--text-sm);
+  font-size: var(--text-md);
+  font-weight: var(--font-bold);
   line-height: var(--leading-normal);
-  color: var(--color-text-secondary);
+  color: var(--public-text);
 }
 
 // The technique's lines (camera, lens, ISO…; an Object's materials), as entered: their own block
@@ -251,14 +250,27 @@ a.artist:hover {
   font-size: 13px;
   line-height: 1.5;
   color: var(--color-text-secondary);
+}
 
-  p,
-  li {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--color-text-secondary);
-  }
+// The size, in the technical lines' format, right after them (owner, 2026-11-25: "Move the sizes
+// where the technical info is", "move the materials first, sizes later").
+.info .technique p,
+.info .technique li,
+.info .makingSize {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+// The action, right under the year's divider (owner, 2026-11-25): the price and Order a print, or
+// Inquire.
+.action {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5) 0;
+  border-top: 1px solid var(--color-gray-30);
 }
 
 // How it is made: the technical lines (an Object's materials), under a divider.
@@ -269,12 +281,22 @@ a.artist:hover {
   border-top: 1px solid var(--color-gray-30);
 }
 
-// The actions, under a divider: an image's print block, Inquire, the views, Share.
-.actions {
+// The rich text's own space under it would part the size from the lines above it (three classes:
+// outranks RichText's `.compact` margin whatever the stylesheet order).
+.info .making .technique {
+  margin: 0;
+}
+
+// The rest: an image's print kind and sizes, the views, then Share; under a divider when it holds
+// more than Share.
+.rest {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  padding-top: var(--space-6);
+}
+
+.restDivided {
+  padding-top: var(--space-5);
   border-top: 1px solid var(--color-gray-30);
 }
 

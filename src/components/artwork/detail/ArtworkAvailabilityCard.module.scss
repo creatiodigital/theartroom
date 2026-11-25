@@ -1,6 +1,7 @@
 @use '@/styles/mixins' as *;
 
-// docs/public-redesign/artwork.md "Info column"; designs/artwork-desktop.dc.html.
+// docs/public-redesign/artwork.md "Info column"; designs/artwork-desktop.dc.html. Two parts since
+// 2026-11-25: the purchase (price, Order a print) and the print's details (kind, sizes).
 .card {
   display: flex;
   flex-direction: column;
@@ -8,14 +9,12 @@
   font-family: var(--font-sans), var(--font-sans-fallback);
 }
 
+// The price and Available, first under the year's divider (owner, 2026-11-25).
 .priceRow {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-4);
-  // A divider above the price (owner, 2026-11-20), as the one above the print block.
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-gray-30);
 }
 
 .price {
@@ -156,12 +155,6 @@
   font-size: 13px;
   color: var(--color-text-secondary);
   white-space: nowrap;
-}
-
-// "Available" under the rows, on the left.
-.statusRow .status,
-.statusRow .statusSoldOut {
-  margin-left: 0;
 }
 
 .card .cta {
