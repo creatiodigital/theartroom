@@ -421,32 +421,28 @@ export const ObjectMediaManager = ({ artworkId }: { artworkId: string }) => {
               </Callout>
             )}
             <div className={styles.dialogActions}>
+              {/* The admin's own dialog buttons (ConfirmModal's): centred text, one look. */}
               <Button
-                variant="bare"
+                variant="danger"
                 font="dashboard"
                 className={styles.remove}
                 disabled={busy}
                 onClick={removeEditing}
-              >
-                Remove
-              </Button>
+                label="Remove"
+              />
               <Button
-                variant="bare"
+                variant="secondary"
                 font="dashboard"
-                className={styles.secondary}
                 onClick={() => setEditing(null)}
-              >
-                Cancel
-              </Button>
+                label="Cancel"
+              />
               <Button
-                variant="bare"
+                variant="primary"
                 font="dashboard"
-                className={styles.primary}
                 disabled={busy}
                 onClick={saveEdit}
-              >
-                Save
-              </Button>
+                label="Save"
+              />
             </div>
           </div>
         </Modal>

@@ -91,13 +91,11 @@ export function ObjectSpaceSection({
             it is sent.
           </span>
           <Button
-            variant="bare"
+            variant="secondary"
             font="dashboard"
-            className={styles.outline}
             onClick={() => setChecking(true)}
-          >
-            {model.modelUrl ? 'Replace .glb' : 'Upload .glb'}
-          </Button>
+            label={model.modelUrl ? 'Replace .glb' : 'Upload .glb'}
+          />
         </div>
       )}
 

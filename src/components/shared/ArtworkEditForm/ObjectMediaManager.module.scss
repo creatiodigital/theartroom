@@ -292,33 +292,7 @@
   justify-content: flex-end;
 }
 
-.dialogActions .remove,
-.dialogActions .secondary,
-.dialogActions .primary {
-  min-height: var(--space-10);
-  padding: var(--space-2) var(--space-4);
-  box-sizing: border-box;
-  border: 1px solid var(--color-gray-60);
-  border-radius: var(--radius-sm);
-  background: var(--color-white);
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  color: var(--color-black);
-  cursor: pointer;
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-}
-
+// Remove on the left, Cancel · Save on the right.
 .dialogActions .remove {
   margin-right: auto;
-  color: var(--color-red-50);
-}
-
-.dialogActions .primary {
-  border-color: var(--color-dark-surface);
-  background: var(--color-dark-surface);
-  color: var(--color-white);
 }

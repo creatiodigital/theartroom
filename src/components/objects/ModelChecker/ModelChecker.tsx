@@ -257,14 +257,12 @@ export default function ModelChecker({
           >
             <UploadSimple size={20} weight="light" aria-hidden />
             <Button
-              variant="bare"
+              variant="secondary"
               font="dashboard"
-              className={styles.choose}
               disabled={uploading || checking}
               onClick={() => inputRef.current?.click()}
-            >
-              {file ? 'Choose another .glb' : 'Choose a .glb'}
-            </Button>
+              label={file ? 'Choose another .glb' : 'Choose a .glb'}
+            />
             <span className={styles.dropText}>{file ? file.name : 'or drop it here'}</span>
           </div>
 
@@ -314,18 +312,15 @@ export default function ModelChecker({
         </div>
 
         <div className={styles.actions}>
-          <Button variant="bare" font="dashboard" className={styles.secondary} onClick={onClose}>
-            Cancel
-          </Button>
+          {/* The admin's own dialog buttons (ConfirmModal's): centred text, one look everywhere. */}
+          <Button variant="secondary" font="dashboard" onClick={onClose} label="Cancel" />
           <Button
-            variant="bare"
+            variant="primary"
             font="dashboard"
-            className={styles.primary}
             disabled={!passes || uploading}
             onClick={upload}
-          >
-            {uploading ? 'Uploading and checking…' : replacing ? 'Replace' : 'Upload'}
-          </Button>
+            label={uploading ? 'Uploading and checking…' : replacing ? 'Replace' : 'Upload'}
+          />
         </div>
       </div>
     </Modal>
