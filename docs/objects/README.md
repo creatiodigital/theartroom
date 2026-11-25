@@ -503,3 +503,7 @@ object! unless it's a pedestal", "I cannot navigate in this 3D space with the ke
   in the info column. "Photographs" and "In motion" use the same label as "More by the artist" (sans, small spaced
   caps, grey), not the headings' serif. Grids never say "Object" under a card (owner: "why should we state it's an
   object").
+- The 3D viewers (artwork page, upload window, editor) have no wheel or pinch zoom: over them the wheel scrolls the
+  page (owner: "we cannot block the whole page to scroll down"). + / − buttons (top right) zoom in steps between
+  75 % and 150 % of the framed distance; on the artwork page square and outlined like Reset view. Hints: "Drag to
+  turn (it around)".

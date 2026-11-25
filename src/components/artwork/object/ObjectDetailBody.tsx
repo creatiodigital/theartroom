@@ -209,7 +209,7 @@ export function ObjectDetailBody({
                 />
                 <span className={styles.dragHint}>
                   <HandGrabbing size={18} weight="light" aria-hidden />
-                  Drag to turn it around · scroll to come closer
+                  Drag to turn it around
                 </span>
                 <Button
                   variant="bare"

@@ -60,7 +60,7 @@ export function ObjectSpaceSection({
         <div className={styles.ready}>
           <ModelViewer
             url={model.modelUrl}
-            hint="Drag to turn · scroll to zoom"
+            hint="Drag to turn"
             className={styles.viewer}
           />
           <div className={styles.facts}>

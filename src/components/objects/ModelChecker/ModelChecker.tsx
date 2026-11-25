@@ -272,7 +272,7 @@ export default function ModelChecker({
                 <ModelViewer
                   url={blobUrl}
                   onResult={onViewerResult}
-                  hint="Drag to turn · scroll to zoom"
+                  hint="Drag to turn"
                   className={styles.preview}
                 />
               ) : (

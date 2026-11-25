@@ -1,3 +1,5 @@
+@use '@/styles/mixins' as *;
+
 // The 3D preview (objects-editor.dc.html "In the 3D space"): dark, the hint bottom left.
 .viewer {
   position: relative;
@@ -21,3 +23,40 @@
   border-radius: 0;
   background: transparent;
 }
+
+// + / −, top right (no wheel zoom). The library buttons; on the artwork page square and outlined like
+// its Reset view (visitors: no rounded corners).
+.zoom {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.zoom .zoomButton {
+  width: var(--space-8);
+  height: var(--space-8);
+  padding: 0;
+}
+
+.light .zoom {
+  top: var(--space-5);
+  right: var(--space-6);
+
+  @include media-down(sm) {
+    top: var(--space-3);
+    right: var(--space-3);
+  }
+}
+
+.light .zoom .zoomButton {
+  width: var(--space-10);
+  height: var(--space-10);
+  border: 1px solid var(--public-text);
+  border-radius: 0;
+  background: var(--color-white);
+  color: var(--public-text);
+}
+

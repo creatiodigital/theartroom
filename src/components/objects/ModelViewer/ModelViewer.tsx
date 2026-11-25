@@ -1,6 +1,6 @@
 'use client'
 
-import { Component, Suspense, useEffect, useRef, type ReactNode } from 'react'
+import { Component, Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Bounds, OrbitControls, useBounds, useGLTF } from '@react-three/drei'
 import {
@@ -15,6 +15,9 @@ import {
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 // drei's GLTFLoader is three-stdlib's: its KTX2 loader must be too (as drei's useKTX2).
 import { KTX2Loader } from 'three-stdlib'
+import { Minus, Plus } from '@phosphor-icons/react'
+
+import { Button } from '@/components/ui/Button'
 
 import styles from './ModelViewer.module.scss'
 
@@ -251,6 +254,48 @@ function Reframe({ resetKey }: { resetKey: number }) {
 }
 
 /** Keeps the wheel near the framed view, every frame: Bounds widens the limit when it refits. */
+/** One press of + or −: this much nearer (or the inverse farther), within the zoom limits. */
+const ZOOM_STEP = 0.8
+/** How quickly a zoom step eases to its distance (s). */
+const ZOOM_EASE_S = 0.12
+
+/**
+ * The + / − buttons' zoom (owner, 2026-11-25: the wheel scrolled the viewer instead of the page, so
+ * no wheel zoom): each press eases the camera nearer or farther along its line to the model,
+ * between ZOOM_IN and ZOOM_OUT of the framed distance.
+ */
+function ZoomStep({
+  zoom,
+  framedRef,
+}: {
+  zoom: { n: number; dir: 1 | -1 }
+  framedRef: { current: number | null }
+}) {
+  const camera = useThree((state) => state.camera)
+  const controls = useThree((state) => state.controls) as unknown as OrbitTarget | null
+  const goal = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (zoom.n === 0 || !controls) return
+    const from = goal.current ?? camera.position.distanceTo(controls.target)
+    const framed = framedRef.current ?? from
+    const next = zoom.dir > 0 ? from * ZOOM_STEP : from / ZOOM_STEP
+    goal.current = Math.min(framed * ZOOM_OUT, Math.max(framed * ZOOM_IN, next))
+  }, [zoom, camera, controls, framedRef])
+
+  useFrame((_, delta) => {
+    const g = goal.current
+    if (g === null || !controls) return
+    const offset = camera.position.clone().sub(controls.target)
+    const d = offset.length()
+    const next = d + (g - d) * (1 - Math.exp(-delta / ZOOM_EASE_S))
+    camera.position.copy(controls.target).addScaledVector(offset.normalize(), next)
+    controls.update()
+    if (Math.abs(next - g) < 0.0005) goal.current = null
+  })
+  return null
+}
+
 function ZoomLimits({ framedRef }: { framedRef: { current: number | null } }) {
   useFrame((state) => {
     const controls = state.controls as unknown as DistanceControls | null
@@ -272,6 +317,8 @@ export default function ModelViewer({
 }: ModelViewerProps) {
   const shaderError = useRef(false)
   const framedRef = useRef<number | null>(null)
+  const [zoom, setZoom] = useState<{ n: number; dir: 1 | -1 }>({ n: 0, dir: 1 })
+  const step = (dir: 1 | -1) => setZoom((z) => ({ n: z.n + 1, dir }))
   const onCreated = ({ gl }: { gl: WebGLRenderer }) => {
     // Three only logs a shader that fails to compile; the checker must know.
     gl.debug.onShaderError = () => {
@@ -303,10 +350,34 @@ export default function ModelViewer({
             </Bounds>
           </Suspense>
         </LoadBoundary>
-        <OrbitControls makeDefault />
+        {/* No wheel (or pinch) zoom: over the viewer the wheel scrolls the page; + / − zoom. */}
+        <OrbitControls makeDefault enableZoom={false} />
         <ZoomLimits framedRef={framedRef} />
+        <ZoomStep zoom={zoom} framedRef={framedRef} />
       </Canvas>
       {hint && <span className={styles.hint}>{hint}</span>}
+      <div className={styles.zoom} role="group" aria-label="Zoom">
+        <Button
+          variant="secondary"
+          size="small"
+          font="dashboard"
+          className={styles.zoomButton}
+          aria-label="Zoom in"
+          onClick={() => step(1)}
+        >
+          <Plus size={16} weight="light" aria-hidden />
+        </Button>
+        <Button
+          variant="secondary"
+          size="small"
+          font="dashboard"
+          className={styles.zoomButton}
+          aria-label="Zoom out"
+          onClick={() => step(-1)}
+        >
+          <Minus size={16} weight="light" aria-hidden />
+        </Button>
+      </div>
     </div>
   )
 }
