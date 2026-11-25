@@ -15,7 +15,7 @@ import {
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 // drei's GLTFLoader is three-stdlib's: its KTX2 loader must be too (as drei's useKTX2).
 import { KTX2Loader } from 'three-stdlib'
-import { Minus, Plus } from '@phosphor-icons/react'
+import { MagnifyingGlassMinus, MagnifyingGlassPlus } from '@phosphor-icons/react'
 
 import { Button } from '@/components/ui/Button'
 
@@ -365,7 +365,7 @@ export default function ModelViewer({
           aria-label="Zoom in"
           onClick={() => step(1)}
         >
-          <Plus size={16} weight="light" aria-hidden />
+          <MagnifyingGlassPlus size={18} weight="light" aria-hidden />
         </Button>
         <Button
           variant="secondary"
@@ -375,7 +375,7 @@ export default function ModelViewer({
           aria-label="Zoom out"
           onClick={() => step(-1)}
         >
-          <Minus size={16} weight="light" aria-hidden />
+          <MagnifyingGlassMinus size={18} weight="light" aria-hidden />
         </Button>
       </div>
     </div>
