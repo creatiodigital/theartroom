@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import {
   ArrowCounterClockwise,
   ArrowClockwise,
@@ -12,8 +12,16 @@ import c from 'classnames'
 import { Button } from '@/components/ui/Button'
 import { SegmentStrip } from '@/components/wallview/chrome'
 import type { FloorArtwork } from '@/lib/floor/floorArtworks'
-import type { FloorItem, FloorPedestal } from '@/lib/floor/floorLayout'
 import {
+  FLOOR_FACES,
+  isSideFace,
+  withShape,
+  type FloorFace,
+  type FloorItem,
+  type FloorPedestal,
+} from '@/lib/floor/floorLayout'
+import {
+  attachTo,
   childrenOf,
   descendantsOf,
   detachItem,
@@ -29,9 +37,11 @@ import {
   pedestalMaterial,
   pedestalOutline,
   pedestalShape,
+  type PedestalColour,
   type PedestalEdges,
   type PedestalFinish,
 } from '@/lib/floor/pedestals'
+import { assetUrl } from '@/lib/assetUrl'
 
 import type { FloorEditor } from './useFloorEditor'
 import type { FloorRoom } from './useFloorRooms'
@@ -46,6 +56,38 @@ import styles from './FloorView.module.scss'
  * colour and place. Several picked: align, distribute, group.
  */
 const RAD = Math.PI / 180
+
+const FACE_LABEL: Record<FloorFace, string> = {
+  top: 'Top',
+  bottom: 'Bottom',
+  front: 'Front',
+  back: 'Back',
+  left: 'Left',
+  right: 'Right',
+}
+
+/** The three turns, each about the item's own centre ('YXZ': Turn first, then tilt and lean). */
+const TURNS = [
+  { key: 'rotX', label: 'Tilt forward / back', step: 15 },
+  { key: 'rotY', label: 'Turn', step: 90 },
+  { key: 'rotZ', label: 'Lean left / right', step: 15 },
+] as const
+
+/** Degrees in (−180, 180]. */
+const normDeg = (a: number) => {
+  const d = ((a % 360) + 360) % 360
+  return d > 180 ? d - 360 : d
+}
+
+/** A colour swatch: a wood shows its own texture (the frames' diffuse map). */
+const swatchStyle = (col: PedestalColour): CSSProperties =>
+  col.texture
+    ? {
+        backgroundColor: col.hex,
+        backgroundImage: `url('${assetUrl(`/assets/materials/wooden-frame-${col.texture}/diffuse.jpg?v=3`)}')`,
+        backgroundSize: 'cover',
+      }
+    : { background: col.hex }
 
 function NumberField({
   label,
@@ -170,10 +212,9 @@ export function FloorInspector({
   onSelect,
   onDuplicate,
 }: Props) {
-  const { layout } = editor
+  const { layout, sizes } = editor
   const items = layout.items.filter((i) => selectedIds.includes(i.id))
-  const [confirmRemove, setConfirmRemove] = useState<FloorPedestal | null>(null)
-  const { sizes } = editor
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null)
   const at = placeMap(layout, sizes)
 
   if (items.length === 0) {
@@ -192,6 +233,27 @@ export function FloorInspector({
 
   const item = items[0]
   const where = at.get(item.id)!
+  const parent = item.parentId ? layout.items.find((i) => i.id === item.parentId) : undefined
+  const children = childrenOf(layout, item.id)
+  const setItem = (next: FloorItem) =>
+    editor.update((all) => all.map((i) => (i.id === item.id ? next : i)))
+  // A new size: what is attached to it stays on its faces (re-centred if it fell off).
+  const resized = (next: FloorItem) =>
+    editor.commit(
+      keepChildrenOnFaces(
+        { ...layout, items: layout.items.map((i) => (i.id === item.id ? next : i)) },
+        item.id,
+        sizes,
+      ),
+    )
+  // Removing it alone leaves what is attached to it where it is; "Remove too" takes all of it.
+  const remove = (alsoAttached: boolean) => {
+    const ids = new Set([item.id, ...(alsoAttached ? descendantsOf(layout, item.id) : [])])
+    editor.commit(removeItems(layout, ids, sizes))
+    setConfirmRemove(null)
+    onSelect([])
+  }
+
   const lock = (
     <Button
       variant="bare"
@@ -208,7 +270,7 @@ export function FloorInspector({
     </Button>
   )
 
-  // Where it stands, from the west and north walls (cm); moving it there.
+  // Where it is, from the west and north walls (cm); moving it there (attached: on its face).
   const fromWest = (where.x - room.minX) * 100
   const fromNorth = (where.z - room.minZ) * 100
   const moveTo = (westCm: number, northCm: number) => {
@@ -219,68 +281,222 @@ export function FloorInspector({
       editor.patchItem(item.id, { x, z })
       return
     }
-    // Attached: it slides on its face (on a side, only across it).
     const slid = slideOnFace(item, parentAt, x - where.x, z - where.z)
     editor.patchItem(item.id, { offsetX: slid.offsetX, offsetZ: slid.offsetZ })
   }
-  const place = (
-    <Section title="Position">
-      <div className={styles.pair}>
-        <NumberField
-          label="From west wall"
-          unit="cm"
-          value={fromWest}
-          disabled={item.locked}
-          onChange={(v) => moveTo(v, fromNorth)}
-        />
-        <NumberField
-          label="From north wall"
-          unit="cm"
-          value={fromNorth}
-          disabled={item.locked}
-          onChange={(v) => moveTo(fromWest, v)}
-        />
-      </div>
-    </Section>
+  const fromWalls = (
+    <div className={styles.pair}>
+      <NumberField
+        label="From west wall"
+        unit="cm"
+        value={fromWest}
+        disabled={item.locked}
+        onChange={(v) => moveTo(v, fromNorth)}
+      />
+      <NumberField
+        label="From north wall"
+        unit="cm"
+        value={fromNorth}
+        disabled={item.locked}
+        onChange={(v) => moveTo(fromWest, v)}
+      />
+    </div>
   )
 
-  const rotation = (
-    <Section title="Rotation">
-      <div className={styles.rotateRow}>
-        <NumberField
-          label="Turn"
-          unit="°"
-          value={where.rotY}
-          disabled={item.locked}
-          onChange={(v) => editor.patchItem(item.id, { rotY: item.rotY + (v - where.rotY) })}
-        />
+  // One "where" for both kinds (floor composing): free, or on a face of another item.
+  const place = parent ? (
+    <>
+      <div className={styles.onPedestal}>
+        <span>
+          <b>
+            On {names[parent.id]} · {FACE_LABEL[item.face]}
+          </b>
+          <span>Moves with it</span>
+        </span>
         <Button
           variant="secondary"
           size="small"
           font="dashboard"
-          aria-label="Turn 90° left"
           disabled={item.locked}
-          onClick={() => editor.patchItem(item.id, { rotY: item.rotY + 90 })}
+          onClick={() => setItem(detachItem(layout, item, sizes))}
         >
-          <ArrowCounterClockwise size={16} aria-hidden />
-        </Button>
-        <Button
-          variant="secondary"
-          size="small"
-          font="dashboard"
-          aria-label="Turn 90° right"
-          disabled={item.locked}
-          onClick={() => editor.patchItem(item.id, { rotY: item.rotY - 90 })}
-        >
-          <ArrowClockwise size={16} aria-hidden />
+          Detach
         </Button>
       </div>
+      <Section title="Face">
+        <Segments<FloorFace>
+          label="Face"
+          options={FLOOR_FACES.map((f) => ({ id: f, label: FACE_LABEL[f] }))}
+          value={item.face}
+          onChange={(face) => setItem(attachTo(layout, item, parent.id, face, null, sizes))}
+        />
+        <span className={styles.hint}>
+          The side of {names[parent.id]} it is on. On a side it faces out, its back against it.
+        </span>
+      </Section>
+      {isSideFace(item.face) ? (
+        <Section title="On the face">
+          <div className={styles.triple}>
+            <NumberField
+              label="Across"
+              unit="cm"
+              value={item.offsetX}
+              disabled={item.locked}
+              onChange={(v) => editor.patchItem(item.id, { offsetX: v })}
+            />
+            <NumberField
+              label="Up"
+              unit="cm"
+              value={item.offsetY}
+              disabled={item.locked}
+              onChange={(v) => editor.patchItem(item.id, { offsetY: v })}
+            />
+            <NumberField
+              label="Gap"
+              unit="cm"
+              value={item.lift}
+              min={0}
+              max={1000}
+              disabled={item.locked}
+              onChange={(v) => editor.patchItem(item.id, { lift: v })}
+            />
+          </div>
+          <span className={styles.hint}>
+            From the middle of the face: across to the right looking at it, up, and out from it.
+          </span>
+        </Section>
+      ) : (
+        <Section title="Position">
+          {fromWalls}
+          <NumberField
+            label="Raised"
+            unit="cm"
+            hint={item.face === 'top' ? 'above the top' : 'below the bottom'}
+            value={item.lift}
+            min={0}
+            max={1000}
+            disabled={item.locked}
+            onChange={(v) => editor.patchItem(item.id, { lift: v })}
+          />
+        </Section>
+      )}
+    </>
+  ) : (
+    <>
+      <Section title="Position">{fromWalls}</Section>
+      <Section title="Height">
+        <NumberField
+          label="Height above the floor"
+          unit="cm"
+          hint="its lowest point"
+          value={item.lift}
+          min={0}
+          max={1000}
+          disabled={item.locked}
+          onChange={(v) => editor.patchItem(item.id, { lift: v })}
+        />
+      </Section>
+    </>
+  )
+
+  const turn = (key: (typeof TURNS)[number]['key'], deg: number) =>
+    editor.patchItem(item.id, { [key]: normDeg(deg) } as Partial<FloorPedestal>)
+  const rotation = (
+    <Section title="Rotation">
+      {TURNS.map((t) => (
+        <div key={t.key} className={styles.rotateRow}>
+          <NumberField
+            label={t.label}
+            unit="°"
+            value={item[t.key]}
+            disabled={item.locked}
+            onChange={(v) => turn(t.key, v)}
+          />
+          <Button
+            variant="secondary"
+            size="small"
+            font="dashboard"
+            aria-label={`${t.label}: ${t.step}° one way`}
+            disabled={item.locked}
+            onClick={() => turn(t.key, item[t.key] + t.step)}
+          >
+            <ArrowCounterClockwise size={16} aria-hidden />
+          </Button>
+          <Button
+            variant="secondary"
+            size="small"
+            font="dashboard"
+            aria-label={`${t.label}: ${t.step}° the other way`}
+            disabled={item.locked}
+            onClick={() => turn(t.key, item[t.key] - t.step)}
+          >
+            <ArrowClockwise size={16} aria-hidden />
+          </Button>
+          <Button
+            variant="secondary"
+            size="small"
+            font="dashboard"
+            disabled={item.locked || item[t.key] === 0}
+            onClick={() => turn(t.key, 0)}
+          >
+            Reset
+          </Button>
+        </div>
+      ))}
       <span className={styles.hint}>
-        Turns around its own vertical axis. On the plan, the handle snaps every 15°; hold Shift to
-        turn freely.
+        {parent
+          ? `From its rest on ${names[parent.id]}; whatever the turn, it keeps touching it.`
+          : 'About its own centre; tilted, it still rests on its lowest point. On the plan, the handle turns it (15° steps; Shift: freely).'}
       </span>
     </Section>
   )
+
+  const attached = (
+    <Section title="Attached">
+      {children.length ? (
+        <ul className={styles.onTopList}>
+          {children.map((o) => (
+            <li key={o.id}>
+              <Button variant="bare" className={styles.link} onClick={() => onSelect([o.id])}>
+                {names[o.id]} · {FACE_LABEL[o.face]}
+              </Button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <span className={styles.hint}>
+          In the 3D, drag an item onto any of its sides (on the plan, an Object onto its top): it
+          stays there and moves with it.
+        </span>
+      )}
+    </Section>
+  )
+
+  const removeConfirm = confirmRemove === item.id && (
+    <div role="alertdialog" aria-label={`Remove ${names[item.id]}`} className={styles.confirm}>
+      <p>
+        Also remove {children.map((o) => names[o.id]).join(', ')}, or keep{' '}
+        {children.length === 1 ? 'it' : 'them'} on the floor?
+      </p>
+      <div className={styles.confirmActions}>
+        <Button
+          variant="secondary"
+          size="small"
+          font="dashboard"
+          onClick={() => setConfirmRemove(null)}
+        >
+          Cancel
+        </Button>
+        <Button variant="secondary" size="small" font="dashboard" onClick={() => remove(false)}>
+          Keep on the floor
+        </Button>
+        <Button variant="danger" size="small" font="dashboard" onClick={() => remove(true)}>
+          Remove too
+        </Button>
+      </div>
+    </div>
+  )
+  const askRemove = () => (children.length ? setConfirmRemove(item.id) : remove(false))
 
   if (item.kind === 'object') {
     const artwork = artworks[item.artworkId]
@@ -292,9 +508,7 @@ export function FloorInspector({
     const now = sizeText(item.scale)
     const uploaded = b ? sizeText(1) : null
     const scaleTo = (target: number, side: number) =>
-      editor.patchItem(item.id, { scale: Math.min(20, Math.max(0.05, target / side)) })
-    const parent = item.parentId ? layout.items.find((i) => i.id === item.parentId) : undefined
-    const heightCm = where.y * 100
+      resized({ ...item, scale: Math.min(20, Math.max(0.05, target / side)) })
     return (
       <aside className={styles.inspector} aria-label={names[item.id]}>
         <div className={styles.inspectorHead}>
@@ -314,43 +528,7 @@ export function FloorInspector({
             </Button>
           )}
         </div>
-        {parent && (
-          <div className={styles.onPedestal}>
-            <span>
-              <b>On {names[parent.id]}</b>
-              <span>Moves with it</span>
-            </span>
-            <Button
-              variant="secondary"
-              size="small"
-              font="dashboard"
-              onClick={() =>
-                editor.update((all) =>
-                  all.map((i) => (i.id === item.id ? detachItem(layout, item, sizes) : i)),
-                )
-              }
-            >
-              Detach
-            </Button>
-          </div>
-        )}
         {place}
-        <Section title="Height">
-          <NumberField
-            label="Height above the floor"
-            unit="cm"
-            hint={parent ? `on ${names[parent.id]}` : undefined}
-            value={heightCm}
-            min={0}
-            max={1000}
-            disabled={item.locked || (!!parent && item.face !== 'top')}
-            onChange={(v) =>
-              editor.patchItem(item.id, {
-                lift: parent ? Math.max(0, item.lift + v - heightCm) : v,
-              })
-            }
-          />
-        </Section>
         {rotation}
         <Section title="Size">
           {b ? (
@@ -388,7 +566,7 @@ export function FloorInspector({
               min={5}
               max={2000}
               disabled={item.locked}
-              onChange={(v) => editor.patchItem(item.id, { scale: v / 100 })}
+              onChange={(v) => resized({ ...item, scale: v / 100 })}
             />
           )}
           <span className={styles.hint}>
@@ -399,12 +577,13 @@ export function FloorInspector({
             <Button
               variant="bare"
               className={styles.link}
-              onClick={() => editor.patchItem(item.id, { scale: 1 })}
+              onClick={() => resized({ ...item, scale: 1 })}
             >
               Back to the uploaded size
             </Button>
           )}
         </Section>
+        {children.length > 0 && attached}
         <Section title="Light">
           <label className={styles.switchRow}>
             <span>
@@ -420,18 +599,11 @@ export function FloorInspector({
           </label>
         </Section>
         <div className={styles.inspectorFoot}>
-          <Button
-            variant="secondary"
-            size="small"
-            font="dashboard"
-            onClick={() => {
-              editor.commit(removeItems(layout, new Set([item.id]), sizes))
-              onSelect([])
-            }}
-          >
+          <Button variant="secondary" size="small" font="dashboard" onClick={askRemove}>
             Remove from the floor
           </Button>
         </div>
+        {removeConfirm}
       </aside>
     )
   }
@@ -440,24 +612,8 @@ export function FloorInspector({
   const p = item
   const shape = pedestalShape(p.shape)
   const material = pedestalMaterial(p.material)
-  const onTop = childrenOf(layout, p.id)
-  const resize = (patch: Partial<FloorPedestal>) => {
-    const next = { ...p, ...patch }
-    editor.commit(
-      keepChildrenOnFaces(
-        { ...layout, items: layout.items.map((i) => (i.id === p.id ? next : i)) },
-        p.id,
-        sizes,
-      ),
-    )
-  }
-  // Removing it alone leaves what is attached to it where it is; "Remove too" takes all of it.
-  const removePedestal = (alsoAttached: boolean) => {
-    const ids = new Set([p.id, ...(alsoAttached ? descendantsOf(layout, p.id) : [])])
-    editor.commit(removeItems(layout, ids, sizes))
-    setConfirmRemove(null)
-    onSelect([])
-  }
+  const pedestals = layout.items.filter((i): i is FloorPedestal => i.kind === 'pedestal')
+  const resize = (patch: Partial<FloorPedestal>) => resized({ ...p, ...patch })
   return (
     <aside className={styles.inspector} aria-label={p.name}>
       <div className={styles.inspectorHead}>
@@ -480,10 +636,7 @@ export function FloorInspector({
               className={c(styles.shapeTile, s.id === p.shape && styles.shapeOn)}
               aria-pressed={s.id === p.shape}
               title={`${s.label}: ${s.sub}`}
-              onClick={() => {
-                const d = s.round || s.equal ? p.w : p.d
-                resize({ shape: s.id, d, h: s.equal ? p.w : p.h })
-              }}
+              onClick={() => resized(withShape(p, s.id, pedestals))}
             >
               <ShapeIcon id={s.id} />
               <span>{s.label}</span>
@@ -498,7 +651,7 @@ export function FloorInspector({
               label="Side"
               unit="cm"
               value={p.w}
-              min={5}
+              min={1}
               max={600}
               disabled={p.locked}
               onChange={(v) => resize({ w: v, d: v, h: v })}
@@ -509,7 +662,7 @@ export function FloorInspector({
                 label="Diameter"
                 unit="cm"
                 value={p.w}
-                min={5}
+                min={1}
                 max={600}
                 disabled={p.locked}
                 onChange={(v) => resize({ w: v, d: v })}
@@ -530,7 +683,7 @@ export function FloorInspector({
                 label="Width"
                 unit="cm"
                 value={p.w}
-                min={5}
+                min={1}
                 max={600}
                 disabled={p.locked}
                 onChange={(v) => resize({ w: v })}
@@ -539,7 +692,7 @@ export function FloorInspector({
                 label="Depth"
                 unit="cm"
                 value={p.d}
-                min={5}
+                min={1}
                 max={600}
                 disabled={p.locked}
                 onChange={(v) => resize({ d: v })}
@@ -580,7 +733,7 @@ export function FloorInspector({
             >
               <span
                 className={styles.materialDot}
-                style={{ background: m.colours[0].hex }}
+                style={swatchStyle(m.colours[0])}
                 aria-hidden
               />
               {m.label}
@@ -595,7 +748,7 @@ export function FloorInspector({
               key={col.id}
               variant="bare"
               className={c(styles.swatch, col.id === p.colour && styles.swatchOn)}
-              style={{ background: col.hex }}
+              style={swatchStyle(col)}
               aria-label={col.label}
               aria-pressed={col.id === p.colour}
               title={col.label}
@@ -627,82 +780,17 @@ export function FloorInspector({
         )}
       </Section>
       {place}
-      <Section title="Height above the floor">
-        <NumberField
-          label="Raised"
-          unit="cm"
-          value={p.lift}
-          min={0}
-          max={1000}
-          disabled={p.locked}
-          onChange={(v) => editor.patchItem(p.id, { lift: v })}
-        />
-      </Section>
       {rotation}
-      <Section title="On top">
-        {onTop.length ? (
-          <ul className={styles.onTopList}>
-            {onTop.map((o) => (
-              <li key={o.id}>
-                <Button variant="bare" className={styles.link} onClick={() => onSelect([o.id])}>
-                  {names[o.id]}
-                </Button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <span className={styles.hint}>
-            Drag an Object onto its top: it sits there and moves with it.
-          </span>
-        )}
-      </Section>
+      {attached}
       <div className={styles.inspectorFoot}>
         <Button variant="secondary" size="small" font="dashboard" onClick={() => onDuplicate(p)}>
           Duplicate
         </Button>
-        <Button
-          variant="secondary"
-          size="small"
-          font="dashboard"
-          onClick={() => (onTop.length ? setConfirmRemove(p) : removePedestal(false))}
-        >
+        <Button variant="secondary" size="small" font="dashboard" onClick={askRemove}>
           Remove
         </Button>
       </div>
-      {confirmRemove && (
-        <div role="alertdialog" aria-label="Remove the pedestal" className={styles.confirm}>
-          <p>
-            Also remove {onTop.map((o) => names[o.id]).join(', ')}, or keep{' '}
-            {onTop.length === 1 ? 'it' : 'them'} on the floor?
-          </p>
-          <div className={styles.confirmActions}>
-            <Button
-              variant="secondary"
-              size="small"
-              font="dashboard"
-              onClick={() => setConfirmRemove(null)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="secondary"
-              size="small"
-              font="dashboard"
-              onClick={() => removePedestal(false)}
-            >
-              Keep on the floor
-            </Button>
-            <Button
-              variant="danger"
-              size="small"
-              font="dashboard"
-              onClick={() => removePedestal(true)}
-            >
-              Remove too
-            </Button>
-          </div>
-        </div>
-      )}
+      {removeConfirm}
     </aside>
   )
 }

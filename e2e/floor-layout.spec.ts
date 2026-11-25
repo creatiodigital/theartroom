@@ -5,7 +5,9 @@ import { boardUVs } from '../src/components/scene/floor/boardUVs'
 import { WOOD_TILE_M } from '../src/components/scene/spaces/objects/Frame/woodTextures'
 
 import {
+  nextName,
   parseFloorLayout,
+  withShape,
   withoutArtwork,
   type FloorItem,
   type FloorObject,
@@ -496,4 +498,22 @@ test('a move on the plan slides an attached item along its face (across only on 
   const slid = slideOnFace(o, at(layoutOf(p, o), 'p1'), 0, -0.1)
   expect(slid.offsetX).toBeCloseTo(11)
   expect(slid.offsetZ).toBeCloseTo(1)
+})
+
+test('switching to Plank gives its size and dark wood; an automatic name follows the shape', () => {
+  const p = pedestal({ name: 'Pedestal 3' })
+  const other = pedestal({ id: 'x', name: 'Plank 1', shape: 'plank' })
+  const board = withShape(p, 'plank', [other, p])
+  expect([board.shape, board.w, board.d, board.h]).toEqual(['plank', 20, 3, 100])
+  expect([board.material, board.colour, board.finish, board.name]).toEqual(['wood', 'dark', 'satin', 'Plank 2'])
+  // Back to a box: its sizes stay (as any shape change), its name follows.
+  const back = withShape(board, 'box', [other, board])
+  expect([back.shape, back.name, back.w, back.d, back.h]).toEqual(['box', 'Pedestal 1', 20, 3, 100])
+  // A name the artist chose stays.
+  expect(withShape({ ...p, name: 'Big block' }, 'plank', [p]).name).toBe('Big block')
+  // Equal sides: one size for all three.
+  const cube = withShape(p, 'cube', [p])
+  expect([cube.w, cube.d, cube.h]).toEqual([40, 40, 40])
+  expect(nextName('Pedestal', ['Pedestal 2', 'Plank 7', 'Pedestal 9', 'Mine'])).toBe('Pedestal 10')
+  expect(nextName('Plank', [])).toBe('Plank 1')
 })

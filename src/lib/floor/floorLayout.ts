@@ -24,6 +24,8 @@ import {
   PEDESTAL_DEFAULT_LOOK,
   PEDESTAL_MATERIALS,
   PEDESTAL_SHAPES,
+  PLANK_LOOK,
+  pedestalShape,
   WOOD_ALIASES,
   type PedestalEdges,
   type PedestalFinish,
@@ -269,3 +271,36 @@ export function withoutArtwork(layout: FloorLayout, artworkId: string): FloorLay
 export const floorArtworkIds = (layout: FloorLayout) => [
   ...new Set(layout.items.flatMap((i) => (i.kind === 'object' ? [i.artworkId] : []))),
 ]
+
+/** The next free automatic name for a prefix: "Pedestal 4", "Plank 1". */
+export function nextName(prefix: 'Pedestal' | 'Plank', names: string[]): string {
+  const used = names.flatMap((n) => {
+    const m = new RegExp(`^${prefix} (\\d+)$`).exec(n)
+    return m ? [Number(m[1])] : []
+  })
+  return `${prefix} ${(used.length ? Math.max(...used) : 0) + 1}`
+}
+
+const AUTO_NAME = /^(Pedestal|Plank) \d+$/
+
+/**
+ * A pedestal switched to another shape: its sizes stay (a round or equal shape takes its rules),
+ * except a Plank, which takes a plank's size and look (dark wood). An automatic name follows the
+ * shape ("Pedestal 3" → "Plank 1"); a name the artist chose stays. `all` is every pedestal on the floor.
+ */
+export function withShape(p: FloorPedestal, shapeId: PedestalShapeId, all: FloorPedestal[]): FloorPedestal {
+  const s = pedestalShape(shapeId)
+  const sized =
+    s.id === 'plank' && p.shape !== 'plank'
+      ? { ...s.defaults, ...PLANK_LOOK }
+      : { w: p.w, d: s.round || s.equal ? p.w : p.d, h: s.equal ? p.w : p.h }
+  const prefix = s.id === 'plank' ? 'Plank' : 'Pedestal'
+  const renamed =
+    AUTO_NAME.test(p.name) && !p.name.startsWith(`${prefix} `)
+      ? nextName(
+          prefix,
+          all.filter((o) => o.id !== p.id).map((o) => o.name),
+        )
+      : p.name
+  return { ...p, ...sized, shape: s.id, name: renamed }
+}

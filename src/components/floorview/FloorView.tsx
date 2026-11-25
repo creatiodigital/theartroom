@@ -19,7 +19,12 @@ import c from 'classnames'
 import { Button } from '@/components/ui/Button'
 import { SegmentStrip } from '@/components/wallview/chrome'
 import type { FloorArtwork } from '@/lib/floor/floorArtworks'
-import { type FloorItem, type FloorObject, type FloorPedestal } from '@/lib/floor/floorLayout'
+import {
+  nextName,
+  type FloorItem,
+  type FloorObject,
+  type FloorPedestal,
+} from '@/lib/floor/floorLayout'
 import { detachItem, dropItem, removeItems } from '@/lib/floor/floorPlacement'
 import { PEDESTAL_DEFAULT_LOOK, pedestalShape } from '@/lib/floor/pedestals'
 import { addFloorArtworks } from '@/redux/slices/exhibitionSlice'
@@ -195,12 +200,14 @@ export function FloorView() {
     [dispatch, editor, helpers.snapPedestals, layout, placedObjects, room, select],
   )
 
-  const nextPedestalName = useCallback(() => {
-    const used = layout.items
-      .filter((i): i is FloorPedestal => i.kind === 'pedestal')
-      .map((p) => Number(/(\d+)$/.exec(p.name)?.[1] ?? 0))
-    return `Pedestal ${(used.length ? Math.max(...used) : 0) + 1}`
-  }, [layout.items])
+  const nextPedestalName = useCallback(
+    (shape: string = 'box') =>
+      nextName(
+        shape === 'plank' ? 'Plank' : 'Pedestal',
+        layout.items.flatMap((i) => (i.kind === 'pedestal' ? [i.name] : [])),
+      ),
+    [layout.items],
+  )
 
   const addPedestal = useCallback(
     (x: number, z: number, from?: FloorPedestal) => {
@@ -211,7 +218,7 @@ export function FloorView() {
         ? {
             ...detachItem(layout, from, editor.sizes),
             id: newId('p'),
-            name: nextPedestalName(),
+            name: nextPedestalName(from.shape),
             x,
             z,
             locked: false,
