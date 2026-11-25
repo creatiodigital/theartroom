@@ -18,16 +18,15 @@
   justify-content: center;
   min-width: var(--space-10);
   min-height: var(--space-8);
-  padding: 0 var(--space-3);
+  // Optical centring: "cm" and "in" have nothing tall, so in the font's box their letters sat
+  // 1.75 px low (measured); half of this bottom padding lifts them back to the middle.
+  padding: 0 var(--space-3) calc(var(--space-1) * 0.875);
   border: 0;
   border-radius: 0;
   background: transparent;
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: var(--text-sm);
   line-height: 1;
-  // Lower-case words with nothing tall ("cm", "in"): trim the line to the x-height so the letters
-  // themselves sit in the middle, not the font's taller box (owner, 2026-11-25).
-  text-box: trim-both ex alphabetic;
   color: var(--color-text-secondary);
   cursor: pointer;
 
