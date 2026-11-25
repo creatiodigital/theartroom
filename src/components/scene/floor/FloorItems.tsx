@@ -4,15 +4,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Line, useGLTF } from '@react-three/drei'
 import { useThree, type ThreeEvent } from '@react-three/fiber'
-import {
-  Box3,
-  DoubleSide,
-  Matrix4,
-  Quaternion,
-  type Mesh,
-  type Object3D,
-  type WebGLRenderer,
-} from 'three'
+import { Box3, type Mesh, type Object3D, type WebGLRenderer } from 'three'
 // drei's GLTFLoader is three-stdlib's: its KTX2 loader must be too.
 import { KTX2Loader } from 'three-stdlib'
 
@@ -21,7 +13,6 @@ import { floorSizes, type FloorArtwork, type FloorSizes } from '@/lib/floor/floo
 import type { FloorLayout, FloorObject, FloorPedestal } from '@/lib/floor/floorLayout'
 import {
   belowFloor,
-  faceFrame,
   modelOffset,
   overhangs,
   placeAll,
@@ -37,7 +28,7 @@ import { setFocusTarget } from '@/redux/slices/sceneSlice'
 import type { RootState } from '@/redux/store'
 
 import { pedestalGeometry } from './pedestalGeometry'
-import { useFloorDrag, type FaceHover } from './useFloorDrag'
+import { useFloorDrag } from './useFloorDrag'
 
 /** The Floor view's press on an item (picking, dragging); absent for visitors. */
 type FloorDown = (event: ThreeEvent<PointerEvent>, id: string) => void
@@ -75,7 +66,11 @@ export function pedestalLook(p: FloorPedestal) {
   const colour = material.colours.find((c) => c.id === p.colour)
   return {
     // Wood: the texture is the colour.
-    color: colour?.texture ? '#ffffff' : p.colour.startsWith('#') ? p.colour : (colour?.hex ?? material.colours[0].hex),
+    color: colour?.texture
+      ? '#ffffff'
+      : p.colour.startsWith('#')
+        ? p.colour
+        : (colour?.hex ?? material.colours[0].hex),
     roughness: material.finishes ? FINISH_ROUGHNESS[p.finish] : material.roughness,
     metalness: material.metalness,
     transparent: material.opacity !== undefined,
@@ -134,12 +129,7 @@ function Pedestal({
       {/* The geometry stands on y = 0: its centre to the group's. */}
       <mesh geometry={geometry} position={[0, -p.h / 200, 0]} userData={{ floorItemId: p.id }}>
         {wood ? (
-          <meshStandardMaterial
-            key="wood"
-            {...look}
-            {...wood}
-            normalScale={WOOD_NORMAL_SCALE}
-          />
+          <meshStandardMaterial key="wood" {...look} {...wood} normalScale={WOOD_NORMAL_SCALE} />
         ) : (
           <meshStandardMaterial key="flat" {...look} depthWrite={!look.transparent} />
         )}
@@ -341,43 +331,6 @@ function Selection({
   )
 }
 
-/** The face a dragged item would land on, tinted (the editor's blue); never baked, never hit. */
-function FaceHighlight({
-  hover,
-  placed,
-  floorY,
-}: {
-  hover: FaceHover
-  placed: { item: FloorObject | FloorPedestal; at: Placed }[]
-  floorY: number
-}) {
-  const at = hover ? placed.find(({ item }) => item.id === hover.id)?.at : undefined
-  if (!hover || !at) return null
-  const f = faceFrame(at, hover.face)
-  // The plane's own axes: across, then up so that across × up is the face's normal.
-  const up = f.normal.clone().cross(f.across)
-  const turn = new Quaternion().setFromRotationMatrix(new Matrix4().makeBasis(f.across, up, f.normal))
-  const centre = f.centre.clone().add(f.normal.clone().multiplyScalar(0.003))
-  return (
-    <mesh
-      position={[centre.x, floorY + centre.y, centre.z]}
-      quaternion={turn}
-      raycast={() => null}
-      renderOrder={10}
-      userData={{ bakeCaster: false }}
-    >
-      <planeGeometry args={[f.width, f.height]} />
-      <meshBasicMaterial
-        color={PICKED}
-        transparent
-        opacity={0.35}
-        depthWrite={false}
-        side={DoubleSide}
-      />
-    </mesh>
-  )
-}
-
 /** "Person for scale": a 1.70 m figure where the plan shows it; never baked. */
 function PersonForScale({ floorY }: { floorY: number }) {
   const { rooms } = useFloorRooms()
@@ -412,8 +365,8 @@ const FloorItems = () => {
   const placed = useMemo(() => (layout ? placeAll(layout, sizes) : []), [layout, sizes])
   // The Floor view only opens in the editor: there, the items are picked and dragged.
   const composing = isFloorView
-  const drag = useFloorDrag(composing ? (layout ?? null) : null, sizes, floorY)
-  const onFloorDown = composing ? drag.onDown : undefined
+  const floorDown = useFloorDrag(composing ? (layout ?? null) : null, floorY)
+  const onFloorDown = composing ? floorDown : undefined
 
   const urls = useMemo(
     () => [
@@ -444,7 +397,6 @@ const FloorItems = () => {
         <Selection placed={placed} layout={layout} sizes={sizes} floorY={floorY} />
       )}
       {isFloorView && person && <PersonForScale floorY={floorY} />}
-      {composing && <FaceHighlight hover={drag.hover} placed={placed} floorY={floorY} />}
       {placed.map(({ item, at }) => {
         if (item.kind === 'pedestal') {
           return (

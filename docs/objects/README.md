@@ -613,12 +613,14 @@ bounding box sides"; design docs/superpowers/specs/2026-11-25-floor-attach-any-s
 - Placement (`floorPlacement.ts`, three.js math, pure): one `placeAll(layout, sizes)` for plan, Inspector, editor,
   live 3D, room and bake; attached items always touch their face whatever their turn; free items rest by their
   lowest point; `attachTo`, `detachItem`, `dropItem`, `slideOnFace`, `keepChildrenOnFaces`, `removeItems`,
-  `overhangs`, `belowFloor`, `planOutline`, `faceUnderRay`. 24 pure tests in e2e/floor-layout.spec.ts.
+  `overhangs`, `belowFloor`, `planOutline`, `raiseBy`, `movingWith`. 28 pure tests in e2e/floor-layout.spec.ts.
 - Plank (20 × 3 × 100 cm, dark wood satin) in the shape picker; wood = the frames' PBR maps (`Frame/woodTextures.ts`,
   shared with Display), board UVs at real size, grain along the longest side.
-- Editing: live 3D — click picks, drag a picked item onto any face (highlighted) to attach; slide on its face; over
-  nothing it moves across the room; Shift up / down; Alt never attaches; Escape puts it back. Plan — Objects drop
-  onto a top or against a side of an item off the floor (middle height); attached items slide on their face.
+- Editing (after the owner's testing, 11-25): the live 3D ONLY moves up and down ("use the 3D view only to move the
+  object up and down"): a press on an item moves it, or the start of its chain ("if I click on the child, make it
+  move the parent, not the room"); Escape puts it back. Plan: Objects drop onto a top or against a side of an item
+  off the floor (middle height); attached items slide on their face; pinch zooms at the pointer, scroll / drag on
+  the background moves the view; no names on the plan; a pick from the list holds until the list picks another.
   Inspector — On … · Face card, face picker, Across / Up / Gap, Rotation X / Y / Z with Reset, Attached list.
 - Calls to check (spec "Builder check: calls made"): plan side attach only for Objects against raised items; 3D drag
   only for an already picked item; Tilt / Lean step 15°, Turn 90°; switching to Plank applies its size and look.

@@ -11,7 +11,7 @@
  *   offsets in the face's plane, pushed out along the face's normal until it touches (+ `lift`).
  * Chains resolve through their parents, so moving or turning the root carries everything on it.
  */
-import { Box3, Euler, Quaternion, Ray, Vector3 } from 'three'
+import { Euler, Quaternion, Vector3 } from 'three'
 
 import type { FloorSizes } from './floorArtworks'
 import {
@@ -253,46 +253,16 @@ export function slideOnFace<T extends FloorItem>(item: T, parent: Placed, dx: nu
     : { ...item, offsetX: item.offsetX + along(f.across), offsetZ: item.offsetZ + along(f.up) }
 }
 
-type Point = { x: number; y: number; z: number }
-
 /**
- * The live 3D's drag (floor composing): the nearest item's face a ray meets (world m, y from the
- * floor), in the room, never one in `exclude` (the dragged item and what is attached to it).
+ * The live 3D moves an item only up and down (owner, 2026-11-25: "use the 3D view only to move the
+ * object up and down"), by `dyCm`: free, its height above the floor; on a side, its Up; on a top,
+ * its gap above it; on a bottom, its gap below it. Never below the floor or into its face.
  */
-export function faceUnderRay(
-  layout: FloorLayout,
-  sizes: FloorSizes,
-  ray: { origin: Point; direction: Point },
-  room: number,
-  exclude: Set<string>,
-): { id: string; face: FloorFace; point: Vector3 } | null {
-  const places = placeMap(layout, sizes)
-  let best: { id: string; face: FloorFace; point: Vector3; t: number } | null = null
-  for (const item of layout.items) {
-    if (item.room !== room || exclude.has(item.id)) continue
-    const at = places.get(item.id)!
-    const toLocal = at.quaternion.clone().invert()
-    const centre = new Vector3(at.x, at.cy, at.z)
-    const local = new Ray(
-      new Vector3(ray.origin.x, ray.origin.y, ray.origin.z).sub(centre).applyQuaternion(toLocal),
-      new Vector3(ray.direction.x, ray.direction.y, ray.direction.z).normalize().applyQuaternion(toLocal),
-    )
-    const half = halfOf(at.size)
-    const hit = local.intersectBox(
-      new Box3(new Vector3(-half[0], -half[1], -half[2]), new Vector3(...half)),
-      new Vector3(),
-    )
-    if (!hit) continue
-    const t = hit.distanceTo(local.origin)
-    if (best && t >= best.t) continue
-    // The face: the axis the hit is furthest out on, for its size.
-    const r = [hit.x / half[0], hit.y / half[1], hit.z / half[2]]
-    const k = [0, 1, 2].reduce((m, i) => (Math.abs(r[i]) > Math.abs(r[m]) ? i : m), 0)
-    const face: FloorFace =
-      k === 0 ? (r[0] > 0 ? 'right' : 'left') : k === 1 ? (r[1] > 0 ? 'top' : 'bottom') : r[2] > 0 ? 'front' : 'back'
-    best = { id: item.id, face, point: hit.applyQuaternion(at.quaternion).add(centre), t }
-  }
-  return best && { id: best.id, face: best.face, point: best.point }
+export function raiseBy<T extends FloorItem>(item: T, dyCm: number): T {
+  const cap = (v: number) => Math.min(1000, Math.max(0, Math.round(v * 10) / 10))
+  if (!item.parentId || item.face === 'top') return { ...item, lift: cap(item.lift + dyCm) }
+  if (item.face === 'bottom') return { ...item, lift: cap(item.lift - dyCm) }
+  return { ...item, offsetY: Math.round((item.offsetY + dyCm) * 10) / 10 }
 }
 
 /** A world point (m) in an upright item's own plan frame (cm from its centre). */

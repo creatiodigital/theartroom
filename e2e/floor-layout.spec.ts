@@ -18,12 +18,12 @@ import {
   belowFloor,
   detachItem,
   dropItem,
-  faceUnderRay,
   keepChildrenOnFaces,
   modelOffset,
   movingWith,
   overhangs,
   placeMap,
+  raiseBy,
   removeItems,
   rotateOffset,
   sameSpots,
@@ -522,28 +522,6 @@ test('switching to Plank gives its size and dark wood; an automatic name follows
   expect(nextName('Plank', [])).toBe('Plank 1')
 })
 
-test('the 3D drag finds the face under the pointer: the nearest box, never itself', () => {
-  const layout = layoutOf(plank(), pedestal(), object({ id: 's', artworkId: 'alejandro', x: 0, z: -1 }))
-  // Looking straight at the plank's front from the room, at 1.5 m.
-  const ray = { origin: { x: 0, y: 1.5, z: 0 }, direction: { x: 0, y: 0, z: -1 } }
-  const front = faceUnderRay(layout, sizes, ray, 0, new Set(['s']))!
-  expect([front.id, front.face]).toEqual(['pl', 'front'])
-  expect(front.point.z).toBeCloseTo(-1.985)
-  expect(front.point.y).toBeCloseTo(1.5)
-  expect(faceUnderRay(layout, sizes, ray, 0, new Set(['s', 'pl']))).toBeNull()
-  // From above the pedestal: its top, at 90 cm.
-  const down = { origin: { x: 2.05, y: 3, z: 3 }, direction: { x: 0, y: -1, z: 0 } }
-  const top = faceUnderRay(layout, sizes, down, 0, new Set())!
-  expect([top.id, top.face]).toEqual(['p1', 'top'])
-  expect(top.point.y).toBeCloseTo(0.9)
-  // Turned 90°: the pedestal's left now faces +z.
-  const turned = layoutOf(pedestal({ rotY: 90 }))
-  const side = { origin: { x: 2, y: 0.5, z: 6 }, direction: { x: 0, y: 0, z: -1 } }
-  expect(faceUnderRay(turned, sizes, side, 0, new Set())!.face).toBe('left')
-  // Another room never counts.
-  expect(faceUnderRay(layout, sizes, down, 1, new Set())).toBeNull()
-})
-
 test('review: an Alt-dragged support off a top keeps its height; only an Object off a top lands on the floor', () => {
   const block = pedestal({ id: 'b', h: 120 })
   const board = plank({ parentId: 'b', face: 'top', lift: 0 })
@@ -585,4 +563,14 @@ test('what a drag moves: the dragged items and everything attached to them (neve
   const layout = layoutOf(block, board, s, other)
   expect([...movingWith(layout, ['b'])].sort()).toEqual(['b', 'pl', 's'])
   expect([...movingWith(layout, ['s'])]).toEqual(['s'])
+})
+
+test('the 3D moves only up and down: free = height, side = Up, top = gap above, bottom = gap below', () => {
+  expect(raiseBy(object({ lift: 10 }), 25).lift).toBe(35)
+  expect(raiseBy(object({ lift: 10 }), -25).lift).toBe(0)
+  const onSide = object({ parentId: 'pl', face: 'front', offsetY: 5, lift: 1 })
+  expect([raiseBy(onSide, -12).offsetY, raiseBy(onSide, -12).lift]).toEqual([-7, 1])
+  expect(raiseBy(object({ parentId: 'p1', face: 'top', lift: 2 }), 8).lift).toBe(10)
+  expect(raiseBy(object({ parentId: 'p1', face: 'bottom', lift: 2 }), -8).lift).toBe(10)
+  expect(raiseBy(object({ parentId: 'p1', face: 'bottom', lift: 2 }), 8).lift).toBe(0)
 })
