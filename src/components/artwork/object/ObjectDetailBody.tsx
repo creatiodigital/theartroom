@@ -164,6 +164,7 @@ export function ObjectDetailBody({
                 <UnitsSwitch />
               </span>
             )}
+            <span aria-hidden className={styles.divider} />
             <Button
               variant="secondary"
               label="Inquire"
