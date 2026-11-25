@@ -10,8 +10,9 @@ Copy in the boards is final unless marked "(board note)".
 - **Name: Object** (visitor and artist facing). Type key `object` next to image, text, sound, video, shape.
 - **The 3D space is a plus.** An Object is a full artwork without it: cover photo, photos and reels, details,
   description. Anyone must be able to explore an exhibition completely **without entering the 3D room**.
-- **Selling** (update 2026-11-23): like every artwork, an Object can be sold as **print** (a photograph of it, through
-  checkout) and/or as **unique** (by inquiry). Both live in the editor's **Sales** tab (`docs/unique-sales/README.md`).
+- **Selling** (owner 2026-11-25, supersedes 2026-11-23): an Object is sold as a **unique piece** (by inquiry) or not
+  for sale. **Objects never sell prints.** A print of a sculpture is a **separate Image artwork** made from a photo
+  of it (`docs/unique-sales/README.md`, "one artwork = one way of selling").
 
 ## What an Object has (artist's editor, in this order)
 1. **Cover photo** (required): the main thumbnail for library, grids, exhibition pages, sharing. Square crop for
@@ -119,6 +120,47 @@ Copy in the boards is final unless marked "(board note)".
   the boards show "64 × 38 × 31 cm". And the weight follows the cm | in switch: kg with cm, lb with inches ("18 kg",
   "39.7 lb"; `units.md` covers lengths only). Keep both? (Owner.)
 
+**O5 refinement (owner 2026-11-25):** the info column is cleaned up for images and Objects alike, see
+`docs/public-redesign/artwork.md` › "Info column, refined" (size under the year, no cm | in switch, quieter zoom).
+
+## O5b · The Object page IS the image artwork page (owner 2026-11-25) — supersedes O5's page layout
+Owner: "Design the 3D object page based on the image artwork page. The differences: a 3D viewer and a cover. The rest
+SHOULD BE the same. The supplementary images and reels: we already have that component on the image page (a nice
+carousel), use it. Technical info: keep the same format." No new board: **the live image artwork page is the design**
+(`ArtworkDetailBody`, `ArtworkInfoColumn`, `ArtworkViews`, `ArtworkBelowTheWork`, `ArtworkMediaGallery`). The old
+boards `objects-artwork-page-desktop/phone.dc.html` are **superseded**: do not follow them.
+
+Build the Object page from the image page's components, changing only these:
+1. **Stage (the grey box) = 3D model + cover**, nothing else. The 3D model first when it is ready (owner, earlier
+   today), else the cover. No model → the cover alone, exactly like an image work's picture.
+2. **Switching 3D ⇄ cover = the image page's view tiles** (`ArtworkViews`, same tile size, place and behaviour:
+   two rows under Inquire on tablets/desktop, one row under the box on phones, no mark on the picked tile): two
+   tiles, **3D** (the Cube icon on the tile's grey) and **Cover**. Generalise `ArtworkViews` to take a list of tiles
+   instead of only the print views; the image page keeps its four. Only shown when there is a model.
+3. **Remove** the Object-only pieces: the 72 px thumbs strip, the "1 / 6" counter, the phone progress segments, the
+   caption line under the stage, the "3D / Photos" button on the stage.
+4. **Info column = `ArtworkInfoColumn` exactly as for an image work** (follow `artwork.md` › "Info column, refined"
+   for both): the size line where an image work shows its size ("29 × 39 × 14 cm · 15 kg", cm/in from the footer
+   switch, kg always), the materials as the technique lines (same 13 px format), the edition as one more technique
+   line ("Edition 3 of 8 + 2 AP"), then `ArtworkInquire` divided. **No `UnitsSwitch`.** No print block until the Sales
+   tab work (unique-sales U6).
+5. **Below the work = `ArtworkBelowTheWork`, unchanged**: About the work (description), **Details = the
+   `ArtworkMediaGallery` carousel** fed with the Object's photos **and** videos/reels in the editor's order (the
+   cover is not repeated; captions as the gallery shows them), then More by the artist. **Remove** the Object-only
+   sections: the "Materials" TextSection (already in the column, as the image page does not repeat technique), the
+   "Details" size list (`ObjectDetails`, already in the column), "In motion" (`ObjectInMotion`) and the
+   "Photographs" grid. Delete those components if nothing else uses them.
+6. **One change to the shared carousel** so reels are not cut: a **vertical video** (height > width) in
+   `ArtworkMediaGallery` keeps the 3:2 slide but shows the video `object-fit: contain` on the page grey (`#f2f2f2`),
+   instead of `cover`. Images keep `cover`. This also helps image works' vertical videos.
+7. The 3D zoom control: as in `artwork.md` › "Info column, refined" (one joined + / − pair).
+8. The 3D room's artwork overlay shows this same page, like image works.
+9. Remove the Object's own CSS that no longer has a user (`ObjectDetail.module.scss` pieces for thumbs, counter,
+   segments, caption, photo grid, motion).
+
+Check in the browser: an Object with a model (opens on 3D; tiles 3D / Cover; zoom and Reset), one without (cover
+only, no tiles), one with photos + a reel (carousel: 3+ slides, the reel uncut), and an image work (unchanged).
+
 ## Data (one migration, phase 1)
 On **`Artwork`** (all nullable / defaulted, so nothing changes for existing types):
 ```
@@ -163,10 +205,8 @@ Ship phase 1 so Objects can be shown on the site **without the 3D room**. Each s
 artworks API (`/api/artworks`, `/api/artworks/[id]`, batch) accept and return the new fields. Audit every
 `artworkType === …` branch (≈ 30 files, `grep -rn "artworkType ===\|TArtworkKind" src`): an Object must never
 fall into an image-only path by accident (print presentations, lightbox, TPS checkout).
-**Update 2026-11-23 (owner): an Object CAN sell prints of a photograph of it**, and can be sold as unique (see
-`docs/unique-sales/README.md`, editor **Sales** tab). The print source is the photo chosen in Sales › Print image
-(`printImageMediaId` → one of its ArtworkMedia images, or a print-only upload); from there it is an ordinary print:
-same wizard, checkout, TPS. Until the Sales tab is built, keep `printEnabled` false for Objects.
+**Objects never sell prints** (owner 2026-11-25, final): O1's rule stays — an Object always saves with print sales
+off. A print of a sculpture is a separate Image artwork.
 
 **O2 · Library + Add artwork** (`objects-library`, `objects-add-artwork`). Add artwork: the Type select becomes
 5 cards (Image, Object, Text, Sound, Video) with the Object explainer panel. Library: "Object" filter; Object rows
@@ -195,7 +235,8 @@ the public page.
   must protect `modelUrl` and request files.
 
 **O5 · Visitors, without the 3D room** (owner: anyone must explore an exhibition fully without entering it).
-Designs: `objects-artwork-page-desktop.dc.html` (interactive: click the views), `objects-artwork-page-phone.dc.html`.
+**The page layout below is superseded by O5b (2026-11-25): the Object page is the image artwork page.**
+Designs (superseded): `objects-artwork-page-desktop.dc.html`, `objects-artwork-page-phone.dc.html`.
 - Objects show wherever images show: artist profile, exhibition pages, grids, "More by the artist", share cards
   (cover, square crop). Check `getPublicExhibitionByUrl` and `/api/exhibitions/by-url/[url]` (they filter
   `artworkType === 'image'` in three places) so Objects are listed. Objects never get the **Order print** button.
@@ -510,3 +551,31 @@ object! unless it's a pedestal", "I cannot navigate in this 3D space with the ke
 - The Object page's info column is the image artwork page's (owner: "Why so many inconsistencies"): artist, title,
   year; under the divider the materials, the size with its cm | in, then the same outlined Inquire (no black
   Inquire, no "For price, availability and shipping…" line).
+
+**O5b · The Object page is the image artwork page; the info column refined** (2026-11-25, same branch; owner: "The
+differences: a 3D viewer and a cover. The rest SHOULD BE the same", and `artwork.md` › "Info column, refined").
+- The page is built from the image page's parts only: `ArtworkInfoColumn`, `ArtworkInquire`, `ArtworkViews`,
+  `ArtworkBelowTheWork` (About the work, `ArtworkMediaGallery`, More by the artist). The grey box holds the 3D
+  model (first, when it is ready) and the cover; with a model, the tiles **3D** (Cube icon) and **Cover** switch
+  between them, under Inquire on tablets and desktop, one row under the box on phones (same tile size as an image
+  work's four). No model: the cover alone, no tiles. A portrait cover gets the image page's taller box.
+- `ArtworkViews` now takes a list of tiles (`printViewTiles` gives an image work its four); the box's strip
+  (pick, swipe on phones, resize) is one hook for both pages, `useViewsStrip`.
+- Below the work: the photos and videos, in the editor's order, are the image page's carousel (the cover is not in
+  it); a vertical video keeps the 3:2 slide, `contain` on the page grey (image works' vertical videos too).
+- Removed: the 72 px thumbs, "1 / 6", the phone segments, the caption line (and with it "3D model prepared by The
+  Art Room"), the 3D / Photos button, the Materials, Details, In motion and Photographs sections, `ObjectDetails`,
+  `ObjectInMotion` and their CSS.
+- The 3D room's window (`FloorObjectModal`) shows the same page, with the room's frame (`surface="room"`).
+- Differs from the spec: no edition line under the materials. Objects are always unique (owner, earlier the same
+  day), and the edition columns are gone.
+- Checked in Chrome (two test Objects of the e2e artist, deleted after): with a model, photos and a reel (opens on
+  3D, tiles 3D / Cover, zoom + Reset, the carousel's 4 slides with the reel whole), without a model (the cover
+  alone, no tiles, no canvas), the phone page, and the 3D room's window (opened with the click's own action:
+  WebGL clicks are not scripted). Targeted E2E (artwork pages, grids, presentations, share images, lightbox,
+  Objects): 79 passed.
+
+**Objects never sell prints (final, owner 2026-11-25).** O1's rule stays: the catalog query
+(`purchasableArtworkWhere`) leaves Objects out, checkout refuses one, every save of an Object writes
+`printEnabled: false`. So the O5b item 4 line "No print block until the Sales tab work (unique-sales U6)" becomes
+"never": an Object's page has no print block at all.
