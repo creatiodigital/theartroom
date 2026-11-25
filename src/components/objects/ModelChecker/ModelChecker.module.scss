@@ -1,15 +1,33 @@
 @use '@/styles/mixins' as *;
 
 // The .glb upload and its checker (docs/objects O4, Q-O8): the drop area, then the preview beside
-// the report rows (stacked on a phone), then Cancel · Upload.
+// the report rows (stacked on a phone), then Cancel · Upload. The Modal is `flush`: the title on
+// top and the buttons at the bottom stay, the middle scrolls (the report is taller than a screen).
 .dialog {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  min-height: 0;
+  max-height: 100%;
   font-family: var(--font-dashboard), var(--font-dashboard-fallback);
   font-size: var(--text-sm);
   line-height: var(--leading-normal);
   color: var(--color-text-primary);
+}
+
+// Room on the right for the Modal's ×.
+.head {
+  flex: 0 0 auto;
+  padding: var(--space-6) var(--space-16) var(--space-3) var(--space-6);
+}
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-1) var(--space-6) var(--space-6);
 }
 
 .title {
@@ -150,10 +168,13 @@
 }
 
 .actions {
+  flex: 0 0 auto;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-2);
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--color-border-default);
 }
 
 // Two classes: Button's bare reset would win over one.

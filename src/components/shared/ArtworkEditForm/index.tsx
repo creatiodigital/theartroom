@@ -789,7 +789,8 @@ export const ArtworkEditForm = ({
   const showOpenPrintOptions = isImage && formData.printEnabled && formData.editionType === 'open'
   const showExhibitions = !!exhibitions && exhibitions.length > 0 && (isImage || isObject)
   const showSupplementary = isAdmin && !!artworkId && !isObject
-  // In the 3D space: an extra, last (docs/objects O4); its actions save on their own.
+  // In the 3D space (docs/objects O4): right after the cover, where the .glb goes (owner,
+  // 2026-11-25: "the most important part"); its actions save on their own, outside the form.
   const showSpace = isObject && !!artworkId && !!objectModel
   const isPage = variant === 'page'
   const imageSection = isVideo ? ARTWORK_SECTION.poster : ARTWORK_SECTION.image
@@ -799,6 +800,7 @@ export const ArtworkEditForm = ({
     isVideo && ARTWORK_SECTION.videoFile,
     isImageOrVideo && imageSection,
     isObject && ARTWORK_SECTION.cover,
+    showSpace && ARTWORK_SECTION.space,
     isObject && !!artworkId && ARTWORK_SECTION.objectMedia,
     showOpenPrintOptions && ARTWORK_SECTION.ready,
     formData.artworkType === 'sound' && ARTWORK_SECTION.audioFile,
@@ -808,7 +810,6 @@ export const ArtworkEditForm = ({
     hasArtDetails && ARTWORK_SECTION.description,
     hasArtDetails && ARTWORK_SECTION.where,
     showSupplementary && ARTWORK_SECTION.media,
-    showSpace && ARTWORK_SECTION.space,
   ]
   const sections = rendered.filter((section): section is ArtworkSection => Boolean(section))
 
@@ -1398,6 +1399,27 @@ export const ArtworkEditForm = ({
             </EditorPanel>
           )}
 
+          {showSpace && artworkId && objectModel && (
+            <EditorPanel
+              section={ARTWORK_SECTION.space}
+              className={styles.spacePanel}
+              description="An extra from The Art Room: visitors can walk around your piece in the 3D exhibition. Your artwork page and exhibition pages show it fully without it."
+              aside={<ObjectSpaceChip modelStatus={objectModel.modelStatus} short />}
+            >
+              <ObjectSpaceSection
+                artworkId={artworkId}
+                isAdmin={isAdmin}
+                model={objectModel}
+                details={{
+                  heightCm: typedCm(formData.heightCm),
+                  widthCm: typedCm(formData.widthCm),
+                  depthCm: typedCm(formData.depthCm),
+                }}
+                onModelChange={(next) => onObjectModelChange?.(next)}
+              />
+            </EditorPanel>
+          )}
+
           {/* An Object's Photos & reels: uploads are immediate, so only once it exists. */}
           {isObject && artworkId && (
             <EditorPanel
@@ -1784,27 +1806,6 @@ export const ArtworkEditForm = ({
                 }
               >
                 <ArtworkMediaManager artworkId={artworkId} />
-              </EditorPanel>
-            )}
-
-            {showSpace && artworkId && objectModel && (
-              <EditorPanel
-                section={ARTWORK_SECTION.space}
-                className={styles.spacePanel}
-                description="An extra from The Art Room: visitors can walk around your piece in the 3D exhibition. Your artwork page and exhibition pages show it fully without it."
-                aside={<ObjectSpaceChip modelStatus={objectModel.modelStatus} short />}
-              >
-                <ObjectSpaceSection
-                  artworkId={artworkId}
-                  isAdmin={isAdmin}
-                  model={objectModel}
-                  details={{
-                    heightCm: typedCm(formData.heightCm),
-                    widthCm: typedCm(formData.widthCm),
-                    depthCm: typedCm(formData.depthCm),
-                  }}
-                  onModelChange={(next) => onObjectModelChange?.(next)}
-                />
               </EditorPanel>
             )}
 

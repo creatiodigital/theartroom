@@ -86,8 +86,8 @@ export function sizeCheck(
   const match =
     withinTolerance(model.h, h) && withinTolerance(model.w, w) && withinTolerance(model.d, d)
   return match
-    ? { status: 'match', text: 'Matches the size above' }
-    : { status: 'differ', text: `Differs from the size above (${h} × ${w} × ${d} cm)` }
+    ? { status: 'match', text: 'Matches the size in Details' }
+    : { status: 'differ', text: `Differs from the size in Details (${h} × ${w} × ${d} cm)` }
 }
 
 /** The rows, in reading order. Upload only when none fails (`glbPasses`). */

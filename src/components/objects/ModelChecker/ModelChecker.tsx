@@ -219,94 +219,106 @@ export default function ModelChecker({
   }
 
   return (
-    <Modal tone="admin" titleId={TITLE_ID} onClose={onClose} maxWidth="760px" showClose>
+    <Modal
+      tone="admin"
+      layout="flush"
+      titleId={TITLE_ID}
+      onClose={onClose}
+      maxWidth="760px"
+      showClose
+    >
       <div className={styles.dialog}>
-        <h2 id={TITLE_ID} className={styles.title}>
-          {replacing ? 'Replace the 3D model' : 'Upload the 3D model'}
-        </h2>
-        <p className={styles.lead}>
-          The cleaned .glb: textures inside, 1 unit = 1 m, the base at 0. It is checked here before
-          anything is sent, and again on the server. Nothing uploads while a check fails.
-        </p>
-
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".glb,model/gltf-binary"
-          className={styles.input}
-          tabIndex={-1}
-          onChange={(e) => {
-            const picked = e.target.files?.[0]
-            if (picked) void check(picked)
-            e.target.value = ''
-          }}
-        />
-        <div
-          className={c(styles.drop, dragging && styles.dropActive)}
-          onDragOver={(e) => {
-            if (!e.dataTransfer.types.includes('Files')) return
-            e.preventDefault()
-            setDragging(true)
-          }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={onDrop}
-        >
-          <UploadSimple size={20} weight="light" aria-hidden />
-          <Button
-            variant="bare"
-            font="dashboard"
-            className={styles.choose}
-            disabled={uploading || checking}
-            onClick={() => inputRef.current?.click()}
-          >
-            {file ? 'Choose another .glb' : 'Choose a .glb'}
-          </Button>
-          <span className={styles.dropText}>{file ? file.name : 'or drop it here'}</span>
+        <div className={styles.head}>
+          <h2 id={TITLE_ID} className={styles.title}>
+            {replacing ? 'Replace the 3D model' : 'Upload the 3D model'}
+          </h2>
         </div>
+        {/* The report runs long: the middle scrolls, the title and Cancel · Upload stay. */}
+        <div className={styles.body}>
+          <p className={styles.lead}>
+            The cleaned .glb: textures inside, 1 unit = 1 m, the base at 0. It is checked here
+            before anything is sent, and again on the server. Nothing uploads while a check fails.
+          </p>
 
-        {(checking || blobUrl || rows) && (
-          <div className={styles.result}>
-            {blobUrl ? (
-              <ModelViewer
-                url={blobUrl}
-                onResult={onViewerResult}
-                hint="Drag to turn · scroll to zoom"
-                className={styles.preview}
-              />
-            ) : (
-              <div className={c(styles.preview, styles.previewEmpty)} />
-            )}
-            <div className={styles.report} aria-live="polite">
-              {!rows ? (
-                <p className={styles.status}>Checking…</p>
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".glb,model/gltf-binary"
+            className={styles.input}
+            tabIndex={-1}
+            onChange={(e) => {
+              const picked = e.target.files?.[0]
+              if (picked) void check(picked)
+              e.target.value = ''
+            }}
+          />
+          <div
+            className={c(styles.drop, dragging && styles.dropActive)}
+            onDragOver={(e) => {
+              if (!e.dataTransfer.types.includes('Files')) return
+              e.preventDefault()
+              setDragging(true)
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={onDrop}
+          >
+            <UploadSimple size={20} weight="light" aria-hidden />
+            <Button
+              variant="bare"
+              font="dashboard"
+              className={styles.choose}
+              disabled={uploading || checking}
+              onClick={() => inputRef.current?.click()}
+            >
+              {file ? 'Choose another .glb' : 'Choose a .glb'}
+            </Button>
+            <span className={styles.dropText}>{file ? file.name : 'or drop it here'}</span>
+          </div>
+
+          {(checking || blobUrl || rows) && (
+            <div className={styles.result}>
+              {blobUrl ? (
+                <ModelViewer
+                  url={blobUrl}
+                  onResult={onViewerResult}
+                  hint="Drag to turn · scroll to zoom"
+                  className={styles.preview}
+                />
               ) : (
-                <>
-                  <p className={c(styles.status, passes ? styles.statusPass : styles.statusFail)}>
-                    {passes
-                      ? warns
-                        ? `Ready to upload · ${warns} warning${warns === 1 ? '' : 's'}`
-                        : 'Ready to upload'
-                      : `${fails} check${fails === 1 ? '' : 's'} to fix before it can be uploaded`}
-                  </p>
-                  <CheckRows rows={rows} />
-                </>
+                <div className={c(styles.preview, styles.previewEmpty)} />
               )}
+              <div className={styles.report} aria-live="polite">
+                {!rows ? (
+                  <p className={styles.status}>Checking…</p>
+                ) : (
+                  <>
+                    <p className={c(styles.status, passes ? styles.statusPass : styles.statusFail)}>
+                      {passes
+                        ? warns
+                          ? `Ready to upload · ${warns} warning${warns === 1 ? '' : 's'}`
+                          : 'Ready to upload'
+                        : `${fails} check${fails === 1 ? '' : 's'} to fix before it can be uploaded`}
+                    </p>
+                    <CheckRows rows={rows} />
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {serverRows && (
-          <div className={styles.server}>
-            <p className={c(styles.status, styles.statusFail)}>The server’s check</p>
-            <CheckRows rows={serverRows} />
-          </div>
-        )}
+          {serverRows && (
+            <div className={styles.server}>
+              <p className={c(styles.status, styles.statusFail)}>The server’s check</p>
+              <CheckRows rows={serverRows} />
+            </div>
+          )}
 
-        {error && (
-          <Callout tone="red" role="alert">
-            {error}
-          </Callout>
-        )}
+          {error && (
+            <Callout tone="red" role="alert">
+              {error}
+            </Callout>
+          )}
+        </div>
 
         <div className={styles.actions}>
           <Button variant="bare" font="dashboard" className={styles.secondary} onClick={onClose}>

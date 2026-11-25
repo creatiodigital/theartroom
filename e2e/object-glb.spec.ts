@@ -114,7 +114,7 @@ test('size check: within 1 cm or 3 % matches; otherwise differs; no Details size
   expect(sizeCheck({ h: 64.4, w: 38, d: 31.6 }, details).status).toBe('match')
   expect(sizeCheck({ h: 70, w: 38, d: 31 }, details)).toEqual({
     status: 'differ',
-    text: 'Differs from the size above (64 × 38 × 31 cm)',
+    text: 'Differs from the size in Details (64 × 38 × 31 cm)',
   })
   expect(sizeCheck({ h: 64, w: 38, d: 31 }, { heightCm: 64 }).status).toBe('unknown')
   expect(boundsToCm(good.bounds)).toEqual({ h: 64, w: 38, d: 31 })
