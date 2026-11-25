@@ -477,7 +477,10 @@ const MainCamera = () => {
       min: FLOOR_Y + WALL_VIEW_FLOOR_GAP,
       max: cameraElevation + WALL_VIEW_UNKNOWN_RISE,
     }
-    const eyeHeight = clamp(center.y, heights.min, heights.max)
+    // An Object on the floor keeps the eye where it is (the lens shift centres the Object).
+    const eyeHeight = target.object
+      ? clamp(camera.position.y, heights.min, heights.max)
+      : clamp(center.y, heights.min, heights.max)
     const spot = settleBeside(
       new Vector3(center.x + n.x * depth, eyeHeight, center.z + n.z * depth),
       new Vector3(right.x, 0, right.z),

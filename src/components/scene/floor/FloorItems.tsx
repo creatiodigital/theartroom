@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Line, useGLTF } from '@react-three/drei'
 import { useThree, type ThreeEvent } from '@react-three/fiber'
@@ -14,10 +14,16 @@ import type { FloorObject, FloorPedestal } from '@/lib/floor/floorLayout'
 import { placeAll, type Placed } from '@/lib/floor/floorPlacement'
 import { FINISH_ROUGHNESS, pedestalMaterial, pedestalOutline } from '@/lib/floor/pedestals'
 import { useFloorRooms } from '@/components/floorview/useFloorRooms'
+import { DOUBLE_TAP_MS, useTapTracker } from '@/components/scene/spaces/objects/tapTracker'
 import { openFloorObject } from '@/redux/slices/floorSlice'
+import { setFocusTarget } from '@/redux/slices/sceneSlice'
 import type { RootState } from '@/redux/store'
 
 import { pedestalGeometry } from './pedestalGeometry'
+
+/** A click, not a drag: as the works on the walls (Display). */
+const CLICK_MAX_MOVE_PX = 5
+const CLICK_MAX_MS = 300
 
 /**
  * Everything standing on the floor (docs/objects O6): the exhibition's pedestals, built from their
@@ -105,10 +111,67 @@ function FloorModel({
     })
   }, [model, o.castShadow])
 
-  const open = (event: ThreeEvent<MouseEvent>) => {
+  // As a photo on a wall (Display): a click (or tap) comes nearer, a double click (or double tap)
+  // opens the Object's page. Nearer along the camera's own line of sight, at its eye height: never
+  // stepping round to stand in front (owner, 2026-11-25).
+  const camera = useThree((state) => state.camera)
+  const taps = useTapTracker()
+  const pressed = useRef<{ x: number; y: number; at: number } | null>(null)
+  const pending = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => clearTimeout(pending.current ?? undefined), [])
+
+  const openPage = () => dispatch(openFloorObject(artwork.slug))
+  const comeNearer = () => {
+    const b = artwork.boundsCm
+    const [w, d, h] = b ? [b.w, b.d, b.h].map((cm) => (cm / 100) * o.scale) : [1, 1, 1]
+    const center = { x: at.x, y: floorY + at.y + h / 2, z: at.z }
+    const toCamera = { x: camera.position.x - center.x, z: camera.position.z - center.z }
+    const length = Math.hypot(toCamera.x, toCamera.z) || 1
+    dispatch(
+      setFocusTarget({
+        artworkId: artwork.id,
+        position: center,
+        normal: { x: toCamera.x / length, y: 0, z: toCamera.z / length },
+        // Seen from any side, its footprint's diagonal is the widest it can be.
+        width: Math.hypot(w, d),
+        height: h,
+        object: true,
+      }),
+    )
+  }
+
+  const onPointerDown = (event: ThreeEvent<PointerEvent>) => {
     if (isEditMode) return
     event.stopPropagation()
-    dispatch(openFloorObject(artwork.slug))
+    clearTimeout(pending.current ?? undefined)
+    pending.current = null
+    pressed.current = { x: event.clientX, y: event.clientY, at: Date.now() }
+    taps.down(event)
+  }
+  const onPointerUp = (event: ThreeEvent<PointerEvent>) => {
+    if (isEditMode || !pressed.current) return
+    event.stopPropagation()
+    const { x, y, at: downAt } = pressed.current
+    pressed.current = null
+    const still = Math.hypot(event.clientX - x, event.clientY - y) < taps.slop(CLICK_MAX_MOVE_PX)
+    if (taps.ignored || !still || Date.now() - downAt > CLICK_MAX_MS) return
+    if (taps.touch && taps.secondTap()) {
+      openPage()
+      return
+    }
+    pending.current = setTimeout(() => {
+      pending.current = null
+      comeNearer()
+    }, DOUBLE_TAP_MS)
+  }
+  const onDoubleClick = (event: ThreeEvent<MouseEvent>) => {
+    if (isEditMode) return
+    event.stopPropagation()
+    // A finger's double tap is counted in onPointerUp (tapTracker).
+    if (taps.touch) return
+    clearTimeout(pending.current ?? undefined)
+    pending.current = null
+    openPage()
   }
 
   return (
@@ -118,7 +181,9 @@ function FloorModel({
       rotation={[0, at.rotY * RAD, 0]}
       scale={o.scale}
       userData={{ floorItemId: o.id }}
-      onClick={open}
+      onPointerDown={onPointerDown}
+      onPointerUp={onPointerUp}
+      onDoubleClick={onDoubleClick}
     >
       <primitive object={model} position={base} />
     </group>
