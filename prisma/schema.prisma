@@ -256,7 +256,6 @@ model Artwork {
   widthCm            Float?
   depthCm            Float?
   weightKg           Float?
-  sizeIncludesBase   Boolean   @default(false)
   placement          String? // "indoors" | "outdoors" | "both"
   displayMode        String? // "floor" | "pedestal" | "wall" | "hanging"
   signedNote         String?

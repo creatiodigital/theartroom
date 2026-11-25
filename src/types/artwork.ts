@@ -30,7 +30,6 @@ export type TArtworkObjectFields = {
   widthCm?: number | null
   depthCm?: number | null
   weightKg?: number | null
-  sizeIncludesBase?: boolean
   placement?: TObjectPlacement | null
   displayMode?: TObjectDisplayMode | null
   signedNote?: string | null

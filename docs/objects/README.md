@@ -450,3 +450,8 @@ uploader just for 3D objects", "it's a cover image, same as the rest").
   "Object". On the Object page the cover's view thumbnail is centred, like the other views.
 - The gallery team's upload box has no "Gallery team only" eyebrow (owner, same day: "remove this"); only admins see
   it anyway.
+
+**No "Size includes the base"** (2026-11-25, same branch; owner: "bases are just for reference. The measurements are
+just for the sculptures, not supplementary bases"). Removed the editor's checkbox, the visitor page's "Base included
+in the size" / ", with base", and `Artwork.sizeIncludesBase` (one column fewer; the dev database keeps it until the
+owner's next push). H × W × D is always the sculpture alone.

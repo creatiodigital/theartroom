@@ -162,7 +162,6 @@ export type Artwork = {
   widthCm?: number | null
   depthCm?: number | null
   weightKg?: number | null
-  sizeIncludesBase?: boolean
   placement?: string | null
   displayMode?: string | null
   signedNote?: string | null

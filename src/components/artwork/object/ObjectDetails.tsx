@@ -12,7 +12,6 @@ export type ObjectDetailsFields = {
   widthCm: number | null
   depthCm: number | null
   weightKg: number | null
-  sizeIncludesBase: boolean
   placement: string | null
   displayMode: string | null
   signedNote: string | null
@@ -28,9 +27,7 @@ export function ObjectDetails({ fields }: { fields: ObjectDetailsFields }) {
   const { unit } = useUnits()
   const size = formatObjectSize(fields, unit)
   const sizeValue = size
-    ? `${size}${fields.sizeIncludesBase ? ', with base' : ''}${
-        fields.weightKg ? ` · ${formatWeight(fields.weightKg)}` : ''
-      }`
+    ? `${size}${fields.weightKg ? ` · ${formatWeight(fields.weightKg)}` : ''}`
     : fields.weightKg
       ? formatWeight(fields.weightKg)
       : null

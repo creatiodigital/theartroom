@@ -41,7 +41,6 @@ export type ObjectPageArtwork = {
   widthCm: number | null
   depthCm: number | null
   weightKg: number | null
-  sizeIncludesBase: boolean
   imageUrl: string | null
   /** The ready 3D model, if any (docs/objects O4). */
   model: { url: string; boundsCm: { h: number; w: number; d: number } | null } | null
@@ -166,10 +165,7 @@ export function ObjectDetailBody({
                 <UnitsSwitch className={styles.units} />
               </span>
             )}
-            <span className={styles.lines}>
-              {technique}
-              {artwork.sizeIncludesBase && <span>Base included in the size</span>}
-            </span>
+            <span className={styles.lines}>{technique}</span>
           </div>
 
           <div className={detail.purchase}>

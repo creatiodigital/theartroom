@@ -31,7 +31,6 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
       widthCm: true,
       depthCm: true,
       weightKg: true,
-      sizeIncludesBase: true,
       placement: true,
       displayMode: true,
       signedNote: true,

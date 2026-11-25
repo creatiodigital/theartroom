@@ -57,6 +57,6 @@ export const createNewArtwork = ({
     videoVolume: 1.0,
     videoProximityDistance: 3,
     // Objects (docs/objects): the defaults the database gives a new row.
-    ...(artworkType === 'object' && { sizeIncludesBase: false, modelStatus: 'none' as const }),
+    ...(artworkType === 'object' && { modelStatus: 'none' as const }),
   }
 }

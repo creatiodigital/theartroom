@@ -1,7 +1,6 @@
 'use client'
 
 import { SegmentedControl } from '@/components/admin/ui/SegmentedControl'
-import { AdminCheckbox } from '@/components/admin/ui/AdminCheckbox'
 import { Input } from '@/components/ui/Input'
 import { objectDimensionsText } from '@/lib/artwork/objectArtwork'
 
@@ -17,7 +16,6 @@ export type ObjectFormFields = {
   widthCm: string
   depthCm: string
   weightKg: string
-  sizeIncludesBase: boolean
   /** '' | 'indoors' | 'outdoors' | 'both' */
   placement: string
   /** '' | 'floor' | 'pedestal' | 'wall' | 'hanging' */
@@ -32,7 +30,6 @@ type Stored = {
   widthCm?: number | null
   depthCm?: number | null
   weightKg?: number | null
-  sizeIncludesBase?: boolean
   placement?: string | null
   displayMode?: string | null
   signedNote?: string | null
@@ -48,7 +45,6 @@ export const objectFormFields = (data: Stored): ObjectFormFields => ({
   widthCm: text(data.widthCm),
   depthCm: text(data.depthCm),
   weightKg: text(data.weightKg),
-  sizeIncludesBase: data.sizeIncludesBase ?? false,
   placement: data.placement ?? '',
   displayMode: data.displayMode ?? '',
   signedNote: data.signedNote ?? '',
@@ -158,12 +154,6 @@ export function ObjectSize({ fields, onChange }: FieldsProps) {
             onChange={(v) => onChange('weightKg', v)}
           />
         </div>
-        <AdminCheckbox
-          id="object-size-includes-base"
-          label="Size includes the base"
-          checked={fields.sizeIncludesBase}
-          onChange={(checked) => onChange('sizeIncludesBase', checked)}
-        />
         {size && (
           <span className={formStyles.help}>
             Visitors see it as {size}, or in inches if they switch.

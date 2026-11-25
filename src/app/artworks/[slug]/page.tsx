@@ -47,7 +47,6 @@ const getArtwork = cache((slug: string) =>
       widthCm: true,
       depthCm: true,
       weightKg: true,
-      sizeIncludesBase: true,
       placement: true,
       displayMode: true,
       signedNote: true,

@@ -72,7 +72,6 @@ export type ObjectFieldsInput = {
   widthCm?: number | null
   depthCm?: number | null
   weightKg?: number | null
-  sizeIncludesBase?: boolean
   placement?: TObjectPlacement | null
   displayMode?: TObjectDisplayMode | null
   signedNote?: string | null
@@ -156,9 +155,6 @@ export function parseObjectFields(body: Record<string, unknown>): ParsedObjectFi
       if (has(key)) data[key] = toPositive(body[key], label, MAX_SIZE_CM, 0.1)
     }
     if (has('weightKg')) data.weightKg = toPositive(body.weightKg, 'Weight', MAX_WEIGHT_KG, 0.01)
-    if (has('sizeIncludesBase')) {
-      data.sizeIncludesBase = body.sizeIncludesBase === true || body.sizeIncludesBase === 'true'
-    }
     if (has('placement')) {
       data.placement = toChoice(body.placement, OBJECT_PLACEMENTS, 'Where it can stand')
     }
