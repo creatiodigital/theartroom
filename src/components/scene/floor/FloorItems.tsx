@@ -414,7 +414,7 @@ const FloorItems = () => {
   const placed = useMemo(() => (layout ? placeAll(layout, sizes) : []), [layout, sizes])
   // The Floor view only opens in the editor: there, the items are picked and dragged.
   const composing = isFloorView
-  const drag = useFloorDrag(composing ? layout : null, sizes, floorY)
+  const drag = useFloorDrag(composing ? (layout ?? null) : null, sizes, floorY)
   const onFloorDown = composing ? drag.onDown : undefined
 
   const urls = useMemo(
