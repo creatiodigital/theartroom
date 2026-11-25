@@ -17,6 +17,8 @@ Each has a README with the owner's decisions, the design files and a build order
 - **Second language for the 3D space:** `docs/wall-languages/README.md` (designs in `docs/wall-languages/designs/`).
 - **Lightbox** (presentation option for image artworks): `docs/lightbox/README.md`.
 - **Admin › Gallery › Feedback list:** `docs/admin-redesign/feedback-list.md` (step F1 in `docs/admin-redesign/pages.md`).
+- **Objects** (3D artworks: sculptures, decorative pieces; phase 1 = library, editor, GLB upload, visitor pages without the 3D room): `docs/objects/README.md` (designs in `docs/objects/designs/`).
+- **Unique pieces** (selling originals by inquiry, separate from prints; approved 2026-11-23, build U1–U5): `docs/unique-sales/README.md` (designs in `docs/unique-sales/designs/`).
 - **Sizes in cm or inches** (visitor switch, cm default, never by country): `docs/public-redesign/units.md`.
 - Visitor-facing rule: no rounded corners on public/room windows and buttons (`docs/public-redesign/README.md`,
   "Square corners for visitors"); admin and studio unchanged.
