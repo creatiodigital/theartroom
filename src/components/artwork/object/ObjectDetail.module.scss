@@ -62,20 +62,6 @@
   }
 }
 
-.realSize {
-  position: absolute;
-  top: var(--space-5);
-  right: var(--space-6);
-  font-size: var(--text-xs);
-  color: var(--public-muted);
-  pointer-events: none;
-
-  @include media-down(sm) {
-    top: var(--space-3);
-    right: var(--space-3);
-  }
-}
-
 // Two classes: Button's own size rules have one.
 .stage .reset,
 .stage .stage3d {

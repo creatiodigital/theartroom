@@ -12,8 +12,6 @@ export const GLB_MAX_BYTES = 30 * 1024 * 1024
 const TRIANGLE_WARN = 500_000
 const TEXTURE_WARN_PX = 4096
 const TEXTURE_FAIL_PX = 8192
-/** Sizes within this of the Details size match: the larger of 1 cm and 3 %. */
-const SIZE_TOLERANCE = { cm: 1, ratio: 0.03 }
 /** The base rests on y = 0 and sits centred, within half a centimetre / 1 cm or 2 %. */
 const BASE_TOLERANCE_CM = 0.5
 const CENTRE_TOLERANCE = { cm: 1, ratio: 0.02 }
@@ -47,12 +45,6 @@ export type GlbFacts = {
   opened: { ok: boolean; error?: string; by: 'render' | 'read' }
 }
 
-export type DetailsSize = {
-  heightCm?: number | null
-  widthCm?: number | null
-  depthCm?: number | null
-}
-
 export type BoundsCm = { h: number; w: number; d: number }
 
 const round1 = (n: number) => Math.round(n * 10) / 10
@@ -68,27 +60,6 @@ export function boundsToCm(bounds: GlbFacts['bounds']): BoundsCm | null {
 const cmText = (b: BoundsCm) => `${b.h} × ${b.w} × ${b.d} cm`
 
 const megabytes = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-
-const withinTolerance = (a: number, b: number) =>
-  Math.abs(a - b) <= Math.max(SIZE_TOLERANCE.cm, SIZE_TOLERANCE.ratio * Math.max(a, b))
-
-/**
- * The size check alone (also shown on the ready model): matches when height, width and depth
- * are each within 1 cm or 3 % of the Details size. Never blocks.
- */
-export function sizeCheck(
-  model: BoundsCm | null,
-  details: DetailsSize,
-): { status: 'match' | 'differ' | 'unknown'; text: string } {
-  const { heightCm: h, widthCm: w, depthCm: d } = details
-  if (!model) return { status: 'unknown', text: 'No size could be read from the model' }
-  if (!h || !w || !d) return { status: 'unknown', text: 'No full size in Details to compare' }
-  const match =
-    withinTolerance(model.h, h) && withinTolerance(model.w, w) && withinTolerance(model.d, d)
-  return match
-    ? { status: 'match', text: 'Matches the size in Details' }
-    : { status: 'differ', text: `Differs from the size in Details (${h} × ${w} × ${d} cm)` }
-}
 
 /**
  * What a validator message means, in plain words, for the codes Objects meet (owner, 2026-11-25:
@@ -120,7 +91,7 @@ function describeMessages(messages: GlbValidatorMessage[]): string {
 }
 
 /** The rows, in reading order. Upload only when none fails (`glbPasses`). */
-export function checkGlb(facts: GlbFacts, details: DetailsSize): GlbCheckRow[] {
+export function checkGlb(facts: GlbFacts): GlbCheckRow[] {
   const rows: GlbCheckRow[] = []
   const row = (id: string, label: string, status: GlbCheckStatus, detail: string) =>
     rows.push({ id, label, status, detail })
@@ -242,27 +213,15 @@ export function checkGlb(facts: GlbFacts, details: DetailsSize): GlbCheckRow[] {
 
   const cm = boundsToCm(facts.bounds)
   if (!cm || !facts.bounds) {
-    row('realSize', 'Real size', 'fail', 'Nothing to draw: no geometry found')
+    row('realSize', 'Model size', 'fail', 'Nothing to draw: no geometry found')
   } else {
     const largest = Math.max(cm.h, cm.w, cm.d)
     const odd = largest < 1 || largest > 2000
     row(
       'realSize',
-      'Real size',
+      'Model size',
       odd ? 'warn' : 'pass',
       odd ? `${cmText(cm)}: check the scale (1 unit = 1 m)` : cmText(cm),
-    )
-
-    const check = sizeCheck(cm, details)
-    row(
-      'sizeCheck',
-      'Size check',
-      check.status === 'match' ? 'pass' : 'warn',
-      check.status === 'differ'
-        ? `${check.text}. The 3D room shows the model at its own size (above), so one of the two is wrong: correct Details, or the model's scale in Blender. Fine to upload.`
-        : check.status === 'unknown'
-          ? `${check.text}. Fill in Height, Width and Depth in Details to compare.`
-          : check.text,
     )
 
     const baseCm = round1(facts.bounds.min[1] * 100)

@@ -67,12 +67,6 @@ import styles from './ArtworkEditForm.module.scss'
 
 export { ARTWORK_EDIT_FORM_ID } from './sections'
 
-/** A size typed in Details, for the 3D size check (the server validates what is saved). */
-const typedCm = (value: string): number | null => {
-  const n = Number(value.trim().replace(',', '.'))
-  return value.trim() && Number.isFinite(n) && n > 0 ? n : null
-}
-
 /** The print sizes dialog's title (one dialog per page). */
 const PRINT_SIZES_TITLE_ID = 'artwork-print-sizes-title'
 
@@ -1332,11 +1326,6 @@ export const ArtworkEditForm = ({
                 artworkId={artworkId}
                 isAdmin={isAdmin}
                 model={objectModel}
-                details={{
-                  heightCm: typedCm(formData.heightCm),
-                  widthCm: typedCm(formData.widthCm),
-                  depthCm: typedCm(formData.depthCm),
-                }}
                 onModelChange={(next) => onObjectModelChange?.(next)}
               />
             </EditorPanel>

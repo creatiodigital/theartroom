@@ -14,7 +14,6 @@ import {
   glbPasses,
   readGlbJson,
   validatorFacts,
-  type DetailsSize,
   type GlbCheckRow,
   type GlbFacts,
   type ValidatorReport,
@@ -71,13 +70,11 @@ function CheckRows({ rows }: { rows: GlbCheckRow[] }) {
 
 export default function ModelChecker({
   artworkId,
-  details,
   replacing,
   onClose,
   onUploaded,
 }: {
   artworkId: string
-  details: DetailsSize
   replacing: boolean
   onClose: () => void
   onUploaded: (model: UploadedModel) => void
@@ -158,18 +155,15 @@ export default function ModelChecker({
       width: t.width ?? (viewer.ok ? (viewer.textureSizes[i]?.width ?? null) : null),
       height: t.height ?? (viewer.ok ? (viewer.textureSizes[i]?.height ?? null) : null),
     }))
-    return checkGlb(
-      {
-        ...base,
-        textures,
-        bounds: viewer.ok ? viewer.bounds : null,
-        opened: viewer.ok
-          ? { ok: true, by: 'render' }
-          : { ok: false, by: 'render', error: viewer.error },
-      },
-      details,
-    )
-  }, [base, viewer, details])
+    return checkGlb({
+      ...base,
+      textures,
+      bounds: viewer.ok ? viewer.bounds : null,
+      opened: viewer.ok
+        ? { ok: true, by: 'render' }
+        : { ok: false, by: 'render', error: viewer.error },
+    })
+  }, [base, viewer])
 
   const passes = rows !== null && glbPasses(rows)
   const fails = rows?.filter((r) => r.status === 'fail').length ?? 0

@@ -467,3 +467,12 @@ The .glb preview has a neutral studio around the model (three's RoomEnvironment,
 stronger key light plus a fill, so metal and dark materials read. The validator's warnings are grouped by kind and
 written out (e.g. normal maps without stored tangents: the room works them out; fine to upload); the size check says
 the room uses the model's own size and what to correct.
+
+**Sizes: the artist's Details only; never the .glb** (2026-11-25; owner: "I cannot rely on the glb object
+dimensions", "remove that validation", "These fields are the ones to be displayed on the artwork page", "do not rely
+on glb", "on the 3D space, the artist will make sure to resize that glb to closely match the real size").
+- Removed the Size check (upload window, the ready model's facts, the server's rules); the model's own size is
+  shown as "Model size" (information; the odd-scale warning stays).
+- The artwork page shows only Details (Height × Width × Depth, weight); its "Real size" line from the model is gone.
+- In the 3D room an Object starts at the model's own size; the artist resizes it on the Floor plan ("100% is the size
+  of the uploaded model").

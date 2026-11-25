@@ -350,7 +350,7 @@ export function FloorInspector({
             onChange={(v) => editor.patchItem(item.id, { scale: v / 100 })}
           />
           <span className={styles.hint}>
-            Always in proportion. 100% is the real size{real ? `: ${real}` : ''}.
+            Always in proportion. 100% is the size of the uploaded model{real ? `: ${real}` : ''}.
           </span>
           {item.scale !== 1 && (
             <Button
@@ -358,7 +358,7 @@ export function FloorInspector({
               className={styles.link}
               onClick={() => editor.patchItem(item.id, { scale: 1 })}
             >
-              Back to real size
+              Back to 100%
             </Button>
           )}
         </Section>

@@ -48,15 +48,6 @@
   }
 }
 
-// The size check: green when it matches, amber when it differs (the board's colours).
-.kv b.match {
-  color: var(--color-green-70);
-}
-
-.kv b.differ {
-  color: var(--color-yellow-70);
-}
-
 // The gallery team's upload: dashed blue, the line, the button (no eyebrow, owner 2026-11-25).
 .team {
   display: flex;

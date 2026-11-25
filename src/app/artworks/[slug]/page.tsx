@@ -49,7 +49,6 @@ const getArtwork = cache((slug: string) =>
       weightKg: true,
       modelStatus: true,
       modelUrl: true,
-      modelBoundsCm: true,
       // Live variants only — a published-but-unblocked variant is paused from
       // sale and would refuse the reservation. Selected rather than counted so
       // the shape is the same one LIVE_VARIANT_WHERE guards everywhere else.
@@ -227,16 +226,13 @@ const ArtworkPage = async ({ params, searchParams }: ArtworkPageProps) => {
         (await getArtistNeighbours(slug, artistHandler)))(),
       getMoreByArtist(user.handler, slug),
     ])
-    const bounds = artwork.modelBoundsCm as { h: number; w: number; d: number } | null
     return (
       <ObjectDetailPage
         artwork={{
           // Without the artist's cut (`printPriceCents`) and the variants: never sent to the browser.
           ...artworkData,
           model:
-            artwork.modelStatus === 'ready' && artwork.modelUrl
-              ? { url: artwork.modelUrl, boundsCm: bounds }
-              : null,
+            artwork.modelStatus === 'ready' && artwork.modelUrl ? { url: artwork.modelUrl } : null,
         }}
         artist={user}
         media={media}

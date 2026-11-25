@@ -3,14 +3,7 @@ import path from 'node:path'
 
 import { test, expect } from '@playwright/test'
 
-import {
-  boundsToCm,
-  checkGlb,
-  glbPasses,
-  readGlbJson,
-  sizeCheck,
-  type GlbFacts,
-} from '../src/lib/objects/glb'
+import { boundsToCm, checkGlb, glbPasses, readGlbJson, type GlbFacts } from '../src/lib/objects/glb'
 import { gatherServerGlbFacts } from '../src/lib/objects/glbFacts.server'
 
 // Objects O4 (docs/objects, owner Q-O8): the GLB checker's rules, and the server's facts on a
@@ -27,12 +20,10 @@ const good: GlbFacts = {
   bounds: { min: [-0.19, 0, -0.155], max: [0.19, 0.64, 0.155] },
   opened: { ok: true, by: 'render' },
 }
-const details = { heightCm: 64, widthCm: 38, depthCm: 31 }
-const status = (facts: GlbFacts, id: string) =>
-  checkGlb(facts, details).find((r) => r.id === id)?.status
+const status = (facts: GlbFacts, id: string) => checkGlb(facts).find((r) => r.id === id)?.status
 
 test('a clean model passes every check', () => {
-  const rows = checkGlb(good, details)
+  const rows = checkGlb(good)
   expect(rows.filter((r) => r.status !== 'pass')).toEqual([])
   expect(glbPasses(rows)).toBe(true)
 })
@@ -71,7 +62,7 @@ test('blocking: not a glb, too large, validator errors, not opening, external fi
       'textures',
     ),
   ).toBe('fail')
-  expect(glbPasses(checkGlb({ ...good, externalUris: ['x.bin'] }, details))).toBe(false)
+  expect(glbPasses(checkGlb({ ...good, externalUris: ['x.bin'] }))).toBe(false)
 })
 
 test('warnings never block: compression, formats, big textures, triangles, size, base, centre', () => {
@@ -105,19 +96,12 @@ test('warnings never block: compression, formats, big textures, triangles, size,
     bounds: { min: [-190, 0, -155], max: [190, 640, 155] },
   } as GlbFacts
   expect(status(inMillimetres, 'realSize')).toBe('warn')
-  expect(glbPasses(checkGlb({ ...good, extensionsUsed: [], triangles: 900_000 }, details))).toBe(
-    true,
-  )
+  expect(glbPasses(checkGlb({ ...good, extensionsUsed: [], triangles: 900_000 }))).toBe(true)
 })
 
-test('size check: within 1 cm or 3 % matches; otherwise differs; no Details size is unknown', () => {
-  expect(sizeCheck({ h: 64.4, w: 38, d: 31.6 }, details).status).toBe('match')
-  expect(sizeCheck({ h: 70, w: 38, d: 31 }, details)).toEqual({
-    status: 'differ',
-    text: 'Differs from the size in Details (64 × 38 × 31 cm)',
-  })
-  expect(sizeCheck({ h: 64, w: 38, d: 31 }, { heightCm: 64 }).status).toBe('unknown')
+test('the model size is read from the bounds (no check against Details: the artist scales in the room)', () => {
   expect(boundsToCm(good.bounds)).toEqual({ h: 64, w: 38, d: 31 })
+  expect(checkGlb(good).some((r) => r.id === 'sizeCheck')).toBe(false)
 })
 
 const sample = path.join(__dirname, '..', 'public/assets/furniture/eaton/eaton.glb')
@@ -137,13 +121,11 @@ test('server facts on a real file: validator, decoded bounds, textures', async (
   expect(facts.triangles).toBe(132)
   expect(facts.textures).toEqual([{ mimeType: 'image/jpeg', width: 500, height: 368 }])
   expect(boundsToCm(facts.bounds)).toEqual({ h: 44.9, w: 185.3, d: 40.6 })
-  const rows = checkGlb(facts, { heightCm: 44.9, widthCm: 185.3, depthCm: 40.6 })
-  expect(glbPasses(rows)).toBe(true)
-  expect(rows.find((r) => r.id === 'sizeCheck')?.status).toBe('pass')
+  expect(glbPasses(checkGlb(facts))).toBe(true)
 })
 
 test('server facts on broken bytes fail without throwing', async () => {
   const bytes = new Uint8Array(readFileSync(sample)).slice(0, 4000)
   const facts = await gatherServerGlbFacts(bytes)
-  expect(glbPasses(checkGlb(facts, details))).toBe(false)
+  expect(glbPasses(checkGlb(facts))).toBe(false)
 })

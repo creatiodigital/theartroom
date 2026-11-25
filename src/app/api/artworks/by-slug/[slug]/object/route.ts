@@ -33,14 +33,13 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
       weightKg: true,
       modelStatus: true,
       modelUrl: true,
-      modelBoundsCm: true,
       user: { select: { name: true, lastName: true, handler: true, published: true } },
     },
   })
   if (!row || row.artworkType !== 'object' || !row.user.published) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
-  const { user, modelStatus, modelUrl, modelBoundsCm, ...artwork } = row
+  const { user, modelStatus, modelUrl, ...artwork } = row
   const [media, more] = await Promise.all([
     getArtworkMedia(row.id),
     getMoreByArtist(user.handler, slug),
@@ -48,10 +47,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ sl
   return NextResponse.json({
     artwork: {
       ...artwork,
-      model:
-        modelStatus === 'ready' && modelUrl
-          ? { url: modelUrl, boundsCm: modelBoundsCm as { h: number; w: number; d: number } | null }
-          : null,
+      model: modelStatus === 'ready' && modelUrl ? { url: modelUrl } : null,
     },
     artist: { name: user.name, lastName: user.lastName, handler: user.handler },
     media,

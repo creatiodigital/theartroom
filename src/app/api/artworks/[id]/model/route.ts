@@ -59,9 +59,6 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         id: true,
         userId: true,
         artworkType: true,
-        heightCm: true,
-        widthCm: true,
-        depthCm: true,
         modelUrl: true,
       },
     })
@@ -107,7 +104,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       // The same checks as the browser ran, on the server's own reading of the stored file.
       const bytes = new Uint8Array(await getPublicBucketObjectBuffer(key))
       const facts = await gatherServerGlbFacts(bytes)
-      const rows = checkGlb(facts, artwork)
+      const rows = checkGlb(facts)
       if (!glbPasses(rows)) {
         await deleteR2KeyDirect(key).catch(() => {})
         return NextResponse.json(

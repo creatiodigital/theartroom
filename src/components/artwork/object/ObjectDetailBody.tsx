@@ -43,7 +43,7 @@ export type ObjectPageArtwork = {
   weightKg: number | null
   imageUrl: string | null
   /** The ready 3D model, if any (docs/objects O4). */
-  model: { url: string; boundsCm: { h: number; w: number; d: number } | null } | null
+  model: { url: string } | null
 }
 
 const THREE_D_CAPTION = '3D model prepared by The Art Room'
@@ -86,16 +86,6 @@ export function ObjectDetailBody({
   const size = formatObjectSize(artwork, unit)
   const weight = artwork.weightKg ? formatWeight(artwork.weightKg) : null
   const sizeLine = [size, weight].filter(Boolean).join(' · ')
-  const realSize = artwork.model?.boundsCm
-    ? formatObjectSize(
-        {
-          heightCm: artwork.model.boundsCm.h,
-          widthCm: artwork.model.boundsCm.w,
-          depthCm: artwork.model.boundsCm.d,
-        },
-        unit,
-      )
-    : null
 
   const showView = (index: number) => {
     setIn3d(false)
@@ -225,7 +215,6 @@ export function ObjectDetailBody({
                   <HandGrabbing size={18} weight="light" aria-hidden />
                   Drag to turn it around · scroll to come closer
                 </span>
-                {realSize && <span className={styles.realSize}>Real size {realSize}</span>}
                 <Button
                   variant="bare"
                   label="Reset view"

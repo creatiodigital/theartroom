@@ -1,13 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import c from 'classnames'
 
 import { Callout } from '@/components/admin/ui/Callout'
 import { ModelChecker, type UploadedModel } from '@/components/objects/ModelChecker'
 import { ModelViewer } from '@/components/objects/ModelViewer'
 import { Button } from '@/components/ui/Button'
-import { sizeCheck, type BoundsCm, type DetailsSize } from '@/lib/objects/glb'
+import type { BoundsCm } from '@/lib/objects/glb'
 
 import styles from './ObjectSpaceSection.module.scss'
 
@@ -33,27 +32,25 @@ const longDate = (iso: string | null) =>
  * The editor's "In the 3D space" (docs/objects O4, objects-editor.dc.html): an extra. Artists send
  * their .glb files to the gallery directly (owner, 2026-11-25: no requests from the editor, no "In
  * preparation", no "Not in the 3D space yet"); the gallery team uploads the file here through the
- * checker. Then a preview to turn, the real size and the size check against Details. The editor
+ * checker. Then a preview to turn and the model's size (no check against Details: the artist
+ * scales the Object in the 3D room, owner 2026-11-25). The editor
  * shows the section to the artist only once the model is in.
  */
 export function ObjectSpaceSection({
   artworkId,
   isAdmin,
   model,
-  details,
   onModelChange,
 }: {
   artworkId: string
   isAdmin: boolean
   model: ObjectModelState
-  details: DetailsSize
   onModelChange: (next: ObjectModelState) => void
 }) {
   const [checking, setChecking] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
 
   const ready = model.modelStatus === 'ready' && !!model.modelUrl
-  const check = sizeCheck(model.modelBoundsCm, details)
 
   return (
     <div className={styles.space}>
@@ -73,23 +70,12 @@ export function ObjectSpaceSection({
             </div>
             {model.modelBoundsCm && (
               <div className={styles.kv}>
-                <span>Real size</span>
+                <span>Model size</span>
                 <b>
                   {model.modelBoundsCm.h} × {model.modelBoundsCm.w} × {model.modelBoundsCm.d} cm
                 </b>
               </div>
             )}
-            <div className={styles.kv}>
-              <span>Size check</span>
-              <b
-                className={c(
-                  check.status === 'match' && styles.match,
-                  check.status === 'differ' && styles.differ,
-                )}
-              >
-                {check.text}
-              </b>
-            </div>
             <div className={styles.kv}>
               <span>Added</span>
               <b>by The Art Room · {longDate(model.modelReadyAt)}</b>
@@ -102,7 +88,7 @@ export function ObjectSpaceSection({
         <div className={styles.team}>
           <span className={styles.teamText}>
             Upload the cleaned .glb (textures inside, 1 unit = 1 m, base at 0). It is checked before
-            it is sent; we check the size against the one in Details.
+            it is sent.
           </span>
           <Button
             variant="bare"
@@ -118,7 +104,6 @@ export function ObjectSpaceSection({
       {checking && (
         <ModelChecker
           artworkId={artworkId}
-          details={details}
           replacing={!!model.modelUrl}
           onClose={() => setChecking(false)}
           onUploaded={(uploaded: UploadedModel) => {
