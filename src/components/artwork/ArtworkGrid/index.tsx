@@ -50,9 +50,6 @@ type Artwork = {
   /** The work as a photo of the real print (frame or sheet), when one is current and the
    *  switch is on. Absent: the bare image, as always. */
   presentation?: PresentationView | null
-  /** An Object (docs/objects O5): the year line says "Object". Its cover shows whole, like any
-   *  picture (owner, 2026-11-25). */
-  isObject?: boolean
 }
 
 interface ArtworkGridProps {
@@ -198,7 +195,7 @@ export const ArtworkGrid = ({
                 {(() => {
                   const edition =
                     showEdition && artwork.sale ? editionTypeLabel(artwork.sale) : null
-                  const line = [artwork.year, edition, artwork.isObject ? 'Object' : null]
+                  const line = [artwork.year, edition]
                     .filter(Boolean)
                     .join(' · ')
                   return line ? <p className={styles.year}>{line}</p> : null

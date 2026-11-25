@@ -25,8 +25,6 @@ export type PublicArtistArtwork = {
   sale: ArtworkSale | null
   /** The work as a photo of the real print, when one is current and the switch is on. */
   presentation: PresentationView | null
-  /** An Object (docs/objects): its cover's square crop for the card. Null for an image. */
-  isObject: boolean
 }
 
 export type PublicArtistExhibition = {
@@ -125,13 +123,12 @@ export const getPublicArtistByHandler = cache(async function getPublicArtistByHa
         printEnabled,
         printPriceCents,
         limitedVariants,
-        artworkType,
+        artworkType: _artworkType,
         ...artwork
       } = row
       return {
         ...artwork,
         presentation: presentations[artwork.id] ?? null,
-        isObject: artworkType === 'object',
         sale: saleFromRow(
           {
             editionType,

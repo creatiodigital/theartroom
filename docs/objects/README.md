@@ -499,3 +499,7 @@ object! unless it's a pedestal", "I cannot navigate in this 3D space with the ke
   box, at eye height, looking down at it within the head's tilt, where all of that side fits with room around and
   short of the wall behind. A click on the top or bottom takes the nearest side facing the camera, so the way there
   never crosses the Object (`lib/floor/objectSide.ts`, MainCamera `comeNearObject`).
+- The Object page opens on the 3D model (the 3D tile first, then the cover, photos and reels); no "View in 3D" button
+  in the info column. "Photographs" and "In motion" use the same label as "More by the artist" (sans, small spaced
+  caps, grey), not the headings' serif. Grids never say "Object" under a card (owner: "why should we state it's an
+  object").

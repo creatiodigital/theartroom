@@ -319,13 +319,17 @@
   }
 }
 
+// Photographs, In motion: the same label as every section title on the artwork pages (TextSection:
+// sans, small spaced caps, grey), never the headings' serif (owner, 2026-11-25).
 .eyebrow {
   margin: 0;
+  font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: var(--text-xs);
   font-weight: var(--font-regular);
+  line-height: 1.5;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--public-muted);
+  color: var(--color-text-secondary);
 }
 
 .mediaHint {

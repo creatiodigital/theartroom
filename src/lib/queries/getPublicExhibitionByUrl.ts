@@ -118,8 +118,6 @@ export type PublicExhibitionArtwork = {
   sale: ArtworkSale | null
   /** The work as a photo of the real print, when one is current and the switch is on. */
   presentation: PresentationView | null
-  /** An Object (docs/objects): its cover's square crop for the card. Null for an image. */
-  isObject: boolean
 }
 
 export type PublicExhibition = {
@@ -172,7 +170,6 @@ function toPublicArtwork(
     originalHeight: row.originalHeight,
     sale: saleFromRow(row, galleryRates),
     presentation,
-    isObject: row.artworkType === 'object',
   }
 }
 
