@@ -38,6 +38,7 @@ import {
 } from '@/redux/slices/floorSlice'
 import type { RootState } from '@/redux/store'
 
+import { floorBridge } from './floorBridge'
 import { FloorInspector } from './FloorInspector'
 import { DRAG_TYPE, FloorPlan } from './FloorPlan'
 import { useFloorEditor } from './useFloorEditor'
@@ -266,6 +267,18 @@ export function FloorView() {
     editor.revert()
     dispatch(hideFloorView())
   }
+
+  // The live 3D drags through the same editor (floorBridge), always its latest (as editorRef):
+  // set on every render while the view is open, cleared when it closes.
+  floorBridge.editor = editor
+  floorBridge.expand = expand
+  useEffect(
+    () => () => {
+      floorBridge.editor = null
+      floorBridge.expand = (ids) => ids
+    },
+    [],
+  )
 
   // ── Keys ──
   const editorRef = useRef(editor)
