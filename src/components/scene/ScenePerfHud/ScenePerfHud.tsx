@@ -26,7 +26,9 @@ import { useEffect, useRef } from 'react'
 // controls use. Staging is a production BUILD, so a NODE_ENV check would have
 // hidden it exactly where the numbers are most representative of a real visitor.
 // NEXT_PUBLIC_* is inlined at build time.
-const SHOW_HUD = process.env.NEXT_PUBLIC_APP_ENV !== 'production'
+// Hidden for now (owner, 2026-11-25: "hide this HUD temporarily"): set to false to bring it back.
+const HUD_PAUSED = true
+const SHOW_HUD = !HUD_PAUSED && process.env.NEXT_PUBLIC_APP_ENV !== 'production'
 const SAMPLE_MS = 500
 
 export function ScenePerfHud() {

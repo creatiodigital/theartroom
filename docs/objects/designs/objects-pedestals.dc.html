@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pedestal shapes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#e2e2e2}
+.cap{margin:0;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#666}
+.num{display:flex;align-items:center;height:36px;padding:0 10px;border:1px solid #dcdcdc;border-radius:8px;background:#fff;font-family:'Geist Mono',monospace;font-size:13px;color:#000;gap:6px;box-sizing:border-box}
+.num small{font-family:Geist,sans-serif;font-size:11px;color:#767676;margin-left:auto}
+.lbl{font-size:12px;color:#666}
+.btn{font:inherit;font-size:13px;font-weight:600;height:34px;padding:0 12px;background:#fff;border:1px solid #dcdcdc;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;color:#000}
+.seg{display:flex;gap:2px;padding:3px;background:#f5f5f5;border-radius:8px}
+.seg button{flex:1 1 auto;font:inherit;font-size:12px;padding:5px 0;background:transparent;border:0;border-radius:6px;color:#555}
+.seg button[aria-pressed="true"]{background:#fff;color:#000;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.sw{width:34px;height:20px;flex:0 0 auto;border-radius:10px;background:#d6d6d6;position:relative}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff}
+.sw.on{background:#1a1a1a}.sw.on::after{left:17px}
+</style>
+</helmet>
+<div style="width: 1320px; height: 1000px; display: flex; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.45; color: #333333; background: #e2e2e2">
+
+<section aria-labelledby="h-shapes" style="flex: 1 1 auto; padding: 40px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 id="h-shapes" style="margin: 0; font-size: 22px; font-weight: 700; color: #000">Pedestal shapes</h2><span style="color: #555">Opens from <b>Shape</b> in the panel, and from a long press on <b>Pedestal</b> in the floor’s bottom bar. Every shape takes any size and finish.</span></div>
+<div role="radiogroup" aria-label="Pedestal shape" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{shapes}}" as="s" hint-placeholder-count="16">
+<button type="button" role="radio" aria-checked="{{s.on}}" onClick="{{s.pick}}" style="{{s.card}}">
+<svg width="120" height="104" viewBox="0 0 120 112" aria-hidden="true"><sc-for list="{{s.polys}}" as="p" hint-placeholder-count="4"><path d="{{p.d}}" fill="{{p.fill}}" stroke="{{p.stroke}}" stroke-width="0.8" stroke-linejoin="round" stroke-dasharray="{{p.dash}}"></path></sc-for></svg>
+<span style="display: flex; flex-direction: column; align-items: center; line-height: 1.25"><span style="font-size: 13px; font-weight: 600; color: #000">{{s.name}}</span><span style="font-size: 11.5px; color: #767676">{{s.sub}}</span></span>
+</button>
+</sc-for>
+</div>
+</section>
+
+<aside aria-label="{{title}}" style="flex: 0 0 320px; height: 100%; box-sizing: border-box; background: #ffffff; border-left: 1px solid #e6e6e6; display: flex; flex-direction: column">
+<div style="padding: 16px; border-bottom: 1px solid #efefef; display: flex; align-items: center; gap: 10px">
+<span aria-hidden="true" style="width: 48px; height: 44px; border-radius: 6px; background: #f2f2f2; display: flex; align-items: center; justify-content: center"><svg width="44" height="40" viewBox="0 0 120 112"><sc-for list="{{cur.polys}}" as="p" hint-placeholder-count="3"><path d="{{p.d}}" fill="{{p.fill}}" stroke="{{p.stroke}}" stroke-width="1.6" stroke-linejoin="round"></path></sc-for></svg></span>
+<span style="flex: 1 1 auto; display: flex; flex-direction: column; line-height: 1.3"><b style="font-size: 15px; color: #000">Pedestal 1</b><span style="font-size: 12px; color: #767676">{{subtitle}}</span></span>
+</div>
+<div style="flex: 1 1 auto; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 18px">
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">Shape</h3>
+<button type="button" class="btn" style="justify-content: space-between; height: 40px"><span>{{cur.name}}</span><span style="font-size: 12px; font-weight: 500; color: #555">Change</span></button>
+</section>
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">Size</h3>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{dims}}" as="d" hint-placeholder-count="3"><label style="display: flex; flex-direction: column; gap: 4px"><span class="lbl">{{d.l}}</span><span class="num">{{d.v}}<small>cm</small></span></label></sc-for>
+</div>
+<label style="display: flex; align-items: center; gap: 10px; font-size: 13px"><span style="flex: 1 1 auto">Keep proportions</span><span role="switch" aria-checked="false" aria-label="Keep proportions" class="sw"></span></label>
+</section>
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">Edges</h3>
+<div class="seg" role="group" aria-label="Edges"><button type="button" aria-pressed="true">Sharp</button><button type="button" aria-pressed="false">Soft</button><button type="button" aria-pressed="false">Round</button></div>
+</section>
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">Material</h3>
+<div role="radiogroup" aria-label="Material" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{mats}}" as="m" hint-placeholder-count="8"><button type="button" role="radio" aria-checked="{{m.on}}" onClick="{{m.pick}}" style="{{m.style}}"><span aria-hidden="true" style="{{m.chip}}"></span>{{m.n}}</button></sc-for>
+</div>
+</section>
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">{{colTitle}}</h3>
+<div role="radiogroup" aria-label="{{colTitle}}" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{cols}}" as="f" hint-placeholder-count="12"><button type="button" role="radio" aria-checked="{{f.on}}" aria-label="{{f.n}}" title="{{f.n}}" onClick="{{f.pick}}" style="{{f.style}}"></button></sc-for>
+</div>
+<span style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: #555"><span>{{colName}}</span><sc-if value="{{anyCol}}" hint-placeholder-val="{{true}}"><button type="button" style="font: inherit; font-size: 12px; font-weight: 600; padding: 0; background: none; border: 0; color: #000">Any colour…</button></sc-if></span>
+<sc-if value="{{surface}}" hint-placeholder-val="{{true}}"><div class="seg" role="group" aria-label="Surface"><button type="button" aria-pressed="true">Matte</button><button type="button" aria-pressed="false">Satin</button><button type="button" aria-pressed="false">Gloss</button></div></sc-if>
+</section>
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">Place</h3>
+<div style="display: flex; gap: 6px">
+<label style="flex: 1 1 0; display: flex; flex-direction: column; gap: 4px"><span class="lbl">From west wall</span><span class="num">450<small>cm</small></span></label>
+<label style="flex: 1 1 0; display: flex; flex-direction: column; gap: 4px"><span class="lbl">From north wall</span><span class="num">350<small>cm</small></span></label>
+</div>
+<div style="display: flex; gap: 6px">
+<label style="flex: 1 1 0; display: flex; flex-direction: column; gap: 4px"><span class="lbl">Height above floor</span><span class="num">0<small>cm</small></span></label>
+<label style="flex: 1 1 0; display: flex; flex-direction: column; gap: 4px"><span class="lbl">Rotation</span><span class="num">0<small>°</small></span></label>
+</div>
+</section>
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">On top</h3>
+<div style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: #f7f7f7; border-radius: 8px"><span aria-hidden="true" style="width: 30px; height: 30px; border-radius: 4px; background: #efece7; display: flex; align-items: flex-end; justify-content: center"><svg width="14" height="24" viewBox="0 0 60 100"><path d="M14 96 C6 70 14 40 22 26 C14 14 22 2 30 2 C38 2 46 14 38 26 C46 40 54 70 46 96 Z" fill="#7d766d"></path></svg></span><span style="flex: 1 1 auto; font-size: 13px">Torso II</span><span style="font-size: 11px; color: #767676">moves with it</span></div>
+</section>
+</div>
+<div style="padding: 12px 16px; border-top: 1px solid #efefef; display: flex; gap: 8px"><button type="button" class="btn" style="flex: 1 1 auto">Duplicate</button><button type="button" class="btn" style="flex: 1 1 auto; color: #a12a2a">Remove</button></div>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1320,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { shape: 1 }; }
+  renderVals() {
+    const K = 0.62, CX = 60, CY = 82;
+    const P = (x, y, z) => [CX + (x - y) * 0.866 * K, CY + (x + y) * 0.5 * K - z * K];
+    const path = (pts) => 'M' + pts.map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L') + ' Z';
+    const shade = (nx, ny) => { const t = Math.max(0, Math.min(1, 0.5 + 0.5 * (nx * 0.7 - ny * 0.7))); const v = Math.round(200 + t * 30); return 'rgb(' + v + ',' + (v - 2) + ',' + (v - 6) + ')'; };
+    // extrude a polygon (base outline pts [x,y]) from z0 to z1, top scaled by s
+    const ext = (poly, z0, z1, s) => {
+      s = s || 1; const out = []; const n = poly.length;
+      const sides = [];
+      for (let i = 0; i < n; i++) {
+        const a = poly[i], b = poly[(i + 1) % n];
+        const ex = b[0] - a[0], ey = b[1] - a[1];
+        let nx = ey, ny = -ex; const L = Math.hypot(nx, ny) || 1; nx /= L; ny /= L;
+        // polygon is counter-clockwise in x,y → outward normal (ey,-ex)
+        if (nx + ny > 0.0001) sides.push({ d: path([P(a[0], a[1], z0), P(b[0], b[1], z0), P(b[0] * s, b[1] * s, z1), P(a[0] * s, a[1] * s, z1)]), fill: shade(nx, ny), depth: a[0] + a[1] + b[0] + b[1] });
+      }
+      sides.sort((p, q) => p.depth - q.depth).forEach((f) => out.push({ d: f.d, fill: f.fill, stroke: '#8f8b84', dash: 'none' }));
+      out.push({ d: path(poly.map((p) => P(p[0] * s, p[1] * s, z1))), fill: '#fbfbf9', stroke: '#8f8b84', dash: 'none' });
+      return out;
+    };
+    const rect = (w, d) => [[-w / 2, -d / 2], [w / 2, -d / 2], [w / 2, d / 2], [-w / 2, d / 2]].reverse();
+    const ngon = (n, rx, ry, a0) => { const r = []; for (let i = 0; i < n; i++) { const a = (a0 || 0) + (i / n) * Math.PI * 2; r.push([Math.cos(a) * rx, Math.sin(a) * (ry || rx)]); } return r.reverse(); };
+    const arc = (r, a0, a1, n, extra) => { const pts = []; for (let i = 0; i <= n; i++) { const a = a0 + (a1 - a0) * (i / n); pts.push([Math.cos(a) * r, Math.sin(a) * r]); } return (extra ? pts.concat(extra) : pts).reverse(); };
+    const rrect = (w, d, r) => { const pts = []; const c = [[w / 2 - r, d / 2 - r, 0], [-w / 2 + r, d / 2 - r, Math.PI / 2], [-w / 2 + r, -d / 2 + r, Math.PI], [w / 2 - r, -d / 2 + r, Math.PI * 1.5]]; c.forEach(([x, y, a]) => { for (let i = 0; i <= 6; i++) { const t = a + (i / 6) * Math.PI / 2; pts.push([x + Math.cos(t) * r, y + Math.sin(t) * r]); } }); return pts.reverse(); };
+    const PI = Math.PI;
+    const S = [
+      ['Cube', 'Equal sides', () => ext(rect(44, 44), 0, 44)],
+      ['Box', 'Any width, depth, height', () => ext(rect(40, 40), 0, 90)],
+      ['Slab', 'Low platform', () => ext(rect(90, 60), 0, 14)],
+      ['Long table', 'Long and low', () => ext(rect(110, 34), 0, 36)],
+      ['Cylinder', 'Round', () => ext(ngon(40, 22), 0, 90)],
+      ['Disc', 'Low and round', () => ext(ngon(40, 46), 0, 14)],
+      ['Hexagon', 'Six sides', () => ext(ngon(6, 26), 0, 80)],
+      ['Octagon', 'Eight sides', () => ext(ngon(8, 26, 26, PI / 8), 0, 80)],
+      ['Tapered', 'Narrower at the top', () => ext(rect(46, 46), 0, 90, 0.7)],
+      ['Tapered round', 'Round, narrower at the top', () => ext(ngon(40, 26), 0, 88, 0.7)],
+      ['Stepped', 'Two tiers', () => ext(rect(64, 64), 0, 22).concat(ext(rect(38, 38), 22, 82))],
+      ['Soft box', 'Rounded corners', () => ext(rrect(46, 46, 10), 0, 86)],
+      ['Half round', 'Flat back, for a wall', () => ext(arc(30, -PI / 2, PI / 2, 20), 0, 86)],
+      ['Corner', 'Quarter round, for a corner', () => ext(arc(44, -PI / 2, 0, 16, [[0, 0]]), 0, 86)],
+      ['Table', 'Top on four legs', () => { const l = (x, y) => ext(rect(5, 5).map(([a, b]) => [a + x, b + y]), 0, 70); return l(-36, -24).concat(l(36, -24), l(-36, 24)).concat(ext(rect(84, 60), 70, 76)).concat(l(36, 24)); }],
+      ['More from the gallery', 'Pedestals made by The Art Room', null]
+    ];
+    const ghost = [{ d: path([P(-22, -22, 0), P(22, -22, 0), P(22, 22, 0), P(-22, 22, 0)]), fill: 'none', stroke: '#9a9a9a', dash: '3 3' }, { d: path([P(22, -22, 0), P(22, 22, 0), P(22, 22, 70), P(22, -22, 70)]), fill: 'none', stroke: '#9a9a9a', dash: '3 3' }, { d: path([P(-22, 22, 0), P(22, 22, 0), P(22, 22, 70), P(-22, 22, 70)]), fill: 'none', stroke: '#9a9a9a', dash: '3 3' }, { d: path([P(-22, -22, 70), P(22, -22, 70), P(22, 22, 70), P(-22, 22, 70)]), fill: 'none', stroke: '#9a9a9a', dash: '3 3' }];
+    const shapes = S.map(([name, sub, fn], i) => {
+      const on = this.state.shape === i;
+      // the last two items are a placeholder for GLB pedestals; fix the table draw order (front leg last)
+      const polys = fn ? fn() : ghost;
+      return { name, sub, polys, on: on ? 'true' : 'false', pick: () => this.setState({ shape: i }),
+        card: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: '14px 10px 12px', font: 'inherit', background: fn ? '#ffffff' : '#f4f4f4', border: on ? '2px solid #1a1a1a' : (fn ? '1px solid #e2e2e2' : '1px dashed #b5b5b5'), borderRadius: '10px', cursor: 'pointer', boxSizing: 'border-box' } };
+    });
+    const cur = shapes[this.state.shape] || shapes[1];
+    const round = ['Cylinder', 'Disc', 'Tapered round', 'Hexagon', 'Octagon'].indexOf(cur.name) >= 0;
+    const dimsBy = { Cube: [['Side', 45], ['Side', 45], ['Side', 45]], Slab: [['Width', 120], ['Depth', 80], ['Height', 15]], 'Long table': [['Width', 200], ['Depth', 50], ['Height', 45]], Disc: [['Diameter', 120], ['—', '—'], ['Height', 15]], Table: [['Width', 120], ['Depth', 80], ['Height', 75]] };
+    const dims = (dimsBy[cur.name] || (round ? [['Diameter', 45], ['—', '—'], ['Height', 90]] : [['Width', 40], ['Depth', 40], ['Height', 90]])).filter((d) => d[0] !== '—').map(([l, v]) => ({ l, v }));
+    const PAINT = [['White', '#f7f7f5'], ['Off-white', '#ece7dc'], ['Sand', '#d8c9ad'], ['Light grey', '#c9c9c7'], ['Dark grey', '#5a5a5a'], ['Black', '#1c1c1c'], ['Terracotta', '#b8644a'], ['Ochre', '#c99a3e'], ['Olive', '#7a7a4e'], ['Sage', '#a3b09a'], ['Blue', '#3d5a80'], ['Red', '#a3272f']];
+    const M = [
+      ['Painted', 'linear-gradient(135deg,#f7f7f5,#e4e2dd)', 'Colour', PAINT, true, true],
+      ['Wood', 'linear-gradient(135deg,#d2b48c,#b8925f)', 'Wood', [['Birch', 'linear-gradient(135deg,#ecdcc0,#d9c39d)'], ['Ash', 'linear-gradient(135deg,#e2cfae,#c9b089)'], ['Oak', 'linear-gradient(135deg,#d2b48c,#b8925f)'], ['Cherry', 'linear-gradient(135deg,#b97a56,#93553a)'], ['Walnut', 'linear-gradient(135deg,#6b4a33,#4a3222)'], ['Ebonised', 'linear-gradient(135deg,#3a322c,#1e1a17)']], false, true],
+      ['Plastic', 'linear-gradient(135deg,#ffffff,#d6dde4)', 'Colour', PAINT, true, true],
+      ['Concrete', 'linear-gradient(135deg,#b9b6b0,#9e9a93)', 'Tone', [['Light', 'linear-gradient(135deg,#cfccc6,#b4b0a9)'], ['Mid', 'linear-gradient(135deg,#b0aca5,#948f88)'], ['Dark', 'linear-gradient(135deg,#7e7a74,#5f5b56)']], false, false],
+      ['Stone', 'linear-gradient(135deg,#f4f3f1 40%,#cfcac3 50%,#f4f3f1 60%)', 'Stone', [['White marble', 'linear-gradient(135deg,#f4f3f1 40%,#cfcac3 50%,#f4f3f1 60%)'], ['Travertine', 'linear-gradient(135deg,#e6d8bf,#cdb994)'], ['Green marble', 'linear-gradient(135deg,#3f5a4c,#273a30)'], ['Black granite', 'linear-gradient(135deg,#2a2a2a,#111)']], false, true],
+      ['Metal', 'linear-gradient(135deg,#d9dbdd,#9fa3a7)', 'Metal', [['Brushed steel', 'linear-gradient(135deg,#d9dbdd,#9fa3a7)'], ['Black steel', 'linear-gradient(135deg,#4a4c4f,#26282a)'], ['Brass', 'linear-gradient(135deg,#e2c37a,#a9853c)'], ['Copper', 'linear-gradient(135deg,#d99a72,#9c5a3a)'], ['Corten', 'linear-gradient(135deg,#9c5a33,#6e3a1f)']], false, true],
+      ['Acrylic', 'linear-gradient(135deg,rgba(200,220,235,0.6),rgba(255,255,255,0.95))', 'Tint', [['Clear', 'linear-gradient(135deg,rgba(200,220,235,0.5),rgba(255,255,255,0.9))'], ['Frosted', 'linear-gradient(135deg,#eef1f3,#dfe4e8)'], ['Smoke', 'linear-gradient(135deg,rgba(80,80,80,0.5),rgba(160,160,160,0.6))']].concat(PAINT.slice(6).map(([n, c]) => [n + ' tint', c])), true, false],
+      ['Mirror', 'linear-gradient(135deg,#eef1f4,#8d949b 60%,#eef1f4)', 'Mirror', [['Silver', 'linear-gradient(135deg,#eef1f4,#8d949b 60%,#eef1f4)'], ['Smoked', 'linear-gradient(135deg,#9aa0a6,#4b5056 60%,#9aa0a6)'], ['Gold', 'linear-gradient(135deg,#f4e3b5,#b8933f 60%,#f4e3b5)']], false, false]
+    ];
+    const mi = this.state.mat ?? 0;
+    const cm = M[mi];
+    const ci = Math.min(this.state.col ?? 0, cm[3].length - 1);
+    return {
+      mats: M.map(([n, sw], i) => ({ n, on: i === mi ? 'true' : 'false', pick: () => this.setState({ mat: i, col: 0 }),
+        chip: { width: '22px', height: '22px', borderRadius: '50%', background: sw, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.12)' },
+        style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '8px 2px 6px', font: 'inherit', fontSize: '11.5px', fontWeight: i === mi ? 600 : 400, color: i === mi ? '#000' : '#444', background: i === mi ? '#f5f5f5' : '#fff', border: i === mi ? '2px solid #1a1a1a' : '1px solid #e0e0e0', borderRadius: '8px', cursor: 'pointer', boxSizing: 'border-box' } })),
+      colTitle: cm[2],
+      colName: cm[0] + ' · ' + cm[3][ci][0],
+      anyCol: cm[4],
+      surface: cm[5],
+      cols: cm[3].map(([n, c], i) => ({ n, on: i === ci ? 'true' : 'false', pick: () => this.setState({ col: i }), style: { height: '36px', padding: 0, border: i === ci ? '2px solid #1a1a1a' : '1px solid #d0d0d0', borderRadius: '6px', background: c, cursor: 'pointer', boxSizing: 'border-box' } })),
+      shapes, cur,
+      title: 'Pedestal 1',
+      subtitle: 'Pedestal · ' + cur.name + ' · ' + dims.map((d) => d.v).join(' × ') + ' cm',
+      dims
+    };
+  }
+}
+</script>
+</body>
+</html>

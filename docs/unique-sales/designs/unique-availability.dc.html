@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Availability of unique pieces</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&amp;family=Lato:wght@400;700&amp;family=Geist:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f4f4f2}
+.serif{font-family:'EB Garamond',Georgia,serif}
+.caps{font-size:12px;letter-spacing:.16em;text-transform:uppercase}
+.lab{font-family:Geist,sans-serif;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#666}
+.col{width:320px;background:#fff;padding:24px;display:flex;flex-direction:column;gap:18px;box-sizing:border-box}
+.pb{display:flex;align-items:center;justify-content:center;gap:10px;height:48px;font:inherit;font-size:13px;letter-spacing:.12em;text-transform:uppercase;background:#1a1a1a;color:#fff;border:0}
+.ob{display:flex;align-items:center;justify-content:center;height:46px;font:inherit;font-size:13px;letter-spacing:.12em;text-transform:uppercase;background:#fff;color:#1a1a1a;border:1px solid #1a1a1a}
+.g{font-family:Geist,sans-serif;font-size:14px;color:#333}
+.card{background:#fff;border:1px solid #eaeaea;border-radius:8px;padding:24px;display:flex;flex-direction:column;gap:16px}
+.seg{display:inline-flex;border:1px solid #dcdcdc;border-radius:4px;overflow:hidden}
+.seg button{font:inherit;font-size:13px;padding:6px 14px;min-height:38px;background:#fff;border:0;border-left:1px solid #dcdcdc;color:#333}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed="true"]{background:#1a1a1a;color:#fff;font-weight:600}
+.sw{width:40px;height:24px;flex:0 0 auto;border-radius:12px;background:#d6d6d6;position:relative}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff}
+.sw.on{background:#1a1a1a}.sw.on::after{left:19px}
+.help{font-size:12px;color:#666}
+.btn{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:13px;font-weight:600;padding:7px 12px;min-height:36px;background:#fff;border:1px solid #dcdcdc;border-radius:4px;color:#000}
+</style>
+</helmet>
+<div style="width: 1440px; min-height: 1500px; box-sizing: border-box; padding: 48px; display: flex; flex-direction: column; gap: 48px; font-family: Lato, -apple-system, sans-serif; color: #1a1a1a">
+
+<section aria-labelledby="h-a" style="display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px; font-family: Geist, sans-serif"><h2 id="h-a" style="margin: 0; font-size: 22px; font-weight: 700">1 · Artwork page, info column</h2><span class="g" style="color: #555">Three states for an original. The column keeps the approved artwork page layout; only the status line and the buttons change.</span></div>
+<div style="display: flex; gap: 24px; align-items: flex-start">
+
+<div style="display: flex; flex-direction: column; gap: 8px"><span class="lab">Available</span>
+<div class="col">
+<div style="display: flex; flex-direction: column; gap: 4px"><span class="caps" style="color: #555">Jane Doe</span><h3 class="serif" style="margin: 4px 0 0; font-weight: 400; font-size: 32px; line-height: 1.1">Morning over the estuary</h3><span style="font-size: 14px; color: #888">2024</span><span style="font-size: 14px; color: #888">80 × 60 cm</span><span style="font-size: 13px; color: #999; margin-top: 6px">Oil on canvas</span></div>
+<div style="display: flex; flex-direction: column; gap: 12px; padding-top: 18px; border-top: 1px solid #ececec">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><span class="caps" style="color: #555">Original</span><span style="display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: #2f6b3a"><span style="width: 7px; height: 7px; border-radius: 50%; background: #3c8a4a"></span>Available</span></div>
+<button type="button" class="ob">Inquire</button>
+</div>
+</div></div>
+
+<div style="display: flex; flex-direction: column; gap: 8px"><span class="lab">Reserved</span>
+<div class="col">
+<div style="display: flex; flex-direction: column; gap: 4px"><span class="caps" style="color: #555">Jane Doe</span><h3 class="serif" style="margin: 4px 0 0; font-weight: 400; font-size: 32px; line-height: 1.1">Morning over the estuary</h3><span style="font-size: 14px; color: #888">2024</span><span style="font-size: 14px; color: #888">80 × 60 cm</span></div>
+<div style="display: flex; flex-direction: column; gap: 12px; padding-top: 18px; border-top: 1px solid #ececec">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><span class="caps" style="color: #555">Original</span><span style="display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: #6b6b6b"><span style="width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid #8a8a8a; box-sizing: border-box"></span>Reserved</span></div>
+<span style="font-size: 14px; line-height: 1.6; color: #555">Another collector is finalising this work. Leave your details and we will tell you if it becomes available.</span>
+<button type="button" class="ob">Inquire</button>
+</div>
+</div></div>
+
+<div style="display: flex; flex-direction: column; gap: 8px"><span class="lab">Sold</span>
+<div class="col">
+<div style="display: flex; flex-direction: column; gap: 4px"><span class="caps" style="color: #555">Jane Doe</span><h3 class="serif" style="margin: 4px 0 0; font-weight: 400; font-size: 32px; line-height: 1.1">Morning over the estuary</h3><span style="font-size: 14px; color: #888">2024</span><span style="font-size: 14px; color: #888">80 × 60 cm</span></div>
+<div style="display: flex; flex-direction: column; gap: 12px; padding-top: 18px; border-top: 1px solid #ececec">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><span class="caps" style="color: #555">Original</span><span style="display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: #a3272f"><span style="width: 9px; height: 9px; border-radius: 50%; background: #c0262d"></span>Sold</span></div>
+<a href="#" style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: #333; text-decoration: none"><svg width="15" height="15" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M220.24,132.24l-72,72a6,6,0,0,1-8.48-8.48L201.51,134H40a6,6,0,0,1,0-12H201.51L139.76,60.24a6,6,0,0,1,8.48-8.48l72,72A6,6,0,0,1,220.24,132.24Z"></path></svg>Ask about similar works</a>
+</div>
+</div></div>
+
+<div style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 10px; padding-top: 26px; font-family: Geist, sans-serif; font-size: 13px; color: #444; line-height: 1.6">
+<b style="color: #000">Rules</b>
+<span>• One artwork = one way of selling (owner 2026-11-25): a unique piece’s page never shows prints. A print of the work is a separate artwork with its own page.</span>
+<span>• Never a price for the original, not even “Price on request”: only Inquire.</span>
+<span>• Not for sale: no Original block and no status label, but <b>Inquire</b> stays (outlined, under the work’s details) so a collector can still get in touch.</span>
+<span>• Editions of Objects: “3 of 8 available” instead of Available, then Sold out.</span>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="h-b" style="display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px; font-family: Geist, sans-serif"><h2 id="h-b" style="margin: 0; font-size: 22px; font-weight: 700">2 · Everywhere the work appears</h2><span class="g" style="color: #555">Exhibition, artist and home grids, “More by the artist”, and the info panel in the 3D room. A small mark after the year, nothing over the image.</span></div>
+<div style="display: grid; grid-template-columns: repeat(4, 240px); gap: 28px">
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="4">
+<figure style="margin: 0; background: #fff; padding: 12px">
+<span role="img" aria-label="{{t.title}}" style="display: block; aspect-ratio: 1 / 1; background: {{t.bg}}"></span>
+<figcaption style="padding-top: 10px; display: flex; flex-direction: column; gap: 2px"><span class="serif" style="font-size: 18px"><i>{{t.title}}</i></span><span style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #888">{{t.year}}<sc-if value="{{t.mark}}" hint-placeholder-val="{{false}}"><span style="{{t.markStyle}}"><span style="{{t.dot}}"></span>{{t.mark}}</span></sc-if></span></figcaption>
+</figure>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="h-c" style="display: flex; gap: 24px; align-items: flex-start; font-family: Geist, sans-serif; font-size: 14px; color: #333">
+<div class="card" style="flex: 1 1 0">
+<div style="display: flex; flex-direction: column"><span class="lab" style="margin-bottom: 6px">3 · Artwork editor (admin and artist)</span><h2 id="h-c" style="margin: 0; font-size: 18px; font-weight: 700; color: #000">Original</h2></div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px"><span style="display: flex; flex-direction: column"><b style="color: #000">Sell as unique</b><span class="help">Visitors can inquire about buying the work itself. Independent from Print sales.</span></span><span role="switch" aria-checked="true" aria-label="Sell as unique" class="sw on"></span></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 12px; font-weight: 600; color: #555">Availability</span>
+<div class="seg" role="group" aria-label="Availability"><button type="button" aria-pressed="false">Available</button><button type="button" aria-pressed="true">Reserved</button><button type="button" aria-pressed="false">Sold</button></div>
+<div style="display: flex; align-items: center; gap: 10px; font-size: 13px">Reserved until <span style="display: inline-flex; align-items: center; height: 36px; padding: 0 10px; border: 1px solid #dcdcdc; border-radius: 4px">30 Nov 2026</span><span class="help">You get a reminder that day.</span></div>
+<span class="help">Set by the sale record UP-0007 (Agreed, 18 Nov). <a href="UniqueSaleRecord.dc.html" style="color: #000; font-weight: 600">Open the sale</a></span>
+</div>
+<label style="display: flex; align-items: center; justify-content: space-between; gap: 16px"><span style="display: flex; flex-direction: column"><b style="color: #000">Hide when sold</b><span class="help">Off: sold works stay visible with the red dot, as in a gallery.</span></span><span role="switch" aria-checked="false" aria-label="Hide when sold" class="sw"></span></label>
+<span class="help">Admin sees all three states. The artist sees the state read-only, plus the button on the right.</span>
+</div>
+<div class="card" style="flex: 0 0 420px">
+<span class="lab">What the artist sees</span>
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 8px; height: 8px; border-radius: 50%; background: #3c8a4a"></span><b style="color: #000">Available</b><span class="help">The gallery handles inquiries and sales.</span></div>
+<button type="button" class="btn" style="align-self: flex-start">Sold elsewhere…</button>
+<span class="help">For a sale outside The Art Room. Asks for the date (and optionally the price), shows the work as Sold, and tells the gallery. No sale record, no commission flow.</span>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const M = { Reserved: ['#6b6b6b', { width: '7px', height: '7px', borderRadius: '50%', border: '1.5px solid #8a8a8a', boxSizing: 'border-box' }], Sold: ['#a3272f', { width: '8px', height: '8px', borderRadius: '50%', background: '#c0262d' }], '3 of 8 available': ['#555', { display: 'none' }] };
+    const T = [['Blue hour I', '2023', 'linear-gradient(135deg,#a9bcd0,#3b5573)', null], ['Morning over the estuary', '2024', 'linear-gradient(135deg,#e7d3b0,#b08d57)', 'Sold'], ['Red field', '2025', 'linear-gradient(135deg,#d26a6a,#8a1f26)', 'Reserved'], ['Torso II', '2025', 'linear-gradient(180deg,#f2f2f2,#e2ded7)', '3 of 8 available']];
+    return {
+      tiles: T.map(([title, year, bg, mark]) => ({ title, year, bg, mark: mark || false,
+        markStyle: { display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: mark ? M[mark][0] : '#888' },
+        dot: mark ? M[mark][1] : {} }))
+    };
+  }
+}
+</script>
+</body>
+</html>

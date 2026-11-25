@@ -56,9 +56,11 @@ interface SceneProps {
    * inside the scene's audio provider, so they can read and switch its sound.
    */
   overlay?: ReactNode
+  /** Fill its container rather than the whole window (the Floor view's live 3D, docs/objects O6). */
+  fill?: boolean
 }
 
-export const Scene = ({ hideLoader, overlay }: SceneProps = {}) => {
+export const Scene = ({ hideLoader, overlay, fill = false }: SceneProps = {}) => {
   const wallRefs = useRef<React.RefObject<Mesh | null>[]>([])
   const windowRefs = useRef<React.RefObject<Mesh | null>[]>([])
   const glassRefs = useRef<React.RefObject<Mesh | null>[]>([])
@@ -146,7 +148,10 @@ export const Scene = ({ hideLoader, overlay }: SceneProps = {}) => {
   return (
     <SceneAudioProvider>
       <SceneContext.Provider value={{ wallRefs, windowRefs, glassRefs }}>
-        <div className={styles.scene} onContextMenu={(e) => e.preventDefault()}>
+        <div
+          className={fill ? `${styles.scene} ${styles.fill}` : styles.scene}
+          onContextMenu={(e) => e.preventDefault()}
+        >
           {webglAvailable === false && <WebGLUnavailable />}
           {webglAvailable && (
             <SceneErrorBoundary exhibitionUrl={exhibitionUrl}>

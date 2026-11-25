@@ -14,3 +14,18 @@ export const PUBLIC_ARTWORK_OMIT = {
   originalDpi: true,
   originalFormat: true,
 } satisfies Prisma.ArtworkOmit
+
+/**
+ * A unique piece's private prices (docs/unique-sales U1): the artist's suggested price (artist and
+ * gallery only), the lowest the gallery accepts (admin only) and the artist's own sale price when
+ * sold elsewhere. The public never sees any of them; the artist never sees the lowest.
+ *
+ * The Prisma client leaves them out of EVERY query (src/lib/prisma.ts), so no page or API returns
+ * them by accident, whatever it selects or spreads. A query that needs one names it
+ * (`omit: { suggestedPriceCents: false }` or a `select`), and only the editor's own routes may.
+ */
+export const PRIVATE_ARTWORK_OMIT = {
+  suggestedPriceCents: true,
+  lowestPriceCents: true,
+  soldElsewherePriceCents: true,
+} satisfies Prisma.ArtworkOmit

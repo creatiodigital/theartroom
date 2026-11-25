@@ -13,6 +13,7 @@ import WallCeilingPanel from '@/components/editview/WallCeilingPanel/WallCeiling
 import { WindowsPanel } from '@/components/editview/WindowsPanel'
 import { ExitPrompt } from '@/components/exhibitions/ExitPrompt'
 import { useArtworkRereadOnReturn } from '@/hooks/artworkReread'
+import { FloorFrame } from '@/components/floorview/FloorFrame'
 import { Scene } from '@/components/scene'
 import { WallView } from '@/components/wallview'
 import { declineExit } from '@/redux/slices/sceneSlice'
@@ -26,6 +27,8 @@ function EditView() {
   // Works opened in the studio by "Edit artwork" are re-read when this tab is back (Q153).
   useArtworkRereadOnReturn()
   const isWallView: boolean = useSelector((state: RootState) => state.wallView.isWallView)
+  // The Floor view (docs/objects O6) keeps this scene as its live 3D: the tools step aside.
+  const isFloorView: boolean = useSelector((state: RootState) => state.floor.isFloorView)
   const isArtworkPanelOpen: boolean = useSelector(
     (state: RootState) => state.dashboard.isArtworkPanelOpen,
   )
@@ -75,18 +78,24 @@ function EditView() {
     <>
       {!isWallView && (
         <div>
-          <Menu />
-          <Scene />
-          {isArtworkPanelOpen && <ArtworkPanel />}
-          {isLightingPanelOpen && <LightingPanel />}
-          {isPanelsPanelOpen && <PanelsPanel />}
-          {isFurniturePanelOpen && <FurniturePanel />}
-          {isFloorPanelOpen && <FloorPanel />}
-          {isCameraPanelOpen && <CameraPanel />}
+          {!isFloorView && <Menu />}
+          <FloorFrame active={isFloorView}>
+            <Scene fill={isFloorView} />
+          </FloorFrame>
+          {!isFloorView && (
+            <>
+              {isArtworkPanelOpen && <ArtworkPanel />}
+              {isLightingPanelOpen && <LightingPanel />}
+              {isPanelsPanelOpen && <PanelsPanel />}
+              {isFurniturePanelOpen && <FurniturePanel />}
+              {isFloorPanelOpen && <FloorPanel />}
+              {isCameraPanelOpen && <CameraPanel />}
 
-          {isWallCeilingPanelOpen && <WallCeilingPanel />}
-          {isWindowsPanelOpen && <WindowsPanel />}
-          {isBakePanelOpen && <BakePanel />}
+              {isWallCeilingPanelOpen && <WallCeilingPanel />}
+              {isWindowsPanelOpen && <WindowsPanel />}
+              {isBakePanelOpen && <BakePanel />}
+            </>
+          )}
 
           <ExitPrompt
             open={isExitPromptOpen}

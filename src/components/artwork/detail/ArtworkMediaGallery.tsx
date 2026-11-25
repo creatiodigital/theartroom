@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import c from 'classnames'
 
 import { Button } from '@/components/ui/Button'
 import { Text } from '@/components/ui/Typography'
@@ -29,7 +30,9 @@ import styles from './ArtworkMediaGallery.module.scss'
  * Images are `cover` at a fixed 3:2, not `contain`. An asset moves between
  * layouts as more are added, so a shared ratio keeps its crop stable instead of
  * reframing every time the count changes. (The artwork's own image is
- * `contain`, above — that one must never crop.)
+ * `contain`, above — that one must never crop.) A vertical video (an Object's
+ * reel) keeps the 3:2 slide but shows whole, `contain` on the page grey: a reel
+ * cut to 3:2 loses most of itself (docs/objects O5b).
  */
 /** Must match the CSS transition on `.track`. */
 const SLIDE_MS = 400
@@ -154,7 +157,10 @@ export const ArtworkMediaGallery = ({ media = [] }: { media?: ArtworkMediaItem[]
               aria-hidden={isCarousel && position !== activePosition}
             >
               {item.kind === 'video' ? (
-                <ArtworkMediaVideo url={item.url} />
+                <ArtworkMediaVideo
+                  url={item.url}
+                  vertical={!!item.width && !!item.height && item.height > item.width}
+                />
               ) : (
                 <img
                   src={item.url}
@@ -214,9 +220,18 @@ export const ArtworkMediaGallery = ({ media = [] }: { media?: ArtworkMediaItem[]
  * A visitor who has asked for reduced motion gets a still first frame and the
  * play button, not a moving image they did not consent to.
  */
-const ArtworkMediaVideo = ({ url }: { url: string }) => {
+const ArtworkMediaVideo = ({
+  url,
+  vertical: storedVertical,
+}: {
+  url: string
+  vertical: boolean
+}) => {
   const ref = useRef<HTMLVideoElement>(null)
   const [playing, setPlaying] = useState(true)
+  // Taller than wide: from the stored size, or the file's own once it is read (not every video
+  // row has its size).
+  const [vertical, setVertical] = useState(storedVertical)
 
   useEffect(() => {
     const el = ref.current
@@ -250,7 +265,10 @@ const ArtworkMediaVideo = ({ url }: { url: string }) => {
       <video
         ref={ref}
         src={url}
-        className={styles.media}
+        className={c(styles.media, vertical && styles.mediaContain)}
+        onLoadedMetadata={(e) =>
+          setVertical(e.currentTarget.videoHeight > e.currentTarget.videoWidth)
+        }
         autoPlay
         loop
         muted

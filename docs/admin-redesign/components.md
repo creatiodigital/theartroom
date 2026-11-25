@@ -565,3 +565,32 @@ like the real Pause switch). Logic and dialogs unchanged.
   `checkoutErrorLabel`, `roomErrorLabel`, `pageLabel`. Data: `lib/analytics/ga4Report.ts` (`fetchAnalyticsReport`),
   shape in `lib/analytics/reportShape.ts` (client-safe), page data + cache in `app/admin/analytics/report.ts`.
 - Tokens: `--admin-series-1…3`, `--admin-series-other`.
+
+### Objects (docs/objects, AR-191)
+- `ImageUploader` (shared, admin row): `overlay?: ReactNode`, drawn over the preview above the image (hidden while
+  uploading), e.g. an Object cover's square-crop frame.
+- **Built** · `dashboard/artworks/ObjectSpaceChip` · `{ modelStatus?: string | null }`: "In the 3D space" (`ready`) or
+  "3D model in preparation" (`requested`), else nothing; library rows and the artwork editor's header.
+- **Removed 2026-11-25** · `shared/ArtworkEditForm/ObjectCover.tsx` (`CoverCropFrame`, `CoverPreviews`): an Object's
+  cover is the image upload itself (owner: "it's a cover image, same as the rest"), shown whole everywhere.
+- **Built** · `shared/ArtworkEditForm/ObjectFields.tsx` · `ObjectSize { fields; onChange }` (2026-11-25: no Edition, no Technical info)
+  and `objectFormFields(stored)`.
+- **Built** · `shared/ArtworkEditForm/ObjectMediaManager.tsx` · `{ artworkId }`: Photos & reels (labels, captions, drag to
+  reorder, the Object limits). Upload helpers in `uploadArtworkMedia.ts` (`uploadArtworkMediaFile`, `measureMedia`),
+  shared with `ArtworkMediaManager`.
+- **Built** · `objects/ModelViewer` · `{ url; onResult?; resetKey?; hint?; className? }` (next/dynamic, client-only):
+  an Object's .glb to turn and zoom, with the 3D room's loaders; `onResult` reports load / compile / bounds for the
+  checker. Reused by O5's artwork page.
+- **Built** · `objects/ModelChecker` · `{ artworkId; details; replacing; onClose; onUploaded }` (next/dynamic): the team's
+  .glb upload with the checker rows (`lib/objects/glb.ts`); loads the glTF validator on open.
+- **Built** · `objects/ObjectSpaceSection` · `{ artworkId; isAdmin; model; details; onModelChange }`: the editor's In the
+  3D space (2026-11-25: right after the cover; the ready model and the team's upload; no requests, no "Not yet" box;
+  the artist sees it once the model is in).
+  `EditorPanel` gained `className?`; `ObjectSpaceChip` gained `short?` ("Ready" after a dot; "In preparation" removed).
+- **Built** · `floorview/FloorFrame` · `{ active; children }`: lays the Floor view around the editor's own canvas
+  (kept mounted). `floorview/FloorView`, `FloorPlan` (`{ room; editor; artworks; selectedIds; onSelect; expand;
+  onDropAdd; zoom; names }`), `FloorInspector`, `useFloorEditor` (working copy, undo / redo, save / revert),
+  `useFloorRooms` (rooms in plan from the hanging walls). `scene/floor/FloorItems` (pedestals and Objects in the
+  room), `pedestalGeometry`. `exhibitions/view/FloorObjectModal` (an Object's page over the room).
+- `Scene`: `fill?: boolean` (fills its container: the Floor view's live 3D).
+

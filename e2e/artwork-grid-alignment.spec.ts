@@ -28,7 +28,8 @@ import { routes } from './fixtures'
  */
 
 type CardBox = {
-  row: number
+  /** "<grid>:<row>": the exhibition page has one grid per section, and a row never spans two. */
+  row: string
   title: string
   imgMid: number | null
   imgTop: number | null
@@ -36,7 +37,11 @@ type CardBox = {
   dividerTop: number
 }
 
-/** Every card on the page, tagged with the visual row it sits in. */
+/**
+ * Every card on the page, in every grid, tagged with the grid and the visual row it sits in.
+ * Every grid counts, not only the first: an exhibition puts its works with no section first, in a
+ * grid of their own, which may hold a single card.
+ */
 async function readCards(page: Page): Promise<CardBox[]> {
   return page.evaluate(() => {
     const isPart = (el: Element, part: string) =>
@@ -44,37 +49,41 @@ async function readCards(page: Page): Promise<CardBox[]> {
       el.className.includes('ArtworkGrid-module') &&
       el.className.includes('__' + part)
 
-    const grid = [...document.querySelectorAll('div')].find((e) => isPart(e, 'grid'))
-    if (!grid) return []
+    const grids = [...document.querySelectorAll('div')].filter((e) => isPart(e, 'grid'))
 
-    const cards = [...grid.children].map((card) => {
-      const info = [...card.querySelectorAll('div')].find((e) => isPart(e, 'info'))
-      // A print presentation (AR-167) is the piece as shown — the render, framed; its first img is
-      // the work inside the frame's window, off-centre wherever the mount is deeper at the foot.
-      const img = card.querySelector('[data-print-presentation]') ?? card.querySelector('img')
-      const i = img?.getBoundingClientRect()
-      return {
-        cardTop: Math.round(card.getBoundingClientRect().top),
-        title: card.querySelector('h3, h1')?.textContent?.trim() ?? '(untitled)',
-        imgMid: i ? (i.top + i.bottom) / 2 : null,
-        imgTop: i ? i.top : null,
-        imgBottom: i ? i.bottom : null,
-        dividerTop: info ? info.getBoundingClientRect().top : NaN,
-      }
+    return grids.flatMap((grid, g) => {
+      const cards = [...grid.children].map((card) => {
+        const info = [...card.querySelectorAll('div')].find((e) => isPart(e, 'info'))
+        // A print presentation (AR-167) is the piece as shown — the render, framed; its first img is
+        // the work inside the frame's window, off-centre wherever the mount is deeper at the foot.
+        const img = card.querySelector('[data-print-presentation]') ?? card.querySelector('img')
+        const i = img?.getBoundingClientRect()
+        return {
+          cardTop: Math.round(card.getBoundingClientRect().top),
+          title: card.querySelector('h3, h1')?.textContent?.trim() ?? '(untitled)',
+          imgMid: i ? (i.top + i.bottom) / 2 : null,
+          imgTop: i ? i.top : null,
+          imgBottom: i ? i.bottom : null,
+          dividerTop: info ? info.getBoundingClientRect().top : NaN,
+        }
+      })
+
+      // Cards of one grid sharing a top edge are one visual row — that is the scope both
+      // invariants apply to.
+      const tops = [...new Set(cards.map((c) => c.cardTop))].sort((a, b) => a - b)
+      return cards.map(({ cardTop, ...rest }) => ({
+        row: `${g}:${tops.indexOf(cardTop)}`,
+        ...rest,
+      }))
     })
-
-    // Cards sharing a top edge are one visual row — that is the scope both
-    // invariants apply to.
-    const tops = [...new Set(cards.map((c) => c.cardTop))].sort((a, b) => a - b)
-    return cards.map(({ cardTop, ...rest }) => ({ row: tops.indexOf(cardTop), ...rest }))
   })
 }
 
 const spread = (values: number[]) => Math.max(...values) - Math.min(...values)
 
 /** Rows holding more than one card — a single card is trivially aligned. */
-function multiCardRows(cards: CardBox[]): Map<number, CardBox[]> {
-  const rows = new Map<number, CardBox[]>()
+function multiCardRows(cards: CardBox[]): Map<string, CardBox[]> {
+  const rows = new Map<string, CardBox[]>()
   for (const card of cards) rows.set(card.row, [...(rows.get(card.row) ?? []), card])
   return new Map([...rows].filter(([, group]) => group.length > 1))
 }

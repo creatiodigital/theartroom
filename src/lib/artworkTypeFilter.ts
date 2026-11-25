@@ -9,7 +9,7 @@
  * kind of thing `CollapsibleSection` remembers, and nothing here is private.
  */
 
-export const ARTWORK_TYPE_FILTERS = ['all', 'image', 'text', 'sound', 'video'] as const
+export const ARTWORK_TYPE_FILTERS = ['all', 'image', 'object', 'text', 'sound', 'video'] as const
 
 export type ArtworkTypeFilter = (typeof ARTWORK_TYPE_FILTERS)[number]
 

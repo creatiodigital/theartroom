@@ -16,10 +16,10 @@ const UNITS: Unit[] = ['cm', 'in']
 const ARROWS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']
 
 /**
- * The cm | in choice (docs/public-redesign/units.md): plain words, "cm | in", the chosen one bold, a
- * light divider; the other turns brand red on hover / focus (no underline). It takes the size and
- * grey of where it sits. Every copy (the footer's, the artwork page's print line, the configurators'
- * left panel) sets one saved choice (`useUnits`, kept in this browser).
+ * The cm | in choice (docs/public-redesign/units.md): a small squared toggle, the chosen unit filled
+ * dark (owner, 2026-11-25: the plain words were "hard to notice even click on them"; "do a nice
+ * squared toggle"). Every copy (the footer's, the artwork pages', the configurators' left panel)
+ * sets one saved choice (`useUnits`, kept in this browser).
  * A radio group: arrow keys move between the two, Enter or Space chooses (they are buttons); Tab
  * lands on the chosen one.
  */
@@ -46,13 +46,8 @@ export function UnitsSwitch({ className }: { className?: string }) {
       className={c(styles.switch, className)}
       onKeyDown={moveFocus}
     >
-      {UNITS.map((option, index) => (
+      {UNITS.map((option) => (
         <Fragment key={option}>
-          {index > 0 && (
-            <span className={styles.divider} aria-hidden="true">
-              |
-            </span>
-          )}
           <Button
             variant="bare"
             role="radio"

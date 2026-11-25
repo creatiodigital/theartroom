@@ -1,5 +1,6 @@
 'use client'
 
+import FloorItems from '@/components/scene/floor/FloorItems'
 import { Suspense, useContext, useMemo, createRef } from 'react'
 import { useSelector } from 'react-redux'
 import type { Mesh } from 'three'
@@ -74,6 +75,10 @@ export const Space: React.FC<SpaceProps> = ({ onPlaceholderClick, artworks }) =>
       {/* Not GLB nodes: the artist's benches, the same in every space (AR-167). */}
       <Suspense fallback={null}>
         <Benches />
+      </Suspense>
+      {/* The floor's Objects and pedestals (docs/objects O6). */}
+      <Suspense fallback={null}>
+        <FloorItems />
       </Suspense>
     </>
   )

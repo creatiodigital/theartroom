@@ -3,6 +3,13 @@ import type { NextRequest } from 'next/server'
 
 import { auth } from '@/auth'
 import { getEffectiveUserId } from '@/lib/authUtils'
+import { isArtworkKind } from '@/lib/artwork/artworkKinds'
+import {
+  countObjectMedia,
+  objectWriteData,
+  parseObjectFields,
+  type ObjectMediaCounts,
+} from '@/lib/artwork/objectArtwork'
 import { PUBLIC_ARTWORK_OMIT } from '@/lib/artworkFields'
 import prisma from '@/lib/prisma'
 import { generateUniqueSlug } from '@/lib/slugify'
@@ -120,6 +127,20 @@ export async function GET(request: NextRequest) {
       },
     })
 
+    // Objects (docs/objects): their photos, videos and reels, counted for the library row. One
+    // query, and only when there are Objects.
+    const objectIds = artworks.filter((a) => a.artworkType === 'object').map((a) => a.id)
+    const objectMedia = new Map<string, ObjectMediaCounts>()
+    if (objectIds.length > 0) {
+      const media = await prisma.artworkMedia.findMany({
+        where: { artworkId: { in: objectIds } },
+        select: { artworkId: true, kind: true, role: true, width: true, height: true },
+      })
+      for (const id of objectIds) {
+        objectMedia.set(id, countObjectMedia(media.filter((m) => m.artworkId === id)))
+      }
+    }
+
     // `sellingNow` — is this artwork buyable as a print RIGHT NOW? Same rule
     // the checkout enforces (`validateAndPriceItem`): print sales on, and
     // either a live priced variant (limited) or an artwork-level price (open).
@@ -133,7 +154,9 @@ export async function GET(request: NextRequest) {
         a.artworkType === 'image' &&
         a.printEnabled === true &&
         (a.editionType === 'limited' ? limitedVariants.length > 0 : Boolean(a.printPriceCents))
-      if (viewerOwnsTarget) return { ...rest, sellingNow }
+      const objectCounts = objectMedia.get(a.id)
+      const extra = objectCounts ? { sellingNow, objectMedia: objectCounts } : { sellingNow }
+      if (viewerOwnsTarget) return { ...rest, ...extra }
       const {
         printPriceCents: _printPriceCents,
         printOptions: _printOptions,
@@ -141,7 +164,7 @@ export async function GET(request: NextRequest) {
         printRecommendations: _printRecommendations,
         ...publicFields
       } = rest
-      return { ...publicFields, sellingNow }
+      return { ...publicFields, ...extra }
     })
 
     return NextResponse.json(withSellingState)
@@ -160,6 +183,16 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { artworkType, title, author, year, technique, dimensions, description, featured } = body
+
+    if (artworkType !== undefined && artworkType !== null && !isArtworkKind(artworkType)) {
+      return NextResponse.json({ error: 'Unknown artwork type.' }, { status: 400 })
+    }
+    // Objects (docs/objects): their own fields, and never print sales.
+    const objectFields = artworkType === 'object' ? parseObjectFields(body) : null
+    if (objectFields && !objectFields.ok) {
+      return NextResponse.json({ error: objectFields.error }, { status: 400 })
+    }
+    const objectData = objectFields?.ok ? objectWriteData(objectFields.data, null) : {}
 
     // Sanitize single-line text fields. Description is rich-text HTML
     // (TipTap) — not sanitized here, DOMPurify cleans at render time.
@@ -206,6 +239,7 @@ export async function POST(request: NextRequest) {
         dimensions: cleanDimensions || null,
         description: description || null,
         featured: featured === true || featured === 'true',
+        ...objectData,
       },
     })
 

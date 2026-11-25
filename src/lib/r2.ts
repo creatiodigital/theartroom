@@ -318,6 +318,23 @@ export async function buildArtworkMediaKey(
   return `${getEnvPrefix()}/artists/${handler}/${artworkId}-${randomSuffix()}.${ext}`
 }
 
+/**
+ * An Object's 3D model (docs/objects O4): one cleaned .glb in a folder per artwork,
+ * `<env>/artists/<handler>/<artworkId>/model/<suffix>.glb`. Uploaded by the gallery team only.
+ */
+export async function buildArtworkModelKey(userId: string, artworkId: string): Promise<string> {
+  const handler = await getArtistHandler(userId)
+  return `${getEnvPrefix()}/artists/${handler}/${artworkId}/model/${randomSuffix()}.glb`
+}
+
+/** Fetch a main-bucket object's bytes (server-side only), e.g. an uploaded .glb to check it. */
+export async function getPublicBucketObjectBuffer(key: string): Promise<Buffer> {
+  const res = await r2.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }))
+  const bytes = await res.Body?.transformToByteArray()
+  if (!bytes) throw new Error(`Empty object: ${key}`)
+  return Buffer.from(bytes)
+}
+
 // Aliases — kept for call-site clarity (video vs sound context)
 export const buildArtworkVideoKey = buildArtworkMediaKey
 export const buildArtworkSoundKey = buildArtworkMediaKey

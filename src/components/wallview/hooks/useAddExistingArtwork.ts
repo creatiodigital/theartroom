@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { WALL_SCALE } from '@/components/wallview/constants'
 import { convert2DTo3D } from '@/components/wallview/utils'
 import { createNewArtwork } from '@/factories/artworkFactory'
+import { hangsOnWall } from '@/lib/artwork/artworkKinds'
 import { restoreArtwork } from '@/redux/slices/artworkSlice'
 import { createArtworkPosition } from '@/redux/slices/exhibitionSlice'
 import {
@@ -60,6 +61,8 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
         return false
       }
       const artworkData = await response.json()
+      // Objects stand on the floor (docs/objects), never on a wall; the library doesn't offer them.
+      if (!hangsOnWall(artworkData.artworkType)) return false
 
       const size = sizeForType(artworkData.artworkType)
       const posX2d = (wallWidth * WALL_SCALE) / 2 - size / 2
@@ -132,6 +135,8 @@ export const useAddExistingArtwork = (boundingData: TDimensions | null) => {
         return false
       }
       const artworkData = await response.json()
+      // Objects stand on the floor (docs/objects), never on a wall; the library doesn't offer them.
+      if (!hangsOnWall(artworkData.artworkType)) return false
 
       const size = sizeForType(artworkData.artworkType)
       const adjustedX = posX2d - size / 2

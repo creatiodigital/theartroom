@@ -54,6 +54,10 @@ function envPrefix(): 'production' | 'staging' {
 
 // Determine the env segment of an R2 key.
 // Most keys are `<env>/<type>/...`. Originals are `artworks-original/<env>/...`.
+// Deliberately NOT read here: `model-requests/<env>/<artworkId>/…`, the scans and models artists
+// send with a 3D model request (docs/objects O4). No row points at them (they are listed by
+// prefix), so treating them as this env's keys would make every one an orphan; deleting the
+// artwork removes them.
 function keyEnv(key: string): string | null {
   const parts = key.split('/')
   if (parts[0] === 'artworks-original') return parts[1] ?? null
@@ -99,6 +103,8 @@ async function collectReferencedKeys(): Promise<Set<string>> {
         originalImageUrl: true,
         soundUrl: true,
         videoUrl: true,
+        // An Object's 3D model (docs/objects O4).
+        modelUrl: true,
         // Print presentations (`<env>/presentations/{artworkId}/…`): both stored sizes.
         printPresentation: true,
       },
@@ -140,6 +146,7 @@ async function collectReferencedKeys(): Promise<Set<string>> {
     add(a.originalImageUrl)
     add(a.soundUrl)
     add(a.videoUrl)
+    add(a.modelUrl)
     if (isPrintPresentationRecord(a.printPresentation)) {
       add(a.printPresentation.urls.large)
       add(a.printPresentation.urls.small)

@@ -38,6 +38,32 @@ export function formatDimensions(widthCm: number, heightCm: number, unit: Unit):
   return writePair(heightCm, widthCm, unit)
 }
 
+/**
+ * An Object's size (docs/objects O5, Q-O9): height, width, depth, the unit once. In cm as the artist
+ * entered it, no forced ".0" ("64 × 38 × 31 cm", "64.5 × 38 × 31 cm": a sculpture's size, not a
+ * print field); in inches one decimal, as everywhere ("25.2 × 15.0 × 12.2 in"). The sizes not given
+ * are left out; null when there are none.
+ */
+export function formatObjectSize(
+  size: { heightCm?: number | null; widthCm?: number | null; depthCm?: number | null },
+  unit: Unit,
+): string | null {
+  const parts = [size.heightCm, size.widthCm, size.depthCm].filter(
+    (cm): cm is number => typeof cm === 'number' && cm > 0,
+  )
+  const one = (cm: number) => (unit === 'cm' ? String(toUnit(cm, 'cm')) : write(cm, unit))
+  return parts.length ? `${parts.map(one).join(' × ')} ${unit}` : null
+}
+
+/**
+ * An Object's weight: always kg, whatever the cm | in choice ("Prices, weights and anything not a
+ * dimension are unchanged", units.md; Q-O9). Up to one decimal, none when whole: "18 kg", "2.5 kg".
+ */
+export function formatWeight(kg: number): string {
+  const rounded = Math.round(kg * 10) / 10
+  return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)} kg`
+}
+
 /** "30.0 × 20.0 cm to 165.8 × 110.5 cm". */
 export function formatDimensionsRange(min: Dimensions, max: Dimensions, unit: Unit): string {
   return `${formatDimensions(min.widthCm, min.heightCm, unit)} to ${formatDimensions(max.widthCm, max.heightCm, unit)}`
@@ -64,15 +90,18 @@ const insideParentheses = (text: string, offset: number) => {
  * parentheses, so they never nest). Text with no "<number> cm" in it is returned as it was.
  */
 export function convertCmText(text: string, to: Unit | 'both'): string {
-  return text.replace(CM_TEXT, (_match, first: string, second: string | undefined, offset: number) => {
-    const a = Number(first)
-    const b = second === undefined ? null : Number(second)
-    const inUnit = (unit: Unit) => (b === null ? formatSize(a, unit) : writePair(a, b, unit))
-    if (to !== 'both') return inUnit(to)
-    return insideParentheses(text, offset)
-      ? `${inUnit('cm')} / ${inUnit('in')}`
-      : `${inUnit('cm')} (${inUnit('in')})`
-  })
+  return text.replace(
+    CM_TEXT,
+    (_match, first: string, second: string | undefined, offset: number) => {
+      const a = Number(first)
+      const b = second === undefined ? null : Number(second)
+      const inUnit = (unit: Unit) => (b === null ? formatSize(a, unit) : writePair(a, b, unit))
+      if (to !== 'both') return inUnit(to)
+      return insideParentheses(text, offset)
+        ? `${inUnit('cm')} / ${inUnit('in')}`
+        : `${inUnit('cm')} (${inUnit('in')})`
+    },
+  )
 }
 
 /**

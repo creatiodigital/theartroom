@@ -21,6 +21,7 @@ import { useFrame } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
 
 import { Frame } from '@/components/scene/spaces/objects/Frame'
+import { cloneFrameTexture, WOOD_ASPECT } from '@/components/scene/spaces/objects/Frame/woodTextures'
 import {
   LIGHTBOX_WOOD,
   LightboxBox,
@@ -82,8 +83,6 @@ type ArtworkImageProps = {
   lightbox?: TLightbox | null
 }
 
-/** Wood textures' width over height (`wooden-frame-light` is 2048 × 1024; the others square). */
-const WOOD_ASPECT: Record<string, number> = { 'wood-light': 2 }
 
 // Placeholder shown while texture loads
 /** A support's depth (cm), as drawn: the artist's thickness, 2 cm by default, 0 to 10. */
@@ -520,90 +519,6 @@ const useCachedTexture = (url: string, accept: (u: string) => boolean): Texture 
   }, [url, accept])
 
   return texture
-}
-
-// Shared sources for frame PBR maps.
-//
-// Every artwork in a show uses the same handful of frame texture files, but each
-// needs its OWN repeat/offset/rotation (per-artwork frame scale, plus a seeded
-// grain offset so adjacent wood frames don't look stamped). Those live on the
-// Texture, not the material — so each Display used to call `new TextureLoader()`
-// and get a private copy. On a 92-artwork exhibition that meant 40 identical
-// uploads of each 2048² map: measured at 1.7 GB of pure duplication, 70% of the
-// scene's entire texture budget.
-//
-// three allocates GPU memory per `texture.source`, and its texture cache key
-// (getTextureCacheKey) covers only sampler/format state — wrap, filters,
-// anisotropy, colorSpace — NOT repeat/offset/rotation. So a clone that shares one
-// Source costs ONE upload however many artworks use it, while keeping its own UV
-// transform. three refcounts those sharers itself (`usedTimes`), freeing the GPU
-// texture only when the last clone is disposed, so the existing per-Display
-// `dispose()` cleanup stays correct.
-//
-// Sampler state is set on the BASE before cloning, so every clone hashes to the
-// same cache key and they genuinely share. Set it per-clone instead and they
-// would silently split back into separate uploads.
-const frameTextureBases = new Map<string, Texture>()
-
-// Clones taken while their shared Source was still empty — see cloneFrameTexture.
-const clonesAwaitingImage = new Map<string, Texture[]>()
-
-const releaseClonesAwaitingImage = (url: string) => {
-  const waiting = clonesAwaitingImage.get(url)
-  clonesAwaitingImage.delete(url)
-  waiting?.forEach((clone) => {
-    clone.needsUpdate = true
-  })
-}
-
-const getFrameTextureBase = (url: string, srgb: boolean): Texture => {
-  const cached = frameTextureBases.get(url)
-  if (cached) return cached
-
-  const texture = new TextureLoader().load(
-    url,
-    () => releaseClonesAwaitingImage(url),
-    undefined,
-    // Nothing will ever arrive, so drop the held clones rather than retaining
-    // them for the life of the page. They stay at version 0 and simply never
-    // upload, which is what they did before this anyway.
-    () => clonesAwaitingImage.delete(url),
-  )
-  texture.wrapS = texture.wrapT = 1000 // RepeatWrapping
-  if (srgb) texture.colorSpace = SRGBColorSpace
-  frameTextureBases.set(url, texture)
-  return texture
-}
-
-/**
- * A private Texture over a shared Source: own UV transform, one GPU upload.
- *
- * `Texture.copy()` ends with `this.needsUpdate = true`, so a clone is born with
- * `version = 1` — "upload me". `TextureLoader.load()` returns its texture
- * synchronously with `source.data` still null, so a clone taken in that window
- * is marked for upload with nothing to upload, and three's `setTexture2D`
- * warns "Texture marked for update but no image data found" for that clone on
- * EVERY frame until the fetch lands (forever, if it fails).
- *
- * The base itself escapes this only because it is never cloned from: it sits at
- * `version = 0` until the loader sets both image and version together.
- *
- * So hold the clone at version 0 too, and mark it the moment the image is
- * really there. `image` reads through to the shared Source, so by then the
- * clone already has the pixels — this only tells three when to look.
- */
-const cloneFrameTexture = (url: string, srgb: boolean): Texture => {
-  const base = getFrameTextureBase(url, srgb)
-  const clone = base.clone()
-
-  if (base.image === null) {
-    clone.version = 0
-    const waiting = clonesAwaitingImage.get(url) ?? []
-    waiting.push(clone)
-    clonesAwaitingImage.set(url, waiting)
-  }
-
-  return clone
 }
 
 /**

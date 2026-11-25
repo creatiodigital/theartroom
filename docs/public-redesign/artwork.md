@@ -55,3 +55,69 @@ Today's extras all stay; none of them sits next to the main image except the opt
 
 ## Same page inside the 3D room
 The room's artwork overlay (`ArtworkModal`) shows **exactly this page**, built from the same components, with only a close × added (`other-screens.md`).
+
+## Info column, refined (owner 2026-11-25: "make this layout a little better")
+Board: `docs/objects/designs/artwork-info-column.dc.html` (canvas "Objects", "Visitor · Artwork info column").
+One rule for image works and Objects, in the shared `ArtworkInfoColumn`:
+1. **Who and what** (no divider above): artist (caps, `--public-secondary`), title (h1), year, **size**, each on its own line, 14 px
+   `--color-text-secondary`. Same fonts, colours and Inquire button as the live page: the board only moves things. The size moves **up**, right under the year, as this file always said ("the year and
+   the size each on its own line"). Objects: `29 × 39 × 14 cm · 15 kg`. Pass it as a new `size` prop; image works
+   use their size the same way. Bottom padding 24 px.
+2. **How it is made**, under a divider: technique / materials lines (13 px, as today), then for Objects the edition
+   line ("Edition 3 of 8 + 2 AP"). 20 px above and below. If empty, this block and its divider go.
+3. **Actions**, under a divider: Inquire (outlined, as built). 24 px above. Nothing else changes here (whatever the
+   column shows under Inquire today stays as it is).
+- **Title, its line height and the year: one scale** (owner 2026-11-25: "a little ugly… the relation between the size
+  of the title, the line height of the title, the size of the year"). Today: title 36 px / 1.1 (3.6 px of air between
+  two lines, so descenders like the *p* of *puertas* nearly touch the line below), the year 14 px only 4 px under it:
+  2.6× smaller and glued on. New, in `.title` / `.fact` (ArtworkDetail.module.scss), same fonts and colours:
+  | | Desktop | Phone |
+  |---|---|---|
+  | Title (EB Garamond) | **32 px**, line-height **1.2** (38 px lines), `text-wrap: balance` | **28 px**, 1.2 |
+  | Space title → year | **10 px** | 8 px |
+  | Year, size (Lato, `#666`) | **15 px**, line-height 1.5 | 14 px |
+  | Artist caps → title | 8 px (unchanged look) | 6 px |
+  Title to year ≈ 2.1× instead of 2.6×, a two-line title reads as one block (*La memoria / de las puertas*), and the
+  year sits clearly under it without floating. Applies everywhere the column is used (image works, Objects, the 3D
+  room overlay). This replaces "EB Garamond 36" in the info column bullet above.
+- **Remove the `cm | in` switch from the column** (`UnitsSwitch` in `ObjectDetailBody`): `units.md` keeps it in the
+  footer only ("no switch after the artwork's size"). The size still follows the visitor's saved choice.
+- **3D stage zoom** (`ModelViewer`, `.light .zoom`): one joined control instead of two separate 40 px boxes: white,
+  1 px `#d6d6d2` outline around the pair and between the cells, cells 36 × 36 px (44 px hit area), 16 px icons,
+  square corners, top right 16 px in. Reset view unchanged.
+- The image page's print block (when the work sells prints) sits in block 3 above Inquire, unchanged.
+
+**Built: Info column, refined** (2026-11-25, branch `feat/AR-191-add-3d-artworks`).
+- `ArtworkInfoColumn` has the three blocks: who and what (artist, title, year, the new `size` line; 24 px under),
+  how it is made (the technique / materials, 20 px above and below a divider; gone when empty), the actions (a
+  divider, 24 px, then the print block or Inquire, the views, Share). `ArtworkInquire` lost its own divider: the
+  block's is above it.
+- Title scale in tokens: the board's 32 / 15 px are `--text-2xl` / `--text-sm` (30 / 14 px, the same 2.1× between
+  title and year), line-height `--leading-tight` (1.2), `text-wrap: balance`, `--space-3` (12 px, the board's 10)
+  before the year; phones `--text-2xl-mobile` (28 px), 8 px, 14 px, exactly as drawn. "The Old Cedar in November"
+  breaks into two balanced lines.
+- Image works (owner's answer, 2026-11-25): **not for sale** (or purchases paused), the sizes are the size line under
+  the year ("30.0 × 20.0 cm to 40.9 × 27.2 cm", or the edition sizes joined by " · ", `artworkSizesText`) and the old
+  "Open edition print" facts block is gone (`ArtworkPrintFacts` removed). **For sale**, no size line: the print
+  block says the sizes, unchanged, so they never show twice.
+- No `cm | in` anywhere in the column (owner: footer only): the Object's switch and the print block's kind line
+  switch are gone. Sizes still follow the saved choice; weight always kg.
+- 3D zoom (`ModelViewer` `.light .zoom`): one joined pair, white, `--color-gray-55` outline and divider (#d0d0d0, the
+  nearest token to #d6d6d2), cells `--space-10` (40 px: the nearest token to 36 that keeps the 44 px hit area in
+  reach), 16 px in from the top right. Reset view unchanged.
+
+**Built: the owner's review of the column, later on 2026-11-25** (supersedes parts of the note above).
+- Title and year: back to the live title (36 px, phones 30 px, 4 px above and below; no balance), its line
+  height 1.1 → 1.05 ("a little smaller"). The year a little bigger, bolder and black: `--text-md`, Lato bold (the
+  only weight above regular), `--public-text`.
+- Order of the blocks, one rule for every work: who and what (artist, title, year) · divider · **the action**
+  (`ArtworkInfoColumn` `action`): for sale, the price and Available, then Order a print, **no Inquire** (owner:
+  "remove the Inquire button if we show an order print"; Inquire comes back only when sold out); not for sale and
+  Objects, Inquire · divider · the technique / materials, **then the size** in their format (owner: "Move the sizes
+  where the technical info is", "materials first, sizes later") · divider · the print's kind and sizes, the views,
+  Share.
+- The print card is two parts: `ArtworkPurchase` (price + Order a print) and `ArtworkPrintDetails` (kind, sizes,
+  edition rows). The price line: open "From €338", one-size limited "€284", several sizes the in-stock range
+  "€445–€653" as the grids write it; the rows keep their own prices, "Available" is no longer repeated under them.
+- Specs adjusted: the artwork page's CTA check matches "Order a print"; the views grid sits below the action;
+  the inquiry form spec opens Inquire on its own throwaway not-for-sale work.

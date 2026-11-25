@@ -1,0 +1,65 @@
+@use '@/styles/mixins' as *;
+
+// The 3D preview (objects-editor.dc.html "In the 3D space"): dark, the hint bottom left.
+.viewer {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--studio-3d-viewer);
+  touch-action: none;
+}
+
+.hint {
+  position: absolute;
+  left: var(--space-3);
+  bottom: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--color-gray-55);
+  pointer-events: none;
+}
+
+// On the artwork page's grey stage (docs/objects O5): no box of its own, square corners.
+.light {
+  border-radius: 0;
+  background: transparent;
+}
+
+// + / −, top right (no wheel zoom). The library buttons; on the artwork page one joined pair (`.light`,
+// visitors: no rounded corners).
+.zoom {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.zoom .zoomButton {
+  width: var(--space-8);
+  height: var(--space-8);
+  padding: 0;
+}
+
+.light .zoom {
+  // The artwork page's zoom (artwork.md "Info column, refined"): one joined + / − pair, white, a
+  // light outline round the pair and between the cells, square corners, top right.
+  top: var(--space-4);
+  right: var(--space-4);
+  gap: 0;
+  border: 1px solid var(--color-gray-55);
+  background: var(--color-white);
+}
+
+.light .zoom .zoomButton {
+  width: var(--space-10);
+  height: var(--space-10);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--public-text);
+}
+
+.light .zoom .zoomButton + .zoomButton {
+  border-top: 1px solid var(--color-gray-55);
+}

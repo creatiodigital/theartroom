@@ -67,10 +67,15 @@
   object-fit: contain;
 }
 
-// Text, sound, video without a picture: an icon on the warm tile.
+// Text, sound, video, an Object without a picture: an icon on the warm tile.
 .tile {
   background: var(--studio-nav-active);
   color: var(--color-text-secondary);
+}
+
+// An Object without a cover: the cube on the stone tile (objects-library.dc.html).
+.tile.objectTile {
+  background: var(--studio-object-tile);
 }
 
 // The sound preview (a button). Two classes beat Button's bare and size rules,

@@ -1,3 +1,4 @@
+import { loadFloorArtworks } from '@/lib/floor/floorArtworks.server'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
@@ -294,6 +295,9 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
         trackLampSettings: snapshotExhibition.trackLampSettings,
         panelSettings: snapshotExhibition.panelSettings,
         benchSettings: snapshotExhibition.benchSettings,
+        // The floor as published (docs/objects O6), its Objects' models read live.
+        floorLayout: snapshotExhibition.floorLayout ?? null,
+        floorArtworks: await loadFloorArtworks(snapshotExhibition.floorLayout, exhibition.userId),
         windowLightColor: snapshotExhibition.windowLightColor,
         windowLightIntensity: snapshotExhibition.windowLightIntensity,
         windowTransparency: snapshotExhibition.windowTransparency,
@@ -346,6 +350,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ url: s
 
     return NextResponse.json({
       ...liveExhibition,
+      floorArtworks: await loadFloorArtworks(exhibition.floorLayout, exhibition.userId),
       // No snapshot, no published bake; the live column is a draft.
       bake: null,
       // Override the raw (already placed-only, per the query's `where`)
@@ -394,6 +399,7 @@ async function getBakePreviewResponse(exhibition: PublicExhibitionRow) {
 
   return NextResponse.json({
     ...live,
+    floorArtworks: await loadFloorArtworks(exhibition.floorLayout, exhibition.userId),
     bake: bakeStatus === 'current' ? draft : null,
     bakeStatus,
     exhibitionArtworks: placedExhibitionArtworks,
@@ -462,6 +468,7 @@ async function getEditModeResponse(url: string) {
 
   return NextResponse.json({
     ...exhibition,
+    floorArtworks: await loadFloorArtworks(exhibition.floorLayout, exhibition.userId),
     // `bake` is the draft here. The room's current light fingerprint (for the
     // stale check) is admin-only: bakes are made and reviewed by admins. Judged
     // from the very rows returned (the full exhibition row and every placed

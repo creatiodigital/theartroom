@@ -9,6 +9,8 @@ import type { AutofocusGroup } from '@/types/autofocusGroup'
 import type { TExhibition } from '@/types/exhibition'
 import type { PanelSettings } from '@/components/scene/spaces/objects/Panel/panelSettings'
 import type { BenchSettings } from '@/components/scene/spaces/objects/Bench/benchSettings'
+import type { FloorArtwork } from '@/lib/floor/floorArtworks'
+import type { FloorLayout } from '@/lib/floor/floorLayout'
 
 const HISTORY_LIMIT = 20
 
@@ -248,6 +250,17 @@ const exhibitionSlice = createSlice({
       state.benchSettings[key] = { ...state.benchSettings[key], ...patch }
     },
 
+    /** The floor (docs/objects O6): replaced whole by the Floor view (its own undo and Cancel). */
+    setFloorLayout: (state: TExhibitionWithHistory, action: PayloadAction<FloorLayout>) => {
+      state.floorLayout = action.payload
+    },
+
+    /** The floor's Objects' models and sizes, added as Objects arrive on the floor. */
+    addFloorArtworks: (state: TExhibitionWithHistory, action: PayloadAction<FloorArtwork[]>) => {
+      if (!state.floorArtworks) state.floorArtworks = {}
+      for (const artwork of action.payload) state.floorArtworks[artwork.id] = artwork
+    },
+
     addAutofocusGroup: (state: TExhibitionWithHistory, action: PayloadAction<AutofocusGroup>) => {
       if (!state.autofocusGroups) state.autofocusGroups = []
       state.autofocusGroups.push(action.payload)
@@ -322,6 +335,8 @@ export const {
   setBenchSettings,
   toggleArtworkLocked,
   setExhibition,
+  setFloorLayout,
+  addFloorArtworks,
   setExhibitionField,
   setTrackLampRotation,
   setTrackLampEnabled,

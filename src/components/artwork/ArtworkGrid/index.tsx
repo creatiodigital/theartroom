@@ -195,7 +195,9 @@ export const ArtworkGrid = ({
                 {(() => {
                   const edition =
                     showEdition && artwork.sale ? editionTypeLabel(artwork.sale) : null
-                  const line = [artwork.year, edition].filter(Boolean).join(' · ')
+                  const line = [artwork.year, edition]
+                    .filter(Boolean)
+                    .join(' · ')
                   return line ? <p className={styles.year}>{line}</p> : null
                 })()}
                 {/* The price under the caption (owner, 2026-11-18, White Cube's card): see

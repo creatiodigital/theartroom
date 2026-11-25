@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Unique piece sale · Admin</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&amp;family=Geist+Mono:wght@400;500&amp;family=EB+Garamond:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f9f9f9}
+a{color:#333333}a:hover{color:#000000}
+.nav a{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:8px;color:#cfcfcf;text-decoration:none;font-size:14px}
+.nav a[aria-current="page"]{background:#333;color:#fff;font-weight:600}
+.card{background:#fff;border:1px solid #eaeaea;border-radius:8px;padding:24px;display:flex;flex-direction:column;gap:16px}
+.h2{margin:0;font-size:18px;font-weight:700;color:#000}
+.sub{font-size:13px;color:#666}
+.fl{display:flex;flex-direction:column;gap:6px}
+.lb{font-size:12px;font-weight:600;color:#555}
+.in{font:inherit;font-size:14px;min-height:42px;box-sizing:border-box;padding:0 12px;border:1px solid #dcdcdc;border-radius:4px;background:#fff;width:100%}
+.help{font-size:12px;color:#666}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-size:13px;font-weight:600;padding:7px 12px;min-height:36px;box-sizing:border-box;background:#fff;border:1px solid #dcdcdc;border-radius:4px;color:#000;text-decoration:none}
+.dark{background:#1a1a1a;border-color:#1a1a1a;color:#fff}
+.seg{display:inline-flex;border:1px solid #dcdcdc;border-radius:4px;overflow:hidden}
+.seg button{font:inherit;font-size:13px;padding:6px 12px;min-height:38px;background:#fff;border:0;border-left:1px solid #dcdcdc;color:#333}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed="true"]{background:#1a1a1a;color:#fff;font-weight:600}
+.opt{display:flex;flex-direction:column;gap:4px;padding:14px;border:1px solid #dcdcdc;border-radius:8px;background:#fff;font:inherit;text-align:left;cursor:pointer}
+.opt[aria-checked="true"]{border:2px solid #1a1a1a;padding:13px;background:#fafafa}
+.opt b{font-size:14px;color:#000}
+.opt span{font-size:12px;color:#555}
+.risk{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px;background:#f4f1ea;color:#6b5a2e;align-self:flex-start}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid #f0f0f0;font-size:13px}
+.kv b{font-weight:600;color:#000;font-variant-numeric:tabular-nums}
+.sw{width:34px;height:20px;flex:0 0 auto;border-radius:10px;background:#d6d6d6;position:relative}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #f9f9f9; color: #333333; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<nav aria-label="Admin" class="nav" style="flex: 1 1 248px; background: #1a1a1a; color: #ffffff; padding: 28px 16px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+<a href="#" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 0 10px; color: #ffffff"><span style="font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 24px; line-height: 1.1">The Art Room</span><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #999999">Admin</span></a>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="padding: 0 12px 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #999999">Sales</span>
+<a href="#">Orders</a><a href="UniqueSales.dc.html" aria-current="page">Unique pieces</a><a href="#">Edition sales</a><a href="#">Gift orders</a><a href="#">Payouts</a><a href="#">Invoices</a><a href="#">Pricing</a>
+</div>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 32px 40px 56px; box-sizing: border-box">
+<div style="max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+
+<nav aria-label="Breadcrumb" style="font-size: 13px; color: #666666"><a href="UniqueSales.dc.html" style="color: #666666">Unique pieces</a> <span aria-hidden="true">/</span> <span style="color: #000; font-family: 'Geist Mono', monospace">UP-0007</span></nav>
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px"><h1 style="margin: 0; font-weight: 700; font-size: 28px; letter-spacing: -0.02em; color: #000">Torso II → Thomas B.</h1><span style="color: #666">Agreed by phone 18 Nov 2026 · from an inquiry of 14 Nov</span></div>
+<div style="display: flex; gap: 8px"><button type="button" class="btn">More ▾</button><button type="button" class="btn dark">Mark payment received</button></div>
+</header>
+
+<div role="note" style="display: flex; gap: 10px; padding: 12px 16px; background: #fff3cd; border: 1px solid #f3dfa0; border-radius: 8px; font-size: 13px; color: #533f03"><b>Next step:</b><span>waiting for the bank transfer of €20,180 (reference UP-0007). Check your bank, then mark it received. Nothing ships before that.</span></div>
+
+<ol aria-label="Status" style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px">
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="5"><li style="{{s.bar}}"><span style="font-size: 13px; font-weight: 600; color: {{s.color}}">{{s.label}}</span><span style="font-size: 12px; color: #666">{{s.date}}</span></li></sc-for>
+</ol>
+<span class="help">“More” holds: Back one step · Refund requested · Cancel sale (the artwork goes back to Available). Every change is logged with its date.</span>
+
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+<div style="flex: 1 1 620px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+
+<section class="card" aria-labelledby="h-art">
+<h2 id="h-art" class="h2">Artwork</h2>
+<div style="display: flex; gap: 14px; align-items: center"><span aria-hidden="true" style="width: 72px; height: 72px; border-radius: 4px; background: #ece9e3; display: flex; align-items: flex-end; justify-content: center"><svg width="30" height="60" viewBox="0 0 60 100"><path d="M14 96 C6 70 14 40 22 26 C14 14 22 2 30 2 C38 2 46 14 38 26 C46 40 54 70 46 96 Z" fill="#6f685f"></path></svg></span><span style="display: flex; flex-direction: column; line-height: 1.35"><b style="font-size: 15px; color: #000">Torso II</b><span class="sub">Jane Doe · Object · Bronze · 64 × 38 × 31 cm · 18 kg · Edition 3 of 8</span><span style="display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; font-weight: 600; color: #555"><span style="width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid #8a8a8a; box-sizing: border-box"></span>Shows as Reserved on the site since 18 Nov · Sold when paid</span></span></div>
+</section>
+
+<section class="card" aria-labelledby="h-buyer">
+<h2 id="h-buyer" class="h2">Buyer</h2>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+<label class="fl"><span class="lb">Name</span><input class="in" value="Thomas Becker"></label>
+<label class="fl"><span class="lb">Email</span><input class="in" value="thomas.becker@example.de"></label>
+<label class="fl"><span class="lb">Phone</span><input class="in" value="+49 30 1234 5678"></label>
+<label class="fl"><span class="lb">Country</span><input class="in" value="Germany"></label>
+<label class="fl" style="grid-column: span 2"><span class="lb">Delivery address</span><input class="in" value="Kastanienallee 12, 10435 Berlin"></label>
+</div>
+</section>
+
+<section class="card" aria-labelledby="h-price">
+<h2 id="h-price" class="h2">Price</h2>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+<label class="fl"><span class="lb">Agreed price</span><input class="in" value="€ 19,000"><span class="help">Suggested by the artist: €20,000.</span></label>
+<label class="fl"><span class="lb">Gallery commission</span><input class="in" value="40 %"><span class="help">Negotiated for this sale. Required.</span></label>
+<div class="fl"><span class="lb">Split</span><div style="display: flex; flex-direction: column; font-size: 13px; padding-top: 6px"><span>Artist <b style="color: #000">€11,400</b></span><span>Gallery <b style="color: #000">€7,600</b></span></div></div>
+</div>
+</section>
+
+<section class="card" aria-labelledby="h-contract">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px"><div style="display: flex; flex-direction: column"><h2 id="h-contract" class="h2">Contract</h2><span class="sub">The sale agreement between The Art Room Gallery SL and the buyer, filled from this record.</span></div><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: #d4edda; color: #155724">Signed 21 Nov</span></div>
+<div style="display: flex; flex-direction: column">
+<div class="kv" style="border-top: 0"><span>Generated from the template</span><span style="display: flex; gap: 8px; align-items: center"><span class="help">contract-UP-0007.pdf · 20 Nov</span><button type="button" class="btn" style="min-height: 30px; padding: 4px 10px">Preview</button></span></div>
+<div class="kv"><span>Sent to the buyer</span><span style="display: flex; gap: 8px; align-items: center"><span class="help">20 Nov, 10:14</span><button type="button" class="btn" style="min-height: 30px; padding: 4px 10px">Send again</button></span></div>
+<div class="kv"><span>Signed copy</span><span style="display: flex; gap: 8px; align-items: center"><span class="help">contract-UP-0007-signed.pdf · 21 Nov</span><button type="button" class="btn" style="min-height: 30px; padding: 4px 10px">Replace</button></span></div>
+</div>
+<span class="help">It states the work, price, payment terms, delivery and who carries the risk, and the return terms. Fields left empty in this record are marked in the preview, so nothing is sent incomplete. The template text is the gallery’s, written with your lawyer.</span>
+</section>
+
+<section class="card" aria-labelledby="h-pay">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px"><h2 id="h-pay" class="h2">Payment</h2><span style="font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: #fff3cd; color: #856404">Waiting since 21 Nov</span></div>
+<div class="seg" role="group" aria-label="Payment method"><button type="button" aria-pressed="true">Bank transfer</button><button type="button" aria-pressed="false">Stripe payment link</button><button type="button" aria-pressed="false">Other</button></div>
+<div style="display: flex; flex-direction: column; padding: 4px 14px; border: 1px solid #eaeaea; border-radius: 8px">
+<div class="kv" style="border-top: 0"><span>Amount</span><b>€20,180</b></div>
+<div class="kv"><span>IBAN · The Art Room Gallery SL</span><span style="display: flex; gap: 8px; align-items: center"><span style="font-family: 'Geist Mono', monospace; color: #000">ES12 3456 7890 1234 5678 9012</span><button type="button" class="btn" style="min-height: 30px; padding: 4px 10px">Copy</button></span></div>
+<div class="kv"><span>Reference</span><span style="font-family: 'Geist Mono', monospace; color: #000">UP-0007</span></div>
+<div class="kv"><span>Payment details sent to the buyer</span><span style="display: flex; gap: 8px; align-items: center"><span class="help">21 Nov, 16:02</span><button type="button" class="btn" style="min-height: 30px; padding: 4px 10px">Send again</button></span></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px"><label style="display: flex; align-items: center; gap: 8px; font-size: 13px">Received on <span class="in" style="width: 150px; display: flex; align-items: center; min-height: 36px; color: #888">dd/mm/yyyy</span></label><button type="button" class="btn dark">Mark payment received</button></div>
+<span class="help"><b style="color: #000">Above €3,000 the record offers bank transfer only</b> (a limit you set in Pricing). A Stripe link stays available for smaller pieces: one-time, for the exact amount; paid → Paid on its own.</span>
+</section>
+
+<section class="card" aria-labelledby="h-del">
+<div style="display: flex; flex-direction: column"><h2 id="h-del" class="h2">Delivery and risk</h2><span class="sub">Chosen per sale. It decides who pays if the work is damaged on the way.</span></div>
+<div role="radiogroup" aria-label="Delivery" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<button type="button" role="radio" aria-checked="false" class="opt"><b>Buyer collects</b><span>Picks it up from the artist or the gallery.</span><span class="risk">Buyer from handover</span></button>
+<button type="button" role="radio" aria-checked="false" class="opt"><b>Artist delivers in person</b><span>Same city, no carrier.</span><span class="risk">Artist until handover</span></button>
+<button type="button" role="radio" aria-checked="false" class="opt"><b>Artist ships</b><span>The artist packs and sends it with a carrier of their choice.</span><span class="risk">Artist pays if damaged</span></button>
+<button type="button" role="radio" aria-checked="true" class="opt"><b>Art shipper · Arta</b><span>Collection, packing, transport and delivery by Arta.</span><span class="risk" style="background: #e8eef8; color: #1f3b6b">Arta transit insurance</span></button>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px; padding: 16px; background: #fafafa; border: 1px solid #eaeaea; border-radius: 8px">
+<div style="display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 13px"><span><span class="help">From</span> Jane Doe’s studio · Madrid, ES</span><span><span class="help">To</span> Berlin, DE</span><span><span class="help">Piece</span> 64 × 38 × 31 cm · 18 kg</span><span><span class="help">Declared value</span> €19,000</span></div>
+<span class="lb">Quotes from Arta</span>
+<div role="radiogroup" aria-label="Arta quote" style="display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{quotes}}" as="q" hint-placeholder-count="4"><button type="button" role="radio" aria-checked="{{q.on}}" style="{{q.style}}"><span style="flex: 1 1 auto; display: flex; flex-direction: column; line-height: 1.35"><b style="font-size: 14px; color: #000">{{q.name}}</b><span style="font-size: 12px; color: #555">{{q.what}}</span></span><span style="font-size: 12px; color: #555; width: 150px">{{q.days}}</span><span style="font-size: 12px; color: #555; width: 170px">{{q.ins}}</span><b style="width: 70px; text-align: right; color: #000; font-variant-numeric: tabular-nums">{{q.price}}</b></button></sc-for>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px">Shipping paid by<span class="seg" role="group" aria-label="Shipping paid by"><button type="button" aria-pressed="true">Buyer</button><button type="button" aria-pressed="false">Gallery</button><button type="button" aria-pressed="false">Artist</button></span></label>
+<button type="button" class="btn" style="margin-left: auto" disabled>Book with Arta · €1,180 (after payment)</button>
+</div>
+<span class="help">Quotes illustrative, and shown to the buyer before the contract so the shipping is in the agreed total. Booking unlocks once the payment is received.</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border: 1px solid #eaeaea; border-radius: 8px">
+<span class="lb">Tracking</span>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<label class="fl"><span class="help">Carrier / reference</span><input class="in" placeholder="e.g. Arta AR-48211"></label>
+<label class="fl"><span class="help">Tracking link</span><input class="in" placeholder="https://…"></label>
+</div>
+<div style="display: flex; align-items: center; gap: 10px"><button type="button" class="btn" disabled>Send tracking to the buyer</button><span class="help">Fills in once booked; sending moves the sale to Shipped.</span></div>
+</div>
+
+<div class="fl"><span class="lb">Condition photos before it leaves</span>
+<div style="display: flex; gap: 8px"><span aria-hidden="true" style="width: 88px; height: 66px; border-radius: 4px; background: linear-gradient(135deg,#e7d3b0,#b08d57)"></span><span aria-hidden="true" style="width: 88px; height: 66px; border-radius: 4px; background: linear-gradient(135deg,#d9c3a0,#9c7a48)"></span><button type="button" style="width: 88px; height: 66px; font: inherit; font-size: 12px; color: #555; background: #fafafa; border: 1px dashed #ccc; border-radius: 4px">+ Add</button></div>
+<span class="help">Front, back and corners, taken by the artist on the day. They settle any damage claim.</span></div>
+</section>
+
+<section class="card" aria-labelledby="h-docs">
+<div style="display: flex; flex-direction: column"><h2 id="h-docs" class="h2">Documents for the buyer</h2><span class="sub">Each one is sent from here by email (from the gallery’s address) and logged in the timeline.</span></div>
+<div style="display: flex; flex-direction: column">
+<div class="kv" style="border-top: 0"><span>Invoice · The Art Room Gallery SL</span><span style="display: flex; gap: 8px; align-items: center"><span class="help">after payment</span><button type="button" class="btn" style="min-height: 30px; padding: 4px 10px" disabled>Upload PDF</button><button type="button" class="btn" style="min-height: 30px; padding: 4px 10px" disabled>Send</button></span></div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 10px 0; border-top: 1px solid #f0f0f0; font-size: 13px">
+<div style="display: flex; justify-content: space-between; gap: 12px"><span>Certificate of authenticity · issued by The Art Room</span><span class="help">Torso II · 3 of 8</span></div>
+<ol style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+<li style="display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-top: 3px solid #1a1a1a; background: #fafafa"><b style="color: #000">1 · Generated</b><span class="help">From this record: title, artist, year, materials, size, edition, date. 20 Nov</span><button type="button" class="btn" style="min-height: 28px; padding: 2px 8px; align-self: flex-start">Download PDF</button></li>
+<li style="display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-top: 3px dashed #1a1a1a; background: #fafafa"><b style="color: #000">2 · Signed by the artist</b><span class="help">Printed and signed by hand. Upload a scan of the signed copy.</span><button type="button" class="btn" style="min-height: 28px; padding: 2px 8px; align-self: flex-start">Upload signed scan</button></li>
+<li style="display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-top: 3px solid #e2e2e2; background: #fafafa"><b style="color: #888">3 · Original with the piece</b><span class="help">The signed paper travels in the crate.</span><label style="display: flex; align-items: center; gap: 6px; font-size: 12px"><input type="checkbox" style="margin: 0"> Packed with it</label></li>
+<li style="display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-top: 3px solid #e2e2e2; background: #fafafa"><b style="color: #888">4 · Copy to the buyer</b><span class="help">The scan, by email, logged here.</span><button type="button" class="btn" style="min-height: 28px; padding: 2px 8px; align-self: flex-start" disabled>Send</button></li>
+</ol>
+</div>
+<div class="kv"><span>Condition report (photos before it leaves)</span><span style="display: flex; gap: 8px; align-items: center"><span class="help">with the shipment</span><button type="button" class="btn" style="min-height: 30px; padding: 4px 10px" disabled>Send</button></span></div>
+<div class="kv"><span>Anything else</span><button type="button" class="btn" style="min-height: 30px; padding: 4px 10px">Upload</button></div>
+</div>
+</section>
+</div>
+
+<aside style="flex: 0 1 340px; min-width: 280px; display: flex; flex-direction: column; gap: 20px; position: sticky; top: 24px">
+<section class="card" aria-labelledby="h-sum" style="gap: 6px">
+<h2 id="h-sum" class="h2" style="font-size: 15px">Summary</h2>
+<div class="kv" style="border-top: 0"><span>Price</span><b>€19,000</b></div>
+<div class="kv"><span>Shipping (buyer pays)</span><b>€1,180</b></div>
+<div class="kv"><span>Buyer pays</span><b>€20,180</b></div>
+<div class="kv"><span>Received</span><b style="color: #856404">Not yet</b></div>
+<div class="kv"><span>Artist share</span><b>€11,400</b></div>
+<div class="kv"><span>Gallery</span><b>€7,600</b></div>
+<div class="kv"><span>Artist payout</span><b style="color: #856404">Pending</b></div>
+<span class="help" style="margin-top: 6px">The artist’s share joins Payouts once the sale is Delivered.</span>
+</section>
+<section class="card" aria-labelledby="h-time" style="gap: 10px">
+<h2 id="h-time" class="h2" style="font-size: 15px">Timeline</h2>
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; font-size: 13px">
+<li><b style="color: #000">21 Nov · Payment details sent</b><br><span class="help">IBAN + reference UP-0007, by email</span></li>
+<li><b style="color: #000">21 Nov · Contract signed</b><br><span class="help">Signed copy uploaded</span></li>
+<li><b style="color: #000">20 Nov · Contract sent</b><br><span class="help">to thomas.becker@example.de</span></li>
+<li><b style="color: #000">18 Nov · Agreed by phone</b><br><span class="help">€19,000 after a counter-offer of €17,500. Shipping by Arta, €1,180. Artwork shows Reserved.</span></li>
+<li><b style="color: #000">14 Nov · Inquiry</b><br><span class="help">“Is Torso II still available? Shipping to Berlin?”</span></li>
+</ol>
+<label class="fl"><span class="lb">Add a note</span><textarea class="in" style="min-height: 64px; padding: 8px 12px"></textarea></label>
+</section>
+</aside>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const S = [['Agreed', '18 Nov', 'done'], ['Contract signed', '21 Nov', 'done'], ['Paid', 'waiting', 'next'], ['Shipped', '', ''], ['Delivered', '', ''], ['Closed', '', '']];
+    const Q = [['Premium', 'Crated, climate controlled, white glove delivery', '6–9 working days', 'Arta transit insurance', '€1,180', true], ['Select', 'Custom packing, shared art transport', '10–14 working days', 'Arta transit insurance', '€740']];
+    return {
+      steps: S.map(([label, date, st]) => ({ label, date, color: st ? '#000' : '#888', bar: { display: 'flex', flexDirection: 'column', gap: '2px', padding: '10px 12px', borderTop: st === 'done' ? '3px solid #1a1a1a' : st === 'next' ? '3px dashed #1a1a1a' : '3px solid #e2e2e2', background: '#ffffff' } })),
+      quotes: Q.map(([name, what, days, ins, price, on]) => ({ name, what, days, ins, price, on: on ? 'true' : 'false', style: { display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', font: 'inherit', textAlign: 'left', background: '#fff', border: on ? '2px solid #1a1a1a' : '1px solid #dcdcdc', borderRadius: '6px', cursor: 'pointer' } }))
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -202,6 +202,20 @@
   --studio-impersonation-label: #8f1119; // "Viewing as"
   --studio-impersonation-text: #6b2a2e; // the card's sentence
   --studio-note-surface: #f7f7f7; // the artwork editor's print-size box
+  // Objects (docs/objects, owner Q-O5 2026-11-23: the boards' exact values): the warm sand and
+  // stone family, and the 3D model's states.
+  --studio-object-tile: #ece9e3; // an Object's tile, the explainer's figure box
+  --studio-object-explainer: #f6f4f0; // Add artwork: the Object explainer
+  --studio-object-figure: #6f685f; // the explainer's sculpture
+  --studio-3d-ready: #e8eef8; // "In the 3D space", "Ready"
+  --studio-3d-ready-text: #1f3b6b;
+  --studio-3d-ready-dot: #3b6fd8;
+  --studio-3d-caution: #f4f1ea; // the Floor plan's confirm box
+  --studio-3d-caution-edge: #c49a2c; // an Object reaching past its pedestal's top
+  --studio-3d-panel-border: #d6e0f0; // the editor's In the 3D space panel
+  --studio-3d-team-border: #b9c7de; // its gallery team upload box
+  --studio-3d-team-surface: #f7f9fd;
+  --studio-3d-viewer: #2b2b2b; // the 3D preview's background
 
   // 3D room editor chrome (editor3d.md): the toolbar, the editing pill and the tool panels
   // floating over the room (`components/editorChrome`). Editor-only.

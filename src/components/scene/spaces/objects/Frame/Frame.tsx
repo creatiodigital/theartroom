@@ -3,6 +3,8 @@ import { Shape, ExtrudeGeometry, Material, Vector3 } from 'three'
 import { RoundedBox } from '@react-three/drei'
 import { useDisposable } from '@/components/scene/spaces/objects/useDisposable'
 
+import { WOOD_TILE_M } from './woodTextures'
+
 interface FrameProps {
   width: number
   height: number
@@ -17,14 +19,8 @@ const BEVEL_SEGMENTS = 3
 const EDGE_EASE_M = 0.0008
 const ROUNDED_BEVEL_RADIUS = 0.002
 
-/**
- * AR-169 (Eduardo 2026-10-29: "a realistic wooden texture size, no matter the thickness or size
- * of the frame"): one tile of the wood maps (diffuse, normal, roughness) covers this much board,
- * in metres — the print studio's frames (`StudioFrame`, 0.26–0.36 m). A frame's UVs are in tiles
- * of real board, so a bigger frame shows more wood, never bigger grain. `Display` scales it by the
- * artist's texture scale (1× at its default) and the texture's own width-to-height ratio.
- */
-export const WOOD_TILE_M = 0.31
+// One tile of the wood maps covers this much board (AR-169); shared with the floor's wood.
+export { WOOD_TILE_M } from './woodTextures'
 
 /** Each bar starts on its own stretch of board (the miter joints read as joints). */
 const BAR_OFFSETS: [number, number][] = [

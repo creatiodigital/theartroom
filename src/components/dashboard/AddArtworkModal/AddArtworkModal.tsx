@@ -2,19 +2,35 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import {
+  Cube,
+  Image as ImageIcon,
+  SpeakerHigh,
+  TextT,
+  VideoCamera,
+  type Icon,
+} from '@phosphor-icons/react'
+import c from 'classnames'
 
 import { AdminConfirmModal } from '@/components/admin/ui/AdminConfirmModal'
-import { AdminSelect } from '@/components/admin/ui/AdminSelect'
 import { Input } from '@/components/ui/Input'
 
 import styles from './AddArtworkModal.module.scss'
 
-const artworkTypeOptions = [
-  { value: 'image', label: 'Image' },
-  { value: 'text', label: 'Text' },
-  { value: 'sound', label: 'Sound' },
-  { value: 'video', label: 'Video' },
+/** The type cards, in the board's order (objects-add-artwork.dc.html). */
+const ARTWORK_TYPES: { value: string; label: string; icon: Icon }[] = [
+  { value: 'image', label: 'Image', icon: ImageIcon },
+  { value: 'object', label: 'Object', icon: Cube },
+  { value: 'text', label: 'Text', icon: TextT },
+  { value: 'sound', label: 'Sound', icon: SpeakerHigh },
+  { value: 'video', label: 'Video', icon: VideoCamera },
 ]
+
+const OBJECT_EXPLAINER_ID = 'add-artwork-object-explainer'
+
+/** The explainer's figure: a standing sculpture, as drawn on the board. Decorative. */
+const SCULPTURE_PATH =
+  'M14 96 C6 70 14 40 22 26 C14 14 22 2 30 2 C38 2 46 14 38 26 C46 40 54 70 46 96 Z'
 
 // The confirm button sits outside the <form> (in the dialog's button row) and
 // submits it through this id.
@@ -29,6 +45,8 @@ type AddArtworkModalProps = {
 /**
  * Add artwork (artist.md §2: today's dialog in the admin look, like Add user):
  * labels above the fields, today's help text under them, Cancel / Create artwork.
+ * The type is a row of cards (docs/objects, objects-add-artwork.dc.html); choosing
+ * Object explains it in one panel under them.
  */
 export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalProps) => {
   const router = useRouter()
@@ -104,25 +122,51 @@ export const AddArtworkModal = ({ userId, onClose, onSuccess }: AddArtworkModalP
             </span>
           </div>
 
-          <div className={styles.field}>
-            <AdminSelect
-              id="artworkType"
-              label="Type"
-              size="form"
-              value={formData.artworkType}
-              onChange={(val) => handleChange('artworkType', val)}
-            >
-              {artworkTypeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </AdminSelect>
-            <span className={styles.help}>
-              Choose the type of artwork you want to create. Image for visual artworks, Text for
-              written content, Sound for audio, Video for video artworks.
-            </span>
-          </div>
+          <fieldset className={styles.types}>
+            <legend className={styles.label}>Type</legend>
+            <div className={styles.typeCards}>
+              {ARTWORK_TYPES.map(({ value, label, icon: TypeIcon }) => {
+                const checked = formData.artworkType === value
+                return (
+                  <label key={value} className={c(styles.typeCard, checked && styles.checked)}>
+                    <input
+                      type="radio"
+                      name="artworkType"
+                      value={value}
+                      checked={checked}
+                      onChange={() => handleChange('artworkType', value)}
+                      className="sr-only"
+                      aria-describedby={
+                        value === 'object' && checked ? OBJECT_EXPLAINER_ID : undefined
+                      }
+                    />
+                    <TypeIcon size={24} weight="light" aria-hidden />
+                    <span>{label}</span>
+                  </label>
+                )
+              })}
+            </div>
+            {formData.artworkType === 'object' && (
+              <div id={OBJECT_EXPLAINER_ID} className={styles.explainer}>
+                <span aria-hidden className={styles.explainerFigure}>
+                  <svg width="30" height="48" viewBox="0 0 60 100">
+                    <path d={SCULPTURE_PATH} />
+                  </svg>
+                </span>
+                <span className={styles.explainerText}>
+                  <strong>Object: a sculpture or any piece with volume</strong>
+                  <span>
+                    You add a cover photo, more photos and reels, and the details. It shows in your
+                    exhibitions like any other artwork.
+                  </span>
+                  <span>
+                    Want it in the 3D room too? We turn it into a 3D model for you. You can ask for
+                    that later.
+                  </span>
+                </span>
+              </div>
+            )}
+          </fieldset>
         </form>
       }
       warning={error || undefined}
