@@ -347,6 +347,7 @@
   stroke: var(--editor-row-selected-edge);
   stroke-width: 1px;
   stroke-dasharray: 4 4;
+  pointer-events: none;
 }
 
 .planItem {
@@ -383,10 +384,12 @@
   stroke-width: 2px;
 }
 
+// Drawn over the picked item and ending at its centre: never in the way of a press on it.
 .planMeasure {
   stroke: var(--editor-row-selected-edge);
   stroke-width: 1px;
   stroke-dasharray: 3 3;
+  pointer-events: none;
 }
 
 .planMeasureText {
@@ -397,6 +400,7 @@
 .planHandleLine {
   stroke: var(--editor-row-selected-edge);
   stroke-width: 1px;
+  pointer-events: none;
 }
 
 .planHandle {

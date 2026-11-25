@@ -21,6 +21,7 @@ import {
   faceUnderRay,
   keepChildrenOnFaces,
   modelOffset,
+  movingWith,
   overhangs,
   placeMap,
   removeItems,
@@ -574,4 +575,14 @@ test('review: a model with no measured size stands on its placed box, never in t
   expect(measured[0]).toBeCloseTo(0)
   expect(measured[1]).toBeCloseTo(-0.4)
   expect(measured[2]).toBeCloseTo(0)
+})
+
+test('what a drag moves: the dragged items and everything attached to them (never snap targets)', () => {
+  const block = pedestal({ id: 'b', h: 120 })
+  const board = plank({ parentId: 'b', face: 'top', lift: 0 })
+  const s = object({ id: 's', artworkId: 'alejandro', parentId: 'pl', face: 'front' })
+  const other = pedestal({ id: 'p2', x: 5 })
+  const layout = layoutOf(block, board, s, other)
+  expect([...movingWith(layout, ['b'])].sort()).toEqual(['b', 'pl', 's'])
+  expect([...movingWith(layout, ['s'])]).toEqual(['s'])
 })

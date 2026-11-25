@@ -10,6 +10,7 @@ import {
   belowFloor,
   descendantsOf,
   faceFrame,
+  movingWith,
   overhangs,
   placeAll,
   placeMap,
@@ -218,7 +219,15 @@ export function FloorPlan({
   }, [])
 
   // ── Moving ──
-  const moveStart = useRef<{ x: number; z: number; lead: Placed; leadId: string } | null>(null)
+  // `others`: the centres a drag snaps to, taken when it starts, never what it moves (an item
+  // riding along on the dragged one would pull it back to where it just was: the guides blinked).
+  const moveStart = useRef<{
+    x: number
+    z: number
+    lead: Placed
+    leadId: string
+    others: { x: number; z: number }[]
+  } | null>(null)
 
   const onItemDown = (event: PointerEvent, pressed: FloorItem) => {
     event.stopPropagation()
@@ -240,7 +249,11 @@ export function FloorPlan({
     const lead = atById.get(item.id)
     if (!lead) return
     const p = toPlan(event.clientX, event.clientY)
-    moveStart.current = { x: p.x, z: p.z, lead, leadId: item.id }
+    const moving = movingWith(layout, ids)
+    const others = placed
+      .filter(({ item: i }) => !moving.has(i.id))
+      .map(({ at }) => ({ x: at.x * 100, z: at.z * 100 }))
+    moveStart.current = { x: p.x, z: p.z, lead, leadId: item.id, others }
     editor.beginDrag(ids)
     ;(event.target as Element).setPointerCapture?.(event.pointerId)
   }
@@ -264,17 +277,13 @@ export function FloorPlan({
           room.centreX * 100,
           room.minX * 100 + (lead.x - lead.min.x) * 100,
           room.maxX * 100 - (lead.max.x - lead.x) * 100,
-          ...placed
-            .filter(({ item }) => !selectedIds.includes(item.id))
-            .map(({ at }) => at.x * 100),
+          ...start.others.map((o) => o.x),
         ]
         const zs = [
           room.centreZ * 100,
           room.minZ * 100 + (lead.z - lead.min.z) * 100,
           room.maxZ * 100 - (lead.max.z - lead.z) * 100,
-          ...placed
-            .filter(({ item }) => !selectedIds.includes(item.id))
-            .map(({ at }) => at.z * 100),
+          ...start.others.map((o) => o.z),
         ]
         const bestX = xs.reduce<number | null>(
           (b, v) =>
@@ -312,7 +321,7 @@ export function FloorPlan({
       window.removeEventListener('pointerup', onUp)
     }
     // toPlan reads the svg ref; the rest comes through refs.
-  }, [placed, selectedIds, room])
+  }, [room])
 
   // ── Turning ──
   const turnStart = useRef<{ id: string; a0: number; rot0: number; cx: number; cz: number } | null>(

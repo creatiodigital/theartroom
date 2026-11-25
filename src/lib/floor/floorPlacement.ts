@@ -222,6 +222,10 @@ export function descendantsOf(layout: FloorLayout, id: string): Set<string> {
   return out
 }
 
+/** What a drag of these items moves: them and everything attached to them, at any depth. */
+export const movingWith = (layout: FloorLayout, ids: string[]): Set<string> =>
+  new Set(ids.flatMap((id) => [id, ...descendantsOf(layout, id)]))
+
 /** A face in the world: its centre, outward normal, the offsets' axes (unit) and its size (m). */
 export function faceFrame(parent: Placed, face: FloorFace) {
   const local = faceLocal(parent, face)
