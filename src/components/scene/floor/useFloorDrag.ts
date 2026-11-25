@@ -60,13 +60,30 @@ export function useFloorDrag(layout: FloorLayout | null, sizes: FloorSizes, floo
         return
       }
 
-      // Picked: it moves. No mouse events follow this press, so the camera stays still.
-      event.nativeEvent.preventDefault()
+      // Picked: it moves. The room's camera listens to the mouse events that follow a press
+      // (R3F's own listener is passive, so this press can't be cancelled): the one mousedown is
+      // stopped before it reaches the camera.
+      const block = (e: MouseEvent) => e.stopPropagation()
+      window.addEventListener('mousedown', block, { capture: true, once: true })
       const group = selectedIds.length > 1
       const ids = group ? selectedIds : [id]
       const before = layout
       const exclude = new Set(ids.flatMap((i) => [i, ...descendantsOf(before, i)]))
       const grab = new Vector3(event.point.x, event.point.y - floorY, event.point.z)
+      // Where the press's ray meets the floor (or the grab's level): the drag's start on that plane.
+      const floor = new Plane(new Vector3(0, 1, 0), 0)
+      const atGrab = new Plane(new Vector3(0, 1, 0), -grab.y)
+      const pressRay = new Ray(
+        event.ray.origin.clone().setY(event.ray.origin.y - floorY),
+        event.ray.direction.clone(),
+      )
+      const floorStart = pressRay.intersectPlane(floor, new Vector3())
+      const levelHit = (ray: Ray) => {
+        const onFloor = floorStart && ray.intersectPlane(floor, new Vector3())
+        if (floorStart && onFloor) return Object.assign(onFloor, { from: floorStart })
+        const onLevel = ray.intersectPlane(atGrab, new Vector3())
+        return onLevel && Object.assign(onLevel, { from: grab })
+      }
       floorBridge.editor.beginDrag(ids)
       const raycaster = new Raycaster()
       // The pointer's ray, in the floor's coordinates (y from the floor).
@@ -115,9 +132,10 @@ export function useFloorDrag(layout: FloorLayout | null, sizes: FloorSizes, floo
           )
           return
         }
-        // Across the room, at the level it was grabbed.
-        const p = ray.intersectPlane(new Plane(new Vector3(0, 1, 0), -grab.y), new Vector3())
-        if (p) editor.dragTo(p.x - grab.x, p.z - grab.z, { free: true })
+        // Across the room: by where the pointer meets the floor (a level plane near the eye would
+        // throw it far), or the level it was grabbed at when the pointer is above the horizon.
+        const p = levelHit(ray)
+        if (p) editor.dragTo(p.x - p.from.x, p.z - p.from.z, { free: true })
       }
       const up = () => {
         cleanup.current?.()
@@ -135,6 +153,7 @@ export function useFloorDrag(layout: FloorLayout | null, sizes: FloorSizes, floo
         window.removeEventListener('pointermove', move)
         window.removeEventListener('pointerup', up)
         window.removeEventListener('keydown', key)
+        window.removeEventListener('mousedown', block, { capture: true })
         setHover(null)
         cleanup.current = null
       }

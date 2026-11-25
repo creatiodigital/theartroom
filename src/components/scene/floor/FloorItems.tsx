@@ -412,8 +412,8 @@ const FloorItems = () => {
   const person = useSelector((state: RootState) => state.floor.helpers.person)
   const sizes = useMemo(() => floorSizes(artworks), [artworks])
   const placed = useMemo(() => (layout ? placeAll(layout, sizes) : []), [layout, sizes])
-  const isEditMode = useSelector((state: RootState) => state.dashboard.isEditMode)
-  const composing = isFloorView && isEditMode
+  // The Floor view only opens in the editor: there, the items are picked and dragged.
+  const composing = isFloorView
   const drag = useFloorDrag(composing ? layout : null, sizes, floorY)
   const onFloorDown = composing ? drag.onDown : undefined
 
