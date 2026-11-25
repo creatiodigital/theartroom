@@ -25,6 +25,9 @@
   font-family: var(--font-sans), var(--font-sans-fallback);
   font-size: var(--text-sm);
   line-height: 1;
+  // Lower-case words with nothing tall ("cm", "in"): trim the line to the x-height so the letters
+  // themselves sit in the middle, not the font's taller box (owner, 2026-11-25).
+  text-box: trim-both ex alphabetic;
   color: var(--color-text-secondary);
   cursor: pointer;
 
