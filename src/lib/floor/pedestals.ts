@@ -23,6 +23,7 @@ export type PedestalShapeId =
   | 'halfRound'
   | 'corner'
   | 'table'
+  | 'plank'
 
 export type PedestalShape = {
   id: PedestalShapeId
@@ -142,6 +143,14 @@ export const PEDESTAL_SHAPES: readonly PedestalShape[] = [
     sub: 'Top on four legs',
     round: false,
     defaults: { w: 120, d: 80, h: 75 },
+  },
+  {
+    // A board (floor composing, 2026-11-25): stood against a wall, it holds a work by its back.
+    id: 'plank',
+    label: 'Plank',
+    sub: 'Board, any size',
+    round: false,
+    defaults: { w: 20, d: 3, h: 100 },
   },
 ]
 
@@ -269,7 +278,16 @@ export function insideOutline(outline: Pt[], x: number, z: number): boolean {
 export type PedestalFinish = 'matte' | 'satin' | 'gloss'
 export type PedestalEdges = 'sharp' | 'soft' | 'round'
 
-export type PedestalColour = { id: string; label: string; hex: string }
+export type PedestalColour = {
+  id: string
+  label: string
+  hex: string
+  /** Wood: the frames' PBR set it uses (`/assets/materials/wooden-frame-<texture>/`). */
+  texture?: WoodTexture
+}
+
+/** The frames' three woods (owner, 2026-11-25: "use the textures we have for our frames"). */
+export type WoodTexture = 'dark' | 'medium' | 'light'
 
 export type PedestalMaterial = {
   id: 'painted' | 'wood' | 'plastic' | 'concrete' | 'stone' | 'metal' | 'acrylic' | 'mirror'
@@ -319,16 +337,15 @@ export const PEDESTAL_MATERIALS: readonly PedestalMaterial[] = [
     label: 'Wood',
     colourTitle: 'Wood',
     anyColour: false,
-    finishes: false,
+    // The finish scales the wood's roughness map.
+    finishes: true,
     roughness: 0.7,
     metalness: 0,
+    // The frames' real wood (diffuse, normal, roughness); the hex is only the swatch's fallback.
     colours: [
-      { id: 'birch', label: 'Birch', hex: '#e2cfae' },
-      { id: 'ash', label: 'Ash', hex: '#d8c3a0' },
-      { id: 'oak', label: 'Oak', hex: '#c5a271' },
-      { id: 'cherry', label: 'Cherry', hex: '#a66848' },
-      { id: 'walnut', label: 'Walnut', hex: '#5a3e2b' },
-      { id: 'ebonised', label: 'Ebonised', hex: '#2c2622' },
+      { id: 'dark', label: 'Dark wood', hex: '#4a3326', texture: 'dark' },
+      { id: 'medium', label: 'Medium wood', hex: '#8a5f3f', texture: 'medium' },
+      { id: 'light', label: 'Light wood', hex: '#cdb08a', texture: 'light' },
     ],
   },
   {
@@ -430,6 +447,24 @@ export const FINISH_ROUGHNESS: Record<PedestalFinish, number> = {
 
 /** Edges: the bevel radius (cm) at the outline's corners and the top's rim. */
 export const EDGE_RADIUS: Record<PedestalEdges, number> = { sharp: 0, soft: 0.6, round: 2.5 }
+
+/** The six flat wood tones saved before the frames' woods (2026-11-25), and the wood each became. */
+export const WOOD_ALIASES: Record<string, WoodTexture> = {
+  birch: 'light',
+  ash: 'light',
+  oak: 'medium',
+  cherry: 'medium',
+  walnut: 'dark',
+  ebonised: 'dark',
+}
+
+/** A Plank's look: dark wood, satin (close to the frames' roughness). */
+export const PLANK_LOOK = {
+  material: 'wood' as const,
+  colour: 'dark',
+  finish: 'satin' as PedestalFinish,
+  edges: 'soft' as PedestalEdges,
+}
 
 /** Default for a new pedestal (owner: Painted, White, Matte). */
 export const PEDESTAL_DEFAULT_LOOK = {

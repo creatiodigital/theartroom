@@ -15,6 +15,7 @@ import {
   PEDESTAL_DEFAULT_LOOK,
   PEDESTAL_MATERIALS,
   PEDESTAL_SHAPES,
+  WOOD_ALIASES,
   type PedestalEdges,
   type PedestalFinish,
   type PedestalShapeId,
@@ -121,14 +122,16 @@ function parsePedestal(raw: Record<string, unknown>): FloorPedestal | null {
   if (!id) return null
   const shape = PEDESTAL_SHAPES.find((s) => s.id === raw.shape) ?? PEDESTAL_SHAPES[1]
   const material = PEDESTAL_MATERIALS.find((m) => m.id === raw.material) ?? PEDESTAL_MATERIALS[0]
-  const colourRaw = str(raw.colour, 16)
+  const colourRaw =
+    material.id === 'wood' ? (WOOD_ALIASES[str(raw.colour, 16)] ?? str(raw.colour, 16)) : str(raw.colour, 16)
   const colour =
     material.colours.some((c) => c.id === colourRaw) ||
     (material.anyColour && /^#[0-9a-fA-F]{6}$/.test(colourRaw))
       ? colourRaw
       : material.colours[0].id
-  const w = num(raw.w, 5, MAX_PEDESTAL_CM, shape.defaults.w)
-  const d = shape.round || shape.equal ? w : num(raw.d, 5, MAX_PEDESTAL_CM, shape.defaults.d)
+  // Down to 1 cm across: a plank is 3 cm deep.
+  const w = num(raw.w, 1, MAX_PEDESTAL_CM, shape.defaults.w)
+  const d = shape.round || shape.equal ? w : num(raw.d, 1, MAX_PEDESTAL_CM, shape.defaults.d)
   const h = shape.equal ? w : num(raw.h, 2, MAX_PEDESTAL_CM, shape.defaults.h)
   const edges = ['sharp', 'soft', 'round'].includes(raw.edges as string)
     ? (raw.edges as PedestalEdges)

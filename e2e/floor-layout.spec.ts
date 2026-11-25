@@ -17,7 +17,7 @@ import {
   rotateOffset,
 } from '../src/lib/floor/floorPlacement'
 import { clickedSide, sideFace, toObject, toWorld } from '../src/lib/floor/objectSide'
-import { insideOutline, pedestalTop } from '../src/lib/floor/pedestals'
+import { insideOutline, pedestalShape, pedestalTop } from '../src/lib/floor/pedestals'
 
 // Objects O6 (docs/objects "Snapping, exactly"): the floor's data and placement rules. Pure.
 
@@ -236,4 +236,29 @@ test("the Object's own coordinates and the world, turned and back", () => {
   expect(back.x).toBeCloseTo(1)
   expect(back.y).toBeCloseTo(0.5)
   expect(back.z).toBeCloseTo(0)
+})
+
+test("parse: old wood ids map to the frames' three woods; a plank keeps 3 cm", () => {
+  const raw = (id: string, colour: string, patch: Record<string, unknown> = {}) => ({
+    ...pedestal({ id }),
+    material: 'wood',
+    colour,
+    ...patch,
+  })
+  const { items } = parseFloorLayout({
+    items: [
+      raw('p1', 'walnut'),
+      raw('p2', 'ebonised'),
+      raw('p3', 'oak'),
+      raw('p4', 'cherry'),
+      raw('p5', 'ash'),
+      raw('p6', 'birch'),
+      raw('p7', 'dark', { shape: 'plank', w: 20, d: 3, h: 100, finish: 'gloss' }),
+    ],
+  })
+  const colours = (items as FloorPedestal[]).map((p) => p.colour)
+  expect(colours).toEqual(['dark', 'dark', 'medium', 'medium', 'light', 'light', 'dark'])
+  const plank = items[6] as FloorPedestal
+  expect([plank.shape, plank.w, plank.d, plank.h, plank.finish]).toEqual(['plank', 20, 3, 100, 'gloss'])
+  expect(pedestalShape('plank').defaults).toEqual({ w: 20, d: 3, h: 100 })
 })
