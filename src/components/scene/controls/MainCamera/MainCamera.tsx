@@ -173,6 +173,13 @@ function detectCollisions(
 // rays reach 0.7 m, so a step this short can never carry the camera past a wall they have not seen.
 const MAX_STEP = 0.15
 
+/** Coming nearer an Object on the floor (comeNearObject): no nearer than this (m), all of it framed
+ * with this much room around (wider than a photo's: an Object is seen in its space), and its middle
+ * this far under the screen's middle at most, the head tilted down. */
+const OBJECT_NEAREST = 1
+const OBJECT_PADDING = 1.6
+const OBJECT_BELOW_CENTRE = (12 * Math.PI) / 180
+
 /** A mouse event this soon after a touch (ms) is the browser's echo of the tap, not a mouse. */
 const TOUCH_ECHO_MS = 800
 
@@ -193,6 +200,8 @@ type Glide = {
   yawFrom: number
   yawTo: number
   pitchFrom: number
+  /** The head's tilt at the end (0, level, unless said: coming nearer an Object looks down at it). */
+  pitchTo?: number
   shiftFrom: LensShift
   shiftTo: LensShift
   /**
@@ -336,6 +345,12 @@ const MainCamera = () => {
   const isExitPromptOpen = useSelector((state: RootState) => state.scene.isExitPromptOpen)
   const isArtworkPanelOpen = useSelector((state: RootState) => state.dashboard.isArtworkPanelOpen)
   const isArtworkModalOpen = useSelector((state: RootState) => state.dashboard.isArtworkModalOpen)
+  // The Floor view (docs/objects O6): the keys walk the room as usual, except while something is
+  // picked on the plan and the mouse is not over the 3D: then the arrows move what is picked.
+  const isFloorView = useSelector((state: RootState) => state.floor.isFloorView)
+  const floorPicked = useSelector((state: RootState) => state.floor.selectedIds.length > 0)
+  const pointerOnRoom = useSelector((state: RootState) => state.floor.pointerOnRoom)
+  const floorOwnsKeys = isFloorView && floorPicked && !pointerOnRoom
   const spaceId = useSelector((state: RootState) => state.exhibition.spaceId) || 'paris'
   const spaceConfig = getSpaceConfig(spaceId)
 
@@ -354,9 +369,9 @@ const MainCamera = () => {
   const isPhone = useIsPhone()
   // A work's information (the editor's panel, or the room's details) is open over the room.
   const infoOpen = isArtworkPanelOpen || isArtworkModalOpen
-  const latest = useRef({ infoOpen, isExitPromptOpen, isPhone })
+  const latest = useRef({ infoOpen, isExitPromptOpen, isPhone, floorOwnsKeys })
   useEffect(() => {
-    latest.current = { infoOpen, isExitPromptOpen, isPhone }
+    latest.current = { infoOpen, isExitPromptOpen, isPhone, floorOwnsKeys }
   })
 
   // The room's solid surfaces, for the taps' walks and the works' taps alike (`roomRays`).
@@ -422,6 +437,10 @@ const MainCamera = () => {
   // placeholder (`wallViewLimits`): a work hung beyond them, the lens shift centers the rest. Leaving
   // Wall View floats the eye back down (`exitArtworkView`).
   const focusOn = (target: TFocusTarget) => {
+    if (target.object) {
+      comeNearObject(target)
+      return
+    }
     const { position, normal, width, height } = target
 
     const n = new Vector3(normal.x, 0, normal.z)
@@ -510,6 +529,72 @@ const MainCamera = () => {
       },
     }
     framed.current = { target, aspect: camera.aspect, moved: false }
+    reshaping.current = null
+  }
+
+  // A click on an Object on the floor (docs/objects, owner 2026-11-25): an ordinary glide (never Wall
+  // View) to stand squarely in front of the clicked side of its box (`target`: the side's middle,
+  // outward normal, length and height), at eye height, looking down at it within the head's tilt,
+  // where all of the side fits with room around and its middle sits low enough on the screen; short
+  // of the wall behind.
+  const comeNearObject = (target: TFocusTarget) => {
+    dispatch(clearFocusTarget())
+    const center = new Vector3(target.position.x, target.position.y, target.position.z)
+    const n = new Vector3(target.normal.x, 0, target.normal.z)
+    if (n.lengthSq() < 1e-6) return
+    n.normalize()
+    const fitted = fitDistance(
+      target.width,
+      target.height,
+      cameraFOV,
+      camera.aspect,
+      OBJECT_NEAREST,
+      OBJECT_PADDING,
+    )
+    // Far enough that its middle sits OBJECT_BELOW_CENTRE under the screen's middle, the head
+    // tilted down as far as it goes.
+    const drop = Math.max(0, camera.position.y - center.y)
+    const inSight = drop / Math.tan(PITCH_LIMIT + OBJECT_BELOW_CENTRE)
+    const wanted = Math.max(fitted, inSight, OBJECT_NEAREST)
+    const behind = firstRoomHit(
+      center.clone().addScaledVector(n, 0.05),
+      n,
+      wanted + WALL_CLEARANCE,
+      meshesOfRoom(),
+    )
+    const roomLimit = behind ? behind.distance + 0.05 - WALL_CLEARANCE : Infinity
+    const depth = Math.max(0.3, Math.min(wanted, roomLimit))
+    const spot = center.clone().addScaledVector(n, depth)
+    const yawTo = yawOf(-n.x, -n.z)
+    const turn = wrapAngle(yawTo - yaw.current)
+    const distance = Math.hypot(spot.x - camera.position.x, spot.z - camera.position.z)
+    const interrupted = !!glide.current
+    turnVelocity.current = 0
+    tiltVelocity.current = 0
+    artworkView.current = null
+    glide.current = {
+      kind: 'focus',
+      fromX: camera.position.x,
+      fromZ: camera.position.z,
+      toX: spot.x,
+      toZ: spot.z,
+      elapsed: 0,
+      duration: Math.max(
+        glideDuration(distance, FOCUS_GLIDE_MIN_S),
+        (Math.abs(turn) / Math.PI) * GLIDE_MAX_S,
+      ),
+      ease: interrupted ? easeOutCubic : easeInOutCubic,
+      yawFrom: yaw.current,
+      yawTo: yaw.current + turn,
+      pitchFrom: pitch.current,
+      pitchTo: -Math.min(PITCH_LIMIT, Math.atan2(drop, depth)),
+      shiftFrom: shift.current,
+      shiftTo: NO_SHIFT,
+      heightFrom: null,
+      heightTo: camera.position.y,
+      view: null,
+    }
+    framed.current = null
     reshaping.current = null
   }
 
@@ -752,6 +837,7 @@ const MainCamera = () => {
         exitAsked.current = true
         return
       }
+      if (latest.current.floorOwnsKeys) return
       handleKeyPress(keysPressed, event.key, true)
     },
     [currentView],
@@ -1106,7 +1192,7 @@ const MainCamera = () => {
         touchGrab.current = { x: 0, y: 0 }
       }
       if (g.heightFrom !== null) cam.position.y = g.heightFrom + (g.heightTo - g.heightFrom) * e
-      pitch.current = pitchTarget.current = g.pitchFrom * (1 - e)
+      pitch.current = pitchTarget.current = g.pitchFrom + ((g.pitchTo ?? 0) - g.pitchFrom) * e
       shift.current = lerpShift(g.shiftFrom, g.shiftTo, e)
       if (t >= 1 && glide.current === g) {
         glide.current = null

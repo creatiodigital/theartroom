@@ -14,6 +14,7 @@ import {
   panelIndexOfFace,
 } from '@/components/scene/spaces/objects/Panel/panelSettings'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
+import { hangsOnWall } from '@/lib/artwork/artworkKinds'
 import type { RootState } from '@/redux/store'
 
 import styles from './MediaLibrary.module.scss'
@@ -158,8 +159,10 @@ export const MediaLibrary = ({ onClose, onClickArtwork, duplicateError }: MediaL
     fetchArtworks()
   }, [effectiveUser?.id])
 
-  // Filter out artworks already in this exhibition
+  // Filter out artworks already in this exhibition, and Objects: they stand on the floor
+  // (docs/objects, Floor view not built yet), never on a wall.
   const availableArtworks = artworks
+    .filter((artwork) => hangsOnWall(artwork.artworkType))
     .filter(
       (artwork) => !exhibitionArtworkIds.includes(artwork.id) || onHiddenPanel.has(artwork.id),
     )

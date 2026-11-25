@@ -569,6 +569,8 @@ export class LightBaker {
       if (/glass/i.test(mesh.name)) return
       // A sky panel behind a window casts no shadow: the sky can't shade the sun.
       if (/^windowLight\d+$/.test(mesh.name)) return
+      // A floor Object with "Casts a shadow" off (docs/objects O6).
+      if (mesh.userData.bakeCaster === false) return
       if (receiverMeshes.has(mesh) || mesh.geometry) {
         mesh.layers.enable(CASTER_LAYER)
         this.casters.push(mesh)

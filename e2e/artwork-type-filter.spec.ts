@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test'
 import { parseArtworkTypeFilter } from '../src/lib/artworkTypeFilter'
 
-test('each of the five filters survives a round trip', () => {
-  for (const value of ['all', 'image', 'text', 'sound', 'video'] as const) {
+test('each of the six filters survives a round trip', () => {
+  for (const value of ['all', 'image', 'object', 'text', 'sound', 'video'] as const) {
     expect(parseArtworkTypeFilter(value)).toBe(value)
   }
 })

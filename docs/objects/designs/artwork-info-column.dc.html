@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Artwork info column</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&amp;family=Lato:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#ffffff}
+.col{width:320px;display:flex;flex-direction:column}
+.artist{font-size:12px;line-height:1.5;letter-spacing:.16em;text-transform:uppercase;color:#555555;text-decoration:none}
+.title{margin:8px 0 10px;font-family:'EB Garamond',Georgia,serif;font-weight:400;font-size:32px;line-height:1.2;color:#1a1a1a;text-wrap:balance}
+.fact{font-size:15px;line-height:1.5;color:#666666}
+.id{display:flex;flex-direction:column;padding-bottom:24px}
+.sec{display:flex;flex-direction:column;padding:20px 0;border-top:1px solid #ececec}
+.tech{font-size:13px;line-height:1.5;color:#666666}
+.act{display:flex;flex-direction:column;padding-top:24px;border-top:1px solid #ececec}
+.inq{display:flex;align-items:center;justify-content:center;height:46px;font:inherit;font-size:13px;letter-spacing:.12em;text-transform:uppercase;background:#ffffff;color:#1a1a1a;border:1px solid #1a1a1a}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:8px;padding-top:12px}
+.tile{aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:#f2f2f2;border:0;padding:0;cursor:pointer;font:inherit}
+</style>
+</helmet>
+<div style="width: 1240px; height: 900px; box-sizing: border-box; padding: 48px; display: flex; gap: 80px; align-items: flex-start; font-family: Lato, -apple-system, sans-serif; color: #1a1a1a; background: #ffffff">
+
+<aside class="col" aria-label="La memoria de las puertas">
+<div class="id"><a href="#" class="artist">Elizabeth Mosler</a><h2 class="title">La memoria de las puertas</h2><span class="fact">2023</span><span class="fact">60 × 40 cm</span></div>
+<div class="sec"><span class="tech">Fuji Film XT-10</span></div>
+<div class="act"><button type="button" class="inq">Inquire</button></div>
+</aside>
+
+<aside class="col" aria-label="Trunk">
+<div class="id"><a href="#" class="artist">John Doe</a><h2 class="title">Trunk</h2><span class="fact">2018</span><span class="fact">29 × 39 × 14 cm · 15 kg</span></div>
+<div class="sec"><span class="tech">Wood, plaster, plastic</span><span class="tech">Edition 3 of 8 + 2 AP</span></div>
+<div class="act"><button type="button" class="inq">Inquire</button>
+<div class="tiles" role="group" aria-label="Views of the work">
+<button type="button" class="tile" aria-pressed="true" aria-label="View in 3D" style="flex-direction: column; gap: 6px; font-size: 12px; letter-spacing: .12em; color: #1a1a1a"><svg width="24" height="24" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="10" stroke-linejoin="round" aria-hidden="true"><path d="M128 24 L224 76 V180 L128 232 L32 180 V76 Z M32 76 L128 128 L224 76 M128 128 V232"></path></svg>3D</button>
+<button type="button" class="tile" aria-pressed="false" aria-label="Cover" style="align-items: flex-end"><svg width="56" height="112" viewBox="0 0 60 100" aria-hidden="true" style="margin-bottom: 10px"><path d="M10 96 L10 40 C10 30 20 24 30 24 C40 24 50 30 50 40 L50 96 Z" fill="#8a7a66"></path></svg></button>
+</div>
+</div>
+</aside>
+
+<div role="img" aria-label="3D stage with the zoom control" style="position: relative; width: 360px; height: 460px; background: #f2f2f2">
+<div role="group" aria-label="Zoom" style="position: absolute; right: 16px; top: 16px; display: flex; flex-direction: column; background: #ffffff; border: 1px solid #d6d6d2">
+<button type="button" aria-label="Zoom in" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: none; border: 0; border-bottom: 1px solid #d6d6d2; color: #1a1a1a"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M222,128a6,6,0,0,1-6,6H134v82a6,6,0,0,1-12,0V134H40a6,6,0,0,1,0-12h82V40a6,6,0,0,1,12,0v82h82A6,6,0,0,1,222,128Z"></path></svg></button>
+<button type="button" aria-label="Zoom out" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: none; border: 0; color: #1a1a1a"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M222,128a6,6,0,0,1-6,6H40a6,6,0,0,1,0-12H216A6,6,0,0,1,222,128Z"></path></svg></button>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1240,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

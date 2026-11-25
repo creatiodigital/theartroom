@@ -157,34 +157,34 @@ model Artwork {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  name                 String
-  slug                 String         @unique
-  artworkType          String         @default("image")
-  title                String         @default("Untitled")
-  author               String?
-  year                 String?
-  technique            String?
-  dimensions           String?
-  description          String?
-  imageUrl             String? // Web-optimized image (CDN)
-  originalImageUrl     String? // High-res original for print fulfillment (no CDN)
-  originalWidth        Int? // Original image width in pixels
-  originalHeight       Int? // Original image height in pixels
-  originalDpi          Int? // Image DPI from EXIF metadata
-  originalFormat       String? // Original file format (JPEG, PNG, etc.)
-  originalSizeBytes    Int? // Original file size in bytes
-  textContent          String? // Fixed text content for stencil/text artworks
+  name                  String
+  slug                  String         @unique
+  artworkType           String         @default("image")
+  title                 String         @default("Untitled")
+  author                String?
+  year                  String?
+  technique             String?
+  dimensions            String?
+  description           String?
+  imageUrl              String? // Web-optimized image (CDN)
+  originalImageUrl      String? // High-res original for print fulfillment (no CDN)
+  originalWidth         Int? // Original image width in pixels
+  originalHeight        Int? // Original image height in pixels
+  originalDpi           Int? // Image DPI from EXIF metadata
+  originalFormat        String? // Original file format (JPEG, PNG, etc.)
+  originalSizeBytes     Int? // Original file size in bytes
+  textContent           String? // Fixed text content for stencil/text artworks
   // AR-182: the second-language version of `textContent`, shown in the 3D room when the
   // exhibition's second language is on. Null/empty = same as English. `textContentSecondLang`
   // is the language code it was written for (taken from the exhibition; never shown).
   textContentSecond     String?
   textContentSecondLang String?
-  soundUrl            String? // Audio file URL for sound artworks
-  videoUrl             String? // Video file URL for video artworks
-  media                ArtworkMedia[]
-  featured             Boolean        @default(false)
-  hiddenFromExhibition Boolean        @default(false)
-  order                Int            @default(0)
+  soundUrl              String? // Audio file URL for sound artworks
+  videoUrl              String? // Video file URL for video artworks
+  media                 ArtworkMedia[]
+  featured              Boolean        @default(false)
+  hiddenFromExhibition  Boolean        @default(false)
+  order                 Int            @default(0)
 
   // Print sales (theprintspace fulfillment). `printEnabled` gates the
   // "Order Print" CTA + the /print wizard; when false the artwork page
@@ -246,6 +246,53 @@ model Artwork {
   // originalHeight): measured once by the admin's print presentations page, and read ONLY by the
   // print presentation for its shape. Print sizes always come from the original file.
   presentationRatio Float?
+
+  // ── Objects (artworkType "object": sculptures, decorative pieces; docs/objects/README.md) ──
+  // All nullable / defaulted, so nothing changes for the other types. The cover photo is the
+  // image fields above (imageUrl, originalImageUrl, originalWidth/Height). Objects never sell
+  // prints: printEnabled stays false (enforced by every write route). `dimensions` above keeps a
+  // "64 × 38 × 31 cm" copy of the structured size for older displays; these fields are the truth.
+  heightCm       Float?
+  widthCm        Float?
+  depthCm        Float?
+  weightKg       Float?
+  // The 3D model: one cleaned .glb uploaded by the gallery team (step O4), stored in R2 under
+  // the artwork. Written only by the dedicated model routes, never by the artwork routes.
+  modelUrl       String?
+  modelSizeBytes Int?
+  modelBoundsCm  Json? // { h, w, d } read from the GLB on upload
+  modelStatus    String    @default("none") // "none" | "ready"
+  modelReadyAt   DateTime?
+
+  // ── Selling (docs/unique-sales/README.md) ──
+  // One way of selling per artwork (owner, 2026-11-25): "prints" (image works only: the print
+  // pipeline above) | "unique" (an original sold by inquiry: image works and Objects) | "none"
+  // (not for sale, Inquire only). `printEnabled` stays in step with "prints", so the print
+  // pipeline reads exactly what it read before (src/lib/artwork/saleMode.ts).
+  saleMode                String    @default("none")
+  // A unique piece's private prices: the artist's suggested price (the artist and the gallery see
+  // it) and the lowest the gallery accepts (admin only). Neither is EVER shown to the public, and
+  // the artist never sees the lowest. The client leaves both out of every query unless a query
+  // names them (`PRIVATE_ARTWORK_OMIT`, src/lib/prisma.ts).
+  suggestedPriceCents     Int?
+  lowestPriceCents        Int?
+  // The framed size, optional, for images and Objects ("… (framed)" on its own line).
+  framedHeightCm          Float?
+  framedWidthCm           Float?
+  framedDepthCm           Float?
+  // A unique piece's availability: "available" | "reserved" | "sold". Set by its sale record
+  // (Agreed → reserved, Paid → sold, Cancelled / Refunded → available) and by hand in the admin
+  // editor; a manual Reserved has a reminder date, never released automatically.
+  originalStatus          String    @default("available")
+  reservedUntil           DateTime?
+  hideWhenSold            Boolean   @default(false)
+  // The artist's "Sold elsewhere…" (no sale record): when, and optionally for how much (private,
+  // left out like the prices above).
+  soldElsewhereAt         DateTime?
+  soldElsewherePriceCents Int?
+
+  inquiries   Inquiry[]
+  uniqueSales UniqueSale[]
 
   // The gallery's curated /prints entry, if this work is in the selection.
   selectedPrint SelectedPrint?
@@ -436,6 +483,112 @@ model OffPlatformOrder {
   updatedAt DateTime @updatedAt
 
   editionNumbers EditionNumber[]
+}
+
+// A visitor's inquiry about a work (docs/unique-sales U2): `/api/inquire` emails the gallery and
+// stores it here, so a sale can start from it with the buyer and the work filled in. Inquiries are
+// leads (owner, 2026-11-23): they outlive the work (its deletion leaves `artworkId` null).
+// `artworkStatusAtInquiry`: the work's `originalStatus` when they asked ("asked while Reserved").
+model Inquiry {
+  id                     String      @id @default(uuid())
+  artworkId              String?
+  artwork                Artwork?    @relation(fields: [artworkId], references: [id], onDelete: SetNull)
+  name                   String
+  email                  String
+  message                String?
+  artworkStatusAtInquiry String?
+  // Ticked by the gallery in Admin › Sales › Inquiries.
+  handledAt              DateTime?
+  // The sale it led to (Start a sale), or that it is a lead for.
+  saleId                 String?
+  sale                   UniqueSale? @relation(fields: [saleId], references: [id], onDelete: SetNull)
+  createdAt              DateTime    @default(now())
+
+  @@index([artworkId, createdAt])
+  @@index([createdAt])
+}
+
+// A unique piece's sale, recorded by hand by the gallery (docs/unique-sales U5). Outside the print
+// pipeline: never a PrintOrder, a cart, checkout or TPS. Seller of record: The Art Room Gallery SL
+// (Q-U1). A sale keeps its work: an artwork with a sale record cannot be deleted (Restrict).
+model UniqueSale {
+  id        String  @id @default(uuid())
+  // "UP-0001": the gallery's reference, also the bank transfer reference.
+  ref       String  @unique
+  artworkId String
+  artwork   Artwork @relation(fields: [artworkId], references: [id], onDelete: Restrict)
+
+  // agreed | paid | shipped | delivered | closed | cancelled | refund_requested | refunded
+  status String @default("agreed")
+
+  buyerName    String
+  buyerEmail   String
+  buyerPhone   String?
+  buyerCountry String? // denormalised from the address for list views
+  // { line1, line2?, city, state?, postalCode, country }: the OffPlatformOrder snapshot pattern.
+  buyerAddress Json?
+
+  // The agreed price; the commission is negotiated per sale (Q-U2), so the split is frozen here.
+  priceCents    Int
+  commissionPct Float
+  artistCents   Int
+  galleryCents  Int
+
+  // stripe_link | bank_transfer | other
+  paymentMethod       String?
+  stripePaymentLinkId String?
+  paymentIntentId     String?   @unique
+  paidAt              DateTime?
+
+  // collect | artist_delivers | artist_ships | arta: decides who carries the risk.
+  deliveryMethod String?
+  riskNote       String?
+  shippingCents  Int?
+  shippingPaidBy String? // buyer | gallery | artist
+  carrier        String?
+  trackingRef    String?
+  trackingUrl    String?
+  artaRequestId  String?
+  artaShipmentId String?
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+  closedAt       DateTime?
+
+  // The artist's share paid (manual tick): feeds Payouts, like OffPlatformOrder.artistPaidAt.
+  artistPaidAt DateTime?
+
+  // Buyer invoice, certificate, shipping receipt, condition photos, other: R2 keys, never URLs.
+  // [{ kind: "invoice" | "certificate" | "shipping_receipt" | "condition" | "other", key, name,
+  //    uploadedAt }]
+  documents Json?
+
+  inquiries Inquiry[]
+  events    UniqueSaleEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([artworkId])
+}
+
+// A unique sale's timeline: one row per status change, payment, document or note.
+model UniqueSaleEvent {
+  id     String     @id @default(uuid())
+  saleId String
+  sale   UniqueSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  at     DateTime   @default(now())
+
+  // 'status' | 'payment' | 'document' | 'note' | …
+  kind       String
+  // 'admin:<userId>' | 'stripe' | 'system'
+  actor      String
+  fromStatus String?
+  toStatus   String?
+  message    String?
+  payload    Json?
+
+  @@index([saleId, at])
 }
 
 // Fixed-window rate-limit counters (AR-132). One row per "<name>:<key>"
@@ -700,37 +853,37 @@ model InvoiceCounter {
 }
 
 model Exhibition {
-  id                String    @id @default(uuid())
-  userId            String
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  handler           String
-  mainTitle         String
-  description       String?
-  shortDescription  String?
-  url               String    @unique
-  thumbnailUrl      String?
-  bannerUrl         String?
-  featuredImageUrl  String?
-  spaceId           String
-  startDate         DateTime?
-  endDate           DateTime?
-  status            String
-  published         Boolean   @default(false)
+  id                    String    @id @default(uuid())
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  handler               String
+  mainTitle             String
+  description           String?
+  shortDescription      String?
+  url                   String    @unique
+  thumbnailUrl          String?
+  bannerUrl             String?
+  featuredImageUrl      String?
+  spaceId               String
+  startDate             DateTime?
+  endDate               DateTime?
+  status                String
+  published             Boolean   @default(false)
   // Gates the 3D room alone: the "Enter Virtual Exhibition" button and the
   // /visit route. Defaults false so a new exhibition is page-first and the
   // room is revealed only when it is ready.
-  spacePublished    Boolean   @default(false)
-  publishedAt       DateTime? // When last published/updated
-  publishedSnapshot Json? // Full snapshot at publish time
-  hasPendingChanges Boolean   @default(false) // True when draft differs from published
-  previewEnabled    Boolean   @default(false) // When true, visit route is accessible even if unpublished
-  previewToken      String? // UUID token required in ?preview= param
-  bake              Json? // AR-161: draft BakeRecord; the published one lives in publishedSnapshot
+  spacePublished        Boolean   @default(false)
+  publishedAt           DateTime? // When last published/updated
+  publishedSnapshot     Json? // Full snapshot at publish time
+  hasPendingChanges     Boolean   @default(false) // True when draft differs from published
+  previewEnabled        Boolean   @default(false) // When true, visit route is accessible even if unpublished
+  previewToken          String? // UUID token required in ?preview= param
+  bake                  Json? // AR-161: draft BakeRecord; the published one lives in publishedSnapshot
   // AR-182: one optional second language for the texts inside the 3D room only. A language
   // code (fr, es, it, de, pt…); null = none. `secondLanguageVisible` shows the visitor switch
   // (off by default, so texts can be translated before visitors see them).
   secondLanguage        String?
-  secondLanguageVisible Boolean @default(false)
+  secondLanguageVisible Boolean   @default(false)
 
   // Lighting customization (space-agnostic)
   ambientLightColor      String?  @default("#e4e8f2")
@@ -760,6 +913,10 @@ model Exhibition {
   // Absent means no bench has ever been switched on. See
   // src/components/scene/spaces/objects/Bench/benchSettings.ts
   benchSettings          Json?
+  // The floor (docs/objects O6): Objects and pedestals standing on the rooms' floors,
+  //   { version: 1, items: [...], groups: [...] }. Absent means nothing on the floor. See
+  // src/lib/floor/floorLayout.ts
+  floorLayout            Json?
   windowLightColor       String?  @default("#ffffff")
   windowLightIntensity   Float?   @default(4.0)
   windowTransparency     Boolean? @default(false)
@@ -1080,6 +1237,10 @@ model ArtworkMedia {
   /// Plain text only, escaped on render — never HTML.
   caption String?
 
+  /// Objects only (docs/objects): which view this is — "front" | "back" | "side" | "detail" |
+  /// "room" | "process" | "reel". A reel is a `video` with a 9:16 frame (width/height tell).
+  role String?
+
   order     Int      @default(0)
   createdAt DateTime @default(now())
 
@@ -1131,17 +1292,17 @@ model SiteSettings {
   // Admin › Sales › Pricing (pricing.md); read per request by every price, the checkout and the
   // limited-edition margin check. Placed orders keep what they sold at (galleryCents). The default
   // must match DEFAULT_GALLERY_COMMISSION_PCT in src/lib/galleryCommission.ts.
-  galleryCommissionPct          Float     @default(25)
+  galleryCommissionPct         Float     @default(25)
   // Limited editions' own commission (owner 2026-11-20: "I will choose the % separately"), so a
   // numbered edition is not cheaper than an open one at the same artist price. galleryCommissionPct
   // is then the open editions' commission. NULL = the same as galleryCommissionPct, which is what
   // every limited price used before this column, so adding it changes no price; the Pricing page
   // saves both at once.
-  galleryCommissionLimitedPct   Float?
+  galleryCommissionLimitedPct  Float?
   // Who changed them last and when (either one), for the page's "Last changed" line. Null until the
   // first save.
-  galleryCommissionChangedAt    DateTime?
-  galleryCommissionChangedById  String?
+  galleryCommissionChangedAt   DateTime?
+  galleryCommissionChangedById String?
 
   updatedAt DateTime @updatedAt
 }

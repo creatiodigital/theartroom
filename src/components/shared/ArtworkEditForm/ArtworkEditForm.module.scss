@@ -684,3 +684,8 @@
     margin: 0;
   }
 }
+
+// An Object's In the 3D space (objects-editor.dc.html): the panel's blue edge.
+.column .spacePanel {
+  border-color: var(--studio-3d-panel-border);
+}

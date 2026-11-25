@@ -2,11 +2,8 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 import { auth } from '@/auth'
-import {
-  getArtworkMedia,
-  MAX_ARTWORK_MEDIA,
-  MAX_ARTWORK_MEDIA_VIDEOS,
-} from '@/lib/artwork/artworkMedia'
+import { getArtworkMedia, mediaLimitsFor } from '@/lib/artwork/artworkMedia'
+import { isObjectMediaRole } from '@/lib/artwork/objectArtwork'
 import { isValidImageType } from '@/lib/imageProcessor'
 import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
@@ -19,13 +16,15 @@ import {
 } from '@/lib/r2'
 import { rateLimit } from '@/lib/rateLimit'
 import { isValidVideoType } from '@/lib/videoType'
+import { sanitizeLine } from '@/utils/sanitizeLine'
 
 /**
  * Supplementary artwork media — upload and removal.
  *
- * ADMIN ONLY. The main artwork image stays artist-or-admin because the work is
- * the artist's; this is the gallery's sales presentation, so it is deliberately
- * narrower than the surface it sits beside.
+ * Admins, for any artwork: the gallery's sales presentation, deliberately
+ * narrower than the main image beside it (artist-or-admin). The one exception is
+ * an Object (docs/objects): its photos and reels are how the artist shows the
+ * piece, so its own artist manages them too.
  *
  * Modelled on /api/upload/image, which is the house pattern: ownership checked
  * on BOTH steps, a MIME allowlist, the declared size AND the real one, a key
@@ -56,61 +55,72 @@ function isSafeKey(key: unknown, artworkId: string): key is string {
   return key.includes(`/${artworkId}/supplementary/`)
 }
 
-async function requireAdmin() {
+const MB = 1024 * 1024
+
+/** An Object's videos are reels and films of the piece (up to 3 min), so they may be larger. */
+const maxBytesFor = (kind: 'image' | 'video', artworkType: string) =>
+  kind === 'image' ? 25 * MB : artworkType === 'object' ? 50 * MB : 20 * MB
+
+/**
+ * Who may manage this artwork's media: an admin, or the artist for their own
+ * Object. Checked against the artwork the request names (or the row's artwork).
+ */
+async function requireMediaAccess(artworkId: string) {
   const session = await auth()
   if (!session?.user?.id) return { error: 'Not authenticated', status: 401 as const }
+  const artwork = await prisma.artwork.findUnique({
+    where: { id: artworkId },
+    select: { userId: true, artworkType: true },
+  })
+  if (!artwork) return { error: 'Artwork not found', status: 404 as const }
   const t = session.user.userType
-  if (t !== 'admin' && t !== 'superAdmin') {
-    return { error: 'Not authorized', status: 403 as const }
-  }
-  return { userId: session.user.id }
+  const isAdmin = t === 'admin' || t === 'superAdmin'
+  const ownObject = artwork.userId === session.user.id && artwork.artworkType === 'object'
+  if (!isAdmin && !ownObject) return { error: 'Not authorized', status: 403 as const }
+  return { userId: session.user.id, artwork }
 }
 
-/** The artwork's media, for the admin manager. Admin-only like the rest of this
- *  route — the public page reads the same rows through `getArtworkMedia`. */
+/** The artwork's media, for the editor's manager. The public page reads the same
+ *  rows through `getArtworkMedia`. */
 export async function GET(request: NextRequest) {
-  const gate = await requireAdmin()
+  const artworkId = new URL(request.url).searchParams.get('artworkId')
+  if (!artworkId) return NextResponse.json({ error: 'Missing artworkId' }, { status: 400 })
+  const gate = await requireMediaAccess(artworkId)
   if ('error' in gate) {
     return NextResponse.json({ error: gate.error }, { status: gate.status })
   }
-  const artworkId = new URL(request.url).searchParams.get('artworkId')
-  if (!artworkId) return NextResponse.json({ error: 'Missing artworkId' }, { status: 400 })
 
   return NextResponse.json({ media: await getArtworkMedia(artworkId) })
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const gate = await requireAdmin()
-    if ('error' in gate) {
-      return NextResponse.json({ error: gate.error }, { status: gate.status })
-    }
-
-    // Presigning is cheap for us and expensive for the bucket. Bound it per
-    // admin so a runaway client cannot mint URLs indefinitely.
-    const { success } = await rateLimit({
-      name: 'artwork-media-upload',
-      key: gate.userId,
-      limit: 40,
-      windowSeconds: 3600,
-    })
-    if (!success) {
-      return NextResponse.json({ error: 'Too many uploads. Try again shortly.' }, { status: 429 })
-    }
-
     const body = await request.json()
     const { artworkId } = body
     if (typeof artworkId !== 'string' || !artworkId) {
       return NextResponse.json({ error: 'Missing artworkId' }, { status: 400 })
     }
 
-    const artwork = await prisma.artwork.findUnique({
-      where: { id: artworkId },
-      select: { userId: true },
-    })
-    if (!artwork) return NextResponse.json({ error: 'Artwork not found' }, { status: 404 })
+    const gate = await requireMediaAccess(artworkId)
+    if ('error' in gate) {
+      return NextResponse.json({ error: gate.error }, { status: gate.status })
+    }
+    const { artwork } = gate
 
     if (body.type === 'request-upload') {
+      // Presigning is cheap for us and expensive for the bucket. Bound it per
+      // user so a runaway client cannot mint URLs indefinitely. Counted on the
+      // presign only: an Object's 40 photos are one batch, not a runaway.
+      const { success } = await rateLimit({
+        name: 'artwork-media-upload',
+        key: gate.userId,
+        limit: 60,
+        windowSeconds: 3600,
+      })
+      if (!success) {
+        return NextResponse.json({ error: 'Too many uploads. Try again shortly.' }, { status: 429 })
+      }
+
       const spec = ALLOWED[body.contentType as keyof typeof ALLOWED]
       if (!spec) {
         return NextResponse.json(
@@ -118,31 +128,38 @@ export async function POST(request: NextRequest) {
           { status: 400 },
         )
       }
-      if (typeof body.fileSize === 'number' && body.fileSize > spec.max) {
+      const max = maxBytesFor(spec.kind, artwork.artworkType)
+      if (typeof body.fileSize === 'number' && body.fileSize > max) {
         return NextResponse.json(
-          { error: `File too large. Maximum is ${spec.max / (1024 * 1024)}MB.` },
+          { error: `File too large. Maximum is ${max / MB}MB.` },
           { status: 400 },
         )
       }
 
       // A ceiling far above real use, so a careless or compromised account
       // cannot fill the bucket. Counted here, before a URL is minted.
+      // Per type (`mediaLimitsFor`): Objects take more videos than the other types.
+      const limits = mediaLimitsFor(artwork.artworkType)
       const existing = await prisma.artworkMedia.findMany({
         where: { artworkId },
         select: { kind: true },
       })
-      if (existing.length >= MAX_ARTWORK_MEDIA) {
+      if (existing.length >= limits.maxItems) {
         return NextResponse.json(
-          { error: `This artwork already holds the maximum of ${MAX_ARTWORK_MEDIA} assets.` },
+          { error: `This artwork already holds the maximum of ${limits.maxItems} assets.` },
           { status: 400 },
         )
       }
-      if (
-        spec.kind === 'video' &&
-        existing.filter((m) => m.kind === 'video').length >= MAX_ARTWORK_MEDIA_VIDEOS
-      ) {
+      const sameKind = existing.filter((m) => m.kind === spec.kind).length
+      if (spec.kind === 'video' && sameKind >= limits.maxVideos) {
         return NextResponse.json(
-          { error: `At most ${MAX_ARTWORK_MEDIA_VIDEOS} videos per artwork.` },
+          { error: `At most ${limits.maxVideos} videos per artwork.` },
+          { status: 400 },
+        )
+      }
+      if (spec.kind === 'image' && sameKind >= limits.maxImages) {
+        return NextResponse.json(
+          { error: `At most ${limits.maxImages} photos per artwork.` },
           { status: 400 },
         )
       }
@@ -153,14 +170,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (body.type === 'complete') {
-      const { key, width, height, caption } = body
+      const { key, width, height, caption, role } = body
       if (!isSafeKey(key, artworkId)) {
         return NextResponse.json({ error: 'Invalid key' }, { status: 400 })
       }
 
       const ext = key.split('.').pop() as string
       const kind = ext === 'mp4' || ext === 'webm' ? 'video' : 'image'
-      const max = kind === 'video' ? 20 * 1024 * 1024 : 25 * 1024 * 1024
+      const max = maxBytesFor(kind, artwork.artworkType)
 
       // The presigned PUT imposes no ceiling and the declared size was the
       // client's word, so check the real object before committing it.
@@ -212,9 +229,19 @@ export async function POST(request: NextRequest) {
           // Plain text only — never HTML.
           caption:
             typeof caption === 'string' && caption.trim() ? caption.trim().slice(0, 300) : null,
+          // Objects only: the view's label (Front, Reel…).
+          role: artwork.artworkType === 'object' && isObjectMediaRole(role) ? role : null,
           order: (last?.order ?? -1) + 1,
         },
-        select: { id: true, kind: true, url: true, width: true, height: true, caption: true },
+        select: {
+          id: true,
+          kind: true,
+          url: true,
+          width: true,
+          height: true,
+          caption: true,
+          role: true,
+        },
       })
 
       return NextResponse.json(created)
@@ -238,11 +265,6 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const gate = await requireAdmin()
-    if ('error' in gate) {
-      return NextResponse.json({ error: gate.error }, { status: gate.status })
-    }
-
     const { id } = await request.json()
     if (typeof id !== 'string' || !id) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 })
@@ -253,6 +275,11 @@ export async function DELETE(request: NextRequest) {
       select: { id: true, url: true, artworkId: true },
     })
     if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+    const gate = await requireMediaAccess(row.artworkId)
+    if ('error' in gate) {
+      return NextResponse.json({ error: gate.error }, { status: gate.status })
+    }
 
     await prisma.artworkMedia.delete({ where: { id: row.id } })
 
@@ -268,5 +295,103 @@ export async function DELETE(request: NextRequest) {
     console.error('[DELETE /api/artwork-media] error:', error)
     captureError(error, { flow: 'upload', stage: 'artwork-media-delete', level: 'error' })
     return NextResponse.json({ error: 'Delete failed' }, { status: 500 })
+  }
+}
+
+/**
+ * Edit, never upload: one asset's label and caption (`{ id, role?, caption? }`),
+ * or the order of all of an artwork's assets (`{ artworkId, order: ids[] }`,
+ * every id once). The label is an Object's only (docs/objects).
+ */
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json()
+
+    if (Array.isArray(body.order)) {
+      const { artworkId, order } = body as { artworkId: unknown; order: unknown[] }
+      if (typeof artworkId !== 'string' || !artworkId) {
+        return NextResponse.json({ error: 'Missing artworkId' }, { status: 400 })
+      }
+      const gate = await requireMediaAccess(artworkId)
+      if ('error' in gate) {
+        return NextResponse.json({ error: gate.error }, { status: gate.status })
+      }
+      const rows = await prisma.artworkMedia.findMany({
+        where: { artworkId },
+        select: { id: true },
+      })
+      const ids = new Set(rows.map((r) => r.id))
+      const sameSet =
+        order.length === ids.size &&
+        new Set(order).size === order.length &&
+        order.every((id) => typeof id === 'string' && ids.has(id))
+      if (!sameSet) {
+        return NextResponse.json(
+          { error: 'The order must list every asset of this artwork once.' },
+          { status: 400 },
+        )
+      }
+      await prisma.$transaction(
+        (order as string[]).map((id, index) =>
+          prisma.artworkMedia.update({ where: { id }, data: { order: index } }),
+        ),
+      )
+      return NextResponse.json({ media: await getArtworkMedia(artworkId) })
+    }
+
+    const { id, role, caption } = body
+    if (typeof id !== 'string' || !id) {
+      return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+    }
+    const row = await prisma.artworkMedia.findUnique({
+      where: { id },
+      select: { artworkId: true },
+    })
+    if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    const gate = await requireMediaAccess(row.artworkId)
+    if ('error' in gate) {
+      return NextResponse.json({ error: gate.error }, { status: gate.status })
+    }
+
+    const data: { role?: string | null; caption?: string | null } = {}
+    if (role !== undefined) {
+      if (role !== null && (gate.artwork.artworkType !== 'object' || !isObjectMediaRole(role))) {
+        return NextResponse.json({ error: 'Unknown label.' }, { status: 400 })
+      }
+      data.role = role
+    }
+    if (caption !== undefined) {
+      if (caption !== null && typeof caption !== 'string') {
+        return NextResponse.json({ error: 'The caption must be text.' }, { status: 400 })
+      }
+      // Plain text only — never HTML; escaped on render.
+      const clean = caption === null ? '' : sanitizeLine(caption)
+      if (clean.length > 300) {
+        return NextResponse.json(
+          { error: 'The caption is too long (300 at most).' },
+          { status: 400 },
+        )
+      }
+      data.caption = clean || null
+    }
+
+    const updated = await prisma.artworkMedia.update({
+      where: { id },
+      data,
+      select: {
+        id: true,
+        kind: true,
+        url: true,
+        width: true,
+        height: true,
+        caption: true,
+        role: true,
+      },
+    })
+    return NextResponse.json(updated)
+  } catch (error) {
+    console.error('[PATCH /api/artwork-media] error:', error)
+    captureError(error, { flow: 'upload', stage: 'artwork-media-edit', level: 'error' })
+    return NextResponse.json({ error: 'Could not save that change' }, { status: 500 })
   }
 }

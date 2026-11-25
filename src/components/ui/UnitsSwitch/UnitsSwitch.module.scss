@@ -1,33 +1,49 @@
-// units.md "The switch": plain words in the row's own size and grey, "cm | in", the chosen one bold
-// and dark; the other brand red on hover or focus; the divider light and not clickable.
+// The cm | in toggle (units.md; owner, 2026-11-25: "do a nice squared toggle"): two square segments
+// in one hairline frame, the chosen one filled dark; the other darkens on hover. Its own size
+// wherever it sits (the plain words in the row's size were hard to see and to hit). Visitors: no
+// rounded corners.
 .switch {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  align-items: stretch;
+  flex: none;
+  border: 1px solid var(--public-units-divider);
+  border-radius: 0;
+  background: var(--color-white);
 }
 
+// Two classes: Button's bare reset has one.
 .switch .cell {
-  font-size: inherit;
-  line-height: inherit;
-  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--space-10);
+  min-height: var(--space-8);
+  // Optical centring: "cm" and "in" have nothing tall, so in the font's box their letters sat
+  // 1.75 px low (measured); half of this bottom padding lifts them back to the middle.
+  padding: 0 var(--space-3) calc(var(--space-1) * 0.875);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  font-size: var(--text-sm);
+  line-height: 1;
+  color: var(--color-text-secondary);
+  cursor: pointer;
 
-  // Brand red, no underline (owner, 2026-11-17).
-  &:not(.chosen):hover,
-  &:not(.chosen):focus-visible {
-    color: var(--color-brand);
+  &:not(.chosen):hover {
+    color: var(--public-text);
+    background: var(--color-gray-10);
   }
 
   &:focus-visible {
-    outline: 1px solid currentColor;
+    outline: 1px solid var(--public-text);
     outline-offset: 2px;
   }
 }
 
 .switch .chosen {
-  font-weight: 700;
-  color: var(--public-units-chosen);
-}
-
-.divider {
-  color: var(--public-units-divider);
+  background: var(--public-units-chosen);
+  font-weight: var(--font-semibold);
+  color: var(--color-white);
+  cursor: default;
 }

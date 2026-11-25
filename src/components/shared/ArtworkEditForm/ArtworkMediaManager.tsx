@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { MAX_ARTWORK_MEDIA, type ArtworkMediaItem } from '@/lib/artwork/artworkMediaTypes'
 
 import styles from './ArtworkMediaManager.module.scss'
+import { measureMedia, uploadArtworkMediaFile } from './uploadArtworkMedia'
 
 /**
  * Supplementary media for an artwork page — close-ups, print mockups, an
@@ -47,24 +48,6 @@ export const ArtworkMediaManager = ({ artworkId }: { artworkId: string }) => {
     void load()
   }, [load])
 
-  /** Real pixel size, so the row can reserve the right slot and we can warn
-   *  about an image too small to stay sharp. Videos carry no dimensions here. */
-  const measure = (file: File) =>
-    new Promise<{ width?: number; height?: number }>((resolve) => {
-      if (!file.type.startsWith('image/')) return resolve({})
-      const img = new Image()
-      const url = URL.createObjectURL(file)
-      img.onload = () => {
-        URL.revokeObjectURL(url)
-        resolve({ width: img.naturalWidth, height: img.naturalHeight })
-      }
-      img.onerror = () => {
-        URL.revokeObjectURL(url)
-        resolve({})
-      }
-      img.src = url
-    })
-
   const upload = async (files: FileList | File[]) => {
     setBusy(true)
     setError(null)
@@ -73,38 +56,12 @@ export const ArtworkMediaManager = ({ artworkId }: { artworkId: string }) => {
 
     for (const file of Array.from(files)) {
       try {
-        const { width, height } = await measure(file)
+        // Images only, as before: a video's size isn't sent from this manager.
+        const { width, height } = file.type.startsWith('image/') ? await measureMedia(file) : {}
         if (width && height && Math.max(width, height) < MIN_IMAGE_LONG_EDGE) {
           soft.push(`${file.name} (${width}×${height})`)
         }
-
-        const reqRes = await fetch('/api/artwork-media', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'request-upload',
-            artworkId,
-            contentType: file.type,
-            fileSize: file.size,
-          }),
-        })
-        if (!reqRes.ok) throw new Error((await reqRes.json()).error ?? 'Upload refused')
-        const { presignedUrl, key } = await reqRes.json()
-
-        const put = await fetch(presignedUrl, {
-          method: 'PUT',
-          body: file,
-          headers: { 'Content-Type': file.type },
-        })
-        if (!put.ok) throw new Error('The file could not be sent to storage')
-
-        // Only the key goes back — the server rebuilds the URL from it.
-        const doneRes = await fetch('/api/artwork-media', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'complete', artworkId, key, width, height }),
-        })
-        if (!doneRes.ok) throw new Error((await doneRes.json()).error ?? 'Upload failed')
+        await uploadArtworkMediaFile({ artworkId, file, width, height })
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Upload failed')
         break

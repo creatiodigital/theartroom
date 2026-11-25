@@ -16,6 +16,8 @@ export type ArtworkMediaItem = {
   height: number | null
   /** Plain text, escaped on render. Never HTML. */
   caption: string | null
+  /** Objects only: the view's label ("front", "detail", "reel"…, `OBJECT_MEDIA_ROLES`). */
+  role: string | null
 }
 
 /**
@@ -29,3 +31,21 @@ export const MAX_ARTWORK_MEDIA = 60
 /** Autoplaying more than a couple of videos on one page is a bandwidth problem
  *  for the buyer, not a feature. */
 export const MAX_ARTWORK_MEDIA_VIDEOS = 2
+
+/**
+ * The ceilings per artwork type: all assets together, photos, videos. Objects (docs/objects) sell
+ * the piece through their photos and reels, so they take more videos: 40 photos and 6 videos
+ * (reels ≤ 60 s, landscape ≤ 3 min), the proposal in Q-O1 until the owner answers. Every other
+ * type keeps the limits above.
+ */
+export type ArtworkMediaLimits = { maxItems: number; maxImages: number; maxVideos: number }
+
+export function mediaLimitsFor(artworkType: string | null | undefined): ArtworkMediaLimits {
+  return artworkType === 'object'
+    ? { maxItems: 46, maxImages: 40, maxVideos: 6 }
+    : {
+        maxItems: MAX_ARTWORK_MEDIA,
+        maxImages: MAX_ARTWORK_MEDIA,
+        maxVideos: MAX_ARTWORK_MEDIA_VIDEOS,
+      }
+}

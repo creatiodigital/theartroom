@@ -9,6 +9,7 @@ import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 import { Button } from '@/components/ui/Button'
 import { FormField } from '@/components/ui/FormField'
 import { Input } from '@/components/ui/Input'
+import { useBackdropClose } from '@/hooks/useBackdropClose'
 import { useFormValidation } from '@/hooks/useFormValidation'
 import { track } from '@/lib/analytics/track'
 import type { PresentationView } from '@/lib/printPresentation/record'
@@ -132,6 +133,7 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
     onClose()
     if (submitStatus === 'success' || submitStatus === 'error') setSubmitStatus('idle')
   }
+  const backdropClose = useBackdropClose(handleClose)
 
   const field = (
     id: 'fullName' | 'email' | 'phone',
@@ -162,11 +164,12 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
   )
 
   // other-screens.md "Inquire": a right-hand panel (440 px; full screen on phones) with the work,
-  // the fields in the checkout style, black Send inquiry, and the result in the same panel.
+  // the fields in the checkout style, black Send inquiry, and the result in the same panel. A click
+  // outside it closes it (owner, 2026-11-25); what was typed stays for the next opening.
   if (!isOpen) return null
 
   return (
-    <div className={styles.backdrop}>
+    <div className={styles.backdrop} {...backdropClose}>
       <aside
         className={styles.sidebar}
         role="dialog"
@@ -214,18 +217,12 @@ export const InquireSidebar = ({ isOpen, onClose, artwork }: InquireSidebarProps
               }
             </PrintPresentation>
           </div>
+          {/* As the artwork page: the artist in small caps, the title upright, the year bold on its
+              own line (owner, 2026-11-25). */}
           <div className={styles.workText}>
-            <span className={styles.workTitle}>
-              {/* Title italic only when the year follows (owner, 2026-11-20). */}
-              {artwork.year ? (
-                <>
-                  <cite>{artwork.title}</cite>, {artwork.year}
-                </>
-              ) : (
-                artwork.title
-              )}
-            </span>
             <span className={styles.workArtist}>{artwork.artistName}</span>
+            <span className={styles.workTitle}>{artwork.title}</span>
+            {artwork.year ? <span className={styles.workYear}>{artwork.year}</span> : null}
           </div>
         </div>
 

@@ -1,5 +1,6 @@
 'use client'
 
+import { parseFloorLayout } from '@/lib/floor/floorLayout'
 import { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSession } from 'next-auth/react'
@@ -17,6 +18,7 @@ import { resetArtworks } from '@/redux/slices/artworkSlice'
 import { useGetExhibitionByUrlQuery } from '@/redux/slices/exhibitionApi'
 import { setExhibition } from '@/redux/slices/exhibitionSlice'
 import { resetScene } from '@/redux/slices/sceneSlice'
+import { hideFloorView } from '@/redux/slices/floorSlice'
 import {
   resetWallView,
   showWallView,
@@ -53,6 +55,10 @@ export const ExhibitionEditPage = ({
   useEffect(() => {
     preloadAllFloorMaterials()
   }, [])
+
+  // Leaving the editor closes the Floor view: the floor slice outlives the page, and a Floor view
+  // left "open" would keep the room's Objects in compose mode for visitors.
+  useEffect(() => () => void dispatch(hideFloorView()), [dispatch])
 
   // Reset all exhibition-related state when page loads or exhibition changes
   // This ensures complete isolation between exhibitions
@@ -135,6 +141,9 @@ export const ExhibitionEditPage = ({
         trackLampSettings: exhibition.trackLampSettings ?? undefined,
         panelSettings: exhibition.panelSettings ?? undefined,
         benchSettings: exhibition.benchSettings ?? undefined,
+        // The floor (docs/objects O6) and its Objects' models.
+        floorLayout: parseFloorLayout(exhibition.floorLayout),
+        floorArtworks: exhibition.floorArtworks ?? {},
         ceilingLightMode: exhibition.ceilingLightMode ?? undefined,
         recessedLampColor: exhibition.recessedLampColor ?? undefined,
         recessedLampIntensity: exhibition.recessedLampIntensity ?? undefined,

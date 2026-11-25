@@ -10,6 +10,7 @@ import { AdminPageHeader } from '@/components/admin/ui/AdminPageHeader'
 import { Callout } from '@/components/admin/ui/Callout'
 import { SaveBar } from '@/components/admin/ui/SaveBar'
 import { StatusPill } from '@/components/admin/ui/StatusPill'
+import { ObjectSpaceChip } from '@/components/dashboard/artworks/ObjectSpaceChip'
 import {
   ARTWORK_EDIT_FORM_ID,
   ArtworkEditForm,
@@ -45,6 +46,7 @@ const TYPE_LABEL: Record<string, string> = {
   text: 'Text',
   sound: 'Sound',
   video: 'Video',
+  object: 'Object',
 }
 
 /**
@@ -878,6 +880,7 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
             {artwork && isSellingNow(artwork) && (
               <StatusPill tone="green" shape="tag" dot label="Selling prints" />
             )}
+            {artworkType === 'object' && <ObjectSpaceChip modelStatus={artwork?.modelStatus} />}
           </span>
         }
       />
@@ -923,6 +926,18 @@ export const ArtworkEditPage = ({ artworkId }: ArtworkEditPageProps) => {
         onCancel={() => router.push(backLink)}
         onRichTextReady={handleRichTextReady}
         onVariantsDirtyChange={setVariantsDirty}
+        objectModel={
+          artwork?.artworkType === 'object'
+            ? {
+                modelStatus: artwork.modelStatus ?? 'none',
+                modelUrl: artwork.modelUrl ?? null,
+                modelSizeBytes: artwork.modelSizeBytes ?? null,
+                modelBoundsCm: artwork.modelBoundsCm ?? null,
+                modelReadyAt: artwork.modelReadyAt ?? null,
+              }
+            : undefined
+        }
+        onObjectModelChange={(next) => setArtwork((prev) => (prev ? { ...prev, ...next } : prev))}
       />
       {artwork && (
         <SaveBar

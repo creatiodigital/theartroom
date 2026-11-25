@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Object editor</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&amp;family=Geist+Mono:wght@400;500&amp;family=EB+Garamond:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f9f9f9}
+a{color:#333333}a:hover{color:#000000}
+.card{background:#fff;border:1px solid #eaeaea;border-radius:8px;padding:24px;display:flex;flex-direction:column;gap:18px}
+.h2{margin:0;font-size:18px;font-weight:700;color:#000}
+.sub{font-size:13px;color:#666}
+.fl{display:flex;flex-direction:column;gap:6px}
+.lb{font-size:12px;font-weight:600;color:#555}
+.in{font:inherit;font-size:14px;min-height:44px;box-sizing:border-box;padding:0 12px;border:1px solid #dcdcdc;border-radius:4px;background:#fff;width:100%}
+.help{font-size:12px;color:#666}
+.unit{display:flex;align-items:center;min-height:44px;box-sizing:border-box;border:1px solid #dcdcdc;border-radius:4px;background:#fff}
+.unit input{flex:1 1 auto;min-width:0;font:inherit;font-size:14px;border:0;padding:0 4px 0 12px;height:42px;background:transparent}
+.unit span{padding:0 12px;color:#666;font-size:13px}
+.btn{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:13px;font-weight:600;padding:7px 12px;min-height:36px;box-sizing:border-box;background:#fff;border:1px solid #dcdcdc;border-radius:4px;color:#000;text-decoration:none}
+.dark{background:#1a1a1a;border-color:#1a1a1a;color:#fff}
+.seg{display:inline-flex;border:1px solid #dcdcdc;border-radius:4px;overflow:hidden}
+.seg button{font:inherit;font-size:13px;padding:6px 12px;min-height:40px;background:#fff;border:0;border-left:1px solid #dcdcdc;color:#333}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed="true"]{background:#1a1a1a;color:#fff;font-weight:600}
+.nav a{padding:7px 10px;border-left:2px solid #eaeaea;color:#555;text-decoration:none}
+.nav a[aria-current="true"]{border-left-color:#000;color:#000;font-weight:600}
+.tile{position:relative;border-radius:4px;background:#ece9e3;display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+.role{position:absolute;left:6px;top:6px;font-size:11px;font-weight:600;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,.92);color:#333}
+.dur{position:absolute;right:6px;bottom:6px;font-family:'Geist Mono',monospace;font-size:11px;padding:2px 5px;border-radius:3px;background:rgba(0,0,0,.65);color:#fff}
+.play{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center}
+.rte{border:1px solid #dcdcdc;border-radius:4px}
+.rte .tb{display:flex;gap:2px;padding:4px;border-bottom:1px solid #eaeaea;font-size:13px}
+.rte .tb span{min-width:32px;height:32px;display:flex;align-items:center;justify-content:center;padding:0 6px;box-sizing:border-box}
+.chk{width:20px;height:20px;flex:0 0 auto;border-radius:4px;background:#1a1a1a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid #f0f0f0;font-size:13px}
+.kv b{font-weight:600;color:#000}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #f9f9f9; color: #333333; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<nav aria-label="Artist" style="flex: 1 1 248px; background: #ffffff; border-right: 1px solid #eaeaea; padding: 28px 16px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px">
+<a href="ArtistArtworks.dc.html" style="display: flex; flex-direction: column; gap: 2px; padding: 0 10px; color: #000000; text-decoration: none"><span style="font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 24px; line-height: 1.1">The Art Room</span><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #bd1622">Artist studio</span></a>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<a href="#" style="padding: 10px 12px; border-radius: 8px; color: #333333; text-decoration: none">Home</a>
+<a href="ArtistArtworks.dc.html" aria-current="page" style="padding: 10px 12px; border-radius: 8px; background: #f2f0ec; color: #000000; font-weight: 600; text-decoration: none">Artworks</a>
+<a href="#" style="padding: 10px 12px; border-radius: 8px; color: #333333; text-decoration: none">Profile</a>
+<a href="#" style="padding: 10px 12px; border-radius: 8px; color: #333333; text-decoration: none">Payouts</a>
+</div>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 32px 40px 0; box-sizing: border-box; display: flex; flex-direction: column">
+<div style="max-width: 1080px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; flex: 1 1 auto">
+
+<nav aria-label="Breadcrumb" style="font-size: 13px; color: #666666"><a href="ArtistArtworks.dc.html" style="color: #666666">Artworks</a> <span aria-hidden="true">/</span> <span style="color: #000000">Torso II</span></nav>
+<header style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-weight: 700; font-size: 30px; letter-spacing: -0.02em; line-height: 1.15; color: #000000">Torso II</h1>
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; color: #666666"><span>Object</span><span style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: #e8eef8; color: #1f3b6b"><svg width="12" height="12" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="18" stroke-linejoin="round" aria-hidden="true"><path d="M128 24 L224 76 V180 L128 232 L32 180 V76 Z M32 76 L128 128 L224 76 M128 128 V232"></path></svg>In the 3D space</span></span>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 28px">
+
+<nav aria-label="Sections" class="nav" style="flex: 0 1 190px; position: sticky; top: 24px; display: flex; flex-direction: column; gap: 2px; font-size: 13px">
+<span style="padding: 0 10px 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #666666">On this page</span>
+<a href="#cover" aria-current="true">Cover photo</a>
+<a href="#media">Photos &amp; reels</a>
+<a href="#details">Details</a>
+<a href="#tech">Technical info</a>
+<a href="#desc">Description</a>
+<a href="#show">Where it shows</a>
+<a href="#space">In the 3D space</a>
+</nav>
+
+<div style="flex: 1 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+
+<section id="cover" aria-labelledby="h-cover" class="card">
+<div style="display: flex; flex-direction: column"><h2 id="h-cover" class="h2">Cover photo</h2><span class="sub">The first thing people see: in your library, on exhibition pages, in grids and when shared. Use your best photo, on a calm background.</span></div>
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+<div class="tile" role="img" aria-label="Cover photo of Torso II" style="width: 300px; height: 375px; background: #e9e6e0">
+<svg width="150" height="300" viewBox="0 0 60 100" aria-hidden="true" style="margin-bottom: 18px"><ellipse cx="30" cy="97" rx="22" ry="3" fill="rgba(0,0,0,0.12)"></ellipse><path d="M14 96 C6 70 14 40 22 26 C14 14 22 2 30 2 C38 2 46 14 38 26 C46 40 54 70 46 96 Z" fill="#6f685f"></path><path d="M30 2 C38 2 46 14 38 26 C46 40 54 70 46 96 L40 96 C46 70 40 40 34 26 C40 14 36 4 30 2 Z" fill="#544e47"></path></svg>
+<span aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 37px; height: 300px; box-shadow: 0 0 0 999px rgba(255,255,255,0.45); outline: 1.5px dashed #1a1a1a"></span>
+</div>
+<div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 14px">
+<span class="sub">torso-ii-studio.jpg · 4000 × 5000 px · 2.1 MB</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px"><button type="button" class="btn">Replace</button><button type="button" class="btn">Adjust square crop</button></div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span class="lb">How it shows</span>
+<div style="display: flex; gap: 12px; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 4px; align-items: center"><span class="tile" aria-hidden="true" style="width: 96px; height: 96px; background: #e9e6e0"><svg width="42" height="84" viewBox="0 0 60 100" style="margin-bottom: 4px"><path d="M14 96 C6 70 14 40 22 26 C14 14 22 2 30 2 C38 2 46 14 38 26 C46 40 54 70 46 96 Z" fill="#6f685f"></path></svg></span><span class="help">Grids · square</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; align-items: center"><span class="tile" aria-hidden="true" style="width: 80px; height: 100px; background: #e9e6e0"><svg width="40" height="80" viewBox="0 0 60 100" style="margin-bottom: 6px"><path d="M14 96 C6 70 14 40 22 26 C14 14 22 2 30 2 C38 2 46 14 38 26 C46 40 54 70 46 96 Z" fill="#6f685f"></path></svg></span><span class="help">Artwork page · 4:5</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; align-items: center"><span class="tile" aria-hidden="true" style="width: 40px; height: 40px; background: #e9e6e0"><svg width="18" height="36" viewBox="0 0 60 100"><path d="M14 96 C6 70 14 40 22 26 C14 14 22 2 30 2 C38 2 46 14 38 26 C46 40 54 70 46 96 Z" fill="#6f685f"></path></svg></span><span class="help">Lists</span></div>
+</div>
+</div>
+<span class="help">At least 2000 px on the short side. JPG, PNG or WebP, up to 25 MB.</span>
+</div>
+</div>
+</section>
+
+<section id="media" aria-labelledby="h-media" class="card">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+<div style="display: flex; flex-direction: column"><h2 id="h-media" class="h2">Photos &amp; reels</h2><span class="sub">Show it from every side, up close and in a room. Visitors swipe through these on the artwork page. Drag to change the order.</span></div>
+<span class="help">8 photos · 2 reels · up to 40 photos and 6 videos</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; align-items: start">
+<sc-for list="{{media}}" as="m" hint-placeholder-count="10">
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px">
+<span class="tile" role="img" aria-label="{{m.alt}}" style="{{m.box}}">
+<svg width="{{m.w}}" height="{{m.h}}" viewBox="{{m.vb}}" aria-hidden="true" style="{{m.svgStyle}}"><path d="{{m.path}}" fill="{{m.tone}}"></path></svg>
+<span class="role">{{m.role}}</span>
+<sc-if value="{{m.video}}" hint-placeholder-val="{{false}}"><span class="play" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 256 256" fill="#fff"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27Z"></path></svg></span><span class="dur">{{m.video}}</span></sc-if>
+</span>
+<figcaption style="font-size: 12px; color: #666666">{{m.cap}}</figcaption>
+</figure>
+</sc-for>
+<button type="button" style="height: 165px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font: inherit; font-size: 13px; color: #555555; background: #fafafa; border: 1px dashed #cccccc; border-radius: 4px; cursor: pointer"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M222,128a6,6,0,0,1-6,6H134v82a6,6,0,0,1-12,0V134H40a6,6,0,0,1,0-12h82V40a6,6,0,0,1,12,0v82h82A6,6,0,0,1,222,128Z"></path></svg><strong style="color: #000000">Add photos or videos</strong><span style="font-size: 12px">or drop them here</span></button>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px 20px; padding: 12px 14px; background: #f6f6f6; border-radius: 8px; font-size: 12px; color: #555555">
+<span><b style="color: #000">Label each one</b> (Front, Back, Side, Detail, In a room, Process). Labels help visitors and screen readers.</span>
+<span><b style="color: #000">Reels</b>: vertical 9:16 videos up to 60 s play silently as they scroll by. Landscape videos up to 3 min.</span>
+</div>
+</section>
+
+<section id="details" aria-labelledby="h-details" class="card">
+<h2 id="h-details" class="h2">Details</h2>
+<label class="fl"><span class="lb">Title</span><input class="in" value="Torso II"></label>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+<label class="fl" style="grid-column: span 2"><span class="lb">Author</span><input class="in" value="Jane Doe"></label>
+<label class="fl"><span class="lb">Year</span><input class="in" value="2025"></label>
+</div>
+<div class="fl"><span class="lb">Materials / technique</span>
+<div class="rte"><div class="tb"><span style="font-weight: 700">B</span><span style="font-style: italic">I</span><span style="text-decoration: underline">U</span></div><div style="padding: 10px 12px; min-height: 44px">Bronze, lost-wax cast, brown patina. Steel base.</div></div></div>
+<fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px">
+<legend class="lb" style="padding: 0; margin-bottom: 6px">Size</legend>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+<label class="fl"><span class="help">Height</span><span class="unit"><input value="64" aria-label="Height in cm"><span>cm</span></span></label>
+<label class="fl"><span class="help">Width</span><span class="unit"><input value="38" aria-label="Width in cm"><span>cm</span></span></label>
+<label class="fl"><span class="help">Depth</span><span class="unit"><input value="31" aria-label="Depth in cm"><span>cm</span></span></label>
+<label class="fl"><span class="help">Weight</span><span class="unit"><input value="18" aria-label="Weight in kg"><span>kg</span></span></label>
+</div>
+<label style="display: flex; align-items: center; gap: 10px; font-size: 13px"><span class="chk" aria-hidden="true">✓</span>Size includes the base</label>
+<span class="help">Visitors see it as 64 × 38 × 31 cm, or in inches if they switch.</span>
+</fieldset>
+<div class="fl"><span class="lb">Edition</span>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<div class="seg" role="group" aria-label="Edition"><button type="button" aria-pressed="false">Unique piece</button><button type="button" aria-pressed="true">Edition</button></div>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px">Number<span class="unit" style="width: 88px"><input value="3" aria-label="This is number"><span>/</span></span></label>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px">of<span class="unit" style="width: 72px"><input value="8" aria-label="Edition size"></span></label>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px">+ artist’s proofs<span class="unit" style="width: 72px"><input value="2" aria-label="Artist's proofs"></span></label>
+</div>
+<span class="help">Shown as “Edition 3/8 + 2 AP”.</span>
+</div>
+</section>
+
+<section id="tech" aria-labelledby="h-tech" class="card">
+<div style="display: flex; flex-direction: column"><h2 id="h-tech" class="h2">Technical info</h2><span class="sub">For collectors and curators. Every field is optional, and only filled ones are shown.</span></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+<div class="fl"><span class="lb">Where it can stand</span><div class="seg" role="group" aria-label="Where it can stand"><button type="button" aria-pressed="true">Indoors</button><button type="button" aria-pressed="false">Outdoors</button><button type="button" aria-pressed="false">Both</button></div></div>
+<div class="fl"><span class="lb">Display</span><div class="seg" role="group" aria-label="Display"><button type="button" aria-pressed="false">Floor</button><button type="button" aria-pressed="true">Plinth</button><button type="button" aria-pressed="false">Wall</button><button type="button" aria-pressed="false">Hanging</button></div></div>
+<label class="fl"><span class="lb">Signed / marked</span><input class="in" value="Signed and numbered on the base"></label>
+<label class="fl"><span class="lb">Certificate</span><input class="in" value="Certificate of authenticity included"></label>
+</div>
+<label class="fl"><span class="lb">Care and installation</span><textarea class="in" style="min-height: 72px; padding: 10px 12px; resize: vertical">Dust with a soft dry cloth. Wax once a year. Needs a stable plinth of at least 40 × 40 cm.</textarea></label>
+</section>
+
+<section id="desc" aria-labelledby="h-desc" class="card">
+<h2 id="h-desc" class="h2">Description</h2>
+<div class="rte"><div class="tb"><span style="font-weight: 700">B</span><span style="font-style: italic">I</span><span aria-hidden="true" style="min-width: 1px; padding: 0; background: #eaeaea; margin: 4px"></span><span>H2</span><span>• List</span><span>Link</span></div><div style="padding: 14px 16px; min-height: 120px; font-family: Lato, Georgia, serif; font-size: 15px; line-height: 1.6">The second of three torsos modelled from the same clay study. The surface keeps the marks of the fingers, so the light catches differently as you walk around it.</div></div>
+</section>
+
+<section id="show" aria-labelledby="h-show" class="card" style="gap: 14px">
+<h2 id="h-show" class="h2">Where it shows</h2>
+<label style="display: flex; align-items: flex-start; gap: 10px"><span class="chk" aria-hidden="true">✓</span><span style="display: flex; flex-direction: column"><span style="font-weight: 600; color: #000000">Feature on artist profile</span><span class="help">Featured artwork: shown first on your public page.</span></span></label>
+<div class="fl"><span class="lb">Exhibitions</span><div style="display: flex; flex-wrap: wrap; gap: 8px"><span style="padding: 4px 10px; background: #f2f0ec; border-radius: 4px; font-size: 13px">Body and ground</span></div></div>
+</section>
+
+<section id="space" aria-labelledby="h-space" class="card" style="border-color: #d6e0f0">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px">
+<div style="display: flex; flex-direction: column; max-width: 560px"><h2 id="h-space" class="h2">In the 3D space</h2><span class="sub">An extra from The Art Room: visitors can walk around your piece in the 3D exhibition. Your artwork page and exhibition pages show it fully without it.</span></div>
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 4px; background: #e8eef8; color: #1f3b6b"><span style="width: 6px; height: 6px; border-radius: 50%; background: #3b6fd8"></span>Ready</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: stretch">
+<div role="img" aria-label="3D preview of Torso II; drag to turn it" style="position: relative; width: 300px; height: 300px; border-radius: 6px; background: #2b2b2b; display: flex; align-items: flex-end; justify-content: center; overflow: hidden">
+<svg width="140" height="250" viewBox="0 0 60 100" aria-hidden="true" style="margin-bottom: 24px"><ellipse cx="30" cy="97" rx="24" ry="3" fill="rgba(0,0,0,0.5)"></ellipse><path d="M14 96 C6 70 14 40 22 26 C14 14 22 2 30 2 C38 2 46 14 38 26 C46 40 54 70 46 96 Z" fill="#8c857c"></path><path d="M30 2 C38 2 46 14 38 26 C46 40 54 70 46 96 L40 96 C46 70 40 40 34 26 C40 14 36 4 30 2 Z" fill="#5e5850"></path></svg>
+<span style="position: absolute; left: 10px; bottom: 10px; font-size: 11px; color: #d0d0d0">Drag to turn · scroll to zoom</span>
+</div>
+<div style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 0">
+<div class="kv" style="border-top: 0"><span>3D model</span><b>torso-ii.glb · 6.4 MB</b></div>
+<div class="kv"><span>Real size</span><b>64 × 38 × 31 cm</b></div>
+<div class="kv"><span>Size check</span><b style="color: #155724">Matches the size above</b></div>
+<div class="kv"><span>Prepared</span><b>by The Art Room · 18 Nov 2026</b></div>
+<span class="help" style="margin-top: 10px">To place it, open an exhibition’s 3D editor and drag it from your library onto a floor.</span>
+<div style="margin-top: auto; padding-top: 14px; display: flex; flex-wrap: wrap; gap: 8px"><button type="button" class="btn">Ask for a change</button></div>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 14px; border: 1px dashed #b9c7de; border-radius: 8px; background: #f7f9fd; font-size: 13px">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #1f3b6b">Gallery team only</span>
+<span style="flex: 1 1 260px; color: #333333">Upload the cleaned .glb (textures inside, 1 unit = 1 m, base at 0). We check the size against the details above.</span>
+<button type="button" class="btn">Replace .glb</button>
+</div>
+<details style="border: 1px solid #eaeaea; border-radius: 8px">
+<summary style="padding: 12px 16px; font-size: 13px; font-weight: 600; color: #000; cursor: pointer">Before it is ready: what the artist sees</summary>
+<div style="padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; font-size: 13px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 16px; background: #f6f6f6; border-radius: 8px">
+<span style="flex: 1 1 320px; display: flex; flex-direction: column"><b style="color: #000">Not in the 3D space yet</b><span style="color: #555">We prepare the 3D model for you. Send us a 3D scan or model if you have one (GLB, OBJ, FBX, STL), or we work from your photos.</span></span>
+<button type="button" class="btn dark">Ask for a 3D model</button>
+</div>
+<div style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #f4f1ea; border-radius: 8px; color: #6b5a2e"><span style="width: 6px; height: 6px; border-radius: 50%; background: #c49a2c"></span><b>In preparation</b><span>Asked 12 Nov · we will email you when it is ready.</span></div>
+</div>
+</details>
+</section>
+
+<div style="height: 24px"></div>
+</div>
+</div>
+</div>
+
+<div style="position: sticky; bottom: 0; margin: 0 -40px; padding: 14px 40px; background: #ffffff; border-top: 1px solid #eaeaea; display: flex; align-items: center; gap: 12px; justify-content: flex-end">
+<span style="margin-right: auto; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #555555"><span style="width: 8px; height: 8px; border-radius: 50%; background: #e0a800"></span>Unsaved changes</span>
+<button type="button" class="btn">Cancel</button>
+<button type="button" class="btn dark">Save changes</button>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":3000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const TORSO = 'M14 96 C6 70 14 40 22 26 C14 14 22 2 30 2 C38 2 46 14 38 26 C46 40 54 70 46 96 Z';
+    const BACK = 'M15 96 C8 70 13 42 21 27 C15 15 22 3 30 3 C38 3 45 15 39 27 C47 42 52 70 45 96 Z';
+    const SIDE = 'M22 96 C18 70 22 42 26 28 C22 16 26 3 31 3 C37 3 40 16 36 28 C40 42 42 70 38 96 Z';
+    const DETAIL = 'M0 40 C10 20 40 10 60 30 L60 100 L0 100 Z';
+    const ROOM = 'M24 96 C21 84 24 72 27 66 C25 61 27 56 30 56 C33 56 35 61 33 66 C36 72 39 84 36 96 Z M0 98 L60 98 L60 100 L0 100 Z';
+    const P = [
+      ['Front', TORSO, 'IMG_2031.jpg'], ['Back', BACK, 'IMG_2034.jpg'], ['Side', SIDE, 'IMG_2036.jpg'],
+      ['Detail', DETAIL, 'IMG_2040.jpg', 'detail'], ['Reel', TORSO, 'Turntable', 'reel', '0:24'], ['In a room', ROOM, 'Studio view', 'room'],
+      ['Process', SIDE, 'Wax stage', 'process'], ['Reel', BACK, 'Patina', 'reel', '0:41']
+    ];
+    return {
+      media: P.map(([role, path, cap, kind, video]) => {
+        const reel = kind === 'reel';
+        return {
+          role, path, cap, video: video || false,
+          alt: role + ': ' + cap,
+          tone: kind === 'process' ? '#b59a72' : kind === 'detail' ? '#5e5850' : '#6f685f',
+          vb: '0 0 60 100',
+          w: kind === 'detail' ? 132 : reel ? 60 : kind === 'room' ? 132 : 60,
+          h: kind === 'detail' ? 165 : reel ? 110 : kind === 'room' ? 165 : 120,
+          svgStyle: { marginBottom: kind === 'detail' || kind === 'room' ? '0' : '10px' },
+          box: { width: '100%', height: reel ? '235px' : '165px', background: reel ? '#d9d4cb' : kind === 'room' ? '#f1efe9' : '#e9e6e0' }
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

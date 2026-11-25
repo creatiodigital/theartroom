@@ -86,7 +86,8 @@ export const getPublicArtistByHandler = cache(async function getPublicArtistByHa
         orderBy: { createdAt: 'desc' },
       },
       artworks: {
-        where: { artworkType: 'image', featured: true },
+        // Images and Objects (docs/objects O5): the works a grid shows.
+        where: { artworkType: { in: ['image', 'object'] }, featured: true },
         select: {
           id: true,
           slug: true,
@@ -97,6 +98,7 @@ export const getPublicArtistByHandler = cache(async function getPublicArtistByHa
           technique: true,
           dimensions: true,
           imageUrl: true,
+          artworkType: true,
           ...SALE_SELECT,
         },
         orderBy: { order: 'asc' },
@@ -116,7 +118,14 @@ export const getPublicArtistByHandler = cache(async function getPublicArtistByHa
     // the ARTIST's cut, not a buyer-facing figure, and must not reach the
     // client. Only the resolved `sale` crosses the boundary.
     artworks: artist.artworks.map((row) => {
-      const { editionType, printEnabled, printPriceCents, limitedVariants, ...artwork } = row
+      const {
+        editionType,
+        printEnabled,
+        printPriceCents,
+        limitedVariants,
+        artworkType: _artworkType,
+        ...artwork
+      } = row
       return {
         ...artwork,
         presentation: presentations[artwork.id] ?? null,

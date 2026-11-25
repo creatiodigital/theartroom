@@ -164,10 +164,11 @@
 }
 
 // ── The info column ──────────────────────────────────────────────────────
+// Blocks under dividers, each carrying its own space (artwork.md "Info column, refined"): who and
+// what, the action, how it is made, the rest.
 .info {
   display: flex;
   flex-direction: column;
-  gap: 20px;
   min-width: 0;
   padding-top: 4px;
   grid-column: 2;
@@ -198,7 +199,8 @@
 .identity {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
+  padding-bottom: var(--space-5);
   font-family: var(--font-sans), var(--font-sans-fallback);
 }
 
@@ -215,50 +217,86 @@ a.artist:hover {
   color: var(--public-text);
 }
 
+// The title as live since 2026-11-11 (owner, 2026-11-25: "Go back with this layout and font size"),
+// its lines closer (1.1 → 1, "Line height of title smaller") and the year further below it ("separate
+// more the year from the title": 4 → 16 px, clear of the last line's descenders).
 .title {
-  margin: 4px 0 0;
+  margin: var(--space-1) 0 var(--space-3);
   font-family: var(--font-serif), var(--font-serif-fallback);
   font-size: 36px;
   font-weight: var(--font-regular);
-  line-height: 1.1;
+  line-height: 1;
   color: var(--public-text);
   overflow-wrap: anywhere;
 
   @include media-down(sm) {
-    font-size: 30px;
+    font-size: var(--text-2xl);
   }
 }
 
-// Year, size: each on its own line. #666, not the drawn #888 (Q-P12).
+// The year, on its own line: a little bigger, bolder and black, as the title (owner, 2026-11-25;
+// Lato has 400 and 700 only).
 .fact {
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--color-text-secondary);
+  font-size: var(--text-md);
+  font-weight: var(--font-bold);
+  line-height: var(--leading-normal);
+  color: var(--public-text);
 }
 
-// The technique's lines (camera, lens, ISO…), as entered: the first lines of the print block,
-// under the divider (owner, 2026-11-20), set close ("lines look too separated": 1.5, as the year).
-// Through .info: outranks RichText's own rules whatever the stylesheet order (the room overlay
-// loads them in another order than the page).
-.info .technique {
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--color-text-secondary);
-
-  p,
-  li {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--color-text-secondary);
-  }
+// The technique's lines (camera, lens, ISO…; an Object's materials), as entered, then the size in
+// their format (owner, 2026-11-25: "Move the sizes where the technical info is", "materials first,
+// sizes later"), a bit bigger and black ("a bit bigger this font and black": 13 px grey → 14 px).
+// Set close ("lines look too separated": 1.5). Through .info: outranks RichText's own rules whatever
+// the stylesheet order (the room overlay loads them in another order than the page).
+.info .technique,
+.info .technique p,
+.info .technique li,
+.info .makingSize {
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--public-text);
 }
 
-.purchase {
+.info .technique p,
+.info .technique li,
+.info .makingSize {
+  margin: 0;
+}
+
+// The action, right under the year's divider (owner, 2026-11-25): the price and Order a print, or
+// Inquire.
+.action {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding-top: 18px;
+  gap: var(--space-3);
+  padding: var(--space-5) 0;
+  border-top: 1px solid var(--color-gray-30);
+}
+
+// How it is made: the technical lines (an Object's materials), under a divider.
+.making {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5) 0;
+  border-top: 1px solid var(--color-gray-30);
+}
+
+// The rich text's own space under it would part the size from the lines above it (three classes:
+// outranks RichText's `.compact` margin whatever the stylesheet order).
+.info .making .technique {
+  margin: 0;
+}
+
+// The rest: an image's print kind and sizes, the views, then Share; under a divider when it holds
+// more than Share.
+.rest {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.restDivided {
+  padding-top: var(--space-5);
   border-top: 1px solid var(--color-gray-30);
 }
 

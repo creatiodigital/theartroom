@@ -28,6 +28,15 @@ importers:
       '@dnd-kit/utilities':
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.4)
+      '@gltf-transform/core':
+        specifier: ^4.3.0
+        version: 4.3.0
+      '@gltf-transform/extensions':
+        specifier: ^4.3.0
+        version: 4.3.0
+      '@gltf-transform/functions':
+        specifier: ^4.3.0
+        version: 4.3.0
       '@google-analytics/data':
         specifier: ^6.1.0
         version: 6.1.0
@@ -100,6 +109,9 @@ importers:
       dotenv:
         specifier: ^17.3.1
         version: 17.3.1
+      gltf-validator:
+        specifier: 2.0.0-dev.3.10
+        version: 2.0.0-dev.3.10
       jszip:
         specifier: ^3.10.1
         version: 3.10.1
@@ -146,15 +158,6 @@ importers:
         specifier: ^11.1.1
         version: 11.1.1
     devDependencies:
-      '@gltf-transform/core':
-        specifier: ^4.3.0
-        version: 4.3.0
-      '@gltf-transform/extensions':
-        specifier: ^4.3.0
-        version: 4.3.0
-      '@gltf-transform/functions':
-        specifier: ^4.3.0
-        version: 4.3.0
       '@next/eslint-plugin-next':
         specifier: ^16.4.6
         version: 16.4.6(eslint@9.39.1(jiti@2.6.1))
@@ -3598,6 +3601,9 @@ packages:
 
   glsl-noise@0.0.0:
     resolution: {integrity: sha512-b/ZCF6amfAUb7dJM/MxRs7AetQEahYzJ8PtgfrmEdtw6uyGOr+ZSGtgjFm6mfsBkxJ4d2W7kg+Nlqzqvn3Bc0w==}
+
+  gltf-validator@2.0.0-dev.3.10:
+    resolution: {integrity: sha512-odJ4k0tRkGXiDGn78yDBg+fBbAIvBnXxh3RwAta0emSxGtyagFE8B4xELB1oYe3S5RD8Ci3uZAsZaascH2LAEQ==}
 
   google-auth-library@10.5.0:
     resolution: {integrity: sha512-7ABviyMOlX5hIVD60YOfHw4/CxOfBhyduaYB+wbFWCWoni4N7SLcV46hrVRktuBbZjFC9ONyqamZITN7q3n32w==}
@@ -8797,6 +8803,8 @@ snapshots:
   globals@14.0.0: {}
 
   glsl-noise@0.0.0: {}
+
+  gltf-validator@2.0.0-dev.3.10: {}
 
   google-auth-library@10.5.0:
     dependencies:

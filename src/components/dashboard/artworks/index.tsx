@@ -6,6 +6,7 @@ import Image from 'next/image'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
 import {
+  Cube,
   Image as ImageIcon,
   PencilSimple,
   Play,
@@ -20,6 +21,11 @@ import {
 import c from 'classnames'
 
 import { isSafeImageSrc } from '@/lib/imageSafety'
+import {
+  objectDimensionsText,
+  objectMediaSummary,
+  type ObjectMediaCounts,
+} from '@/lib/artwork/objectArtwork'
 import {
   ARTWORK_TYPE_FILTERS,
   readArtworkTypeFilter,
@@ -39,12 +45,13 @@ import { SORTABLE_KEYBOARD_HINT, SortableList } from '@/components/admin/ui/Sort
 import { StatusPill } from '@/components/admin/ui/StatusPill'
 import { Button } from '@/components/ui/Button'
 import { AddArtworkModal } from '@/components/dashboard/AddArtworkModal'
+import { ObjectSpaceChip } from '@/components/dashboard/artworks/ObjectSpaceChip'
 import { useEffectiveUser } from '@/hooks/useEffectiveUser'
 
 import styles from './artworks.module.scss'
 
 const TITLE = 'Artwork library'
-const DESCRIPTION = 'Everything you can hang in your exhibitions. Drag to change the order.'
+const DESCRIPTION = 'Everything you can show in your exhibitions. Drag to change the order.'
 
 /** How each media type reads in the type filter and in a row's meta line. */
 const TYPE_LABEL: Record<string, string> = {
@@ -52,6 +59,7 @@ const TYPE_LABEL: Record<string, string> = {
   text: 'Text',
   sound: 'Sound',
   video: 'Video',
+  object: 'Object',
 }
 
 const FILTER_OPTIONS = ARTWORK_TYPE_FILTERS.map((id) => ({
@@ -105,6 +113,15 @@ type Artwork = {
    *  GET /api/artworks with the same rule the checkout enforces. Only images
    *  can ever be true. */
   sellingNow?: boolean
+  // Objects (docs/objects): the size, the 3D model's state, and the
+  // photo / video / reel counts GET /api/artworks adds for them.
+  originalWidth?: number | null
+  originalHeight?: number | null
+  heightCm?: number | null
+  widthCm?: number | null
+  depthCm?: number | null
+  modelStatus?: string
+  objectMedia?: ObjectMediaCounts
 }
 
 // Extracts first frame from a video URL and renders it as a thumbnail
@@ -183,6 +200,30 @@ type ArtworkThumbProps = {
  * square, and cropping hid whether a work is landscape or portrait.
  */
 function ArtworkThumb({ artwork, title, isPlaying, onTogglePlay }: ArtworkThumbProps) {
+  // An Object shows its cover whole, like an image (owner, 2026-11-25), else a cube on the warm
+  // tile.
+  if (artwork.artworkType === 'object') {
+    if (artwork.imageUrl && isSafeImageSrc(artwork.imageUrl)) {
+      return (
+        <span className={styles.thumb}>
+          <Image
+            src={artwork.imageUrl}
+            alt=""
+            width={64}
+            height={64}
+            unoptimized
+            className={styles.thumbImage}
+          />
+        </span>
+      )
+    }
+    return (
+      <span aria-hidden className={c(styles.thumb, styles.tile, styles.objectTile)}>
+        <Cube size={22} weight="light" />
+      </span>
+    )
+  }
+
   if (
     (artwork.artworkType === 'image' || artwork.artworkType === 'video') &&
     artwork.imageUrl &&
@@ -584,9 +625,15 @@ export const ArtworkLibraryPage = () => {
               sortable={dragEnabled}
               rows={sortedArtworks.map((artwork) => {
                 const title = artwork.title || 'Artwork'
-                const meta = [artwork.year?.trim() ?? '', plainText(artwork.technique)].filter(
-                  Boolean,
-                )
+                const isObject = artwork.artworkType === 'object'
+                // An Object adds its size: "2025 · Patinated bronze · 64 × 38 × 31 cm".
+                const meta = [
+                  artwork.year?.trim() ?? '',
+                  plainText(artwork.technique),
+                  isObject ? (objectDimensionsText(artwork) ?? '') : '',
+                ].filter(Boolean)
+                const mediaSummary =
+                  isObject && artwork.objectMedia ? objectMediaSummary(artwork.objectMedia) : null
                 return {
                   id: artwork.id,
                   title,
@@ -607,6 +654,8 @@ export const ArtworkLibraryPage = () => {
                         {artwork.sellingNow && (
                           <StatusPill label="Selling prints" tone="green" shape="tag" dot />
                         )}
+                        {mediaSummary && <span>{mediaSummary}</span>}
+                        {isObject && <ObjectSpaceChip modelStatus={artwork.modelStatus} />}
                       </span>
                       {/* Not drawn, kept (questions.md Q105): the library's only way
                         to take a work out of an exhibition. */}

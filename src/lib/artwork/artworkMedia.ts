@@ -7,7 +7,9 @@ import type { ArtworkMediaItem } from './artworkMediaTypes'
 export {
   MAX_ARTWORK_MEDIA,
   MAX_ARTWORK_MEDIA_VIDEOS,
+  mediaLimitsFor,
   type ArtworkMediaItem,
+  type ArtworkMediaLimits,
 } from './artworkMediaTypes'
 
 /**
@@ -19,7 +21,15 @@ export async function getArtworkMedia(artworkId: string): Promise<ArtworkMediaIt
   const rows = await prisma.artworkMedia.findMany({
     where: { artworkId },
     orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
-    select: { id: true, kind: true, url: true, width: true, height: true, caption: true },
+    select: {
+      id: true,
+      kind: true,
+      url: true,
+      width: true,
+      height: true,
+      caption: true,
+      role: true,
+    },
   })
 
   // `kind` is a string column; anything unrecognised is dropped rather than

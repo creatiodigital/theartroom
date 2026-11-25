@@ -15,6 +15,7 @@ import { exhibitionUpdateRoles } from '@/lib/exhibitionUpdateRoles'
 import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
 import { freezeExhibition } from '@/lib/exhibitionSnapshot'
+import { floorArtworkIds, parseFloorLayout } from '@/lib/floor/floorLayout'
 import { secondLanguageOf } from '@/lib/roomLanguage'
 
 import { sanitizeLine } from '@/utils/sanitizeLine'
@@ -58,6 +59,8 @@ type ExhibitionUpdateBody = {
   trackLampSettings?: Record<string, { rotation: number; enabled: boolean; offset?: number }> | null
   panelSettings?: Record<string, PanelSettings> | null
   benchSettings?: Record<string, BenchSettings> | null
+  /** The floor (docs/objects O6); validated by `parseFloorLayout`. */
+  floorLayout?: unknown
   windowLightColor?: string
   windowLightIntensity?: number
   windowTransparency?: boolean
@@ -313,6 +316,24 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       data.panelSettings = body.panelSettings === null ? Prisma.JsonNull : body.panelSettings
     if (body.benchSettings !== undefined)
       data.benchSettings = body.benchSettings === null ? Prisma.JsonNull : body.benchSettings
+    if (body.floorLayout !== undefined) {
+      // Only the owner's own Objects stand on the floor: anything else is dropped, never trusted.
+      const layout = parseFloorLayout(body.floorLayout)
+      const ids = floorArtworkIds(layout)
+      const own = ids.length
+        ? await prisma.artwork.findMany({
+            where: { id: { in: ids }, userId: currentExhibition.userId, artworkType: 'object' },
+            select: { id: true },
+          })
+        : []
+      const allowed = new Set(own.map((a) => a.id))
+      const clean = parseFloorLayout({
+        ...layout,
+        items: layout.items.filter((i) => i.kind !== 'object' || allowed.has(i.artworkId)),
+      })
+      data.floorLayout =
+        clean.items.length > 0 ? (clean as unknown as Prisma.InputJsonValue) : Prisma.JsonNull
+    }
     if (body.windowLightColor !== undefined) data.windowLightColor = body.windowLightColor
     if (body.windowLightIntensity !== undefined)
       data.windowLightIntensity = body.windowLightIntensity

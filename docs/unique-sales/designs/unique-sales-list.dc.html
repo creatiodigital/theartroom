@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Unique pieces · Admin</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&amp;family=Geist+Mono:wght@400;500&amp;family=EB+Garamond:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f9f9f9}
+a{color:#333333}a:hover{color:#000000}
+.nav a{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:8px;color:#cfcfcf;text-decoration:none;font-size:14px}
+.nav a[aria-current="page"]{background:#333;color:#fff;font-weight:600}
+.th{padding:10px 12px;font-size:12px;font-weight:600;color:#666;text-align:left}
+.td{padding:14px 12px;vertical-align:top}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #f9f9f9; color: #333333; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<nav aria-label="Admin" class="nav" style="flex: 1 1 248px; background: #1a1a1a; color: #ffffff; padding: 28px 16px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+<a href="#" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 0 10px; color: #ffffff"><span style="font-family: 'EB Garamond', Georgia, serif; font-weight: 500; font-size: 24px; line-height: 1.1">The Art Room</span><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #999999">Admin</span></a>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="padding: 0 12px 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #999999">Sales</span>
+<a href="#">Orders</a>
+<a href="#" aria-current="page">Unique pieces<span style="margin-left: auto; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 9999px; background: #f59e0b; color: #000">3</span></a>
+<a href="#">Edition sales</a>
+<a href="#">Gift orders</a>
+<a href="#">Payouts</a>
+<a href="#">Invoices</a>
+<a href="#">Pricing</a>
+</div>
+<span style="padding: 0 12px; font-size: 12px; color: #8a8a8a">(rest of the menu as built)</span>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 36px 40px 56px; box-sizing: border-box">
+<div style="max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #666666">Sales</span>
+<h1 style="margin: 0; font-weight: 700; font-size: 30px; letter-spacing: -0.02em; line-height: 1.15; color: #000000">Unique pieces</h1>
+<span style="color: #666666">Originals and editions sold by inquiry. You keep this record; nothing here goes through checkout or TPS.</span>
+</div>
+<a href="UniqueSaleRecord.dc.html" style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; padding: 8px 14px; min-height: 36px; box-sizing: border-box; background: #1a1a1a; color: #ffffff; border-radius: 4px; text-decoration: none"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M228,128a12,12,0,0,1-12,12H140v76a12,12,0,0,1-24,0V140H40a12,12,0,0,1,0-24h76V40a12,12,0,0,1,24,0v76h76A12,12,0,0,1,228,128Z"></path></svg>New sale</a>
+</header>
+
+<nav aria-label="Sale stages" style="display: flex; flex-wrap: wrap; gap: 16px 24px; border-bottom: 1px solid #eaeaea">
+<div role="tablist" aria-label="Stages" style="display: flex; gap: 2px; overflow-x: auto">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="6"><button type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="{{t.style}}">{{t.label}}<span style="{{t.countStyle}}">{{t.n}}</span></button></sc-for>
+</div>
+<div role="tablist" aria-label="Other" style="display: flex; gap: 2px; margin-left: auto; padding-left: 16px; border-left: 1px solid #eaeaea">
+<sc-for list="{{others}}" as="t" hint-placeholder-count="2"><button type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="{{t.style}}">{{t.label}}<span style="{{t.countStyle}}">{{t.n}}</span></button></sc-for>
+</div>
+</nav>
+
+<div role="note" style="display: flex; gap: 10px; padding: 12px 16px; background: #eef5fb; border: 1px solid #d6e6f3; border-radius: 8px; font-size: 13px; color: #1f3b57"><strong>{{noteTitle}}</strong><span>{{noteText}}</span></div>
+
+<section aria-label="{{tabLabel}}" style="background: #ffffff; border: 1px solid #eaeaea; border-radius: 8px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid #eaeaea">
+<label style="position: relative; flex: 0 1 380px; display: flex"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search</span><input type="search" placeholder="Search artwork, artist or buyer" style="width: 100%; font: inherit; font-size: 14px; padding: 8px 12px; min-height: 36px; border: 1px solid #dcdcdc; border-radius: 4px; box-sizing: border-box"></label>
+<span style="margin-left: auto; font-size: 13px; color: #666666">{{countLabel}}</span>
+</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; border-collapse: collapse; min-width: 900px">
+<thead><tr style="background: #f6f6f6"><th class="th" style="padding-left: 20px; width: 110px">Date</th><th class="th">Artwork</th><th class="th">Buyer</th><th class="th">Delivery · risk</th><th class="th" style="text-align: right">Price</th><th class="th" style="text-align: right">Artist share</th><th class="th" style="padding-right: 20px; text-align: right">Status</th></tr></thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+<tr style="border-top: 1px solid #f0f0f0">
+<td class="td" style="padding-left: 20px; white-space: nowrap">{{r.date}}</td>
+<td class="td"><a href="UniqueSaleRecord.dc.html" style="display: flex; gap: 10px; align-items: center; text-decoration: none"><span aria-hidden="true" style="{{r.thumb}}"></span><span style="display: flex; flex-direction: column; line-height: 1.3"><span style="font-weight: 600; color: #000">{{r.art}}</span><span style="font-size: 12px; color: #666">{{r.artist}} · {{r.kind}}</span></span></a></td>
+<td class="td"><div style="color: #000">{{r.buyer}}</div><div style="font-size: 12px; color: #666">{{r.city}}</div></td>
+<td class="td"><div style="color: #000">{{r.delivery}}</div><div style="font-size: 12px; color: #666">{{r.risk}}</div></td>
+<td class="td" style="text-align: right; font-variant-numeric: tabular-nums; color: #000; font-weight: 600">{{r.price}}</td>
+<td class="td" style="text-align: right; font-variant-numeric: tabular-nums">{{r.share}}<div style="font-size: 12px; color: #666">{{r.paid}}</div></td>
+<td class="td" style="padding-right: 20px; text-align: right"><span style="{{r.chip}}">{{r.status}}</span><div style="font-size: 12px; color: #666; margin-top: 4px">{{r.next}}</div></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { tab: 'all' }; }
+  renderVals() {
+    const C = { Agreed: ['#fff3cd', '#856404'], 'Contract signed': ['#fde8d7', '#7a3d0c'], Paid: ['#cce5ff', '#004085'], Shipped: ['#e2dcf5', '#3d2b7a'], Delivered: ['#d4edda', '#155724'], Closed: ['#eeeeee', '#444444'], Cancelled: ['#f8d7da', '#721c24'], 'Refund requested': ['#f8d7da', '#721c24'] };
+    const R = [
+      ['18 Nov', 'Torso II', 'Jane Doe', 'Object · 3/8', 'Thomas B.', 'Berlin', 'Art shipper', 'Arta insurance · €19,000', '€19,000', '€11,400', 'not paid yet', 'Contract signed', 'Wait for the transfer', '#6f685f'],
+      ['18 Nov', 'Morning over the estuary', 'Jane Doe', 'Painting', 'Thomas B.', 'Berlin', 'Art shipper', 'Shipper’s insurance · €3,200', '€3,200', '€1,920', 'not paid yet', 'Paid', 'Book the shipper', '#b08d57'],
+      ['12 Nov', 'Red field', 'Marc Soler', 'Painting', 'Ana R.', 'Valencia', 'Artist ships', 'Artist pays if damaged', '€1,450', '€870', 'not paid yet', 'Shipped', 'Confirm delivery', '#a3272f'],
+      ['02 Nov', 'Vessel for the tide', 'Jane Doe', 'Object · unique', 'Pierre L.', 'Lyon', 'Art shipper', 'Shipper’s insurance · €1,900', '€1,900', '€1,140', 'paid 15 Nov', 'Delivered', 'Close the sale', '#a08a6c'],
+      ['14 Oct', 'Blue hour III', 'Iker Ruiz', 'Painting', 'Sara P.', 'Madrid', 'Buyer collects', 'Buyer from handover', '€900', '€540', 'paid 30 Oct', 'Closed', '—', '#3b5573']
+    ];
+    const T = [['all', 'All open', null], ['Agreed', 'Agreed', 'Agreed'], ['Contract signed', 'Contract signed', 'Contract signed'], ['Paid', 'Paid', 'Paid'], ['Shipped', 'Shipped', 'Shipped'], ['Delivered', 'Delivered', 'Delivered'], ['Closed', 'Closed', 'Closed']];
+    const O = [['Cancelled', 'Cancelled', 0], ['Refunds', 'Refunds', 0]];
+    const tabStyle = (on) => ({ display: 'inline-flex', alignItems: 'center', gap: '8px', font: 'inherit', fontSize: '13px', fontWeight: on ? 600 : 400, padding: '10px 12px', background: 'none', border: 0, borderBottom: on ? '2px solid #000' : '2px solid transparent', color: on ? '#000' : '#555', cursor: 'pointer', whiteSpace: 'nowrap' });
+    const cnt = (on) => ({ fontSize: '11px', fontWeight: 600, padding: '0 6px', borderRadius: '9999px', background: on ? '#1a1a1a' : '#eeeeee', color: on ? '#fff' : '#555' });
+    const tab = this.state.tab;
+    const rows = R.filter((r) => tab === 'all' ? r[11] !== 'Closed' : r[11] === tab);
+    const notes = { all: ['Open sales.', 'Everything not closed yet. The artwork shows Reserved from Agreed and Sold from Paid.'], Agreed: ['Agreed:', 'price and buyer settled by phone. Send the contract. The artwork shows Reserved.'], 'Contract signed': ['Contract signed:', 'send the bank details (or a Stripe link for smaller pieces) and wait for the payment.'], Paid: ['Paid:', 'the artwork now shows Sold. Arrange delivery.'], Shipped: ['Shipped:', 'on its way. Confirm with the buyer when it arrives.'], Delivered: ['Delivered:', 'pay the artist, then close the sale.'], Closed: ['Closed:', 'done, artist paid.'], Cancelled: ['Cancelled:', 'the artwork went back to Available.'], Refunds: ['Refunds:', 'handled with the buyer directly; record the outcome here.'] };
+    return {
+      tabs: T.map(([k, label]) => { const n = k === 'all' ? R.filter((r) => r[11] !== 'Closed').length : R.filter((r) => r[11] === k).length; return { label, n, sel: tab === k ? 'true' : 'false', pick: () => this.setState({ tab: k }), style: tabStyle(tab === k), countStyle: cnt(tab === k) }; }),
+      others: O.map(([k, label, n]) => ({ label, n, sel: tab === k ? 'true' : 'false', pick: () => this.setState({ tab: k }), style: tabStyle(tab === k), countStyle: cnt(tab === k) })),
+      noteTitle: notes[tab][0], noteText: notes[tab][1], tabLabel: tab,
+      countLabel: rows.length + (rows.length === 1 ? ' sale' : ' sales'),
+      rows: rows.map((r) => ({ date: r[0], art: r[1], artist: r[2], kind: r[3], buyer: r[4], city: r[5], delivery: r[6], risk: r[7], price: r[8], share: r[9], paid: 'artist ' + r[10], status: r[11], next: r[12],
+        thumb: { width: '40px', height: '40px', flex: '0 0 auto', borderRadius: '4px', background: r[13] },
+        chip: { display: 'inline-block', fontSize: '12px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px', background: C[r[11]][0], color: C[r[11]][1] } }))
+    };
+  }
+}
+</script>
+</body>
+</html>

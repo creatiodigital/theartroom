@@ -1,0 +1,79 @@
+@use '@/styles/mixins' as *;
+
+// An Object's Size (docs/objects, objects-editor.dc.html). Labels, inputs and help lines come
+// from ArtworkEditForm.module.scss; this adds the unit boxes.
+
+.group {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  > legend {
+    padding: 0;
+    margin-bottom: var(--space-1);
+  }
+}
+
+// Height · Width · Depth · Weight: four across, two on a phone.
+.sizeRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+
+  @include media-up(tablet) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.unitField {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+// A field with its unit inside the box: "64 cm".
+.unit {
+  display: flex;
+  align-items: center;
+  min-height: var(--space-12);
+  box-sizing: border-box;
+  border: 1px solid var(--color-gray-60);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+
+  &:focus-within {
+    border-color: var(--color-dark-surface);
+  }
+}
+
+.unitControl {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.unitInput {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0 var(--space-1) 0 var(--space-3);
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.unitName {
+  padding: 0 var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}

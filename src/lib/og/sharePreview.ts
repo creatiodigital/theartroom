@@ -31,8 +31,10 @@ export async function renderSharePreview(imageUrl: string | null | undefined) {
     try {
       const res = await fetch(imageUrl, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
       if (res.ok) {
-        const work = await sharp(Buffer.from(await res.arrayBuffer()))
+        const source = await sharp(Buffer.from(await res.arrayBuffer()))
           .rotate()
+          .toBuffer()
+        const work = await sharp(source)
           .resize(SHARE_PREVIEW_SIZE.width - MARGIN * 2, SHARE_PREVIEW_SIZE.height - MARGIN * 2, {
             fit: 'inside',
           })

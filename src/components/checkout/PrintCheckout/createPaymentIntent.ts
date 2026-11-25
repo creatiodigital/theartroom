@@ -174,6 +174,7 @@ export async function createPaymentIntent(
       slug: true,
       title: true,
       userId: true,
+      artworkType: true,
       printEnabled: true,
       printPriceCents: true,
       printOptions: true,
@@ -199,8 +200,9 @@ export async function createPaymentIntent(
     return { ok: false, error: 'Artwork not found.' }
   }
   // An unpublished artist's works are hidden everywhere public, so not for
-  // sale either — a stale tab or a cart line must not still buy one.
-  if (!artwork.printEnabled || !artwork.user.published) {
+  // sale either — a stale tab or a cart line must not still buy one. An Object
+  // (a sculpture, docs/objects) is never a print, whatever its row says.
+  if (!artwork.printEnabled || !artwork.user.published || artwork.artworkType === 'object') {
     return { ok: false, error: 'This artwork is not currently available as a print.' }
   }
   // Open editions need an artwork-level price; limited editions are priced

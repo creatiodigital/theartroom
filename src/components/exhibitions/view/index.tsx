@@ -1,5 +1,6 @@
 'use client'
 
+import { parseFloorLayout } from '@/lib/floor/floorLayout'
 import { useProgress } from '@react-three/drei'
 import {
   useCallback,
@@ -30,6 +31,7 @@ import {
 import { preloadFloorMaterial } from '@/components/scene/spaces/objects/Floor/ReflectiveFloor'
 import { bakedFloor } from '@/lib/bake/commonFloor'
 import { ArtworkModal } from '@/components/exhibitions/view/ArtworkModal/ArtworkModal'
+import { FloorObjectModal } from '@/components/exhibitions/view/FloorObjectModal/FloorObjectModal'
 import { RoomLoader } from '@/components/exhibitions/view/RoomLoader'
 import {
   RoomAboutPanel,
@@ -951,6 +953,9 @@ export const ExhibitionViewPage = ({
         trackLampSettings: exhibition.trackLampSettings ?? undefined,
         panelSettings: exhibition.panelSettings ?? undefined,
         benchSettings: exhibition.benchSettings ?? undefined,
+        // The floor (docs/objects O6) and its Objects' models.
+        floorLayout: parseFloorLayout(exhibition.floorLayout),
+        floorArtworks: exhibition.floorArtworks ?? {},
         ceilingLightMode: exhibition.ceilingLightMode ?? undefined,
         recessedLampColor: exhibition.recessedLampColor ?? undefined,
         recessedLampIntensity: exhibition.recessedLampIntensity ?? undefined,
@@ -1324,6 +1329,8 @@ export const ExhibitionViewPage = ({
       {/* The work as a photo of the print, as the grids show it, or its plain image when it has no
           current render (AR-174). */}
       {isArtworkModalOpen && <ArtworkModal presentation={currentPresentation} />}
+      {/* An Object on the floor, clicked (docs/objects O6). */}
+      <FloorObjectModal />
     </>
   )
 }

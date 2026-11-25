@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 
+import { parseFloorLayout } from '@/lib/floor/floorLayout'
 import { LIGHTBOX_FIELDS, LIGHTBOX_LIGHT_VERSION } from '@/lib/lightbox'
 
 import { BAKER_VERSION } from './bakeRecord'
@@ -98,6 +99,16 @@ function reducePlaced(row: Record<string, unknown>): Record<string, unknown> {
 }
 
 /**
+ * The floor's Objects and pedestals (docs/objects O6) stand in the bake as the benches do: they
+ * shadow the floor and the walls. Counted only when something stands there, so a room with an empty
+ * floor keeps its fingerprint and its bake (an absent field must never hash as null).
+ */
+const floorItems = (floorLayout: unknown): unknown[] | null => {
+  const { items } = parseFloorLayout(floorLayout)
+  return items.length > 0 ? items : null
+}
+
+/**
  * Gallery benches (AR-167) stand in the bake: they shadow the floor and the walls. Only the benches
  * switched on count, so a room without one keeps its fingerprint and its bake. `benchSettings` is
  * deliberately not in LIGHT_FIELDS: an absent field hashes there as null, which would stale every
@@ -157,6 +168,7 @@ export function computeBakeFingerprint(input: BakeFingerprintInput): string {
   for (const field of LIGHT_FIELDS) exhibition[field] = input.exhibition[field] ?? null
 
   const benches = shownBenches(input.exhibition.benchSettings)
+  const floorStanding = floorItems(input.exhibition.floorLayout)
   const tone = floorTone(input.exhibition)
   const floor = chosenFloor(input.exhibition)
   const daylight = daylightShare(input.exhibition)
@@ -173,6 +185,7 @@ export function computeBakeFingerprint(input: BakeFingerprintInput): string {
         spaceLookVersion: input.spaceLookVersion,
         ...(showsPanels(exhibition.panelSettings) ? { panelsBaked: PANELS_BAKED } : {}),
         ...(benches ? { benches } : {}),
+        ...(floorStanding ? { floorItems: floorStanding } : {}),
         ...(tone !== null ? { floorTone: tone } : {}),
         ...(floor !== null ? { floor } : {}),
         ...(daylight !== null ? { daylight } : {}),

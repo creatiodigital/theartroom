@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import type { ReactNode, MouseEvent } from 'react'
+import type { ReactNode } from 'react'
 import { X } from '@phosphor-icons/react'
 import c from 'classnames'
+
+import { useBackdropClose } from '@/hooks/useBackdropClose'
 
 type ModalProps = {
   children: ReactNode
@@ -57,39 +59,8 @@ const Modal = ({
   layout = 'padded',
   phoneFullScreen = false,
 }: ModalProps) => {
-  const mouseDownOnBackdrop = useRef(false)
-  const mouseDownAt = useRef<{ x: number; y: number } | null>(null)
   const contentRef = useRef<HTMLDivElement>(null)
-
-  // Pointer travel above this is a drag, not a click. Covers the ordinary
-  // wobble between pressing and releasing without swallowing real clicks.
-  const DRAG_TOLERANCE_PX = 5
-
-  const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
-    // Only mark if the mousedown was directly on the backdrop (not a child)
-    mouseDownOnBackdrop.current = e.target === e.currentTarget
-    mouseDownAt.current = { x: e.clientX, y: e.clientY }
-  }
-
-  const handleMouseUp = (e: MouseEvent<HTMLDivElement>) => {
-    // Close only if BOTH mousedown and mouseup happened on the backdrop AND the
-    // pointer barely moved. Without the distance check a DRAG that begins and
-    // ends on the backdrop counts as a click — which silently dismissed the
-    // dialog whenever someone tried to drag something underneath it, such as
-    // panning the 3D camera behind the exhibition's exit prompt.
-    const from = mouseDownAt.current
-    const travelled = from ? Math.hypot(e.clientX - from.x, e.clientY - from.y) : Infinity
-
-    if (
-      mouseDownOnBackdrop.current &&
-      e.target === e.currentTarget &&
-      travelled <= DRAG_TOLERANCE_PX
-    ) {
-      onClose()
-    }
-    mouseDownOnBackdrop.current = false
-    mouseDownAt.current = null
-  }
+  const backdropClose = useBackdropClose(onClose)
 
   // ESC closes the modal — standard affordance every assistive-tech user
   // expects. Attached at document scope so it fires regardless of which
@@ -140,8 +111,8 @@ const Modal = ({
         tone === 'public' && styles.public,
         phoneFullScreen && styles.phoneFullScreen,
       )}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
+      onMouseDown={backdropClose.onMouseDown}
+      onMouseUp={backdropClose.onMouseUp}
       data-no-deselect="true"
     >
       <div

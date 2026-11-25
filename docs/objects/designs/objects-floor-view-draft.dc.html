@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Floor view</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#e2e2e2}
+.cap{margin:0;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#666}
+.num{display:flex;align-items:center;height:36px;padding:0 10px;border:1px solid #dcdcdc;border-radius:8px;background:#fff;font-family:'Geist Mono',monospace;font-size:13px;color:#000;gap:6px;box-sizing:border-box}
+.num small{font-family:Geist,sans-serif;font-size:11px;color:#888;margin-left:auto}
+.lbl{font-size:12px;color:#666}
+.ib{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid #dcdcdc;border-radius:8px;color:#333;padding:0}
+.btn{font:inherit;font-size:13px;font-weight:600;height:34px;padding:0 12px;background:#fff;border:1px solid #dcdcdc;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;color:#000}
+.chip{position:absolute;display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:#fff;border-radius:8px;font-size:12px;color:#333;box-shadow:0 1px 3px rgba(0,0,0,.1);white-space:nowrap}
+.tag{position:absolute;font-family:'Geist Mono',monospace;font-size:10px;line-height:1;padding:3px 5px;border-radius:4px;background:#fff;color:#333;box-shadow:0 0 0 1px #d6d6d6;white-space:nowrap}
+.ms{position:absolute;font-family:'Geist Mono',monospace;font-size:10px;line-height:1;padding:3px 5px;border-radius:4px;background:#3b6fd8;color:#fff;white-space:nowrap}
+.sw{width:34px;height:20px;flex:0 0 auto;border-radius:10px;background:#d6d6d6;position:relative}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff}
+.sw.on{background:#1a1a1a}.sw.on::after{left:17px}
+</style>
+</helmet>
+<div style="position: relative; display: flex; width: 100%; height: 100vh; min-height: 960px; overflow: hidden; font-family: Geist, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.45; color: #333333; background: #e2e2e2">
+
+<aside aria-label="Floor options" style="flex: 0 0 320px; height: 100%; box-sizing: border-box; background: #ffffff; border-right: 1px solid #e6e6e6; display: flex; flex-direction: column">
+<header style="padding: 18px 16px 14px; border-bottom: 1px solid #efefef; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #999999">Editing floor</span><h1 style="margin: 0; font-size: 18px; font-weight: 700; color: #000000">Room 1 · 900 × 700 cm</h1></div>
+<div style="display: flex; gap: 6px">
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 0 12px; height: 38px; background: none; border: 0; border-radius: 8px; color: #555555">Cancel</button>
+<button type="button" style="font: inherit; font-size: 13px; font-weight: 600; padding: 0 14px; height: 38px; background: #ffffff; border: 1px solid #dcdcdc; border-radius: 8px">Save</button>
+<button type="button" style="flex: 1 1 auto; font: inherit; font-size: 13px; font-weight: 600; height: 38px; background: #1a1a1a; color: #ffffff; border: 0; border-radius: 8px">Save &amp; close</button>
+</div>
+</header>
+
+<div style="flex: 1 1 auto; overflow-y: auto; padding: 14px 12px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; gap: 4px; padding: 4px; background: #f5f5f5; border-radius: 10px">
+<button type="button" aria-label="Undo" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: #ffffff; border: 0; border-radius: 7px; color: #333333; box-shadow: 0 1px 2px rgba(0,0,0,0.06)"><svg width="17" height="17" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{ic.undo}}"></path></svg></button>
+<button type="button" aria-label="Redo" disabled style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: transparent; border: 0; border-radius: 7px; color: #bbbbbb"><svg width="17" height="17" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{ic.redo}}"></path></svg></button>
+<span aria-hidden="true" style="width: 1px; height: 20px; background: #dddddd; margin: 0 4px"></span>
+<button type="button" aria-label="Zoom out" style="width: 30px; height: 34px; display: flex; align-items: center; justify-content: center; background: none; border: 0; color: #333333"><svg width="15" height="15" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{ic.minus}}"></path></svg></button>
+<span style="font-family: 'Geist Mono', monospace; font-size: 12px; min-width: 40px; text-align: center; color: #000000">46%</span>
+<button type="button" aria-label="Zoom in" style="width: 30px; height: 34px; display: flex; align-items: center; justify-content: center; background: none; border: 0; color: #333333"><svg width="15" height="15" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{ic.plus}}"></path></svg></button>
+<button type="button" style="margin-left: auto; display: flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; font-weight: 600; padding: 0 10px; height: 34px; background: #ffffff; border: 0; border-radius: 7px; box-shadow: 0 1px 2px rgba(0,0,0,0.06)"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{ic.fit}}"></path></svg>Fit</button>
+</div>
+
+<section aria-labelledby="h-help" style="display: flex; flex-direction: column; gap: 2px">
+<h2 id="h-help" class="cap" style="margin: 0 4px 6px">Helpers</h2>
+<sc-for list="{{helpers}}" as="h" hint-placeholder-count="5">
+<label style="{{h.row}}">
+<span aria-hidden="true" style="{{h.tile}}"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="{{h.icon}}"></path></svg></span>
+<span style="flex: 1 1 auto; display: flex; flex-direction: column; line-height: 1.3"><span style="font-size: 13px; font-weight: 500">{{h.label}}</span><span style="font-size: 11.5px; color: #767676">{{h.sub}}</span></span>
+<span role="switch" aria-checked="{{h.checked}}" aria-label="{{h.label}}" style="{{h.sw}}"><span style="{{h.knob}}"></span></span>
+</label>
+</sc-for>
+</section>
+
+<section aria-labelledby="h-items" style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; margin: 0 4px"><h2 id="h-items" class="cap">On this floor</h2><span style="font-size: 12px; color: #767676">9 items</span></div>
+<div role="group" aria-label="Show" style="display: flex; gap: 2px; padding: 3px; background: #f5f5f5; border-radius: 8px">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="6"><button type="button" aria-pressed="{{f.on}}" style="{{f.style}}">{{f.label}}</button></sc-for>
+</div>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px">
+<sc-for list="{{items}}" as="it" hint-placeholder-count="9">
+<li><button type="button" aria-current="{{it.cur}}" style="{{it.row}}">
+<sc-if value="{{it.child}}" hint-placeholder-val="{{false}}"><svg width="12" height="12" viewBox="0 0 256 256" fill="none" stroke="#9a9a9a" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: 0 0 auto; margin-left: 4px"><path d="M64 40v96a24 24 0 0 0 24 24h104"></path></svg></sc-if>
+<span aria-hidden="true" style="width: 30px; height: 26px; flex: 0 0 auto; border-radius: 3px; background: {{it.bg}}; display: flex; align-items: center; justify-content: center; color: #555555"><svg width="14" height="14" viewBox="0 0 256 256" fill="{{it.fill}}" stroke="{{it.stroke}}" stroke-width="14" stroke-linejoin="round"><path d="{{it.icon}}"></path></svg></span>
+<span style="flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{it.name}}</span>
+<span style="font-size: 11px; color: #767676">{{it.kind}}</span>
+</button></li>
+</sc-for>
+</ul>
+</section>
+</div>
+</aside>
+
+<main aria-label="Floor" style="position: relative; flex: 1 1 auto; height: 100%; display: flex; min-width: 0">
+
+<section aria-label="Plan, seen from above" style="position: relative; flex: 1 1 0; min-width: 0; background: #e2e2e2; overflow: hidden">
+<span class="chip" style="left: 16px; top: 16px"><b style="font-weight: 600; color: #000">Plan</b><span style="color: #767676">seen from above</span></span>
+<span style="position: absolute; left: 31px; top: 130px; font-family: 'Geist Mono', monospace; font-size: 10px; color: #6b6b6b">900 cm</span>
+<span style="position: absolute; left: 2px; top: 300px; font-family: 'Geist Mono', monospace; font-size: 10px; color: #6b6b6b; transform: rotate(-90deg)">700 cm</span>
+
+<div style="position: absolute; left: 31px; top: 150px; width: 414px; height: 322px; box-sizing: border-box; background: #f7f6f3; border: 6px solid #3a3a3a"></div>
+<span aria-hidden="true" style="position: absolute; left: 206px; top: 466px; width: 64px; height: 6px; background: #f7f6f3"></span>
+<span style="position: absolute; left: 213px; top: 478px; font-size: 10px; color: #6b6b6b">Entrance</span>
+<span title="Alas para tres" style="position: absolute; left: 123px; top: 156px; width: 46px; height: 4px; background: #7a5a3c"></span>
+<span title="Huída" style="position: absolute; left: 215px; top: 156px; width: 46px; height: 4px; background: #7a5a3c"></span>
+<span title="Ibiza" style="position: absolute; left: 307px; top: 156px; width: 46px; height: 4px; background: #7a5a3c"></span>
+<span style="position: absolute; left: 123px; top: 164px; font-size: 9px; color: #8a8a8a">wall artworks</span>
+
+<span aria-hidden="true" style="position: absolute; left: 100px; top: 376px; width: 64px; height: 64px; border-radius: 50%; background: #d8cbb9"></span>
+<span class="tag" style="left: 112px; top: 402px">Rug</span>
+
+<span aria-hidden="true" style="position: absolute; left: 68px; top: 217px; width: 46px; height: 4px; background: #4f6b80"></span>
+<span class="tag" style="left: 66px; top: 226px">Image · standing</span>
+
+<span aria-hidden="true" style="position: absolute; left: 120px; top: 299px; width: 23px; height: 23px; box-sizing: border-box; background: #ffffff; border: 1.5px solid #9a9a9a"></span>
+<span aria-hidden="true" style="position: absolute; left: 125px; top: 304px; width: 13px; height: 13px; border-radius: 50%; background: #8c857c"></span>
+<span class="tag" style="left: 110px; top: 326px">Plinth 2</span>
+
+<span aria-hidden="true" style="position: absolute; left: 224px; top: 297px; width: 28px; height: 28px; box-sizing: border-box; background: #ffffff; border: 1.5px solid #9a9a9a"></span>
+<span aria-hidden="true" style="position: absolute; left: 229px; top: 304px; width: 18px; height: 14px; border-radius: 45% 55% 50% 50%; background: #6f685f; transform: rotate(30deg)"></span>
+<span aria-hidden="true" style="position: absolute; left: 225px; top: 300px; width: 26px; height: 22px; box-sizing: border-box; border: 1.5px solid #3b6fd8; transform: rotate(30deg)"></span>
+<span aria-hidden="true" style="position: absolute; left: 248px; top: 278px; width: 9px; height: 9px; border-radius: 50%; background: #ffffff; border: 1.5px solid #3b6fd8"></span>
+<span aria-hidden="true" style="position: absolute; left: 237px; top: 152px; width: 0; height: 146px; border-left: 1px dashed #3b6fd8"></span>
+<span class="ms" style="left: 242px; top: 220px">350 cm</span>
+<span aria-hidden="true" style="position: absolute; left: 37px; top: 311px; width: 186px; height: 0; border-top: 1px dashed #3b6fd8"></span>
+<span class="ms" style="left: 160px; top: 290px">450 cm</span>
+<span class="ms" style="left: 262px; top: 324px; background: #1a1a1a">Torso II · on Plinth 1 · 30°</span>
+
+<span aria-hidden="true" style="position: absolute; left: 316px; top: 230px; width: 64px; height: 41px; border-radius: 48% 52% 40% 60% / 55% 45% 55% 45%; background: rgba(140,133,124,0.55); border: 1px dashed #6f685f; box-sizing: border-box"></span>
+<span class="tag" style="left: 326px; top: 276px">Cloud · ↑ 180 cm</span>
+
+<span aria-hidden="true" style="position: absolute; left: 238px; top: 408px; transform: translate(-50%,-50%); font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: 0.25em; color: #3a3a3a">QUIMIGRAMAS</span>
+
+<span aria-hidden="true" style="position: absolute; left: 335px; top: 371px; width: 110px; height: 110px; box-sizing: border-box; border-radius: 50%; border: 1px dashed #8a8a8a; background: rgba(0,0,0,0.03)"></span>
+<span aria-hidden="true" style="position: absolute; left: 383px; top: 419px; width: 14px; height: 14px; border-radius: 50%; background: #1a1a1a; display: flex; align-items: center; justify-content: center; color: #fff"><svg width="9" height="9" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.sound}}"></path></svg></span>
+<span class="tag" style="left: 352px; top: 440px">Sound · 120 cm</span>
+</section>
+
+<div role="separator" aria-orientation="vertical" aria-label="Resize plan and 3D" style="flex: 0 0 8px; background: #d4d4d4; display: flex; align-items: center; justify-content: center; cursor: col-resize"><span aria-hidden="true" style="width: 2px; height: 32px; border-radius: 1px; background: #8a8a8a"></span></div>
+
+<section aria-label="3D view" style="position: relative; flex: 1 1 0; min-width: 0; background: #2b2b2b; overflow: hidden">
+<svg viewBox="0 0 476 960" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Room 1 in 3D, eye level: Torso II on Plinth 1, Vessel on Plinth 2, Cloud floating, text on the floor, a rug and a standing image" style="position: absolute; inset: 0; width: 100%; height: 100%">
+<rect x="0" y="0" width="476" height="960" fill="#ecebe7"></rect>
+<polygon points="0,120 98,250 98,520 0,700" fill="#e4e2dd"></polygon>
+<polygon points="476,120 378,250 378,520 476,700" fill="#e9e7e2"></polygon>
+<rect x="98" y="250" width="280" height="270" fill="#f6f5f2"></rect>
+<polygon points="98,520 378,520 476,700 476,960 0,960 0,700" fill="#cfc6b8"></polygon>
+<rect x="128" y="352" width="44" height="34" fill="#7a5a3c"></rect><rect x="132" y="356" width="36" height="26" fill="#9bb0b5"></rect>
+<rect x="216" y="352" width="44" height="34" fill="#7a5a3c"></rect><rect x="220" y="356" width="36" height="26" fill="#c98a8f"></rect>
+<rect x="304" y="352" width="44" height="34" fill="#7a5a3c"></rect><rect x="308" y="356" width="36" height="26" fill="#8f9a86"></rect>
+<polygon points="70,560 118,552 118,612 70,622" fill="#4f6b80"></polygon>
+<ellipse cx="112" cy="770" rx="78" ry="20" fill="#b9a68f"></ellipse>
+<text x="0" y="0" transform="translate(238,860) scale(1,0.38)" text-anchor="middle" font-family="Geist Mono, monospace" font-size="38" letter-spacing="8" fill="#5a5550">QUIMIGRAMAS</text>
+<ellipse cx="146" cy="668" rx="44" ry="7" fill="rgba(0,0,0,0.16)"></ellipse>
+<rect x="114" y="580" width="62" height="86" fill="#fbfbfa"></rect>
+<polygon points="114,580 176,580 168,568 122,568" fill="#ffffff"></polygon>
+<path d="M132 574 C128 548 136 528 145 526 C154 528 162 548 158 574 Z" fill="#8c857c"></path>
+<path d="M145 526 C154 528 162 548 158 574 L150 574 C152 552 150 536 145 526 Z" fill="#6f685f"></path>
+<ellipse cx="238" cy="772" rx="64" ry="10" fill="rgba(0,0,0,0.18)"></ellipse>
+<rect x="190" y="620" width="96" height="150" fill="#fdfdfc"></rect>
+<polygon points="190,620 286,620 276,602 200,602" fill="#ffffff"></polygon>
+<path d="M214 612 C206 580 214 548 222 530 C214 516 222 496 238 494 C254 496 262 516 254 530 C262 548 270 580 262 612 Z" fill="#7d766d"></path>
+<path d="M238 494 C254 496 262 516 254 530 C262 548 270 580 262 612 L248 612 C254 580 250 548 244 530 C250 516 246 500 238 494 Z" fill="#5e5850"></path>
+<path d="M214 612 C206 580 214 548 222 530 C214 516 222 496 238 494 C254 496 262 516 254 530 C262 548 270 580 262 612 Z" fill="none" stroke="#3b6fd8" stroke-width="2"></path>
+<ellipse cx="238" cy="612" rx="46" ry="10" fill="none" stroke="#3b6fd8" stroke-width="2"></ellipse>
+<circle cx="284" cy="612" r="5" fill="#ffffff" stroke="#3b6fd8" stroke-width="2"></circle>
+<line x1="238" y1="486" x2="238" y2="448" stroke="#3b6fd8" stroke-width="2"></line>
+<polygon points="231,452 245,452 238,438" fill="#3b6fd8"></polygon>
+<ellipse cx="372" cy="700" rx="46" ry="8" fill="rgba(0,0,0,0.10)"></ellipse>
+<path d="M330 330 C318 312 336 290 356 296 C366 276 398 280 404 300 C424 302 428 328 410 336 C406 352 380 356 368 346 C352 356 330 348 330 330 Z" fill="#9a938a"></path>
+<path d="M368 346 C380 356 406 352 410 336 C428 328 424 302 404 300 C410 320 392 342 368 346 Z" fill="#7d766d"></path>
+<line x1="372" y1="356" x2="372" y2="696" stroke="#6b6b6b" stroke-width="1" stroke-dasharray="4 4"></line>
+</svg>
+<span class="chip" style="left: 16px; top: 16px"><b style="font-weight: 600; color: #000">3D</b><span style="color: #767676">live</span></span>
+<div role="group" aria-label="Camera" style="position: absolute; right: 16px; top: 16px; display: flex; gap: 2px; padding: 3px; background: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1)">
+<button type="button" aria-pressed="true" style="font: inherit; font-size: 12px; font-weight: 600; padding: 4px 10px; background: #1a1a1a; color: #ffffff; border: 0; border-radius: 6px">Eye level</button>
+<button type="button" aria-pressed="false" style="font: inherit; font-size: 12px; padding: 4px 10px; background: none; color: #333333; border: 0; border-radius: 6px">Orbit</button>
+</div>
+<span class="ms" style="left: 50%; top: 31%; margin-left: 14px">Height 90 cm</span>
+<span class="tag" style="left: 79%; top: 56%">180 cm</span>
+</section>
+
+<nav aria-label="Add to the floor" style="position: absolute; left: 50%; bottom: 30px; transform: translateX(-50%); display: flex; align-items: center; gap: 4px; padding: 6px; background: #ffffff; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.04)">
+<button type="button" title="Add from your library: Objects, images, video, sound" style="display: flex; align-items: center; gap: 8px; font: inherit; font-size: 13px; font-weight: 600; padding: 0 14px 0 12px; height: 52px; background: #1a1a1a; color: #ffffff; border: 0; border-radius: 10px; white-space: nowrap"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{ic.library}}"></path></svg>From library</button>
+<span aria-hidden="true" style="width: 1px; height: 32px; background: #ececec; margin: 0 6px"></span>
+<sc-for list="{{adds}}" as="a" hint-placeholder-count="5">
+<button type="button" draggable="true" title="{{a.tip}}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; width: 58px; height: 52px; font: inherit; background: none; border: 0; border-radius: 10px; color: #333333; cursor: grab"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="{{a.icon}}"></path></svg><span style="font-size: 11px; font-weight: 500">{{a.label}}</span></button>
+</sc-for>
+<span aria-hidden="true" style="width: 1px; height: 32px; background: #ececec; margin: 0 6px"></span>
+<button type="button" draggable="true" title="Add a plinth: a box, a low slab or a column. Click to add it in the middle of the room, or drag it onto the plan or the 3D view" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; width: 58px; height: 52px; font: inherit; background: #f2f2f2; border: 0; border-radius: 10px; color: #333333; cursor: grab"><svg width="20" height="20" viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="12" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.cube}}"></path></svg><span style="font-size: 11px; font-weight: 500">Plinth</span></button>
+</nav>
+<span style="position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); font-size: 11px; color: #555555; white-space: nowrap; background: rgba(226,226,226,0.9); padding: 0 6px; border-radius: 4px">Click to add in the middle of the room, or drag onto the plan or the 3D view.</span>
+</main>
+
+<aside aria-label="Torso II" style="flex: 0 0 300px; height: 100%; box-sizing: border-box; background: #ffffff; border-left: 1px solid #e6e6e6; display: flex; flex-direction: column">
+<div style="padding: 16px; border-bottom: 1px solid #efefef; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 10px"><span aria-hidden="true" style="width: 48px; height: 40px; border-radius: 4px; background: #efece7; display: flex; align-items: flex-end; justify-content: center"><svg width="22" height="34" viewBox="0 0 60 100"><path d="M14 98 C6 70 14 40 22 26 C14 14 22 2 30 2 C38 2 46 14 38 26 C46 40 54 70 46 98 Z" fill="#7d766d"></path></svg></span><span style="flex: 1 1 auto; display: flex; flex-direction: column; line-height: 1.3; min-width: 0"><b style="font-size: 15px; color: #000">Torso II</b><span style="font-size: 12px; color: #767676">Object · 38 × 31 × 64 cm</span></span></div>
+<div style="display: flex; gap: 6px; align-items: center">
+<button class="ib" type="button" aria-label="Lock Torso II"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.lock}}"></path></svg></button>
+<span style="flex: 1 1 auto"></span>
+<button class="btn" type="button">View details</button>
+</div>
+</div>
+<div style="flex: 1 1 auto; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #eef3fb; border-radius: 10px">
+<span aria-hidden="true" style="width: 30px; height: 30px; flex: 0 0 auto; border-radius: 8px; background: #3b6fd8; color: #fff; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="{{ic.magnet}}"></path></svg></span>
+<span style="flex: 1 1 auto; display: flex; flex-direction: column; line-height: 1.3"><b style="font-size: 13px; font-weight: 600; color: #1a3f73">On Plinth 1</b><span style="font-size: 11.5px; color: #3d5a85">Moves with the plinth</span></span>
+<button class="btn" type="button" style="height: 30px; padding: 0 10px; font-size: 12px">Detach</button>
+</div>
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">Position</h3>
+<div style="display: flex; gap: 6px">
+<label style="flex: 1 1 0; display: flex; flex-direction: column; gap: 4px"><span class="lbl">From west wall</span><span class="num">450<small>cm</small></span></label>
+<label style="flex: 1 1 0; display: flex; flex-direction: column; gap: 4px"><span class="lbl">From north wall</span><span class="num">350<small>cm</small></span></label>
+</div>
+<label style="display: flex; flex-direction: column; gap: 4px"><span class="lbl">Height above the floor</span><span class="num">90<small>cm · top of Plinth 1</small></span></label>
+</section>
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">Rotation</h3>
+<div style="display: flex; gap: 6px; align-items: center">
+<span class="num" style="width: 96px">30<small>°</small></span>
+<button class="btn" type="button" aria-label="Turn 90° left" style="width: 36px; padding: 0">↺</button>
+<button class="btn" type="button" aria-label="Turn 90° right" style="width: 36px; padding: 0">↻</button>
+</div>
+<span style="font-size: 11.5px; color: #767676">Turns around its own vertical axis. Snaps every 15°; hold Shift to turn freely.</span>
+</section>
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">Size</h3>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="position: relative; flex: 1 1 auto; height: 4px; border-radius: 2px; background: #e2e2e2"><span style="position: absolute; left: 0; top: 0; width: 50%; height: 4px; border-radius: 2px; background: #1a1a1a"></span><span style="position: absolute; left: 50%; top: -6px; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1.5px #1a1a1a"></span></span>
+<span class="num" style="width: 80px">100<small>%</small></span>
+</div>
+<span style="font-size: 11.5px; color: #767676">Always in proportion. 100% is the real size: 38 × 31 × 64 cm.</span>
+<button type="button" style="align-self: flex-start; font: inherit; font-size: 12px; font-weight: 600; background: none; border: 0; padding: 0; color: #333; text-decoration: underline; text-underline-offset: 2px">Back to real size</button>
+</section>
+<section style="display: flex; flex-direction: column; gap: 8px"><h3 class="cap">Light</h3>
+<label style="display: flex; align-items: center; gap: 10px"><span style="flex: 1 1 auto; display: flex; flex-direction: column; line-height: 1.3"><span style="font-size: 13px; font-weight: 500">Casts a shadow</span><span style="font-size: 11.5px; color: #767676">On the floor and on what is under it</span></span><span role="switch" aria-checked="true" aria-label="Casts a shadow" class="sw on"></span></label>
+</section>
+</div>
+<div style="padding: 12px 16px; border-top: 1px solid #efefef"><button class="btn" type="button" style="width: 100%; color: #a12a2a">Remove from the floor</button></div>
+</aside>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const ic = {
+      undo: 'M222,128a94,94,0,0,1-92.74,94H128a93.43,93.43,0,0,1-64.5-25.65,6,6,0,1,1,8.240-8.72A82,82,0,1,0,70,70l-.19.19L39.44,98H72a6,6,0,0,1,0,12H24a6,6,0,0,1-6-6V56a6,6,0,0,1,12,0V90.34L61.63,61.4A94,94,0,0,1,222,128Z',
+      redo: 'M238,56v48a6,6,0,0,1-6,6H184a6,6,0,0,1,0-12h32.55l-30.38-27.8c-.06-.06-.12-.13-.19-.19a82,82,0,1,0-1.7,117.65,6,6,0,0,1,8.24,8.73A93.46,93.46,0,0,1,128,222h-1.28A94,94,0,1,1,194.37,61.4L226,90.35V56a6,6,0,1,1,12,0Z',
+      minus: 'M222,128a6,6,0,0,1-6,6H40a6,6,0,0,1,0-12H216A6,6,0,0,1,222,128Z',
+      plus: 'M222,128a6,6,0,0,1-6,6H134v82a6,6,0,0,1-12,0V134H40a6,6,0,0,1,0-12h82V40a6,6,0,0,1,12,0v82h82A6,6,0,0,1,222,128Z',
+      fit: 'M214,48V88a6,6,0,0,1-12,0V54H168a6,6,0,0,1,0-12h40A6,6,0,0,1,214,48ZM88,202H54V168a6,6,0,0,0-12,0v40a6,6,0,0,0,6,6H88a6,6,0,0,0,0-12Zm120-40a6,6,0,0,0-6,6v34H168a6,6,0,0,0,0,12h40a6,6,0,0,0,6-6V168A6,6,0,0,0,208,162ZM88,42H48a6,6,0,0,0-6,6V88a6,6,0,0,0,12,0V54H88a6,6,0,0,0,0-12Z',
+      ruler: 'M233.91,74.79,181.22,22.1a14,14,0,0,0-19.8,0L22.09,161.41a14,14,0,0,0,0,19.8L74.78,233.9a14,14,0,0,0,19.8,0L233.91,94.59A14,14,0,0,0,233.91,74.79ZM225.42,86.1,86.1,225.41h0a2,2,0,0,1-2.83,0L30.58,172.73a2,2,0,0,1,0-2.83L64,136.48l27.76,27.76a6,6,0,1,0,8.48-8.48L72.48,128,96,104.48l27.76,27.76a6,6,0,0,0,8.48-8.48L104.48,96,128,72.49l27.76,27.75a6,6,0,0,0,8.48-8.48L136.49,64,169.9,30.59a2,2,0,0,1,2.83,0l52.69,52.68A2,2,0,0,1,225.42,86.1Z',
+      lock: 'M208,82H174V56a46,46,0,0,0-92,0V82H48A14,14,0,0,0,34,96V208a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V96A14,14,0,0,0,208,82ZM94,56a34,34,0,0,1,68,0V82H94ZM210,208a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V96a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2Z',
+      magnet: 'M205.56,51.65A85.5,85.5,0,0,0,144.6,26h-.33A85.45,85.45,0,0,0,83.42,51.22L22,113.39a14,14,0,0,0,.06,19.74l28.66,28.66a13.89,13.89,0,0,0,9.9,4.1h.08a13.9,13.9,0,0,0,9.94-4.21l60.87-62.4A18.1,18.1,0,0,1,156.76,99a17.630,17.63,0,0,1,5.34,12.62,19,19,0,0,1-5.44,13.44L94.37,185.31a14,14,0,0,0-.15,19.95l28.67,28.66a14.05,14.05,0,0,0,19.7.1l61.8-60.49C238.07,139.86,238.6,85.18,205.56,51.65ZM62.08,153.29a2,2,0,0,1-1.42.6,2.15,2.15,0,0,1-1.42-.58L30.57,124.65a2,2,0,0,1,0-2.82L55.790,96.28l31.34,31.34Zm72.11,72.15a2,2,0,0,1-2.82,0l-28.66-28.66a2,2,0,0,1-.59-1.43,2,2,0,0,1,.6-1.41L128.51,169l31.34,31.33ZM196,165l-27.52,26.94-31.29-31.29,27.9-27,.07-.08a30.93,30.93,0,0,0,9-22.06,29.47,29.47,0,0,0-9-21.15,30.17,30.17,0,0,0-42.08.46L95.51,119,64.22,87.74,91.94,59.68A73.47,73.47,0,0,1,144.27,38h.28A73.52,73.52,0,0,1,197,60.08C225.44,88.92,224.94,136,196,165Z',
+      person: 'M128,70A30,30,0,1,0,98,40,30,30,0,0,0,128,70Zm0-48a18,18,0,1,1-18,18A18,18,0,0,1,128,22Zm88.88,113.42L171.67,84.16A30,30,0,0,0,149.17,74H106.830a30,30,0,0,0-22.5,10.15L39.12,135.42A18,18,0,0,0,64.46,161l21.11-16.93L67.44,212.92a18,18,0,0,0,32.75,14.94L128,180l27.81,47.91a18,18,0,0,0,32.75-14.94l-18.13-68.87L191.54,161a18,18,0,0,0,25.34-25.56Z',
+      library: 'M216,74H130L101.73,52.8a14,14,0,0,0-8.4-2.8H40A14,14,0,0,0,26,64V200a14,14,0,0,0,14,14H216.89A13.12,13.12,0,0,0,230,200.89V88A14,14,0,0,0,216,74Zm2,126.89a1.11,1.11,0,0,1-1.11,1.11H40a2,2,0,0,1-2-2V64a2,2,0,0,1,2-2H93.33a2,2,0,0,1,1.2.4L124.4,84.8A6,6,0,0,0,128,86h88a2,2,0,0,1,2,2ZM158,144a6,6,0,0,1-6,6H134v18a6,6,0,0,1-12,0V150H104a6,6,0,0,1,0-12h18V120a6,6,0,0,1,12,0v18h18A6,6,0,0,1,158,144Z',
+      image: 'M216,42H40A14,14,0,0,0,26,56V200a14,14,0,0,0,14,14H216a14,14,0,0,0,14-14V56A14,14,0,0,0,216,42ZM40,54H216a2,2,0,0,1,2,2V163.57L188.53,134.1a14,14,0,0,0-19.8,0l-21.42,21.42L101.9,110.1a14,14,0,0,0-19.8,0L38,154.2V56A2,2,0,0,1,40,54ZM38,200V171.17l52.58-52.58a2,2,0,0,1,2.84,0L176.83,202H40A2,2,0,0,1,38,200Zm178,2H193.8l-38-38,21.41-21.42a2,2,0,0,1,2.83,0l38,38V200A2,2,0,0,1,216,202ZM146,100a10,10,0,1,1,10,10A10,10,0,0,1,146,100Z',
+      text: 'M206,56V88a6,6,0,0,1-12,0V62H134V194h26a6,6,0,0,1,0,12H96a6,6,0,0,1,0-12h26V62H62V88a6,6,0,0,1-12,0V56a6,6,0,0,1,6-6H200A6,6,0,0,1,206,56Z',
+      shapes: 'M69.69,62.1a6,6,0,0,0-11.38,0l-40,120A6,6,0,0,0,24,190h80a6,6,0,0,0,5.69-7.9ZM32.32,178,64,83l31.68,95ZM206,76a50,50,0,1,0-50,50A50.06,50.06,0,0,0,206,76Zm-88,0a38,38,0,1,1,38,38A38,38,0,0,1,118,76Zm106,70H136a6,6,0,0,0-6,6v56a6,6,0,0,0,6,6h88a6,6,0,0,0,6-6V152A6,6,0,0,0,224,146Zm-6,56H142V158h76Z',
+      video: 'M250.83,74.71a6,6,0,0,0-6.16.3L206,100.79V72a14,14,0,0,0-14-14H32A14,14,0,0,0,18,72V184a14,14,0,0,0,14,14H192a14,14,0,0,0,14-14V155.21L244.67,181a6,6,0,0,0,9.33-5V80A6,6,0,0,0,250.83,74.71ZM194,184a2,2,0,0,1-2,2H32a2,2,0,0,1-2-2V72a2,2,0,0,1,2-2H192a2,2,0,0,1,2,2Zm48-19.21-36-24V115.21l36-24Z',
+      sound: 'M154.64,26.61a6,6,0,0,0-6.32.65L77.94,82H32A14,14,0,0,0,18,96v64a14,14,0,0,0,14,14H77.94l70.38,54.74A6,6,0,0,0,158,224V32A6,6,0,0,0,154.64,26.61ZM30,160V96a2,2,0,0,1,2-2H74v68H32A2,2,0,0,1,30,160Zm116,51.73L86,165.07V90.93l60-46.66Zm50.53-108.85a38,38,0,0,1,0,50.24,6,6,0,1,1-9-7.94,26,26,0,0,0,0-34.37,6,6,0,0,1,9-7.93ZM246,128a77.86,77.86,0,0,1-19.86,52,6,6,0,1,1-8.94-8,66,66,0,0,0,0-88,6,6,0,1,1,8.94-8A77.86,77.86,0,0,1,246,128Z',
+      cube: 'M128 24 L224 76 V180 L128 232 L32 180 V76 Z M32 76 L128 128 L224 76 M128 128 V232',
+      blob: 'M70 200 C40 150 60 90 100 70 C110 40 150 30 170 60 C210 70 220 130 190 160 C200 200 150 220 128 200 C110 220 80 220 70 200 Z'
+    };
+    const H = [
+      ['Rulers & guides', 'Measure and line things up', ic.ruler, false],
+      ['Snap to align', 'Snap to edges, centres and walls', ic.magnet, true],
+      ['Snap to plinths', 'Objects stick to a plinth’s top', ic.magnet, true],
+      ['Person for scale', 'A 1.70 m figure in the room', ic.person, false]
+    ];
+    const seg = (on) => ({ flex: '1 1 auto', font: 'inherit', fontSize: '11.5px', fontWeight: on ? 600 : 400, padding: '5px 0', background: on ? '#ffffff' : 'transparent', color: on ? '#000000' : '#555555', border: 0, borderRadius: '6px', boxShadow: on ? '0 1px 2px rgba(0,0,0,0.08)' : 'none', cursor: 'pointer' });
+    const S = { cube: [ic.cube, 'none', 'currentColor', '#f2f2f2'], obj: [ic.blob, '#7d766d', 'none', '#efece7'], text: [ic.text, 'currentColor', 'none', '#f2f2f2'], sound: [ic.sound, 'currentColor', 'none', '#f2f2f2'], shape: [ic.shapes, 'currentColor', 'none', '#f2f2f2'], image: [ic.image, 'currentColor', 'none', '#e4ebf0'] };
+    const I = [
+      ['Plinth 1', 'Plinth', 'cube'],
+      ['Torso II', 'Object', 'obj', true, true],
+      ['Plinth 2', 'Plinth', 'cube'],
+      ['Vessel', 'Object', 'obj', true],
+      ['Cloud', 'Object · ↑ 180', 'obj'],
+      ['Huída (standing)', 'Image', 'image'],
+      ['Exhibition title', 'Text', 'text'],
+      ['Room sound', 'Sound', 'sound'],
+      ['Rug', 'Shape', 'shape']
+    ];
+    return {
+      ic,
+      helpers: H.map(([label, sub, icon, on]) => ({ label, sub, icon, checked: on ? 'true' : 'false',
+        row: { display: 'flex', alignItems: 'center', gap: '10px', padding: '8px', borderRadius: '8px', cursor: 'pointer' },
+        tile: { width: '30px', height: '30px', flex: '0 0 auto', borderRadius: '8px', background: on ? '#1a1a1a' : '#f2f2f2', color: on ? '#ffffff' : '#333333', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+        sw: { width: '34px', height: '20px', flex: '0 0 auto', borderRadius: '10px', background: on ? '#1a1a1a' : '#d6d6d6', position: 'relative' },
+        knob: { position: 'absolute', top: '3px', left: on ? '17px' : '3px', width: '14px', height: '14px', borderRadius: '50%', background: '#ffffff' } })),
+      filters: ['All', 'Objects', 'Plinths', 'Images', 'Text', 'More'].map((label, i) => ({ label, on: i ? 'false' : 'true', style: seg(!i) })),
+      items: I.map(([name, kind, k, child, cur]) => { const s = S[k]; return { name, kind, child: !!child, icon: s[0], fill: s[1], stroke: s[2], bg: s[3], cur: cur ? 'true' : 'false',
+        row: { display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: child ? '5px 8px 5px 10px' : '5px 8px', font: 'inherit', fontSize: '13px', textAlign: 'left', background: cur ? '#eef3fb' : 'transparent', color: cur ? '#1a3f73' : '#333333', fontWeight: cur ? 600 : 400, border: 0, borderRadius: '8px', boxShadow: cur ? 'inset 3px 0 0 #3b6fd8' : 'none', cursor: 'pointer' } }; }),
+      adds: [
+        { label: 'Image', icon: ic.image, tip: 'Click to add an image in the middle of the room, or drag it onto the plan or the 3D view' },
+        { label: 'Text', icon: ic.text, tip: 'Click to add text in the middle of the room, or drag it onto the plan or the 3D view' },
+        { label: 'Shape', icon: ic.shapes, tip: 'Click to add a shape in the middle of the room, or drag it onto the plan or the 3D view' },
+        { label: 'Video', icon: ic.video, tip: 'Click to add a video in the middle of the room, or drag it onto the plan or the 3D view' },
+        { label: 'Sound', icon: ic.sound, tip: 'Click to add sound in the middle of the room, or drag it onto the plan or the 3D view' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

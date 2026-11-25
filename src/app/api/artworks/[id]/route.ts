@@ -4,7 +4,11 @@ import { deleteFromR2 } from '@/lib/r2'
 import { deleteArtworkPresentationFolder } from '@/lib/printPresentation/storage'
 
 import { isAdminOrAbove, requireOwnership } from '@/lib/authUtils'
+import { isArtworkKind } from '@/lib/artwork/artworkKinds'
+import { OBJECT_PRINT_OFF, objectWriteData, parseObjectFields } from '@/lib/artwork/objectArtwork'
+import { saleModeAfterPrintSwitch } from '@/lib/artwork/saleMode'
 import { PUBLIC_ARTWORK_OMIT } from '@/lib/artworkFields'
+import { floorArtworkIds, parseFloorLayout, withoutArtwork } from '@/lib/floor/floorLayout'
 import { saveLimitedVariants } from '@/lib/editions/saveLimitedVariants'
 import { parseIncomingVariants } from '@/lib/editions/parseIncomingVariants'
 import { TPS_FRAME_TYPES, TPS_PAPERS, TPS_WINDOW_MOUNTS } from '@/lib/print-providers/printspace'
@@ -257,6 +261,11 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         editionLocked: true,
         originalWidth: true,
         originalHeight: true,
+        artworkType: true,
+        heightCm: true,
+        widthCm: true,
+        depthCm: true,
+        saleMode: true,
       },
     })
     if (!existing) return NextResponse.json({ error: 'Artwork not found' }, { status: 404 })
@@ -265,6 +274,28 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     const requesterIsAdmin = isAdminOrAbove(session?.user?.userType)
 
     const body = await request.json()
+
+    // The type is chosen when the artwork is created. An Object never becomes another type and
+    // nothing becomes an Object: an image's print sales (prices, a locked edition) must not ride
+    // along into a type that never sells prints (docs/objects).
+    if (body.artworkType !== undefined && !isArtworkKind(body.artworkType)) {
+      return NextResponse.json({ error: 'Unknown artwork type.' }, { status: 400 })
+    }
+    const nextType = body.artworkType ?? existing.artworkType
+    const isObject = nextType === 'object'
+    if (isObject !== (existing.artworkType === 'object')) {
+      return NextResponse.json(
+        { error: 'An artwork cannot be turned into an Object, or an Object into another type.' },
+        { status: 400 },
+      )
+    }
+
+    // Objects: their own fields (only those sent), and never print sales.
+    const objectFields = isObject ? parseObjectFields(body) : null
+    if (objectFields && !objectFields.ok) {
+      return NextResponse.json({ error: objectFields.error }, { status: 400 })
+    }
+    const objectData = objectFields?.ok ? objectWriteData(objectFields.data, existing) : {}
 
     // Sanitize single-line text fields. `description` and `textContent`
     // are rich-text HTML — left untouched here, DOMPurify cleans at
@@ -341,7 +372,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         { status: 409 },
       )
     }
-    const editionType = requestedEditionType
+    const editionType = isObject ? OBJECT_PRINT_OFF.editionType : requestedEditionType
 
     // Sanitize artist-set printing restrictions.
     const printOptions = sanitizePrintOptions(body.printOptions)
@@ -354,7 +385,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
     // Base update data (fields that definitely exist)
     // Sync name with title so all consumers see the updated label
-    const baseData = {
+    const fieldsData = {
       name: body.title || body.name,
       artworkType: body.artworkType,
       title: body.title,
@@ -381,6 +412,13 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         printRecommendations === null
           ? Prisma.DbNull
           : (printRecommendations as unknown as Prisma.InputJsonValue),
+      ...objectData,
+    }
+    // How it is sold follows the print switch until the editor's Sales tab writes it, so
+    // `printEnabled` and `saleMode` never disagree (docs/unique-sales U1).
+    const baseData = {
+      ...fieldsData,
+      saleMode: saleModeAfterPrintSwitch(existing.saleMode, fieldsData.printEnabled),
     }
 
     // Exhibition membership. The client sends the full desired set, so this is
@@ -603,6 +641,8 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
         originalImageUrl: true,
         soundUrl: true,
         videoUrl: true,
+        // An Object's 3D model (docs/objects O4).
+        modelUrl: true,
         // Its extra images and videos: the rows cascade with the artwork, their files don't.
         media: { select: { url: true } },
       },
@@ -650,6 +690,25 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
             data: { autofocusGroups: cleaned as unknown as Prisma.InputJsonValue },
           })
         }
+        // An Object leaves the floors it stood on (docs/objects O6; the pedestals stay).
+        const floors = await tx.exhibition.findMany({
+          where: { userId: artwork.userId, floorLayout: { not: Prisma.DbNull } },
+          select: { id: true, floorLayout: true },
+        })
+        for (const ex of floors) {
+          const layout = parseFloorLayout(ex.floorLayout)
+          if (!floorArtworkIds(layout).includes(id)) continue
+          const next = withoutArtwork(layout, id)
+          await tx.exhibition.update({
+            where: { id: ex.id },
+            data: {
+              floorLayout:
+                next.items.length > 0
+                  ? (next as unknown as Prisma.InputJsonValue)
+                  : Prisma.JsonNull,
+            },
+          })
+        }
         await tx.artwork.delete({ where: { id } })
       })
     } catch (error) {
@@ -688,6 +747,8 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     await deleteFile(artwork.soundUrl, 'sound blob')
     await deleteFile(artwork.videoUrl, 'video blob')
     for (const { url } of artwork.media) await deleteFile(url, 'artwork media blob')
+    // An Object's 3D model.
+    await deleteFile(artwork.modelUrl, '3D model')
 
     return NextResponse.json({ success: true })
   } catch (error) {

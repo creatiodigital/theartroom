@@ -15,6 +15,12 @@
   -webkit-touch-callout: none;
 }
 
+// The Floor view's live 3D (docs/objects O6): its container's size, not the window's.
+.scene.fill {
+  width: 100%;
+  height: 100%;
+}
+
 // Position the performance stats panel at bottom-right
 :global(.stats-panel) {
   top: auto !important;

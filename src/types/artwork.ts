@@ -9,7 +9,31 @@ import type {
 } from '@/lib/lightbox'
 import type { TFontFamily, TFontWeight, TOption } from '@/types/fonts'
 
-export type TArtworkKind = 'image' | 'text' | 'sound' | 'shape' | 'video'
+export type TArtworkKind = 'image' | 'text' | 'sound' | 'shape' | 'video' | 'object'
+
+/** An Object's edition (docs/objects): one of a kind, or number N of M (+ APs). */
+/** The 3D model's state: none → ready (the gallery uploads the .glb the artist sent it). */
+export type TObjectModelStatus = 'none' | 'ready'
+/** The label of one of an Object's photos or videos (ArtworkMedia.role). */
+export type TObjectMediaRole = 'front' | 'back' | 'side' | 'detail' | 'room' | 'process' | 'reel'
+/** The GLB's bounding box in cm, read on upload. */
+export type TObjectBoundsCm = { h: number; w: number; d: number }
+
+/**
+ * The Object fields (artworkType 'object', docs/objects/README.md "Data"). The cover photo is
+ * the artwork's ordinary image (`imageUrl`, `originalWidth`/`Height`).
+ */
+export type TArtworkObjectFields = {
+  heightCm?: number | null
+  widthCm?: number | null
+  depthCm?: number | null
+  weightKg?: number | null
+  modelUrl?: string | null
+  modelSizeBytes?: number | null
+  modelBoundsCm?: TObjectBoundsCm | null
+  modelStatus?: TObjectModelStatus
+  modelReadyAt?: string | null
+}
 
 export type TArtworkPosition = {
   id?: string
@@ -43,7 +67,7 @@ export type TArtworkPosition = {
   showOnPage?: boolean
 }
 
-export type TArtwork = {
+export type TArtwork = TArtworkObjectFields & {
   id: string
   slug?: string
   name: string

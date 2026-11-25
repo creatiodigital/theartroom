@@ -5,7 +5,11 @@ import { presentationInputs } from '@/lib/printPresentation/inputs'
 import { loadPresentationSources } from '@/lib/printPresentation/loadSources'
 import { photoInputs, renderCopy } from '@/lib/printPresentation/photoInputs'
 import type { PrintPresentationRecord } from '@/lib/printPresentation/record'
-import { newRenderId, photoPublicUrls, presentationPublicUrls } from '@/lib/printPresentation/storage'
+import {
+  newRenderId,
+  photoPublicUrls,
+  presentationPublicUrls,
+} from '@/lib/printPresentation/storage'
 import { getPrintPresentationsEnabled } from '@/lib/settings'
 
 import { setupLimitedFixture, teardownLimitedFixture } from './edition-helpers'
@@ -62,7 +66,9 @@ test.describe('the four views on the artwork page', () => {
     test.skip(!(await getPrintPresentationsEnabled()), 'presentations are switched off')
   })
 
-  test('desktop: a 2 × 2 grid below Inquire; picking a view shows it in the box', async ({ page }) => {
+  test('desktop: a 2 × 2 grid below the action; picking a view shows it in the box', async ({
+    page,
+  }) => {
     const fx = await renderedWork(true)
     try {
       await page.setViewportSize({ width: 1440, height: 900 })
@@ -75,10 +81,10 @@ test.describe('the four views on the artwork page', () => {
       await expect(buttons.nth(1)).toHaveAccessibleName(/unframed, its corner/i)
       await expect(buttons.nth(2)).toHaveAccessibleName(/a detail$/i)
       await expect(buttons.nth(3)).toHaveAccessibleName(/a detail at its top edge/i)
-      // Below Inquire, in the info column.
-      const inquire = page.getByRole('button', { name: /^inquire$/i }).first()
-      const [gridBox, inquireBox] = [await grid.boundingBox(), await inquire.boundingBox()]
-      expect(gridBox!.y).toBeGreaterThan(inquireBox!.y)
+      // Below the column's action (Order a print, or Inquire when there is nothing to order).
+      const action = page.getByRole('button', { name: /^(inquire|order a print)$/i }).first()
+      const [gridBox, actionBox] = [await grid.boundingBox(), await action.boundingBox()]
+      expect(gridBox!.y).toBeGreaterThan(actionBox!.y)
       await buttons.nth(1).click()
       await expect(buttons.nth(1)).toHaveAttribute('aria-pressed', 'true')
       await expect(page.locator('img[src*="-sheet-2400.webp"]')).toBeInViewport()
