@@ -15,3 +15,9 @@ export type FloorArtwork = {
   /** The model's size in cm, read from the .glb on upload: H × W × D. */
   boundsCm: { h: number; w: number; d: number } | null
 }
+
+/** The floor's Objects' model sizes (cm, H × W × D) by artwork id: what placement needs. */
+export type FloorSizes = Record<string, { h: number; w: number; d: number } | null | undefined>
+
+export const floorSizes = (artworks: Record<string, FloorArtwork> | null | undefined): FloorSizes =>
+  Object.fromEntries(Object.entries(artworks ?? {}).map(([id, a]) => [id, a.boundsCm]))

@@ -408,7 +408,9 @@
   cursor: grab;
 }
 
-.planSnap {
+// What a free Object would attach to on release: a pedestal's top, or the side it is against.
+.planSnap,
+.planSnapSide {
   fill: none;
   stroke: var(--studio-3d-caution-edge);
   stroke-width: 2px;

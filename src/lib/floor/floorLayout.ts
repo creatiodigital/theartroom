@@ -4,9 +4,18 @@
  * the benches), frozen into the published snapshot for visitors, part of the bake fingerprint.
  *
  * Positions are the room's world coordinates in METRES (x, z; y up), as the 3D scene uses them.
- * Rotation is degrees around the vertical. An Object on a pedestal is stored RELATIVE to it (the
- * offset of its base from the top's centre, in cm, in the pedestal's own frame), so moving or
- * turning the pedestal carries it. `lift` is cm above the floor, or above the pedestal's top.
+ * Turns are degrees (three.js Euler order 'YXZ': the turn about the vertical, then the tilt and the
+ * lean in the item's own frame), about the item's bounding-box centre.
+ *
+ * Floor composing (2026-11-25, docs/superpowers/specs/2026-11-25-floor-attach-any-side-design.md):
+ * any item (an Object or a pedestal) is free in the room or attached to one FACE of another item's
+ * bounding box, stored RELATIVE to it, so moving or turning the parent carries it (chains too):
+ * - free: `x` / `z` its box centre, `lift` its lowest point above the floor (cm), turns in room axes;
+ * - attached: `parentId` + `face`; on a top / bottom `offsetX` / `offsetZ` from the face's centre in
+ *   the parent's frame, on a side `offsetX` across (to the right looking at the face) and `offsetY`
+ *   up (cm); `lift` the gap off the face; turns relative to its rest on the face (on a side: its back
+ *   against it). `floorPlacement.ts` resolves where everything is.
+ * Layouts saved before (an Object's `pedestalId`) read as attached to that pedestal's top.
  *
  * Pure and client-safe. `parseFloorLayout` is the only way in: it drops anything malformed rather
  * than failing a save, and clamps every number to a sane range.
@@ -21,36 +30,46 @@ import {
   type PedestalShapeId,
 } from './pedestals'
 
-export type FloorObject = {
-  kind: 'object'
-  id: string
-  artworkId: string
+/** A face of an item's bounding box: front = its own +z, right = +x. */
+export type FloorFace = 'top' | 'bottom' | 'front' | 'back' | 'left' | 'right'
+
+export const FLOOR_FACES: readonly FloorFace[] = ['top', 'bottom', 'front', 'back', 'left', 'right']
+
+export const isSideFace = (face: FloorFace) => face !== 'top' && face !== 'bottom'
+
+/** Where an item is: free in the room, or on a face of another (see the header). */
+export type FloorPlacementFields = {
   /** The room (index in the space's room list) whose floor it stands on. */
   room: number
   x: number
   z: number
+  rotX: number
   rotY: number
-  /** 1 = real size; proportional only. */
-  scale: number
+  rotZ: number
+  /** Free: its lowest point above the floor (cm). Attached: the gap off its face (cm). */
   lift: number
-  castShadow: boolean
-  /** On a pedestal: its id, and the base's offset from the top's centre (cm, pedestal frame). */
-  pedestalId: string | null
+  parentId: string | null
+  face: FloorFace
   offsetX: number
+  offsetY: number
   offsetZ: number
   locked: boolean
 }
 
-export type FloorPedestal = {
+export type FloorObject = FloorPlacementFields & {
+  kind: 'object'
+  id: string
+  artworkId: string
+  /** 1 = real size; proportional only. */
+  scale: number
+  castShadow: boolean
+}
+
+export type FloorPedestal = FloorPlacementFields & {
   kind: 'pedestal'
   id: string
   /** "Pedestal 1". */
   name: string
-  room: number
-  x: number
-  z: number
-  rotY: number
-  lift: number
   shape: PedestalShapeId
   /** cm; round shapes keep w = d (the diameter). */
   w: number
@@ -61,7 +80,6 @@ export type FloorPedestal = {
   /** A colour id from the material's list, or '#rrggbb' where any colour is allowed. */
   colour: string
   finish: PedestalFinish
-  locked: boolean
 }
 
 export type FloorItem = FloorObject | FloorPedestal
@@ -77,6 +95,7 @@ export const MAX_FLOOR_ITEMS = 200
 const MAX_ROOM_M = 200
 const MAX_PEDESTAL_CM = 600
 const MAX_LIFT_CM = 1000
+const MAX_OFFSET_CM = 1000
 
 const num = (v: unknown, min: number, max: number, fallback: number) =>
   typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback
@@ -94,26 +113,39 @@ const angle = (v: unknown) => {
   return a > 180 ? a - 360 : a <= -180 ? a + 360 : a
 }
 
+/** The fields every item shares. An O6 Object's `pedestalId` is its parent, on the top. */
+function parsePlacement(raw: Record<string, unknown>): FloorPlacementFields {
+  const parentId = idOf(raw.parentId ?? raw.pedestalId) || null
+  const face = FLOOR_FACES.includes(raw.face as FloorFace) ? (raw.face as FloorFace) : 'top'
+  const offset = (v: unknown) => (parentId ? num(v, -MAX_OFFSET_CM, MAX_OFFSET_CM, 0) : 0)
+  return {
+    room: Math.round(num(raw.room, 0, 50, 0)),
+    x: num(raw.x, -MAX_ROOM_M, MAX_ROOM_M, 0),
+    z: num(raw.z, -MAX_ROOM_M, MAX_ROOM_M, 0),
+    rotX: angle(raw.rotX),
+    rotY: angle(raw.rotY),
+    rotZ: angle(raw.rotZ),
+    lift: num(raw.lift, 0, MAX_LIFT_CM, 0),
+    parentId,
+    face: parentId ? face : 'top',
+    offsetX: offset(raw.offsetX),
+    offsetY: offset(raw.offsetY),
+    offsetZ: offset(raw.offsetZ),
+    locked: raw.locked === true,
+  }
+}
+
 function parseObject(raw: Record<string, unknown>): FloorObject | null {
   const id = idOf(raw.id)
   const artworkId = str(raw.artworkId, 64)
   if (!id || !artworkId) return null
-  const pedestalId = idOf(raw.pedestalId) || null
   return {
     kind: 'object',
     id,
     artworkId,
-    room: Math.round(num(raw.room, 0, 50, 0)),
-    x: num(raw.x, -MAX_ROOM_M, MAX_ROOM_M, 0),
-    z: num(raw.z, -MAX_ROOM_M, MAX_ROOM_M, 0),
-    rotY: angle(raw.rotY),
+    ...parsePlacement(raw),
     scale: num(raw.scale, 0.05, 20, 1),
-    lift: num(raw.lift, 0, MAX_LIFT_CM, 0),
     castShadow: raw.castShadow !== false,
-    pedestalId,
-    offsetX: pedestalId ? num(raw.offsetX, -MAX_PEDESTAL_CM, MAX_PEDESTAL_CM, 0) : 0,
-    offsetZ: pedestalId ? num(raw.offsetZ, -MAX_PEDESTAL_CM, MAX_PEDESTAL_CM, 0) : 0,
-    locked: raw.locked === true,
   }
 }
 
@@ -143,11 +175,7 @@ function parsePedestal(raw: Record<string, unknown>): FloorPedestal | null {
     kind: 'pedestal',
     id,
     name: str(raw.name, 60) || 'Pedestal',
-    room: Math.round(num(raw.room, 0, 50, 0)),
-    x: num(raw.x, -MAX_ROOM_M, MAX_ROOM_M, 0),
-    z: num(raw.z, -MAX_ROOM_M, MAX_ROOM_M, 0),
-    rotY: angle(raw.rotY),
-    lift: num(raw.lift, 0, MAX_LIFT_CM, 0),
+    ...parsePlacement(raw),
     shape: shape.id,
     w,
     d,
@@ -156,14 +184,23 @@ function parsePedestal(raw: Record<string, unknown>): FloorPedestal | null {
     material: material.id,
     colour,
     finish,
-    locked: raw.locked === true,
   }
 }
 
+/** Free where it was last placed: its own x / z / lift and turns, no parent. */
+const freed = (item: FloorItem): FloorItem => ({
+  ...item,
+  parentId: null,
+  face: 'top',
+  offsetX: 0,
+  offsetY: 0,
+  offsetZ: 0,
+})
+
 /**
  * Whatever arrived (a request body, a stored value, a snapshot) → a valid floor. Malformed items
- * are dropped; an Object pointing at a pedestal that isn't there stands on the floor instead;
- * groups keep only members that exist.
+ * are dropped; an item whose parent is missing, itself, in another room or in a loop stands free
+ * where it was last placed; groups keep only members that exist.
  */
 export function parseFloorLayout(raw: unknown): FloorLayout {
   if (!raw || typeof raw !== 'object') return EMPTY_FLOOR
@@ -185,12 +222,20 @@ export function parseFloorLayout(raw: unknown): FloorLayout {
     seen.add(item.id)
     items.push(item)
   }
-  const pedestals = new Set(items.filter((i) => i.kind === 'pedestal').map((i) => i.id))
-  for (const item of items) {
-    if (item.kind === 'object' && item.pedestalId && !pedestals.has(item.pedestalId)) {
-      item.pedestalId = null
-      item.offsetX = 0
-      item.offsetZ = 0
+  const byId = new Map(items.map((i) => [i.id, i]))
+  for (let k = 0; k < items.length; k++) {
+    const item = items[k]
+    if (!item.parentId) continue
+    const parent = byId.get(item.parentId)
+    let ok = !!parent && parent.id !== item.id && parent.room === item.room
+    // A loop: following the parents comes back to it.
+    for (let up = parent, steps = 0; ok && up?.parentId && steps <= items.length; steps++) {
+      if (up.parentId === item.id) ok = false
+      up = byId.get(up.parentId)
+    }
+    if (!ok) {
+      items[k] = freed(item)
+      byId.set(item.id, items[k])
     }
   }
   const groups: FloorGroup[] = []

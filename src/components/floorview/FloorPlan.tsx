@@ -4,10 +4,20 @@ import { useEffect, useMemo, useRef, useState, type DragEvent, type PointerEvent
 import { useSelector } from 'react-redux'
 import c from 'classnames'
 
-import type { FloorArtwork } from '@/lib/floor/floorArtworks'
+import type { FloorSizes } from '@/lib/floor/floorArtworks'
 import type { FloorItem, FloorLayout } from '@/lib/floor/floorLayout'
-import { pedestalUnder, placeAll, rotateOffset, type Placed } from '@/lib/floor/floorPlacement'
-import { insideOutline, pedestalOutline, pedestalTop } from '@/lib/floor/pedestals'
+import {
+  belowFloor,
+  descendantsOf,
+  faceFrame,
+  overhangs,
+  placeAll,
+  placeMap,
+  planOutline,
+  sideAgainst,
+  supportUnder,
+  type Placed,
+} from '@/lib/floor/floorPlacement'
 import type { RootState } from '@/redux/store'
 
 import type { FloorEditor } from './useFloorEditor'
@@ -17,8 +27,10 @@ import styles from './FloorView.module.scss'
 /**
  * The plan (docs/objects O6, objects-floor-view-draft.dc.html): the room seen from above, in cm
  * (x right, z down: the room's world axes). Pedestals are their outline, Objects their footprint,
- * both turned as they stand. Click picks (Shift adds), drag moves (snapping to align and, on
- * release, onto pedestals; Alt never snaps), the handle turns (15° steps, Shift free).
+ * both turned as they stand (a tilted item: its box seen from above), higher items over lower ones.
+ * Click picks (Shift adds), drag moves (snapping to align and, on release, Objects onto a pedestal's
+ * top or a raised side; Alt never snaps; an item on a side slides along it), the handle turns
+ * (15° steps, Shift free).
  */
 export const DRAG_TYPE = 'application/x-floor-add'
 
@@ -33,7 +45,6 @@ const HANDLE_R_PX = 7
 type Props = {
   room: FloorRoom
   editor: FloorEditor
-  artworks: Record<string, FloorArtwork>
   selectedIds: string[]
   onSelect: (ids: string[]) => void
   /** A picked group member brings its group (Shift picks single items). */
@@ -44,42 +55,13 @@ type Props = {
   names: Record<string, string>
 }
 
-/** An Object's footprint (cm): its model's width × depth at its scale. */
-export const footprintOf = (item: FloorItem, artworks: Record<string, FloorArtwork>) => {
-  if (item.kind === 'pedestal') return { w: item.w, d: item.d }
-  const b = artworks[item.artworkId]?.boundsCm
-  return { w: (b?.w ?? 40) * item.scale, d: (b?.d ?? 40) * item.scale }
-}
-
-/**
- * An Object on a pedestal whose footprint reaches past the top (allowed; owner: an amber outline as
- * a warning). Checked in the pedestal's frame: the footprint's corners, turned and offset.
- */
-const overhangs = (
-  item: FloorItem,
-  layout: FloorLayout,
-  artworks: Record<string, FloorArtwork>,
-) => {
-  if (item.kind !== 'object' || !item.pedestalId) return false
-  const p = layout.items.find((i) => i.id === item.pedestalId)
-  if (!p || p.kind !== 'pedestal') return false
-  const top = pedestalTop(p.shape, p.w, p.d, p.h).outline
-  const { w, d } = footprintOf(item, artworks)
-  return [
-    [-w / 2, -d / 2],
-    [w / 2, -d / 2],
-    [w / 2, d / 2],
-    [-w / 2, d / 2],
-  ].some(([x, z]) => {
-    const [rx, rz] = rotateOffset(x, z, item.rotY)
-    return !insideOutline(top, item.offsetX + rx, item.offsetZ + rz)
-  })
-}
+/** How far the turning handle stands from the centre (cm): past the item's reach toward its back. */
+const reachOf = (at: Placed) =>
+  at.upright ? at.size.d / 2 : Math.max(at.max.x - at.min.x, at.max.z - at.min.z) * 50
 
 export function FloorPlan({
   room,
   editor,
-  artworks,
   selectedIds,
   onSelect,
   expand,
@@ -96,9 +78,14 @@ export function FloorPlan({
   helpersRef.current = helpers
 
   const layout: FloorLayout = editor.layout
+  const { sizes } = editor
+  // Lower items first, so what stands higher is drawn over them.
   const placed = useMemo(
-    () => placeAll(layout).filter(({ item }) => item.room === room.room),
-    [layout, room.room],
+    () =>
+      placeAll(layout, sizes)
+        .filter(({ item }) => item.room === room.room)
+        .sort((a, b) => a.at.max.y - b.at.max.y),
+    [layout, room.room, sizes],
   )
   const atById = useMemo(() => new Map(placed.map(({ item, at }) => [item.id, at])), [placed])
 
@@ -126,9 +113,7 @@ export function FloorPlan({
     return () => observer.disconnect()
   }, [viewW, viewH])
   const text = { fontSize: TEXT_PX * px }
-  const carrying = new Set(
-    placed.flatMap(({ item }) => (item.kind === 'object' && item.pedestalId ? [item.pedestalId] : [])),
-  )
+  const carrying = new Set(placed.flatMap(({ item }) => (item.parentId ? [item.parentId] : [])))
 
   /** A pointer event → plan cm, and how many cm one screen pixel is. */
   const toPlan = (clientX: number, clientY: number) => {
@@ -176,20 +161,20 @@ export function FloorPlan({
         const tol = SNAP_PX * p.perPx
         const cx = start.lead.x * 100 + dx
         const cz = start.lead.z * 100 + dz
-        const lead = editorRef.current.layout.items.find((i) => i.id === start.leadId)
-        const half = lead ? footprintOf(lead, artworks) : { w: 0, d: 0 }
+        // Flush with a wall: the lead's own reach from its centre, as it is turned.
+        const { lead } = start
         const xs = [
           room.centreX * 100,
-          room.minX * 100 + half.w / 2,
-          room.maxX * 100 - half.w / 2,
+          room.minX * 100 + (lead.x - lead.min.x) * 100,
+          room.maxX * 100 - (lead.max.x - lead.x) * 100,
           ...placed
             .filter(({ item }) => !selectedIds.includes(item.id))
             .map(({ at }) => at.x * 100),
         ]
         const zs = [
           room.centreZ * 100,
-          room.minZ * 100 + half.d / 2,
-          room.maxZ * 100 - half.d / 2,
+          room.minZ * 100 + (lead.z - lead.min.z) * 100,
+          room.maxZ * 100 - (lead.max.z - lead.z) * 100,
           ...placed
             .filter(({ item }) => !selectedIds.includes(item.id))
             .map(({ at }) => at.z * 100),
@@ -214,13 +199,14 @@ export function FloorPlan({
         }
       }
       setGuides(next)
-      editorRef.current.dragTo(dx / 100, dz / 100)
+      editorRef.current.dragTo(dx / 100, dz / 100, { free: event.altKey })
     }
     const onUp = (event: globalThis.PointerEvent) => {
       if (!moveStart.current) return
       moveStart.current = null
       setGuides({ x: null, z: null })
-      editorRef.current.endDrag(helpersRef.current.snapPedestals && !event.altKey)
+      const tol = SNAP_PX * toPlan(event.clientX, event.clientY).perPx
+      editorRef.current.endDrag(helpersRef.current.snapPedestals && !event.altKey, tol)
     }
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
@@ -229,7 +215,7 @@ export function FloorPlan({
       window.removeEventListener('pointerup', onUp)
     }
     // toPlan reads the svg ref; the rest comes through refs.
-  }, [placed, selectedIds, room, artworks])
+  }, [placed, selectedIds, room])
 
   // ── Turning ──
   const turnStart = useRef<{ id: string; a0: number; rot0: number; cx: number; cz: number } | null>(
@@ -270,7 +256,7 @@ export function FloorPlan({
       if (!turnStart.current) return
       turnStart.current = null
       // One undo step for the whole turn.
-      editorRef.current.endDrag(false)
+      editorRef.current.endPreview()
     }
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
@@ -366,40 +352,39 @@ export function FloorPlan({
         />
       )}
 
-      {/* Pedestals first, the Objects over them. */}
-      {[...placed]
-        .sort((a, b) => (a.item.kind === b.item.kind ? 0 : a.item.kind === 'pedestal' ? -1 : 1))
-        .map(({ item, at }) => {
-          const selected = selectedIds.includes(item.id)
-          const fp = footprintOf(item, artworks)
-          const points =
-            item.kind === 'pedestal'
-              ? pedestalOutline(item.shape, item.w, item.d)
-                  .map(([x, z]) => `${x},${z}`)
-                  .join(' ')
-              : `${-fp.w / 2},${-fp.d / 2} ${fp.w / 2},${-fp.d / 2} ${fp.w / 2},${fp.d / 2} ${-fp.w / 2},${fp.d / 2}`
-          return (
-            <g
-              key={item.id}
-              transform={`translate(${at.x * 100} ${at.z * 100}) rotate(${-at.rotY})`}
-              className={c(
-                styles.planItem,
-                selected && styles.planSelected,
-                overhangs(item, layout, artworks) && styles.planOverhang,
-              )}
-              onPointerDown={(e) => onItemDown(e, item)}
-            >
-              <polygon
-                points={points}
-                className={item.kind === 'pedestal' ? styles.planPedestal : styles.planObject}
+      {placed.map(({ item, at }) => {
+        const selected = selectedIds.includes(item.id)
+        const points = planOutline(item, at)
+          .map(([x, z]) => `${x},${z}`)
+          .join(' ')
+        return (
+          <g
+            key={item.id}
+            className={c(
+              styles.planItem,
+              selected && styles.planSelected,
+              (overhangs(layout, item, sizes) || belowFloor(at)) && styles.planOverhang,
+            )}
+            onPointerDown={(e) => onItemDown(e, item)}
+          >
+            <polygon
+              points={points}
+              className={item.kind === 'pedestal' ? styles.planPedestal : styles.planObject}
+            />
+            {item.kind === 'object' && at.upright && (
+              // The front: a short line toward the model's +z.
+              <line
+                x1={0}
+                y1={at.size.d / 2 - 4}
+                x2={0}
+                y2={at.size.d / 2}
+                transform={`translate(${at.x * 100} ${at.z * 100}) rotate(${-at.rotY})`}
+                className={styles.planFront}
               />
-              {item.kind === 'object' && (
-                // The front: a short line toward the model's +z.
-                <line x1={0} y1={fp.d / 2 - 4} x2={0} y2={fp.d / 2} className={styles.planFront} />
-              )}
-            </g>
-          )
-        })}
+            )}
+          </g>
+        )
+      })}
 
       {/* Names, upright whatever the turn. A pedestal that carries an Object writes its name a
           line lower, so the two never print over each other. */}
@@ -459,12 +444,12 @@ export function FloorPlan({
                 x1={0}
                 y1={0}
                 x2={0}
-                y2={-(footprintOf(single.item, artworks).d / 2 + HANDLE_GAP_PX * px)}
+                y2={-(reachOf(single.at) + HANDLE_GAP_PX * px)}
                 className={styles.planHandleLine}
               />
               <circle
                 cx={0}
-                cy={-(footprintOf(single.item, artworks).d / 2 + HANDLE_GAP_PX * px)}
+                cy={-(reachOf(single.at) + HANDLE_GAP_PX * px)}
                 r={HANDLE_R_PX * px}
                 className={styles.planHandle}
                 onPointerDown={(e) => onHandleDown(e, single.item)}
@@ -488,35 +473,50 @@ export function FloorPlan({
         </g>
       )}
 
-      <SnapPreview layout={layout} room={room.room} selectedIds={selectedIds} />
+      <SnapPreview layout={layout} sizes={sizes} selectedIds={selectedIds} px={px} />
     </svg>
   )
 }
 
-/** While an Object is over a pedestal's top, that pedestal is outlined (what it would snap to). */
+/**
+ * While a free Object is over a pedestal's top, that pedestal is outlined; while it is against the
+ * side of an item off the floor, that side is drawn (what it would attach to on release).
+ */
 function SnapPreview({
   layout,
-  room,
+  sizes,
   selectedIds,
+  px,
 }: {
   layout: FloorLayout
-  room: number
+  sizes: FloorSizes
   selectedIds: string[]
+  px: number
 }) {
   const helpers = useSelector((state: RootState) => state.floor.helpers)
   if (!helpers.snapPedestals || selectedIds.length !== 1) return null
   const o = layout.items.find((i) => i.id === selectedIds[0])
-  if (!o || o.kind !== 'object' || o.pedestalId) return null
-  const p = pedestalUnder(layout, room, o.x, o.z)
-  if (!p) return null
-  const points = pedestalOutline(p.shape, p.w, p.d)
-    .map(([x, z]) => `${x},${z}`)
-    .join(' ')
+  if (!o || o.kind !== 'object' || o.parentId) return null
+  const exclude = new Set([o.id, ...descendantsOf(layout, o.id)])
+  const places = placeMap(layout, sizes)
+  const p = supportUnder(layout, sizes, o.room, o.x, o.z, exclude)
+  if (p) {
+    const points = planOutline(p, places.get(p.id)!)
+      .map(([x, z]) => `${x},${z}`)
+      .join(' ')
+    return <polygon points={points} className={styles.planSnap} />
+  }
+  const side = sideAgainst(layout, sizes, o, o.x, o.z, SNAP_PX * px, exclude)
+  if (!side) return null
+  const f = faceFrame(places.get(side.parent.id)!, side.face)
+  const half = f.across.clone().multiplyScalar(f.width / 2)
   return (
-    <polygon
-      points={points}
-      transform={`translate(${p.x * 100} ${p.z * 100}) rotate(${-p.rotY})`}
-      className={styles.planSnap}
+    <line
+      x1={(f.centre.x - half.x) * 100}
+      y1={(f.centre.z - half.z) * 100}
+      x2={(f.centre.x + half.x) * 100}
+      y2={(f.centre.z + half.z) * 100}
+      className={styles.planSnapSide}
     />
   )
 }

@@ -9,7 +9,7 @@ import { Box3, type Mesh, type Object3D, type WebGLRenderer } from 'three'
 import { KTX2Loader } from 'three-stdlib'
 
 import { useBenchRooms } from '@/components/scene/spaces/objects/Bench/benchSettings'
-import type { FloorArtwork } from '@/lib/floor/floorArtworks'
+import { floorSizes, type FloorArtwork } from '@/lib/floor/floorArtworks'
 import type { FloorObject, FloorPedestal } from '@/lib/floor/floorLayout'
 import { placeAll, type Placed } from '@/lib/floor/floorPlacement'
 import { clickedSide, sideFace, toObject, toWorld } from '@/lib/floor/objectSide'
@@ -281,7 +281,10 @@ const FloorItems = () => {
   const { floorY } = useBenchRooms()
   const isFloorView = useSelector((state: RootState) => state.floor.isFloorView)
   const person = useSelector((state: RootState) => state.floor.helpers.person)
-  const placed = useMemo(() => (layout ? placeAll(layout) : []), [layout])
+  const placed = useMemo(
+    () => (layout ? placeAll(layout, floorSizes(artworks)) : []),
+    [layout, artworks],
+  )
 
   const urls = useMemo(
     () => [

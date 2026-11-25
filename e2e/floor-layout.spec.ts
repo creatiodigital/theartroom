@@ -3,23 +3,28 @@ import { test, expect } from '@playwright/test'
 import {
   parseFloorLayout,
   withoutArtwork,
+  type FloorItem,
   type FloorObject,
   type FloorPedestal,
 } from '../src/lib/floor/floorLayout'
 import {
-  detachObject,
-  dropObject,
-  keepObjectsOnTop,
-  pedestalTopCm,
-  pedestalUnder,
-  placeAll,
-  placeObject,
+  attachTo,
+  belowFloor,
+  detachItem,
+  dropItem,
+  keepChildrenOnFaces,
+  overhangs,
+  placeMap,
+  removeItems,
   rotateOffset,
+  supportUnder,
 } from '../src/lib/floor/floorPlacement'
+import type { FloorSizes } from '../src/lib/floor/floorArtworks'
 import { clickedSide, sideFace, toObject, toWorld } from '../src/lib/floor/objectSide'
 import { insideOutline, pedestalShape, pedestalTop } from '../src/lib/floor/pedestals'
 
-// Objects O6 (docs/objects "Snapping, exactly"): the floor's data and placement rules. Pure.
+// Objects O6 (docs/objects "Snapping, exactly") and floor composing (2026-11-25,
+// docs/superpowers/specs/2026-11-25-floor-attach-any-side-design.md): the floor's data and placement. Pure.
 
 const pedestal = (patch: Partial<FloorPedestal> = {}): FloorPedestal => ({
   kind: 'pedestal',
@@ -28,8 +33,15 @@ const pedestal = (patch: Partial<FloorPedestal> = {}): FloorPedestal => ({
   room: 0,
   x: 2,
   z: 3,
+  rotX: 0,
   rotY: 0,
+  rotZ: 0,
   lift: 0,
+  parentId: null,
+  face: 'top',
+  offsetX: 0,
+  offsetY: 0,
+  offsetZ: 0,
   shape: 'box',
   w: 40,
   d: 40,
@@ -49,22 +61,31 @@ const object = (patch: Partial<FloorObject> = {}): FloorObject => ({
   room: 0,
   x: 0,
   z: 0,
+  rotX: 0,
   rotY: 0,
+  rotZ: 0,
   scale: 1,
   lift: 0,
   castShadow: true,
-  pedestalId: null,
+  parentId: null,
+  face: 'top',
   offsetX: 0,
+  offsetY: 0,
   offsetZ: 0,
   locked: false,
   ...patch,
 })
 
-const layoutOf = (...items: (FloorObject | FloorPedestal)[]) => ({
-  version: 1 as const,
-  items,
-  groups: [],
-})
+/** A sculpture's model: 50 cm high, 20 wide, 10 deep; Alejandro's: 57.8 × 22.4 × 15.4. */
+const sizes: FloorSizes = { a1: { h: 50, w: 20, d: 10 }, alejandro: { h: 57.8, w: 22.4, d: 15.4 } }
+
+const layoutOf = (...items: FloorItem[]) => ({ version: 1 as const, items, groups: [] })
+const at = (layout: { items: FloorItem[] }, id: string, s: FloorSizes = sizes) =>
+  placeMap({ version: 1, items: layout.items, groups: [] }, s).get(id)!
+
+/** A 20 × 3 × 100 cm plank against a wall at z = −2, raised 100 cm. */
+const plank = (patch: Partial<FloorPedestal> = {}) =>
+  pedestal({ id: 'pl', name: 'Plank 1', shape: 'plank', w: 20, d: 3, h: 100, x: 0, z: -2, lift: 100, ...patch })
 
 test('parse: drops what is malformed, clamps numbers, frees Objects whose pedestal is gone', () => {
   const parsed = parseFloorLayout({
@@ -97,7 +118,7 @@ test('parse: drops what is malformed, clamps numbers, frees Objects whose pedest
   const o = parsed.items[0] as FloorObject
   expect(o.x).toBe(200)
   expect(o.scale).toBe(20)
-  expect(o.pedestalId).toBeNull()
+  expect(o.parentId).toBeNull()
   expect(o.offsetX).toBe(0)
   const p = parsed.items[1] as FloorPedestal
   // Round: the diameter twice. Metal takes no custom colour: its first one.
@@ -108,62 +129,236 @@ test('parse: drops what is malformed, clamps numbers, frees Objects whose pedest
   expect(parseFloorLayout(null)).toEqual({ version: 1, items: [], groups: [] })
 })
 
-test('an Object on a pedestal stands on its top, turned with it, at its offset', () => {
-  const p = pedestal({ rotY: 90, lift: 10 })
-  const o = object({ pedestalId: 'p1', offsetX: 10, offsetZ: 0, rotY: 30, lift: 5 })
-  const at = placeObject(o, new Map([[p.id, p]]))
+test('old layout: an Object on a pedestal places exactly as before (pedestalId)', () => {
+  // As O6 saved it: no parentId, face, rotX / rotZ or offsetY.
+  const layout = parseFloorLayout({
+    items: [
+      { kind: 'pedestal', id: 'p1', x: 2, z: 3, rotY: 90, lift: 10, shape: 'box', w: 40, d: 40, h: 90 },
+      { kind: 'object', id: 'o1', artworkId: 'a1', pedestalId: 'p1', offsetX: 10, offsetZ: 0, rotY: 30, lift: 5 },
+    ],
+  })
+  const o = layout.items[1] as FloorObject
+  expect([o.parentId, o.face, o.rotX, o.rotZ, o.offsetY]).toEqual(['p1', 'top', 0, 0, 0])
+  const where = at(layout, 'o1')
   // 10 cm along the pedestal's x, which faces −z after a 90° turn.
   const [dx, dz] = rotateOffset(10, 0, 90)
-  expect(at.x).toBeCloseTo(2 + dx / 100)
-  expect(at.z).toBeCloseTo(3 + dz / 100)
   expect(dz).toBeCloseTo(-10)
-  expect(at.y).toBeCloseTo((10 + 90 + 5) / 100)
-  expect(at.rotY).toBe(120)
-  expect(pedestalTopCm(p)).toBe(100)
+  expect(where.x).toBeCloseTo(2 + dx / 100)
+  expect(where.z).toBeCloseTo(3 + dz / 100)
+  // The base on the top: 10 raised + 90 high + 5 above it.
+  expect(where.y).toBeCloseTo((10 + 90 + 5) / 100)
+  expect(where.cy).toBeCloseTo((10 + 90 + 5 + 25) / 100)
+  expect(where.rotY).toBeCloseTo(120)
+  expect(where.upright).toBe(true)
+  // The pedestal itself: base at its lift.
+  expect(at(layout, 'p1').y).toBeCloseTo(0.1)
+  expect(at(layout, 'p1').cy).toBeCloseTo(0.55)
+})
+
+test("a sculpture on a raised plank's front: back against it, touching, at the offsets", () => {
+  const s = object({ id: 's', artworkId: 'alejandro', parentId: 'pl', face: 'front', offsetX: 5, offsetY: 10 })
+  const flat = layoutOf(plank(), s)
+  const where = at(flat, 's')
+  // The plank's front is at z = −2 + 1.5 cm; the sculpture's back touches it.
+  expect(where.min.z).toBeCloseTo(-2 + 0.015)
+  expect(where.z).toBeCloseTo(-2 + 0.015 + 0.077)
+  // 5 cm to the right looking at the face, 10 cm above its middle (150 cm).
+  expect(where.x).toBeCloseTo(0.05)
+  expect(where.cy).toBeCloseTo(1.6)
+  expect(where.rotY).toBeCloseTo(0)
+  // The plank turned 90°: its front faces +x, the sculpture with it.
+  const turned = at(layoutOf(plank({ rotY: 90 }), s), 's')
+  expect(turned.min.x).toBeCloseTo(0.015)
+  expect(turned.rotY).toBeCloseTo(90)
+  // A gap pushes it out along the face's normal.
+  expect(at(layoutOf(plank(), { ...s, lift: 2 }), 's').min.z).toBeCloseTo(-2 + 0.035)
+  // On the back: it faces out the other way.
+  const back = at(layoutOf(plank(), { ...s, face: 'back', offsetX: 0 }), 's')
+  expect(back.max.z).toBeCloseTo(-2 - 0.015)
+  expect(Math.abs(back.rotY)).toBeCloseTo(180)
+})
+
+test('a tilt never sinks: a free item rests by its lowest point', () => {
+  const lying = at(layoutOf(object({ rotX: 90 })), 'o1')
+  // Tilted forward 90°: its 10 cm depth is now its height.
+  expect(lying.y).toBeCloseTo(0)
+  expect(lying.cy).toBeCloseTo(0.05)
+  expect(lying.upright).toBe(false)
+  const leaning = at(layoutOf(object({ rotZ: 45, lift: 20 })), 'o1')
+  expect(leaning.min.y).toBeCloseTo(0.2)
+  const k = Math.SQRT1_2
+  expect(leaning.cy).toBeCloseTo(0.2 + (0.25 * k + 0.1 * k))
+  // Turn first, then the tilt in its own frame ('YXZ'): the heading stays the turn.
+  expect(at(layoutOf(object({ rotY: 30, rotX: 20 })), 'o1').rotY).toBeCloseTo(30)
+})
+
+test('the bottom face hangs it under, touching; below the floor shows', () => {
+  const p = pedestal({ lift: 150 })
+  const hung = object({ parentId: 'p1', face: 'bottom' })
+  const where = at(layoutOf(p, hung), 'o1')
+  expect(where.max.y).toBeCloseTo(1.5)
+  expect(where.cy).toBeCloseTo(1.25)
+  expect(belowFloor(where)).toBe(false)
+  expect(belowFloor(at(layoutOf(pedestal({ lift: 20 }), hung), 'o1'))).toBe(true)
+})
+
+test('a chain moves as one; detach keeps it in place and keeps its children', () => {
+  const block = pedestal({ id: 'b', h: 120, x: 1, z: 1 })
+  const board = plank({ parentId: 'b', face: 'top', lift: 0 })
+  const s = object({ id: 's', artworkId: 'alejandro', parentId: 'pl', face: 'front' })
+  const layout = layoutOf(block, board, s)
+  const before = at(layout, 's')
+  expect(before.y).toBeCloseTo(1.2 + 0.5 - 0.289)
+  const moved = at(layoutOf({ ...block, x: 2 }, board, s), 's')
+  expect(moved.x).toBeCloseTo(before.x + 1)
+  expect(at(layoutOf({ ...block, rotY: 90 }, board, s), 's').rotY).toBeCloseTo(90)
+  // Detach the plank: everything stays where it is; the sculpture is still on it.
+  const free = detachItem(layout, board, sizes)
+  expect(free.parentId).toBeNull()
+  const after = layoutOf(block, free, s)
+  expect(at(after, 'pl').cy).toBeCloseTo(at(layout, 'pl').cy)
+  expect(at(after, 's').x).toBeCloseTo(before.x)
+  expect(at(after, 's').cy).toBeCloseTo(before.cy)
+  expect(at(after, 's').z).toBeCloseTo(before.z)
+  // A tilted item detached keeps its tilt and its place.
+  const tilted = { ...s, rotX: 20 }
+  const tLayout = layoutOf(block, board, tilted)
+  const freed = detachItem(tLayout, tilted, sizes)
+  const a = at(tLayout, 's')
+  const b = at(layoutOf(block, board, freed), 's')
+  expect([b.x, b.cy, b.z]).toEqual([
+    expect.closeTo(a.x, 4),
+    expect.closeTo(a.cy, 4),
+    expect.closeTo(a.z, 4),
+  ])
+  expect(b.quaternion.angleTo(a.quaternion)).toBeCloseTo(0, 3)
+})
+
+test('removing a parent frees its children in place; theirs stay on them', () => {
+  const block = pedestal({ id: 'b', h: 120 })
+  const board = plank({ parentId: 'b', face: 'top', lift: 0 })
+  const s = object({ id: 's', artworkId: 'alejandro', parentId: 'pl', face: 'front' })
+  const layout = layoutOf(block, board, s)
+  const next = removeItems(layout, new Set(['b']), sizes)
+  expect(next.items.map((i) => i.id)).toEqual(['pl', 's'])
+  expect(next.items[0].parentId).toBeNull()
+  expect(next.items[1].parentId).toBe('pl')
+  expect(at(next, 's').cy).toBeCloseTo(at(layout, 's').cy)
+})
+
+test('parse frees loops, missing parents, itself and other rooms', () => {
+  const { items } = parseFloorLayout({
+    items: [
+      pedestal({ id: 'a', parentId: 'b', face: 'front' }),
+      pedestal({ id: 'b', parentId: 'a', face: 'back' }),
+      pedestal({ id: 'c', parentId: 'c' }),
+      pedestal({ id: 'd', parentId: 'zz' }),
+      pedestal({ id: 'e', room: 1, parentId: 'b' }),
+      object({ id: 'o', parentId: 'b', face: 'sideways' as never }),
+    ],
+  })
+  const byId = new Map(items.map((i) => [i.id, i]))
+  // The loop is broken once; nothing points at itself.
+  expect([byId.get('a')!.parentId, byId.get('b')!.parentId]).toContain(null)
+  expect(byId.get('c')!.parentId).toBeNull()
+  expect(byId.get('d')!.parentId).toBeNull()
+  expect(byId.get('e')!.parentId).toBeNull()
+  expect(byId.get('o')!.face).toBe('top')
 })
 
 test('drop: onto a pedestal centred the first time, then it slides; Alt never snaps', () => {
   const p = pedestal()
   const layout = layoutOf(p, object())
-  const first = dropObject(layout, object(), 2.1, 3.05)
-  expect(first.pedestalId).toBe('p1')
+  const first = dropItem(layout, object(), 2.1, 3.05, sizes)
+  expect([first.parentId, first.face]).toEqual(['p1', 'top'])
   expect([first.offsetX, first.offsetZ]).toEqual([0, 0])
-  const slid = dropObject(layoutOf(p, first), first, 2.1, 3.05)
+  const slid = dropItem(layoutOf(p, first), first, 2.1, 3.05, sizes)
   expect([slid.offsetX, slid.offsetZ]).toEqual([10, 5])
-  expect(dropObject(layout, object(), 2.1, 3.05, { snap: false }).pedestalId).toBeNull()
+  expect(dropItem(layout, object(), 2.1, 3.05, sizes, { snap: false }).parentId).toBeNull()
   // Off every top: on the floor.
-  expect(dropObject(layout, first, 5, 5).pedestalId).toBeNull()
+  const off = dropItem(layout, first, 5, 5, sizes)
+  expect([off.parentId, off.lift]).toEqual([null, 0])
 })
 
-test('the highest top wins where tops overlap; another room never counts', () => {
+test('drop: only Objects snap; a side only of an item off the floor, at its middle', () => {
+  // A pedestal over another's top stays on the floor.
+  const p = pedestal()
+  const other = pedestal({ id: 'p2', x: 0, z: 0 })
+  expect(dropItem(layoutOf(p, other), other, 2, 3, sizes).parentId).toBeNull()
+  // Beside a pedestal standing on the floor: no side attach.
+  const near = object({ id: 's', artworkId: 'alejandro' })
+  const beside = dropItem(layoutOf(p, near), near, 2 + 0.2 + 0.077 + 0.01, 3, sizes, { sideTolCm: 5 })
+  expect(beside.parentId).toBeNull()
+  // Against the raised plank's front, 1 cm off it: on its front, its middle height, facing out.
+  const turned = { ...near, rotY: 30 }
+  const onPlank = dropItem(layoutOf(plank(), turned), turned, 0.03, -2 + 0.015 + 0.077 + 0.01, sizes, {
+    sideTolCm: 5,
+  })
+  expect([onPlank.parentId, onPlank.face, onPlank.offsetY, onPlank.rotY]).toEqual(['pl', 'front', 0, 0])
+  expect(onPlank.offsetX).toBeCloseTo(3)
+  // A low plank: raised so nothing ends below the floor.
+  const low = plank({ lift: 5, h: 20 })
+  const onLow = dropItem(layoutOf(low, near), near, 0, -2 + 0.015 + 0.077 + 0.01, sizes, { sideTolCm: 5 })
+  expect(onLow.parentId).toBe('pl')
+  expect(at(layoutOf(low, onLow), 's').y).toBeCloseTo(0, 2)
+  // Too far from the face: free.
+  const far = dropItem(layoutOf(plank(), near), near, 0, -1.5, sizes, { sideTolCm: 5 })
+  expect(far.parentId).toBeNull()
+})
+
+test('the highest top wins where tops overlap; another room, itself and its own children never count', () => {
   const low = pedestal({ id: 'low', h: 40 })
   const high = pedestal({ id: 'high', h: 100 })
   const elsewhere = pedestal({ id: 'far', room: 1, h: 200 })
-  expect(pedestalUnder(layoutOf(low, high, elsewhere), 0, 2, 3)?.id).toBe('high')
+  const layout = layoutOf(low, high, elsewhere)
+  expect(supportUnder(layout, sizes, 0, 2, 3, new Set())?.id).toBe('high')
+  expect(supportUnder(layout, sizes, 0, 2, 3, new Set(['high']))?.id).toBe('low')
 })
 
-test('detach: it stays exactly where it is, its height now from the floor', () => {
-  const p = pedestal({ rotY: 45 })
-  const o = object({ pedestalId: 'p1', offsetX: 8, offsetZ: -4, rotY: 10, lift: 2 })
-  const layout = layoutOf(p, o)
-  const before = placeAll(layout).find(({ item }) => item.id === 'o1')!.at
-  const free = detachObject(layout, o)
-  expect(free.pedestalId).toBeNull()
-  const after = placeAll(layoutOf(p, free)).find(({ item }) => item.id === 'o1')!.at
-  expect(after.x).toBeCloseTo(before.x)
-  expect(after.z).toBeCloseTo(before.z)
-  expect(after.y).toBeCloseTo(before.y)
-  expect(after.rotY).toBeCloseTo(before.rotY)
+test('attaching: on a new side it faces out; on a top it keeps the turn it was seen with', () => {
+  const s = object({ id: 's', artworkId: 'alejandro', rotY: 30, rotX: 10 })
+  const onSide = attachTo(layoutOf(plank(), s), s, 'pl', 'front', null, sizes)
+  expect([onSide.rotX, onSide.rotY, onSide.rotZ, onSide.offsetX, onSide.offsetY]).toEqual([0, 0, 0, 0, 0])
+  const p = pedestal({ rotY: 10 })
+  const onTop = attachTo(layoutOf(p, s), s, 'p1', 'top', null, sizes)
+  expect(onTop.rotY).toBeCloseTo(20)
+  expect(onTop.rotX).toBe(10)
+  // At a point: its centre lands there on the face.
+  const there = attachTo(layoutOf(plank(), s), s, 'pl', 'front', { x: -0.04, y: 1.3, z: -1.98 }, sizes)
+  expect(there.offsetX).toBeCloseTo(-4)
+  expect(there.offsetY).toBeCloseTo(-20)
+  // An item never attaches to itself or below itself.
+  const board = plank()
+  const child = { ...s, parentId: 'pl', face: 'front' as const }
+  expect(attachTo(layoutOf(board, child), board, 's', 'top', null, sizes)).toBe(board)
 })
 
-test('resizing a pedestal keeps Objects that still fit, re-centres the others', () => {
+test('resizing keeps children that still fit, re-centres the others (tops and sides)', () => {
   const p = pedestal({ w: 100, d: 100 })
-  const near = object({ id: 'near', pedestalId: 'p1', offsetX: 10 })
-  const far = object({ id: 'far', pedestalId: 'p1', offsetX: 45 })
+  const near = object({ id: 'near', parentId: 'p1', offsetX: 10 })
+  const far = object({ id: 'far', parentId: 'p1', offsetX: 45 })
   const smaller = { ...p, w: 40, d: 40 }
-  const kept = keepObjectsOnTop(layoutOf(smaller, near, far), smaller)
+  const kept = keepChildrenOnFaces(layoutOf(smaller, near, far), 'p1', sizes)
   expect((kept.items.find((i) => i.id === 'near') as FloorObject).offsetX).toBe(10)
   expect((kept.items.find((i) => i.id === 'far') as FloorObject).offsetX).toBe(0)
+  const s = object({ id: 's', artworkId: 'alejandro', parentId: 'pl', face: 'front', offsetX: 8, offsetY: 30 })
+  const thin = plank({ w: 10 })
+  const onThin = keepChildrenOnFaces(layoutOf(thin, s), 'pl', sizes).items[1]
+  expect([onThin.offsetX, onThin.offsetY]).toEqual([0, 0])
+})
+
+test('an Object wider than its face overhangs; no size: 40 cm everywhere, finite', () => {
+  const s = object({ id: 's', artworkId: 'alejandro', parentId: 'pl', face: 'front' })
+  expect(overhangs(layoutOf(plank(), s), s, sizes)).toBe(true)
+  expect(overhangs(layoutOf(plank({ w: 40 }), s), s, sizes)).toBe(false)
+  const unknown = object({ artworkId: 'nobody' })
+  const where = at(layoutOf(unknown), 'o1', {})
+  expect(where.cy).toBeCloseTo(0.2)
+  expect([where.size.w, where.size.h, where.size.d]).toEqual([40, 40, 40])
+  const onIt = pedestal({ parentId: 'o1', face: 'top' })
+  const above = at(layoutOf(unknown, onIt), 'p1', {})
+  expect(Number.isFinite(above.cy)).toBe(true)
+  expect(above.y).toBeCloseTo(0.4)
 })
 
 test('tops follow the shape: tapered is smaller, a table is its top', () => {

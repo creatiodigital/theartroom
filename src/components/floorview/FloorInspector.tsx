@@ -12,13 +12,15 @@ import c from 'classnames'
 import { Button } from '@/components/ui/Button'
 import { SegmentStrip } from '@/components/wallview/chrome'
 import type { FloorArtwork } from '@/lib/floor/floorArtworks'
-import type { FloorItem, FloorObject, FloorPedestal } from '@/lib/floor/floorLayout'
+import type { FloorItem, FloorPedestal } from '@/lib/floor/floorLayout'
 import {
-  detachObject,
-  keepObjectsOnTop,
-  pedestalTopCm,
-  placeAll,
-  toPedestalFrame,
+  childrenOf,
+  descendantsOf,
+  detachItem,
+  faceFrame,
+  keepChildrenOnFaces,
+  placeMap,
+  removeItems,
 } from '@/lib/floor/floorPlacement'
 import {
   EDGE_RADIUS,
@@ -171,7 +173,8 @@ export function FloorInspector({
   const { layout } = editor
   const items = layout.items.filter((i) => selectedIds.includes(i.id))
   const [confirmRemove, setConfirmRemove] = useState<FloorPedestal | null>(null)
-  const at = new Map(placeAll(layout).map(({ item, at }) => [item.id, at]))
+  const { sizes } = editor
+  const at = placeMap(layout, sizes)
 
   if (items.length === 0) {
     return (
@@ -211,14 +214,20 @@ export function FloorInspector({
   const moveTo = (westCm: number, northCm: number) => {
     const x = room.minX + westCm / 100
     const z = room.minZ + northCm / 100
-    if (item.kind === 'object' && item.pedestalId) {
-      const p = layout.items.find((i) => i.id === item.pedestalId) as FloorPedestal | undefined
-      if (!p) return
-      const [ox, oz] = toPedestalFrame(p, x, z)
-      editor.patchItem(item.id, { offsetX: ox, offsetZ: oz })
-    } else {
+    const parentAt = item.parentId ? at.get(item.parentId) : undefined
+    if (!parentAt) {
       editor.patchItem(item.id, { x, z })
+      return
     }
+    // Attached: the move seen along its face's own axes (on a side, only across it).
+    const f = faceFrame(parentAt, item.face)
+    const along = (v: { x: number; z: number }) => ((x - where.x) * v.x + (z - where.z) * v.z) * 100
+    editor.patchItem(
+      item.id,
+      item.face === 'top' || item.face === 'bottom'
+        ? { offsetX: item.offsetX + along(f.across), offsetZ: item.offsetZ + along(f.up) }
+        : { offsetX: item.offsetX + along(f.across) },
+    )
   }
   const place = (
     <Section title="Position">
@@ -290,9 +299,7 @@ export function FloorInspector({
     const uploaded = b ? sizeText(1) : null
     const scaleTo = (target: number, side: number) =>
       editor.patchItem(item.id, { scale: Math.min(20, Math.max(0.05, target / side)) })
-    const pedestal = item.pedestalId
-      ? (layout.items.find((i) => i.id === item.pedestalId) as FloorPedestal | undefined)
-      : undefined
+    const parent = item.parentId ? layout.items.find((i) => i.id === item.parentId) : undefined
     const heightCm = where.y * 100
     return (
       <aside className={styles.inspector} aria-label={names[item.id]}>
@@ -313,11 +320,11 @@ export function FloorInspector({
             </Button>
           )}
         </div>
-        {pedestal && (
+        {parent && (
           <div className={styles.onPedestal}>
             <span>
-              <b>On {pedestal.name}</b>
-              <span>Moves with the pedestal</span>
+              <b>On {names[parent.id]}</b>
+              <span>Moves with it</span>
             </span>
             <Button
               variant="secondary"
@@ -325,7 +332,7 @@ export function FloorInspector({
               font="dashboard"
               onClick={() =>
                 editor.update((all) =>
-                  all.map((i) => (i.id === item.id ? detachObject(layout, item) : i)),
+                  all.map((i) => (i.id === item.id ? detachItem(layout, item, sizes) : i)),
                 )
               }
             >
@@ -338,14 +345,14 @@ export function FloorInspector({
           <NumberField
             label="Height above the floor"
             unit="cm"
-            hint={pedestal ? `top of ${pedestal.name}` : undefined}
+            hint={parent ? `on ${names[parent.id]}` : undefined}
             value={heightCm}
             min={0}
             max={1000}
-            disabled={item.locked}
+            disabled={item.locked || (!!parent && item.face !== 'top')}
             onChange={(v) =>
               editor.patchItem(item.id, {
-                lift: pedestal ? Math.max(0, v - pedestalTopCm(pedestal)) : v,
+                lift: parent ? Math.max(0, item.lift + v - heightCm) : v,
               })
             }
           />
@@ -424,7 +431,7 @@ export function FloorInspector({
             size="small"
             font="dashboard"
             onClick={() => {
-              editor.update((all) => all.filter((i) => i.id !== item.id))
+              editor.commit(removeItems(layout, new Set([item.id]), sizes))
               onSelect([])
             }}
           >
@@ -439,25 +446,21 @@ export function FloorInspector({
   const p = item
   const shape = pedestalShape(p.shape)
   const material = pedestalMaterial(p.material)
-  const onTop = layout.items.filter(
-    (i): i is FloorObject => i.kind === 'object' && i.pedestalId === p.id,
-  )
+  const onTop = childrenOf(layout, p.id)
   const resize = (patch: Partial<FloorPedestal>) => {
     const next = { ...p, ...patch }
-    const keep = keepObjectsOnTop(
-      { ...layout, items: layout.items.map((i) => (i.id === p.id ? next : i)) },
-      next,
+    editor.commit(
+      keepChildrenOnFaces(
+        { ...layout, items: layout.items.map((i) => (i.id === p.id ? next : i)) },
+        p.id,
+        sizes,
+      ),
     )
-    editor.commit(keep)
   }
-  const removePedestal = (alsoObjects: boolean) => {
-    editor.update((all) =>
-      all
-        .filter(
-          (i) => i.id !== p.id && !(alsoObjects && i.kind === 'object' && i.pedestalId === p.id),
-        )
-        .map((i) => (i.kind === 'object' && i.pedestalId === p.id ? detachObject(layout, i) : i)),
-    )
+  // Removing it alone leaves what is attached to it where it is; "Remove too" takes all of it.
+  const removePedestal = (alsoAttached: boolean) => {
+    const ids = new Set([p.id, ...(alsoAttached ? descendantsOf(layout, p.id) : [])])
+    editor.commit(removeItems(layout, ids, sizes))
     setConfirmRemove(null)
     onSelect([])
   }
@@ -722,10 +725,10 @@ function Several({
   names: Record<string, string>
   onSelect: (ids: string[]) => void
 }) {
-  const { layout } = editor
-  const at = new Map(placeAll(layout).map(({ item, at }) => [item.id, at]))
-  // Free items only: an Object on a pedestal moves with it.
-  const movable = items.filter((i) => !i.locked && !(i.kind === 'object' && i.pedestalId))
+  const { layout, sizes } = editor
+  const at = placeMap(layout, sizes)
+  // Free items only: what is attached moves with what it is on.
+  const movable = items.filter((i) => !i.locked && !i.parentId)
   const ids = new Set(movable.map((i) => i.id))
   const group = layout.groups.find((g) => items.every((i) => g.memberIds.includes(i.id)))
 
@@ -878,16 +881,7 @@ function Several({
           size="small"
           font="dashboard"
           onClick={() => {
-            const gone = new Set(items.map((i) => i.id))
-            editor.update((all) =>
-              all
-                .filter((i) => !gone.has(i.id))
-                .map((i) =>
-                  i.kind === 'object' && i.pedestalId && gone.has(i.pedestalId)
-                    ? detachObject(layout, i)
-                    : i,
-                ),
-            )
+            editor.commit(removeItems(layout, new Set(items.map((i) => i.id)), sizes))
             onSelect([])
           }}
         >

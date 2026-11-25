@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/Button'
 import { SegmentStrip } from '@/components/wallview/chrome'
 import type { FloorArtwork } from '@/lib/floor/floorArtworks'
 import { type FloorItem, type FloorObject, type FloorPedestal } from '@/lib/floor/floorLayout'
-import { detachObject, dropObject } from '@/lib/floor/floorPlacement'
+import { detachItem, dropItem, removeItems } from '@/lib/floor/floorPlacement'
 import { PEDESTAL_DEFAULT_LOOK, pedestalShape } from '@/lib/floor/pedestals'
 import { addFloorArtworks } from '@/redux/slices/exhibitionSlice'
 import { hidePlaceholders, showPlaceholders } from '@/redux/slices/sceneSlice'
@@ -50,6 +50,23 @@ import styles from './FloorView.module.scss'
  * from the library, pedestals) and the picked item's panel. Everything is marked as a panel
  * overlay, so the room's camera ignores presses and wheels over it.
  */
+/** Free in the room at (x, z), on the floor, unturned. */
+const FREE_AT = (room: number, x: number, z: number) => ({
+  room,
+  x,
+  z,
+  rotX: 0,
+  rotY: 0,
+  rotZ: 0,
+  lift: 0,
+  parentId: null,
+  face: 'top' as const,
+  offsetX: 0,
+  offsetY: 0,
+  offsetZ: 0,
+  locked: false,
+})
+
 const newId = (prefix: string) =>
   `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
 
@@ -160,19 +177,18 @@ export function FloorView() {
         kind: 'object',
         id: newId('o'),
         artworkId: artwork.id,
-        room: room.room,
+        ...FREE_AT(room.room, x, z),
+        scale: 1,
+        castShadow: true,
+      }
+      const placed = dropItem(
+        layout,
+        o,
         x,
         z,
-        rotY: 0,
-        scale: 1,
-        lift: 0,
-        castShadow: true,
-        pedestalId: null,
-        offsetX: 0,
-        offsetZ: 0,
-        locked: false,
-      }
-      const placed = dropObject(layout, o, x, z, { snap: helpers.snapPedestals, centre: true })
+        { ...editor.sizes, [artwork.id]: artwork.boundsCm },
+        { snap: helpers.snapPedestals, centre: true },
+      )
       editor.commit({ ...layout, items: [...layout.items, placed] })
       select([placed.id])
     },
@@ -190,21 +206,24 @@ export function FloorView() {
     (x: number, z: number, from?: FloorPedestal) => {
       if (!room) return
       const shape = pedestalShape('box')
+      // A copy stands free beside the original (whatever that is attached to).
       const p: FloorPedestal = from
-        ? { ...from, id: newId('p'), name: nextPedestalName(), x, z, locked: false }
+        ? {
+            ...detachItem(layout, from, editor.sizes),
+            id: newId('p'),
+            name: nextPedestalName(),
+            x,
+            z,
+            locked: false,
+          }
         : {
             kind: 'pedestal',
             id: newId('p'),
             name: nextPedestalName(),
-            room: room.room,
-            x,
-            z,
-            rotY: 0,
-            lift: 0,
+            ...FREE_AT(room.room, x, z),
             shape: shape.id,
             ...shape.defaults,
             ...PEDESTAL_DEFAULT_LOOK,
-            locked: false,
           }
       editor.commit({ ...layout, items: [...layout.items, p] })
       select([p.id])
@@ -289,15 +308,8 @@ export function FloorView() {
       }
       if ((event.key === 'Delete' || event.key === 'Backspace') && ids.size) {
         event.preventDefault()
-        ed.update((all) =>
-          all
-            .filter((i) => !ids.has(i.id))
-            .map((i) =>
-              i.kind === 'object' && i.pedestalId && ids.has(i.pedestalId)
-                ? detachObject(ed.layout, i)
-                : i,
-            ),
-        )
+        // What was attached to them stays where it is.
+        ed.commit(removeItems(ed.layout, ids, ed.sizes))
         select([])
         return
       }
@@ -311,13 +323,17 @@ export function FloorView() {
       if (move[event.key] && ids.size && !pointerOnRoomRef.current) {
         event.preventDefault()
         const [dx, dz] = move[event.key]
+        // Free: across the floor. On a top or bottom: in its parent's frame (as O6). On a side:
+        // left / right across the face, up / down up it.
         ed.update((all) =>
           all.map((i: FloorItem) =>
-            ids.has(i.id) && !i.locked && !(i.kind === 'object' && i.pedestalId)
-              ? { ...i, x: i.x + dx, z: i.z + dz }
-              : i.kind === 'object' && i.pedestalId && ids.has(i.id) && !i.locked
-                ? { ...i, offsetX: i.offsetX + dx * 100, offsetZ: i.offsetZ + dz * 100 }
-                : i,
+            !ids.has(i.id) || i.locked
+              ? i
+              : !i.parentId
+                ? { ...i, x: i.x + dx, z: i.z + dz }
+                : i.face === 'top' || i.face === 'bottom'
+                  ? { ...i, offsetX: i.offsetX + dx * 100, offsetZ: i.offsetZ + dz * 100 }
+                  : { ...i, offsetX: i.offsetX + dx * 100, offsetY: i.offsetY - dz * 100 },
           ),
         )
       }
@@ -332,24 +348,20 @@ export function FloorView() {
   const roomD = Math.round((room.maxZ - room.minZ) * 100)
   const inRoom = layout.items.filter((i) => i.room === room.room)
   const listed = inRoom.filter((i) => filter === 'all' || i.kind === filter)
-  // Pedestals, each followed by its Objects; then the free Objects.
+  // What stands free (pedestals first, then Objects), each followed by what is attached to it, at
+  // any depth. A filter shows a flat list of its kind.
   const rows: { item: FloorItem; child: boolean }[] = []
-  for (const p of listed.filter((i) => i.kind === 'pedestal')) {
-    rows.push({ item: p, child: false })
-    for (const o of inRoom.filter(
-      (i) => i.kind === 'object' && i.pedestalId === p.id && filter !== 'pedestal',
-    )) {
-      rows.push({ item: o, child: true })
+  if (filter === 'all') {
+    const ids = new Set(inRoom.map((i) => i.id))
+    const walk = (item: FloorItem, depth: number) => {
+      rows.push({ item, child: depth > 0 })
+      for (const c of inRoom.filter((i) => i.parentId === item.id)) walk(c, depth + 1)
     }
-  }
-  for (const o of listed.filter(
-    (i) => i.kind === 'object' && !(i.pedestalId && inRoom.some((p) => p.id === i.pedestalId)),
-  )) {
-    rows.push({ item: o, child: false })
-  }
-  if (filter === 'object') {
-    rows.length = 0
-    for (const o of listed) rows.push({ item: o, child: false })
+    const roots = inRoom.filter((i) => !i.parentId || !ids.has(i.parentId))
+    for (const r of [...roots.filter((i) => i.kind === 'pedestal'), ...roots.filter((i) => i.kind === 'object')])
+      walk(r, 0)
+  } else {
+    for (const i of listed) rows.push({ item: i, child: false })
   }
 
   const helperRows: { key: keyof FloorHelpers; label: string; sub: string; icon: ReactNode }[] = [
@@ -368,7 +380,7 @@ export function FloorView() {
     {
       key: 'snapPedestals',
       label: 'Snap to pedestals',
-      sub: 'Objects stick to a pedestal’s top',
+      sub: 'Objects stick to a pedestal’s top or a raised side',
       icon: <Magnet size={16} aria-hidden />,
     },
     {
@@ -544,8 +556,10 @@ export function FloorView() {
                   <span className={styles.itemName}>{names[item.id]}</span>
                   <span className={styles.itemKind}>
                     {item.kind === 'pedestal'
-                      ? 'Pedestal'
-                      : item.lift > 0 && !item.pedestalId
+                      ? pedestalShape(item.shape).id === 'plank'
+                        ? 'Plank'
+                        : 'Pedestal'
+                      : item.lift > 0 && !item.parentId
                         ? `Object · ↑ ${Math.round(item.lift)}`
                         : 'Object'}
                   </span>
@@ -573,7 +587,6 @@ export function FloorView() {
         <FloorPlan
           room={room}
           editor={editor}
-          artworks={artworks}
           selectedIds={selectedIds}
           onSelect={select}
           expand={expand}
