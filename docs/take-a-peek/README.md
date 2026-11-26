@@ -385,3 +385,11 @@ Keep the email address written in the text too: some visitors have no email app 
 
 **Use the normal-pace video** now in `public/videos/take-a-peek/` (27.1 s; the earlier 21 s cut was sped up and is gone
 from the repo). Commit the replaced files and set `PEEK_DURATION_S = 27`.
+
+## Loop update (owner, 2026-11-26)
+
+The 1-second loop jumped on every repeat ("unsettling"). `print-arrives-preview.mp4` / `.webm` / `thumb.gif` / `poster.jpg`
+in `public/videos/take-a-peek/` are replaced with a **3-second seamless loop** (owner, second pass: **5–8.5 s** of the full video,
+where the gloved hands lift the lid in the middle, **cut square 480 × 480** around them, its last half-second
+crossfaded into its start so the repeat doesn't show; the poster is its frame at 1 s). Same names, nothing to change in code beyond any
+comment that says "the first second" or "the first frame" (`media.ts`). The loop is now square: keep `object-fit: cover`. Commit the replaced files.

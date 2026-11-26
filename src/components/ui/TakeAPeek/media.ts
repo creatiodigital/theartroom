@@ -6,10 +6,14 @@ const DIR = '/videos/take-a-peek'
 
 /** The full video, 1024 × 576, no audio: requested only when the window opens. */
 export const PEEK_FULL = `${DIR}/print-arrives-full.mp4`
-/** The circle's loop: the first second of the full video, silent. WebM first. */
+/**
+ * The circle's loop: 3 s of the full video (5–8.5 s, the gloved hands lifting the lid), cut square
+ * 480 × 480 and crossfaded at its end so the repeat doesn't show (owner, 2026-11-26). Silent. WebM
+ * first.
+ */
 export const PEEK_PREVIEW_WEBM = `${DIR}/print-arrives-preview.webm`
 export const PEEK_PREVIEW_MP4 = `${DIR}/print-arrives-preview.mp4`
-/** The first frame: the loop's poster, and the still with reduced motion. */
+/** The loop's frame at 1 s: its poster, and the still with reduced motion. */
 export const PEEK_POSTER = `${DIR}/print-arrives-poster.jpg`
 
 /**

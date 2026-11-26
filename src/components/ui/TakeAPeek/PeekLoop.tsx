@@ -24,10 +24,10 @@ const useReducedMotion = () =>
   )
 
 /**
- * The circle (docs/take-a-peek/README.md "The circle"): the video's first second, silent and
- * looping, inside a ring, with a white play icon on top. It plays only while at least half of it is
+ * The circle (docs/take-a-peek/README.md "The circle"): a seamless 3-second loop of the video,
+ * silent, inside a ring, with a white play icon on top. It plays only while at least half of it is
  * on screen and the tab is visible, and holds while `paused` (the window is open). With reduced
- * motion there is no video, only the first frame.
+ * motion there is no video, only its still.
  */
 export const PeekLoop = ({ paused }: { paused: boolean }) => {
   const reduce = useReducedMotion()
@@ -63,7 +63,7 @@ export const PeekLoop = ({ paused }: { paused: boolean }) => {
   return (
     <span className={styles.ring} aria-hidden>
       <span className={styles.window}>
-        {/* The first frame, under the video until it has one of its own (and alone with reduced motion). */}
+        {/* The still, under the video until it has a frame of its own (and alone with reduced motion). */}
         <img src={PEEK_POSTER} alt="" className={styles.media} />
         {!reduce && (
           // No autoplay: the on-screen check above starts it, so a circle out of view never plays.
