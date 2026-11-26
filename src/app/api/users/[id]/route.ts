@@ -13,6 +13,7 @@ import {
 } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 import { deleteFromR2 } from '@/lib/r2'
+import { recordSlugChange } from '@/lib/seo/slugRedirects'
 import { isEmail } from '@/lib/validation'
 import { sanitizeLine } from '@/utils/sanitizeLine'
 
@@ -98,7 +99,9 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     }
 
     // Check if actor can modify target user based on role hierarchy
-    if (!canModifyUser(session.user.userType, targetUser.userType, targetUser.id === session.user.id)) {
+    if (
+      !canModifyUser(session.user.userType, targetUser.userType, targetUser.id === session.user.id)
+    ) {
       return NextResponse.json({ error: 'Forbidden - Cannot modify this user' }, { status: 403 })
     }
 
@@ -184,6 +187,12 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         signatureUrl: true,
       },
     })
+
+    // A new handler: the old artist address keeps working, sent on to the new one (AR-193). Their
+    // exhibitions' pages follow by their own URL (movedExhibitionPath).
+    if (typeof data.handler === 'string' && data.handler !== targetUser.handler) {
+      await recordSlugChange('artist', targetUser.handler, id)
+    }
 
     // Cascade: unpublishing an artist also unpublishes all their exhibitions
     if (body.published === false) {

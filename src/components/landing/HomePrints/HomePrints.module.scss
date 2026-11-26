@@ -23,17 +23,32 @@
   max-width: var(--content-max-width);
   width: calc(100% - var(--site-padding) * 2);
   margin: 0 auto;
-  padding: 120px 0;
+  // A little space above and below (owner, 2026-11-26; it was 120 px), so where the words are taller
+  // than the print they don't touch the section's edges. One column sets its own, under the words.
+  padding: var(--space-5) 0;
 
-  @include media-down(lg) {
-    gap: 48px;
-    width: calc(100% - var(--space-6) * 2);
+  // The space above is for desktops only (owner, same day): a tablet held sideways, which keeps the
+  // two columns, has none.
+  @media #{$tablet-room} {
+    padding-top: 0;
   }
 
+  // Tablets (owner, 2026-11-26: side by side, the print came out small and the words cramped): one
+  // column, the print over the words, in a centred reading column. No space above it, phones
+  // included (owner, same day): the stage's own margin around the print is enough.
+  @include media-down(lg) {
+    grid-template-columns: minmax(0, var(--measure));
+    justify-content: center;
+    gap: var(--space-10);
+    width: calc(100% - var(--space-6) * 2);
+    padding: 0 0 var(--space-18);
+  }
+
+  // The reading column above still holds: a phone is narrower than it, and an iPad mini (744 px) or
+  // a 768 px tablet gets the tablet column, not a stage as wide as the screen.
   @include media-down(md) {
-    grid-template-columns: 1fr;
     gap: 18px;
-    padding: 56px 0 60px;
+    padding-bottom: 60px;
   }
 }
 
@@ -43,9 +58,9 @@
   aspect-ratio: 1 / 1;
   min-width: 0;
 
-  // Phones: the tallest print's shape, never taller than the square (HomePrints.tsx
-  // `phoneStageAspect`), so a landscape print has no wide band of grey above and below.
-  @include media-down(md) {
+  // Tablets and phones (one column): the tallest print's shape, never taller than the square
+  // (HomePrints.tsx `phoneStageAspect`), so a landscape print has no wide band of grey above and below.
+  @include media-down(lg) {
     aspect-ratio: var(--phone-stage-aspect);
   }
 }
@@ -76,6 +91,15 @@
   justify-content: center;
   width: 100%;
   height: 100%;
+}
+
+// One column (tablets, phones): no margin under the print (owner, 2026-11-26), the gap to the words
+// is the grid's. The print stays centred in the stage (owner, same day: at the top, a wider print
+// left all the stage's spare grey under it).
+@include media-down(lg) {
+  .slide {
+    margin-bottom: 0;
+  }
 }
 
 .render {
@@ -145,69 +169,6 @@
   }
 }
 
-// Every caption in the same cell (the tallest sets the height), under a hairline.
-.captions {
-  display: grid;
-  align-self: stretch;
-  padding-top: 18px;
-  border-top: 1px solid var(--color-gray-55);
-
-  @include media-down(md) {
-    padding-top: 0;
-    border-top: 0;
-  }
-}
-
-.caption {
-  grid-area: 1 / 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  opacity: 0;
-  transition: opacity 1.2s ease;
-  pointer-events: none;
-
-  &.current {
-    opacity: 1;
-    pointer-events: auto;
-  }
-}
-
-.work {
-  font-family: var(--font-serif), var(--font-serif-fallback);
-  font-size: 22px;
-  line-height: 1.3;
-  color: var(--public-text);
-  // A link to the work's page with the caption's look: no underline, not even on hover (public rule).
-  text-decoration: none;
-  align-self: flex-start;
-
-  @include media-down(md) {
-    font-size: 17px;
-  }
-}
-
-.artist {
-  font-family: var(--font-sans), var(--font-sans-fallback);
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--color-text-secondary);
-
-  @include media-down(md) {
-    font-size: 14px;
-  }
-}
-
-// The price, as the grids' cards (owner, 2026-11-18): a little apart from the lines above it.
-.price {
-  margin-top: var(--space-2);
-  font-family: var(--font-sans), var(--font-sans-fallback);
-  font-size: var(--text-md);
-  font-weight: var(--font-medium);
-  line-height: 1.4;
-  color: var(--public-text);
-}
-
 .link {
   font-size: 16px;
 
@@ -217,14 +178,12 @@
 }
 
 // Reduced motion: one print, no fades.
-.still .slide,
-.still .caption {
+.still .slide {
   transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .slide,
-  .caption {
+  .slide {
     transition: none;
   }
 }

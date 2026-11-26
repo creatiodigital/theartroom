@@ -1324,3 +1324,18 @@ model WallGuide {
 
   @@index([exhibitionId, wallId])
 }
+
+/// An address that changed (AR-193): an artwork's slug (it follows the title), an exhibition's URL,
+/// an artist's handler. A page that no longer finds the old one sends the visitor, and search
+/// engines, on to the current address with a permanent redirect instead of a 404, so links in
+/// posts and pins keep working. The target is the row's id, so a second rename needs no chain; a
+/// deleted target simply ends in the 404 it would have been.
+model SlugRedirect {
+  id        String   @id @default(uuid())
+  kind      String // "artwork" | "exhibition" | "artist"
+  oldSlug   String
+  targetId  String
+  createdAt DateTime @default(now())
+
+  @@unique([kind, oldSlug])
+}

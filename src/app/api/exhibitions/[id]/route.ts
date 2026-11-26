@@ -20,6 +20,7 @@ import { secondLanguageOf } from '@/lib/roomLanguage'
 
 import { sanitizeLine } from '@/utils/sanitizeLine'
 import { slugify } from '@/utils/slugify'
+import { recordSlugChange } from '@/lib/seo/slugRedirects'
 import type { PanelSettings } from '@/components/scene/spaces/objects/Panel/panelSettings'
 import type { BenchSettings } from '@/components/scene/spaces/objects/Bench/benchSettings'
 
@@ -204,6 +205,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       where: { id },
       select: {
         userId: true,
+        url: true,
         spaceId: true,
         published: true,
         spacePublished: true,
@@ -536,6 +538,11 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       where: { id },
       data,
     })
+
+    // A new URL: the old address keeps working, sent on to the new one (AR-193).
+    if (typeof data.url === 'string' && data.url !== currentExhibition.url) {
+      await recordSlugChange('exhibition', currentExhibition.url, id)
+    }
 
     if (frozen && previousBakeId) await deleteReplacedBake(id, previousBakeId)
 

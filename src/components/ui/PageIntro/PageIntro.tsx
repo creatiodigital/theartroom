@@ -9,15 +9,28 @@ type PageIntroProps = {
   compact?: boolean
   /** The subtitle as a serif lead, 26 px (21 on phones), #444: About, Contact. */
   lead?: boolean
+  /** A loading stand-in's title: the same look, but not a heading, so the page streamed in after
+   *  it is the only one with an h1 (AR-193: crawlers read both in the HTML). */
+  placeholder?: boolean
 }
 
 /**
  * The redesigned public pages' title and line (designs/exhibitions-desktop.dc.html and the other
  * list pages): EB Garamond 52 (38 on phones), Lato 18 #555. Pages not redesigned yet keep PageHeader.
  */
-export const PageIntro = ({ title, subtitle, compact = false, lead = false }: PageIntroProps) => (
+export const PageIntro = ({
+  title,
+  subtitle,
+  compact = false,
+  lead = false,
+  placeholder = false,
+}: PageIntroProps) => (
   <header className={compact ? `${styles.intro} ${styles.compact}` : styles.intro}>
-    <h1 className={styles.title}>{title}</h1>
+    {placeholder ? (
+      <div className={styles.title}>{title}</div>
+    ) : (
+      <h1 className={styles.title}>{title}</h1>
+    )}
     {subtitle && (
       <p className={lead ? `${styles.subtitle} ${styles.lead}` : styles.subtitle}>{subtitle}</p>
     )}

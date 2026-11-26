@@ -18,8 +18,8 @@ export const PEEK_POSTER = `${DIR}/print-arrives-poster.jpg`
 
 /**
  * The full video's length in whole seconds (27.1 s: the normal-pace recut, 2026-11-26), for the
- * circle's "0:27" before anything is loaded. The player reads the real one from the file once it
- * has it.
+ * player's clock before the file has loaded. It reads the real one from the file once it has it.
+ * (The circle no longer shows a running time: owner, 2026-11-26.)
  */
 export const PEEK_DURATION_S = 27
 
