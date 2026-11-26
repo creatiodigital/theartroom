@@ -86,3 +86,21 @@
   font-weight: var(--font-bold);
   text-decoration: none;
 }
+
+// The optional button (docs/take-a-peek T9; designs/Announcement): 8 px more space above it, 48 px
+// tall, 24 px sides, Lato 12 caps; full width on phones. Under `.content`: two classes, so it wins
+// over Button's size class in any stylesheet order.
+.content .button {
+  align-self: flex-start;
+  height: var(--space-12);
+  margin-top: var(--space-2);
+  padding: 0 var(--space-6);
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+
+  @include media-down(md) {
+    align-self: stretch;
+  }
+}

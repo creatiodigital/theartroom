@@ -190,6 +190,18 @@ guess would be costly.
   (and Object pages, same info column): at its foot, where it was; exhibition: under Enter 3D room; artist: under the
   name (Q6). Checked at 1440 and 390, no console errors; Open Graph title and image are on all three pages, but the
   link-preview debugger needs a public URL: owed on the preview deploy.
+- **Media**: the 27.1 s recut committed, `PEEK_DURATION_S = 27` (circles read 0:27, the aria-label 27 seconds; the spec
+  reads the constant).
+- **T9**: `Announcement.buttonLabel` / `buttonUrl` (nullable; **pushed to the dev DB** with `db:push:dev` on the owner's
+  OK; **prod needs the same push before this ships**: until then the homepage hides the announcement, as its query
+  fails soft, and the admin editor can't load). One rule for the link, `src/lib/announcementButton.ts`, used by the
+  editor (checked on Save, error under the field, clears once fixed) and the API (400 otherwise) and again when the
+  homepage reads it. Homepage: the site's black square `Button` (primary, the artwork page's Order a print), 48 px,
+  12 px caps, envelope only for `mailto:`, full width on phones; an `https://` link opens in a new tab (as the text's
+  links), a site path navigates. Button gets `newTab` and `onLinkClick` for that. `announcement_cta { label }`.
+  Checked end to end on dev (editor → API → homepage at 1440 and 390, the mailto href, the event), then the dev
+  announcement put back with no button: **type the label and link in Admin › Content › Announcements yourself.**
+  Hover is the site button's (#000 to #333), not the board's #1a1a1a to #000.
 
 **Media update (2026-11-26):** `public/videos/take-a-peek/*` replaced with the recut at normal speed (27.1 s). Set
 `PEEK_DURATION_S = 27` in `src/components/ui/TakeAPeek/media.ts` and any "21" in labels; the files keep their names.

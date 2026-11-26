@@ -36,6 +36,10 @@ type ButtonProps = {
   href?: string
   /** With `href`: Next's prefetch (default on). Off for links to files, e.g. invoice PDFs (Q33). */
   prefetch?: boolean
+  /** With `href`: open in a new tab (`target="_blank"`, `rel="noopener noreferrer"`), for addresses off the site. */
+  newTab?: boolean
+  /** With `href`: called when the link is followed, e.g. to measure it (`onClick` is the button form's). */
+  onLinkClick?: () => void
   title?: string
   draggable?: boolean
   onDragStart?: (e: React.DragEvent<HTMLButtonElement>) => void
@@ -79,6 +83,8 @@ export const Button = React.memo(
     iconRight,
     href,
     prefetch,
+    newTab,
+    onLinkClick,
     title,
     draggable,
     onDragStart,
@@ -131,6 +137,9 @@ export const Button = React.memo(
         <Link
           href={href}
           prefetch={prefetch}
+          target={newTab ? '_blank' : undefined}
+          rel={newTab ? 'noopener noreferrer' : undefined}
+          onClick={onLinkClick}
           className={classNames}
           title={title}
           style={style}
