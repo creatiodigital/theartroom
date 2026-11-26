@@ -16,6 +16,7 @@ type ButtonProps = {
     | 'secondary'
     | 'outline'
     | 'outlineInverse'
+    | 'inverse'
     | 'danger'
     | 'ghost'
     | 'tab'

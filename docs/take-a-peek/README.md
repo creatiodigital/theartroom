@@ -147,6 +147,13 @@ guess would be costly.
   the circle, reduced motion shows the still. Two small departures: the loop is started by the on-screen check instead
   of `autoplay` (so a circle out of view never plays), and the window's button is 48 px (the artwork page's Order a
   print height) instead of 44. On phones the window is solid `#141414`, as drawn, so the page doesn't show through.
+- **T2**: P2, `inline` right under Order a print in `ArtworkPurchase` (so the artwork page and the room's pop-up alike;
+  not when sold out, since then there is no Order a print). Prop `order={{ title, onOrder }}`: the window's filled white
+  ORDER A PRINT OF {TITLE} calls the page's own `usePrintWizard`; gone while purchases are paused. Button `inverse`. No
+  bag icon (owner removed it from every Order button on 11-12); the button wraps a long title. Checked on the artwork
+  page at 1440 and 390 (lands in the wizard); the room's pop-up not opened here (WebGL): our Escape is stopped at
+  `document`, before the room's `window` listener, and the window is portalled to `<body>` above the pop-up. Worth
+  one look in the room.
 
 ## Questions
 

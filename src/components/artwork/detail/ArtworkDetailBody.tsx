@@ -239,6 +239,8 @@ export const ArtworkDetailBody = ({
                 minPriceCents={commerce.minPriceCents}
                 editionLines={commerce.editionLines}
                 artworkSlug={artwork.slug}
+                title={displayTitle}
+                surface={surface}
                 inquire={<ArtworkInquire onClick={openInquire} />}
               />
             ) : (

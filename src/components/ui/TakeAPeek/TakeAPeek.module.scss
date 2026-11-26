@@ -209,6 +209,22 @@
   }
 }
 
+// A work's title can be long: the button wraps rather than pushing the words aside.
+.orderCta {
+  height: auto;
+  min-height: var(--space-12);
+  max-width: 50%;
+  padding-block: var(--space-2);
+  // Semibold, as every Order print (owner, 2026-11-12); Lato draws it with its bold.
+  font-weight: var(--font-semibold);
+  white-space: normal;
+  text-align: center;
+
+  @include media-down(md) {
+    max-width: none;
+  }
+}
+
 // The arrow only beside the words on wide screens (PlayerPhone.dc.html draws the words alone).
 .ctaIcon {
   @include media-down(md) {

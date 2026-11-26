@@ -7,6 +7,7 @@ import c from 'classnames'
 
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
 
 import { PeekLoop } from './PeekLoop'
 import { PeekPlayer } from './PeekPlayer'
@@ -24,12 +25,20 @@ export type TakeAPeekPlacement =
   | 'room'
   | 'cart'
 
+/** The window's "Order a print of {title}": the page's own Order a print (its wizard). */
+export type TakeAPeekOrder = { title: string; onOrder: () => void }
+
 type TakeAPeekProps = {
   placement: TakeAPeekPlacement
+  /** Artwork page and the room's pop-up: the window orders this work instead of Discover the prints. */
+  order?: TakeAPeekOrder
   className?: string
 } & (
   | {
-      /** `full`: 96 px (84 on phones) with three lines: homepage, Prints page. */
+      /**
+       * `full`: 96 px (84 on phones) with three lines: homepage, Prints page. `inline`: 44 px with
+       * two small lines: artwork page, room pop-up, cart.
+       */
       size: 'full' | 'inline'
       line?: never
     }
@@ -52,7 +61,7 @@ const NO_CTA: TakeAPeekPlacement[] = ['prints', 'cart']
  * its words, as one button that opens the full video in a window. One component, three sizes
  * (`full`, `strip`, `inline`); at most once per page.
  */
-export const TakeAPeek = ({ size, placement, line, className }: TakeAPeekProps) => {
+export const TakeAPeek = ({ size, placement, line, order, className }: TakeAPeekProps) => {
   const [open, setOpen] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const wasOpen = useRef(false)
@@ -65,7 +74,9 @@ export const TakeAPeek = ({ size, placement, line, className }: TakeAPeekProps) 
     else if (wasOpen.current) triggerRef.current?.focus()
   }, [open])
 
-  const cta = NO_CTA.includes(placement) ? null : (
+  const cta = order ? (
+    <OrderCta {...order} />
+  ) : NO_CTA.includes(placement) ? null : (
     <Button href="/prints" variant="outlineInverse" size="regularSquared" className={styles.cta}>
       <ArrowRight size={16} weight="light" aria-hidden className={styles.ctaIcon} />
       Discover the prints
@@ -121,5 +132,25 @@ export const TakeAPeek = ({ size, placement, line, className }: TakeAPeekProps) 
           document.body,
         )}
     </>
+  )
+}
+
+/**
+ * Filled white, the work's title in it; the same hop as the page's Order a print (open edition:
+ * the wizard; limited: its flow). Gone while purchases are paused. No bag icon: the owner removed
+ * it from every Order button (2026-11-12), the board's drawing predates that.
+ */
+const OrderCta = ({ title, onOrder }: TakeAPeekOrder) => {
+  const paused = usePurchasesPaused()
+  if (paused) return null
+  return (
+    <Button
+      variant="inverse"
+      size="regularSquared"
+      className={c(styles.cta, styles.orderCta)}
+      onClick={onOrder}
+    >
+      {title ? `Order a print of ${title}` : 'Order a print'}
+    </Button>
   )
 }

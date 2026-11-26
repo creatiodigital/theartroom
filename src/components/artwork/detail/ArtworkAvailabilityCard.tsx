@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react'
 
 import { Button } from '@/components/ui/Button'
+import { TakeAPeek } from '@/components/ui/TakeAPeek'
 import type { ArtworkSizes } from '@/lib/editions/artworkSizes'
 import { formatDisplayPrice } from '@/lib/editions/formatDisplayPrice'
 import { editionLineText } from '@/lib/editions/editionLineText'
@@ -76,10 +77,16 @@ function purchasePrice({ editionType, minPriceCents, editionLines = [] }: PrintS
 
 export const ArtworkPurchase = ({
   artworkSlug,
+  title,
+  surface,
   inquire,
   ...sale
 }: PrintSaleProps & {
   artworkSlug: string
+  /** The work's title, for Take a peek's "Order a print of {title}". */
+  title: string
+  /** `room`: the 3D room's pop-up (Take a peek counts it apart). */
+  surface: 'page' | 'room'
   /** Inquire, shown only when there is nothing left to order. */
   inquire?: ReactNode
 }) => {
@@ -98,12 +105,21 @@ export const ArtworkPurchase = ({
       {soldOut ? (
         inquire
       ) : (
-        <Button
-          variant="primary"
-          label="Order a print"
-          onClick={openWizard}
-          className={styles.cta}
-        />
+        <>
+          <Button
+            variant="primary"
+            label="Order a print"
+            onClick={openWizard}
+            className={styles.cta}
+          />
+          {/* What arrives at your door (docs/take-a-peek, P2): right under Order a print, only while
+              there is a print to order; its window orders this work. */}
+          <TakeAPeek
+            size="inline"
+            placement={surface === 'room' ? 'room' : 'artwork'}
+            order={{ title, onOrder: openWizard }}
+          />
+        </>
       )}
     </div>
   )
