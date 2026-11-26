@@ -25,9 +25,14 @@
   margin: 0 auto;
   padding: 120px 0;
 
+  // Tablets (owner, 2026-11-26: side by side, the print came out small and the words cramped): one
+  // column, the print over the words, in a centred reading column.
   @include media-down(lg) {
-    gap: 48px;
+    grid-template-columns: minmax(0, var(--measure));
+    justify-content: center;
+    gap: var(--space-10);
     width: calc(100% - var(--space-6) * 2);
+    padding: var(--space-18) 0;
   }
 
   @include media-down(md) {
@@ -43,9 +48,9 @@
   aspect-ratio: 1 / 1;
   min-width: 0;
 
-  // Phones: the tallest print's shape, never taller than the square (HomePrints.tsx
-  // `phoneStageAspect`), so a landscape print has no wide band of grey above and below.
-  @include media-down(md) {
+  // Tablets and phones (one column): the tallest print's shape, never taller than the square
+  // (HomePrints.tsx `phoneStageAspect`), so a landscape print has no wide band of grey above and below.
+  @include media-down(lg) {
     aspect-ratio: var(--phone-stage-aspect);
   }
 }
@@ -155,6 +160,12 @@
   @include media-down(md) {
     padding-top: 0;
     border-top: 0;
+  }
+
+  // Phones, either way up (owner, 2026-11-26): no caption. The print opens its page, and its link
+  // still names the work and the artist.
+  @media #{$phone-room} {
+    display: none;
   }
 }
 
