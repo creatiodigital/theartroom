@@ -2,12 +2,14 @@ import type { Metadata } from 'next'
 
 import { ExhibitionsPage } from '@/components/exhibitions'
 import prisma from '@/lib/prisma'
+import { publicPageMetadata } from '@/lib/seo/pageMetadata'
 
-export const metadata: Metadata = {
-  title: { absolute: 'The Art Room Exhibitions' },
+export const metadata: Metadata = publicPageMetadata({
+  path: '/exhibitions',
+  title: 'The Art Room Exhibitions',
   description:
     'Browse current and past virtual exhibitions at The Art Room. Experience contemporary art in immersive 3D gallery spaces.',
-}
+})
 
 // Render per request and read straight from the DB so publish/unpublish and
 // edits show immediately. No data cache.

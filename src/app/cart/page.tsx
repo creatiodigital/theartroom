@@ -7,6 +7,8 @@ import { getPurchasesPaused } from '@/lib/settings'
 export const metadata: Metadata = {
   title: { absolute: 'Cart · The Art Room' },
   description: 'Review the prints in your cart before checking out.',
+  // A visitor's own cart: nothing for a search result (AR-193). Its links still count.
+  robots: { index: false, follow: true },
 }
 
 // Read the kill switch per request — never serve a cached verdict.

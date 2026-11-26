@@ -26,6 +26,7 @@ import { VersionGuard } from '@/components/observability/VersionGuard'
 import { CartProvider } from '@/lib/cart/useCart'
 import { UnitsProvider } from '@/lib/units/UnitsProvider'
 import { SOCIAL_LINKS } from '@/lib/socialLinks'
+import { SITE_DESCRIPTION } from '@/lib/seo/pageMetadata'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import '@/styles/globals.scss'
@@ -39,8 +40,7 @@ export const metadata: Metadata = {
     default: 'The Art Room',
     template: 'The Art Room: %s',
   },
-  description:
-    'Explore curated virtual exhibitions in immersive 3D gallery spaces. Discover contemporary art beyond immediacy.',
+  description: SITE_DESCRIPTION,
   openGraph: {
     type: 'website',
     siteName: 'The Art Room',
@@ -71,8 +71,7 @@ const jsonLd = {
   name: 'The Art Room',
   url: SITE_URL,
   logo: `${SITE_URL}/avatar.png`,
-  description:
-    'Virtual exhibition space dedicated to showcasing contemporary art in immersive 3D environments.',
+  description: SITE_DESCRIPTION,
   sameAs: [SOCIAL_LINKS.instagram, SOCIAL_LINKS.facebook, SOCIAL_LINKS.pinterest],
 }
 

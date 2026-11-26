@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import { notFound, permanentRedirect } from 'next/navigation'
 
 import { ExhibitionDescription } from '@/components/exhibitions/profile/ExhibitionDescription'
 import { ExhibitionViewPage } from '@/components/exhibitions/view'
@@ -6,6 +7,7 @@ import type { RoomAbout } from '@/components/exhibitions/view/RoomAbout/RoomAbou
 import prisma from '@/lib/prisma'
 import { getPublicExhibitionByUrl } from '@/lib/queries/getPublicExhibitionByUrl'
 import { plainParagraphsOf } from '@/lib/richText/headingAnchors'
+import { movedExhibitionPath } from '@/lib/seo/slugRedirects'
 import { isRichTextEmpty } from '@/lib/textUtils'
 
 /**
@@ -40,8 +42,10 @@ export async function generateMetadata({ params }: ExhibitionVisitProps): Promis
     },
   })
 
+  // Unpublished: the room still opens for a preview link, the admin's review and the bakes, but
+  // never as a search result (AR-193).
   if (!exhibition) {
-    return { title: 'Exhibition Not Found' }
+    return { title: 'Exhibition Not Found', robots: { index: false, follow: false } }
   }
 
   const artistName = `${exhibition.user.name} ${exhibition.user.lastName}`
@@ -49,6 +53,10 @@ export async function generateMetadata({ params }: ExhibitionVisitProps): Promis
   return {
     title: { absolute: `${artistName} | ${exhibition.mainTitle} | The Art Room` },
     description: `Walk through "${exhibition.mainTitle}" by ${artistName} in an immersive 3D gallery.`,
+    // The room is a 3D scene with a few words around it: search engines are pointed at the
+    // exhibition's page, which describes it and opens it (AR-193). Same title, so it was one page
+    // competing with the other.
+    alternates: { canonical: `/exhibitions/${artistSlug}/${exhibitionSlug}` },
   }
 }
 
@@ -79,6 +87,20 @@ async function getRoomAbout(artistSlug: string, exhibitionSlug: string): Promise
 
 const ExhibitionVisit = async ({ params }: ExhibitionVisitProps) => {
   const { artistSlug, exhibitionSlug } = await params
+
+  // An exhibition that doesn't exist under this address (AR-193). It used to answer 200 with "Not
+  // Found" in the title, which search engines index as a page. Unpublished ones still open (a
+  // preview link, the admin's review, the bakes): the room checks those itself.
+  const exists = await prisma.exhibition.findFirst({
+    where: { url: exhibitionSlug, user: { handler: artistSlug } },
+    select: { id: true },
+  })
+  if (!exists) {
+    const moved = await movedExhibitionPath(artistSlug, exhibitionSlug)
+    if (moved) permanentRedirect(`${moved}/visit`)
+    notFound()
+  }
+
   const about = await getRoomAbout(artistSlug, exhibitionSlug)
   return (
     <ExhibitionViewPage artistSlug={artistSlug} exhibitionSlug={exhibitionSlug} about={about} />

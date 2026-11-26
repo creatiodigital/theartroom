@@ -11,7 +11,6 @@ import { track } from '@/lib/analytics/track'
 
 import { PeekLoop } from './PeekLoop'
 import { PeekPlayer, type PeekCta, type TakeAPeekOrder } from './PeekPlayer'
-import { clock, PEEK_DURATION_S } from './media'
 
 import styles from './TakeAPeek.module.scss'
 
@@ -49,8 +48,9 @@ type TakeAPeekProps = {
     }
 )
 
-const DURATION = clock(PEEK_DURATION_S)
-const ARIA_LABEL = `Take a peek: watch what arrives at your door, ${PEEK_DURATION_S} seconds`
+// No running time anywhere on the circle (owner, 2026-11-26: "no one cares"); the window's player
+// still shows its progress.
+const ARIA_LABEL = 'Take a peek: watch what arrives at your door'
 
 /** Pages where the window offers no button: the Prints page itself, and the cart (already buying). */
 const NO_CTA: TakeAPeekPlacement[] = ['prints', 'cart']
@@ -101,14 +101,13 @@ export const TakeAPeek = ({ size, placement, line, order, className }: TakeAPeek
           <span className={styles.words}>
             <span className={styles.label}>Take a peek</span>
             <span className={styles.line}>What arrives at your door</span>
-            <span className={styles.duration}>{DURATION}</span>
           </span>
         )}
         {size === 'strip' && (
           <>
             <span className={styles.words}>
               <span className={styles.stripLine}>{line}</span>
-              <span className={styles.sub}>Take a peek at what arrives · {DURATION}</span>
+              <span className={styles.sub}>Take a peek at what arrives</span>
             </span>
             <ArrowRight size={18} weight="light" aria-hidden className={styles.arrow} />
           </>
@@ -116,7 +115,7 @@ export const TakeAPeek = ({ size, placement, line, order, className }: TakeAPeek
         {size === 'inline' && (
           <span className={styles.words}>
             <span className={styles.inlineLabel}>Take a peek</span>
-            <span className={styles.sub}>What arrives at your door · {DURATION}</span>
+            <span className={styles.sub}>What arrives at your door</span>
           </span>
         )}
       </Button>

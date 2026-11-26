@@ -1,9 +1,12 @@
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { ArtistProfilePage } from '@/components/artists/profile'
 import { ArtistBiography } from '@/components/artists/profile/ArtistBiography'
 import { getPublicArtistByHandler } from '@/lib/queries/getPublicArtistByHandler'
+import { metaTextOf } from '@/lib/seo/metaText'
+import { publicPageMetadata } from '@/lib/seo/pageMetadata'
+import { movedArtistPath } from '@/lib/seo/slugRedirects'
 
 // Render per request and read straight from the DB so artist edits, new
 // exhibitions and featured-artwork changes appear immediately. No data cache.
@@ -24,19 +27,16 @@ export async function generateMetadata({ params }: ArtistProfileProps): Promise<
   }
 
   const artistName = `${artist.name} ${artist.lastName}`
+  // The biography is the editor's HTML: read as plain text (AR-193), or it went out as "<p>Born…".
   const description =
-    artist.biography?.slice(0, 160) || `Explore exhibitions by ${artistName} at The Art Room.`
+    metaTextOf(artist.biography) || `Explore exhibitions by ${artistName} at The Art Room.`
 
-  const tabTitle = `${artistName} | The Art Room`
-
-  return {
-    title: { absolute: tabTitle },
+  return publicPageMetadata({
+    path: `/artists/${artist.handler}`,
+    ownShareImage: true,
+    title: `${artistName} | The Art Room`,
     description,
-    openGraph: {
-      title: tabTitle,
-      description,
-    },
-  }
+  })
 }
 
 const ArtistProfile = async ({ params }: ArtistProfileProps) => {
@@ -48,7 +48,12 @@ const ArtistProfile = async ({ params }: ArtistProfileProps) => {
   // /api/artworks waterfall is collapsed here.
   const artist = await getPublicArtistByHandler(slug)
 
-  if (!artist) notFound()
+  // A handler that changed: on to the artist's current page (AR-193), not a 404.
+  if (!artist) {
+    const moved = await movedArtistPath(slug)
+    if (moved) permanentRedirect(moved)
+    notFound()
+  }
 
   const { exhibitions, artworks, ...artistData } = artist
   return (
