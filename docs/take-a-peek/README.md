@@ -170,6 +170,11 @@ guess would be costly.
   empty cart and the Take a peek caption as the table says. Searched the rest: the limited wizard, the in-production and
   delivered emails and the edition-number notice speak of a certificate only for limited editions (right as they are).
   Admin content left for the owner: see Questions Q1 (the Prints page text) and Q2 (the €6 supplement).
+- **T6b**: one time promise. Both wizards' Learn more ("Made to order, it usually ships within 2 weeks, with tracking.",
+  the delivery line gone), the checkout's review line (singular / plural) and both order-placed emails ("When it ships"
+  / "When they ship" in the cart email, which always says "your prints"). `estimateDeliveryWindow` is kept but has no
+  buyer-facing caller now; duty notices untouched. Emails checked in /dev/emails; the checkout line by type check only.
+  The Online terms of sale wording is admin content (suggested text in T6b above).
 
 ## Questions
 

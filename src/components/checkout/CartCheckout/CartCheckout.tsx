@@ -15,7 +15,6 @@ import { cartCount } from '@/lib/cart/cartMath'
 import type { CartItem } from '@/lib/cart/types'
 import { useCart } from '@/lib/cart/useCart'
 import type { CartLikeItem, CartTotals } from '@/lib/cart/validateCart'
-import { estimateDeliveryWindow } from '@/lib/emails/delivery'
 import { getCountryName } from '@/lib/print-providers/dialCodes'
 import type { ShippingAddress } from '@/components/checkout/PrintCheckout/createPaymentIntent'
 
@@ -323,8 +322,6 @@ export const CartCheckout = ({
     </div>
   )
 
-  // Review: when the prints should arrive, by destination (the order email's own estimate).
-  const delivery = address ? estimateDeliveryWindow(address.countryCode) : null
   const prints = cartCount(items)
   const hasLimited = items.some((item) => item.editionType === 'limited')
 
@@ -378,12 +375,13 @@ export const CartCheckout = ({
           </span>
         </div>
 
-        {delivery && (
-          <p className={styles.stepNote}>
-            {prints === 1 ? 'Your print is' : 'Your prints are'} made to order and delivered in{' '}
-            {delivery.minDays}–{delivery.maxDays} business days.
-          </p>
-        )}
+        {/* One time promise everywhere, said broadly (docs/take-a-peek T6b, owner 2026-11-26): no
+            day ranges. */}
+        <p className={styles.stepNote}>
+          {prints === 1
+            ? 'Your print is made to order and usually ships within 2 weeks, with tracking.'
+            : 'Your prints are made to order and usually ship within 2 weeks, with tracking.'}
+        </p>
 
         {payError && <p className={styles.orderError}>{payError}</p>}
         <CheckoutButton
