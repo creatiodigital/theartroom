@@ -56,18 +56,6 @@ const nextConfig = {
     ],
   },
 
-  // Addresses that changed before renames were recorded (AR-193; later ones go through the
-  // SlugRedirect table). Search engines still send visitors to these.
-  async redirects() {
-    return [
-      {
-        source: '/exhibitions/beatriz-salvatierra/florescere-feeling-unveiled/:rest*',
-        destination: '/exhibitions/beatriz-salvatierra/florescere-unveiled-sensing/:rest*',
-        permanent: true,
-      },
-    ]
-  },
-
   // Cache headers for optimal performance
   async headers() {
     return [

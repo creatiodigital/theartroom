@@ -4,6 +4,11 @@ import prisma from '@/lib/prisma'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://theartroom.gallery'
 
+// Read per request, like the pages it lists: without this, Next builds the sitemap once at deploy
+// and Vercel serves that copy, so a new artwork, exhibition or artist only appeared after the next
+// release.
+export const dynamic = 'force-dynamic'
+
 /**
  * Every public page a search engine should know about (AR-193). Same public rules as the pages:
  * exhibitions as /exhibitions lists them (published, not the gallery's own), artists as /artists
