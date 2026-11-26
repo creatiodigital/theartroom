@@ -28,14 +28,15 @@ const shownAspect = ({ presentation: view }: HomePrintSlide) =>
   view.piece ? (view.aspect * view.piece.w) / view.piece.h : view.aspect
 
 /**
- * The phone stage's shape, width over height (owner, 2026-11-14: less empty grey above and below
- * the print). The tallest print in the rotation fills the height inside the slide's margin, so a
- * list of landscape prints gets a shorter stage; never taller than the square every other screen
- * keeps, so a portrait print is no smaller than before.
+ * The one-column stage's shape, width over height (tablets and phones; owner, 2026-11-14: less
+ * empty grey above and below the print). The tallest print in the rotation fills the height inside
+ * the slide's margin, so a list of landscape prints gets a shorter stage; never taller than the
+ * square every other screen keeps, so a portrait print is no smaller than before. One column has no
+ * margin under the print (owner, 2026-11-26), so only the top one counts.
  */
 const phoneStageAspect = (slides: HomePrintSlide[]) => {
   const tallest = Math.min(...slides.map(shownAspect))
-  return Math.max(1, 1 / ((1 - 2 * SLIDE_MARGIN) / tallest + 2 * SLIDE_MARGIN))
+  return Math.max(1, 1 / ((1 - 2 * SLIDE_MARGIN) / tallest + SLIDE_MARGIN))
 }
 
 /**

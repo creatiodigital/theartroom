@@ -86,13 +86,12 @@
   height: 100%;
 }
 
-// One column (tablets, phones): the print at the top of the stage, not in its middle (owner,
-// 2026-11-26: too much grey above). The stage is as tall as the tallest print in the rotation, so a
-// wider one leaves its spare grey below, over the words, which stay put as the prints change.
+// One column (tablets, phones): no margin under the print (owner, 2026-11-26), the gap to the words
+// is the grid's. The print stays centred in the stage (owner, same day: at the top, a wider print
+// left all the stage's spare grey under it).
 @include media-down(lg) {
-  .slide,
-  .slideLink {
-    align-items: flex-start;
+  .slide {
+    margin-bottom: 0;
   }
 }
 
