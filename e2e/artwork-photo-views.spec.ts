@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import sharp from 'sharp'
 
 import prisma from '@/lib/prisma'
 import { presentationInputs } from '@/lib/printPresentation/inputs'
@@ -88,6 +89,49 @@ test.describe('the four views on the artwork page', () => {
       await buttons.nth(1).click()
       await expect(buttons.nth(1)).toHaveAttribute('aria-pressed', 'true')
       await expect(page.locator('img[src*="-sheet-2400.webp"]')).toBeInViewport()
+    } finally {
+      await teardownLimitedFixture(fx)
+    }
+  })
+
+  // The framed tile was drawn narrower than the work (owner, 2026-11-26): the tile is a bare Button,
+  // whose `align-items: stretch` stretched the presentation to the tile's height while it kept the
+  // stand-in's width, and the frame and the image, placed in percentages of it, were squeezed.
+  test('desktop: the framed tile keeps the work’s shape, centred in its tile', async ({ page }) => {
+    const fx = await renderedWork(true)
+    try {
+      // The stored files don't exist, and a render that fails to load falls back to the plain
+      // image (no presentation). Serve a stand-in picture for this work's files, so the tile lays
+      // out its real presentation.
+      const picture = await sharp({
+        create: { width: 900, height: 900, channels: 3, background: '#f2f2f2' },
+      })
+        .png()
+        .toBuffer()
+      await page.route(
+        (url) => url.href.includes(fx.artworkId),
+        (route) => route.fulfill({ contentType: 'image/png', body: picture }),
+      )
+      await page.setViewportSize({ width: 1440, height: 900 })
+      await page.goto(`/artworks/${fx.slug}`)
+      const tile = tiles(page).filter({ visible: true }).first().getByRole('button').first()
+      await expect(tile).toBeVisible()
+      const m = await tile.evaluate((el) => {
+        const piece = el.querySelector('[data-print-presentation]')!
+        // The stand-in: the piece's one image in flow; it has the cropped area's own shape.
+        const standIn = [...piece.querySelectorAll(':scope > img')].find(
+          (img) => getComputedStyle(img).position !== 'absolute',
+        )!
+        const [t, p, s] = [el, piece, standIn].map((n) => n.getBoundingClientRect())
+        return {
+          pieceRatio: p.width / p.height,
+          standInRatio: s.width / s.height,
+          gapAbove: p.top - t.top,
+          gapBelow: t.bottom - p.bottom,
+        }
+      })
+      expect(m.pieceRatio).toBeCloseTo(m.standInRatio, 2)
+      expect(Math.abs(m.gapAbove - m.gapBelow)).toBeLessThan(1.5)
     } finally {
       await teardownLimitedFixture(fx)
     }

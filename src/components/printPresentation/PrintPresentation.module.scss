@@ -3,6 +3,10 @@
 .presentation {
   position: relative;
   width: fit-content;
+  // Both ways: a flex row that stretches its items made the piece as tall as the row while it kept
+  // its width, and the window and the frame, placed in percentages of it, came out squeezed
+  // (AR-193, the artwork page's framed tile).
+  height: fit-content;
   max-width: 100%;
   line-height: 0;
 }
