@@ -157,14 +157,14 @@
   padding-top: 18px;
   border-top: 1px solid var(--color-gray-55);
 
-  @include media-down(md) {
-    padding-top: 0;
-    border-top: 0;
+  // Phones and tablets, either way up (owner, 2026-11-26): no caption. The one-column layout
+  // (1024 px and under) and a tablet held sideways, which keeps the two columns. The print opens its
+  // page, and its link still names the work and the artist.
+  @include media-down(lg) {
+    display: none;
   }
 
-  // Phones, either way up (owner, 2026-11-26): no caption. The print opens its page, and its link
-  // still names the work and the artist.
-  @media #{$phone-room} {
+  @media #{$tablet-room} {
     display: none;
   }
 }
