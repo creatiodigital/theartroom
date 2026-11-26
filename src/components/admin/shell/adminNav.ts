@@ -59,10 +59,11 @@ export const ADMIN_NAV_SECTIONS: AdminNavSection[] = [
   {
     label: 'Gallery',
     items: [
+      // Users first (owner, 2026-11-26).
+      { label: 'Users', href: '/admin/users', icon: Users },
       { label: 'Exhibitions', href: '/admin/exhibitions', icon: Door },
       { label: 'Print presentations', href: '/admin/print-presentations', icon: ImageSquare },
       { label: 'Content', href: '/admin/content', icon: Article },
-      { label: 'Users', href: '/admin/users', icon: Users },
       // F1 (feedback-list.md): every visitor feedback, each deletable. No badge.
       { label: 'Feedback', href: '/admin/feedback', icon: ChatCircle },
     ],
