@@ -178,6 +178,12 @@ guess would be costly.
 - **Fix** (Part 1): the Take a peek styles layered on Button `bare` (and on its size class) now use two classes, so a
   production stylesheet order can't undo their padding, gaps and alignment (the same trap `CollapsibleSection` notes).
   The window's button moved into `PeekPlayer` for that. No visible change.
+- **T7**: `PrintAnswers` (`src/components/artwork/detail/`) right under the Take a peek inline in `ArtworkPurchase`, so the
+  artwork page and the room's pop-up, only while there is a print to order. Each row an `<h2>` holding the button
+  (`aria-expanded`, `aria-controls`; Button got `id` and `aria-controls`), one open at a time, all closed at first;
+  panels stay in the page with `inert` while shut, so the height eases open (not with reduced motion). The country
+  count is `TPS_SUPPORTED_COUNTRIES.length` (38). Two departures, see Q3 and Q4. Checked at 1440 and 390. To look at:
+  the last row's hairline and the print details' divider below it sit about 20 px apart.
 
 ## Questions
 
@@ -188,6 +194,12 @@ guess would be costly.
 - **Q2 (T6, owner, pricing; not touched):** `TPS_COA_LETTER_SUPPLEMENT_CENTS` (€6, `src/lib/print-providers/printspace/
   pricing.ts`) is added to every print for "a premium COA design and the gallery letter". If open editions get no
   certificate, is the €6 still right for them (the letter alone may cost less)?
+- **Q3 (T7, copy):** the Shipping answer said "The shipping cost and the delivery estimate for your address are shown at
+  checkout". T6b removed that estimate from the checkout (its review line now says "usually ships within 2 weeks"), so
+  the answer says only "The shipping cost for your address is shown at checkout, before you pay." If you want the
+  per-country estimate back at checkout (the Facts line says it stays), that's one line in `CartCheckout`: say which.
+- **Q4 (T7, copy):** "The frame and passepartout, if you chose them." shows for open editions only: limited editions
+  are sold unframed (the limited wizard says so), so nothing can be chosen.
 
 ---
 

@@ -45,6 +45,8 @@ type ButtonProps = {
   style?: React.CSSProperties
   'aria-label'?: string
   'aria-expanded'?: boolean
+  /** The element this button shows or hides (a disclosure's panel). */
+  'aria-controls'?: string
   'aria-pressed'?: boolean
   'aria-checked'?: boolean
   'aria-haspopup'?: boolean | 'menu' | 'listbox' | 'dialog' | 'tree' | 'grid'
@@ -56,6 +58,8 @@ type ButtonProps = {
   role?: string
   /** Roving tabindex in composite widgets (e.g. admin stage tabs). */
   tabIndex?: number
+  /** The rendered <button>'s id, e.g. for a panel's aria-labelledby. */
+  id?: string
   /** The rendered <button> (not the link form), e.g. to give focus back to it after a window closes. */
   ref?: React.Ref<HTMLButtonElement>
 }
@@ -84,6 +88,7 @@ export const Button = React.memo(
     style,
     'aria-label': ariaLabel,
     'aria-expanded': ariaExpanded,
+    'aria-controls': ariaControls,
     'aria-pressed': ariaPressed,
     'aria-checked': ariaChecked,
     'aria-haspopup': ariaHaspopup,
@@ -93,6 +98,7 @@ export const Button = React.memo(
     'aria-current': ariaCurrent,
     role,
     tabIndex,
+    id,
     ref,
   }: ButtonProps) => {
     const isIconOnly = icon && !label && !children
@@ -139,6 +145,7 @@ export const Button = React.memo(
     return (
       <button
         ref={ref}
+        id={id}
         className={classNames}
         onClick={onClick}
         type={type}
@@ -152,6 +159,7 @@ export const Button = React.memo(
         tabIndex={tabIndex}
         aria-label={ariaLabel}
         aria-expanded={ariaExpanded}
+        aria-controls={ariaControls}
         aria-pressed={ariaPressed}
         aria-checked={ariaChecked}
         aria-haspopup={ariaHaspopup}
