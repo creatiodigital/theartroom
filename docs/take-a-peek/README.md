@@ -158,6 +158,9 @@ guess would be costly.
   sold out), before its heading; none when purchases are paused, as the grids' buttons. Artist page: in Selected works.
   Checked at 1440 and 390 (The Beauty of Permanence; John Doe). To look at: the strip's bottom hairline and the section
   heading's top hairline sit 40 px apart (the board drew the heading without its hairlines).
+- **T4**: P5 Prints page, `full` under the Two kinds text after a hairline, no button in its window; P6 cart, `inline`
+  under the items, before Back to editions, no button (every cart line is a print, so any non-empty cart shows it).
+  Checked at 1440 and 390.
 
 ## Questions
 

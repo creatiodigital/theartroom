@@ -51,6 +51,14 @@
   gap: 14px;
 }
 
+// Take a peek under the two kinds, across the column, after a hairline (designs/PrintsPlacement).
+.peek {
+  align-self: stretch;
+  margin-top: var(--space-3);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-gray-25);
+}
+
 // Small grey caps (Q-P12: the secondary grey).
 .eyebrow {
   font-family: var(--font-sans), var(--font-sans-fallback);
