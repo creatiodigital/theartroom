@@ -78,6 +78,9 @@ const PRINT_BASE_TOP_SLOPE_CENTS_PER_CM2 = 1.9
 // is on the account), then rounded UP to a whole euro so it doesn't
 // drag cents into the artwork line — €5.30 was what made a €443.67
 // out of an otherwise round price.
+// Owner, 2026-11-26: open editions get the letter but no certificate
+// (only limited editions do), and the supplement stays €6 for every print
+// all the same (docs/take-a-peek/README.md Q2). Not an oversight.
 export const TPS_COA_LETTER_SUPPLEMENT_CENTS = 600
 
 // ── Frame supplement (per tier × frame type, approximate) ───────

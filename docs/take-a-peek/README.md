@@ -215,9 +215,8 @@ guess would be costly.
   ends "Each comes with a certificate of authenticity." (seen in the dev database; prod likely the same). Code can't
   change it: please edit it there, e.g. "Each comes with a personal letter from the gallery." The Online terms of sale
   say "where applicable, accompanied by a certificate of authenticity", which is already right.
-- **Q2 (T6, owner, pricing; waiting for the owner's decision, options in the design side's note: €3 / €0 / €6 for open editions):** `TPS_COA_LETTER_SUPPLEMENT_CENTS` (€6, `src/lib/print-providers/printspace/
-  pricing.ts`) is added to every print for "a premium COA design and the gallery letter". If open editions get no
-  certificate, is the €6 still right for them (the letter alone may cost less)?
+- **Q2 (T6, owner, pricing): resolved 2026-11-26, keep €6.** `TPS_COA_LETTER_SUPPLEMENT_CENTS` stays €6 on every
+  print, open editions included (they get the gallery letter, no certificate). Nothing changed in pricing.
 - **Q3 (T7, copy): resolved 2026-11-26.** The Shipping answer now reads "The shipping cost for your address is shown at
   checkout, before you pay. Delivery then usually takes a few days, depending on where you are." (then the duties
   line), as the spec above. The checkout keeps no delivery estimate.
