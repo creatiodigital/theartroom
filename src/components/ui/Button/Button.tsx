@@ -15,6 +15,8 @@ type ButtonProps = {
     | 'primary'
     | 'secondary'
     | 'outline'
+    | 'outlineInverse'
+    | 'inverse'
     | 'danger'
     | 'ghost'
     | 'tab'
@@ -34,6 +36,10 @@ type ButtonProps = {
   href?: string
   /** With `href`: Next's prefetch (default on). Off for links to files, e.g. invoice PDFs (Q33). */
   prefetch?: boolean
+  /** With `href`: open in a new tab (`target="_blank"`, `rel="noopener noreferrer"`), for addresses off the site. */
+  newTab?: boolean
+  /** With `href`: called when the link is followed, e.g. to measure it (`onClick` is the button form's). */
+  onLinkClick?: () => void
   title?: string
   draggable?: boolean
   onDragStart?: (e: React.DragEvent<HTMLButtonElement>) => void
@@ -43,6 +49,8 @@ type ButtonProps = {
   style?: React.CSSProperties
   'aria-label'?: string
   'aria-expanded'?: boolean
+  /** The element this button shows or hides (a disclosure's panel). */
+  'aria-controls'?: string
   'aria-pressed'?: boolean
   'aria-checked'?: boolean
   'aria-haspopup'?: boolean | 'menu' | 'listbox' | 'dialog' | 'tree' | 'grid'
@@ -54,6 +62,10 @@ type ButtonProps = {
   role?: string
   /** Roving tabindex in composite widgets (e.g. admin stage tabs). */
   tabIndex?: number
+  /** The rendered <button>'s id, e.g. for a panel's aria-labelledby. */
+  id?: string
+  /** The rendered <button> (not the link form), e.g. to give focus back to it after a window closes. */
+  ref?: React.Ref<HTMLButtonElement>
 }
 
 export const Button = React.memo(
@@ -71,6 +83,8 @@ export const Button = React.memo(
     iconRight,
     href,
     prefetch,
+    newTab,
+    onLinkClick,
     title,
     draggable,
     onDragStart,
@@ -80,6 +94,7 @@ export const Button = React.memo(
     style,
     'aria-label': ariaLabel,
     'aria-expanded': ariaExpanded,
+    'aria-controls': ariaControls,
     'aria-pressed': ariaPressed,
     'aria-checked': ariaChecked,
     'aria-haspopup': ariaHaspopup,
@@ -89,6 +104,8 @@ export const Button = React.memo(
     'aria-current': ariaCurrent,
     role,
     tabIndex,
+    id,
+    ref,
   }: ButtonProps) => {
     const isIconOnly = icon && !label && !children
 
@@ -120,6 +137,9 @@ export const Button = React.memo(
         <Link
           href={href}
           prefetch={prefetch}
+          target={newTab ? '_blank' : undefined}
+          rel={newTab ? 'noopener noreferrer' : undefined}
+          onClick={onLinkClick}
           className={classNames}
           title={title}
           style={style}
@@ -133,6 +153,8 @@ export const Button = React.memo(
 
     return (
       <button
+        ref={ref}
+        id={id}
         className={classNames}
         onClick={onClick}
         type={type}
@@ -146,6 +168,7 @@ export const Button = React.memo(
         tabIndex={tabIndex}
         aria-label={ariaLabel}
         aria-expanded={ariaExpanded}
+        aria-controls={ariaControls}
         aria-pressed={ariaPressed}
         aria-checked={ariaChecked}
         aria-haspopup={ariaHaspopup}

@@ -10,6 +10,13 @@ import { Input } from '@/components/ui/Input'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { RichTextEditor } from '@/components/ui/RichTextEditor'
 import { Toggle } from '@/components/ui/Toggle'
+import {
+  BUTTON_LABEL_MAX,
+  BUTTON_LINK_ERROR,
+  BUTTON_LINK_HELP,
+  BUTTON_LINK_MAX,
+  normalizeButtonLink,
+} from '@/lib/announcementButton'
 
 import styles from '../page.module.scss'
 import { useAdminGate } from '../useAdminGate'
@@ -20,13 +27,15 @@ type Announcement = {
   content: string
   imageUrl: string | null
   isActive: boolean
+  buttonLabel: string | null
+  buttonUrl: string | null
 }
 
 type PageProps = { params: Promise<{ id: string }> }
 
 /**
- * One announcement: photo, title, text, and whether it shows (AR-174). The photo saves the moment
- * it's uploaded; the rest with Save.
+ * One announcement: photo, title, text, an optional button (docs/take-a-peek T9) and whether it
+ * shows (AR-174). The photo saves the moment it's uploaded; the rest with Save.
  */
 export default function AnnouncementEditor({ params }: PageProps) {
   const { id } = use(params)
@@ -38,6 +47,8 @@ export default function AnnouncementEditor({ params }: PageProps) {
   const [saveError, setSaveError] = useState('')
   const [uploading, setUploading] = useState(false)
   const [imageError, setImageError] = useState('')
+  // The button's link is checked on Save; once shown, its error clears as soon as the link is fixed.
+  const [linkError, setLinkError] = useState('')
 
   useEffect(() => {
     if (!isAdmin) return
@@ -49,6 +60,10 @@ export default function AnnouncementEditor({ params }: PageProps) {
 
   const save = async () => {
     if (!announcement) return
+    if (normalizeButtonLink(announcement.buttonUrl ?? '') === false) {
+      setLinkError(BUTTON_LINK_ERROR)
+      return
+    }
     setSaving(true)
     setSaved(false)
     setSaveError('')
@@ -60,8 +75,15 @@ export default function AnnouncementEditor({ params }: PageProps) {
           title: announcement.title,
           content: announcement.content,
           isActive: announcement.isActive,
+          buttonLabel: announcement.buttonLabel ?? '',
+          buttonUrl: announcement.buttonUrl ?? '',
         }),
       })
+      if (response.status === 400) {
+        const data = (await response.json().catch(() => ({}))) as { error?: string }
+        setLinkError(data.error || BUTTON_LINK_ERROR)
+        return
+      }
       if (!response.ok) throw new Error()
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
@@ -188,6 +210,59 @@ export default function AnnouncementEditor({ params }: PageProps) {
               onChange={(content) => setAnnouncement({ ...announcement, content })}
               placeholder="Write the announcement..."
             />
+          </div>
+
+          <div className={dashboardStyles.section}>
+            <h3 className={dashboardStyles.sectionTitle}>
+              <label htmlFor="announcement-button-label" className={styles.sectionLabel}>
+                Button label
+              </label>
+            </h3>
+            <p className={dashboardStyles.sectionDescription}>
+              Under the text. No button unless both the label and the link are filled.
+            </p>
+            <Input
+              id="announcement-button-label"
+              size="medium"
+              value={announcement.buttonLabel ?? ''}
+              maxLength={BUTTON_LABEL_MAX}
+              placeholder="Propose your exhibition"
+              onChange={(e) => setAnnouncement({ ...announcement, buttonLabel: e.target.value })}
+            />
+          </div>
+
+          <div className={dashboardStyles.section}>
+            <h3 className={dashboardStyles.sectionTitle}>
+              <label htmlFor="announcement-button-link" className={styles.sectionLabel}>
+                Button link
+              </label>
+            </h3>
+            <p id="announcement-button-link-help" className={dashboardStyles.sectionDescription}>
+              {BUTTON_LINK_HELP}
+            </p>
+            <Input
+              id="announcement-button-link"
+              size="medium"
+              value={announcement.buttonUrl ?? ''}
+              maxLength={BUTTON_LINK_MAX}
+              placeholder="https://, /prints or mailto:"
+              invalid={!!linkError}
+              aria-describedby={
+                linkError
+                  ? 'announcement-button-link-help announcement-button-link-error'
+                  : 'announcement-button-link-help'
+              }
+              onChange={(e) => {
+                setAnnouncement({ ...announcement, buttonUrl: e.target.value })
+                // Only clears after a Save showed it (never shown while typing).
+                if (linkError && normalizeButtonLink(e.target.value) !== false) setLinkError('')
+              }}
+            />
+            {linkError && (
+              <p id="announcement-button-link-error" className={styles.fieldError}>
+                {linkError}
+              </p>
+            )}
           </div>
 
           {saveError && <p className={styles.error}>{saveError}</p>}

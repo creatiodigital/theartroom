@@ -178,3 +178,17 @@
   color: var(--color-error-text);
   margin-bottom: var(--space-4);
 }
+
+// A section title that is also its field's <label>: the title's look, not the label's.
+.sectionLabel {
+  font: inherit;
+  color: inherit;
+}
+
+// Under a field, after Save (the button's link).
+.fieldError {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-dashboard), var(--font-dashboard-fallback);
+  font-size: var(--text-sm);
+  color: var(--color-error-text);
+}

@@ -41,6 +41,7 @@ export function ArtworkInfoColumn({
   action?: ReactNode
   /** The technical lines, already rendered (ArtworkTechnique). */
   technique?: ReactNode
+  /** The work's canonical address (SITE_URL + /artworks/slug), for Share. */
   shareUrl: string
   className?: string
   children?: ReactNode
@@ -73,7 +74,13 @@ export function ArtworkInfoColumn({
 
       <div className={c(styles.rest, hasRest && styles.restDivided)}>
         {children}
-        <Share title={title || 'Artwork'} url={shareUrl} className={styles.share} />
+        <Share
+          type="artwork"
+          title={title || 'Artwork'}
+          artist={author}
+          url={shareUrl}
+          className={styles.share}
+        />
       </div>
     </aside>
   )

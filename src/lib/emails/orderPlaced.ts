@@ -13,7 +13,7 @@ import {
 } from './components'
 import { formatAmount } from './format'
 import { renderEmailLayout } from './layout'
-import { estimateDeliveryWindow, mayOweImportDuty } from './delivery'
+import { mayOweImportDuty } from './delivery'
 import { formatOrderRef } from '@/lib/orders/orderRef'
 import {
   EDITION_NUMBER_NOTICE_BODY,
@@ -77,7 +77,6 @@ export function renderOrderPlacedEmail(args: OrderPlacedArgs): { subject: string
       ]
     : [{ label: 'Total', value: total, strong: true }]
 
-  const deliveryWindow = estimateDeliveryWindow(args.shippingCountryCode)
   const dutyLikely = mayOweImportDuty(args.shippingCountryCode)
 
   const dutyNote = dutyLikely
@@ -102,7 +101,8 @@ export function renderOrderPlacedEmail(args: OrderPlacedArgs): { subject: string
       `Thanks for your order. We&rsquo;ve received all your details and your print is being prepared.`,
     ) +
     emailParagraph(
-      `<strong>Expected delivery:</strong> ${deliveryWindow.minDays}&ndash;${deliveryWindow.maxDays} business days from today. Framed prints can occasionally take a few days longer to make.`,
+      // One time promise everywhere (docs/take-a-peek T6b, owner 2026-11-26): no day ranges.
+      `<strong>When it ships:</strong> usually within 2 weeks. We&rsquo;ll email you tracking as soon as it does.`,
     ) +
     emailParagraph(
       `Your payment is authorized, not yet taken &mdash; we&rsquo;ll only take it once your print enters production. We&rsquo;ll email your invoice with that charge, and send tracking details as soon as it ships.`,

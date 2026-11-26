@@ -113,6 +113,11 @@
   }
 }
 
+// Take a peek's strip, above the group's heading (designs/ExhibitionPlacement.dc.html).
+.peek {
+  margin-bottom: var(--space-10);
+}
+
 // As TextSection's `columns` (About the exhibition, readable-text.md final): the label on top, the
 // rest across the full width; from xxxl (1680) the label in the left third, the rest across the
 // right two thirds.

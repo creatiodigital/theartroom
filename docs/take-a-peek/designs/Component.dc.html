@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Take a peek: one component, three sizes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&amp;family=Lato:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#fff}
+a{color:inherit;text-decoration:none}
+a:hover{color:inherit}
+.serif{font-family:'EB Garamond',Georgia,serif}
+.caps{font-size:12px;letter-spacing:.16em;text-transform:uppercase}
+.peek:focus-visible{outline:2px solid #1a1a1a;outline-offset:4px}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1120px; box-sizing: border-box; padding: 72px 80px; font-family: Lato, -apple-system, sans-serif; color: #1a1a1a; background: #fff; display: flex; flex-direction: column; gap: 48px">
+
+<div style="display: flex; flex-direction: column; gap: 10px; max-width: 860px">
+<span class="caps" style="color: #666">Component · TakeAPeek</span>
+<h1 class="serif" style="margin: 0; font-weight: 400; font-size: 44px; line-height: 1.1">Take a peek: one circle, three sizes</h1>
+<p style="margin: 0; font-size: 17px; line-height: 1.7; color: #444">The same looping circle and the same modal everywhere. Only the size and the line next to the circle change with the page.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px">
+
+<div style="display: flex; flex-direction: column; gap: 16px">
+<span class="caps" style="color: #666">1 · Full · 96 px</span>
+<div style="background: #f2f2f2; height: 200px; padding: 0 28px; box-sizing: border-box; display: flex; align-items: center">
+<a class="peek" href="PlayerDesktop.dc.html" aria-label="Take a peek: watch what arrives at your door, 27 seconds" style="display: inline-flex; align-items: center; gap: 18px">
+<span style="position: relative; display: block; width: 96px; height: 96px; flex: 0 0 auto"><span style="display: block; width: 96px; height: 96px; border-radius: 50%; border: 1.5px solid #1a1a1a; padding: 4px; box-sizing: border-box"><img src="/_blob/327ab7805a257ec24d27a5fe5476425c" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block"></span><span style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none"><svg width="30" height="30" viewBox="0 0 256 256" fill="#ffffff" aria-hidden="true" style="margin-left: 3px; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5))"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"></path></svg></span></span>
+<span style="display: flex; flex-direction: column; gap: 4px"><span class="caps" style="color: #666; font-size: 11px">Take a peek</span><span class="serif" style="font-size: 22px; line-height: 1.15">What arrives at your door</span><span style="font-size: 13px; color: #666">0:27</span></span>
+</a>
+</div>
+<p style="margin: 0; font-size: 15px; line-height: 1.6; color: #444"><b style="font-weight: 700">Homepage</b>, in Fine-art prints. <b style="font-weight: 700">Prints page</b>, under "Two kinds of prints".</p>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 16px">
+<span class="caps" style="color: #666">2 · Strip · 56 px</span>
+<div style="height: 200px; display: flex; align-items: center">
+<a class="peek" href="PlayerDesktop.dc.html" aria-label="Take a peek: watch what arrives at your door, 27 seconds" style="flex: 1 1 auto; display: flex; align-items: center; gap: 16px; padding: 14px 0; border-top: 1px solid #d0d0d0; border-bottom: 1px solid #d0d0d0">
+<span style="position: relative; display: block; width: 56px; height: 56px; flex: 0 0 auto"><span style="display: block; width: 56px; height: 56px; border-radius: 50%; border: 1.5px solid #1a1a1a; padding: 3px; box-sizing: border-box"><img src="/_blob/327ab7805a257ec24d27a5fe5476425c" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block"></span><span style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none"><svg width="19" height="19" viewBox="0 0 256 256" fill="#ffffff" aria-hidden="true" style="margin-left: 2px; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5))"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"></path></svg></span></span>
+<span style="display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0"><span class="serif" style="font-size: 18px; line-height: 1.25">Works here are also fine-art prints, approved by the artist.</span><span style="font-size: 14px; color: #666">Take a peek at what arrives · 0:27</span></span>
+<svg width="18" height="18" viewBox="0 0 256 256" fill="#333" aria-hidden="true"><path d="M220.24,132.24l-72,72a6,6,0,0,1-8.48-8.48L201.51,134H40a6,6,0,0,1,0-12H201.51L139.76,60.24a6,6,0,0,1,8.48-8.48l72,72A6,6,0,0,1,220.24,132.24Z"></path></svg>
+</a>
+</div>
+<p style="margin: 0; font-size: 15px; line-height: 1.6; color: #444"><b style="font-weight: 700">Exhibition and artist pages</b>, once, just above the first works with a print: where visitors from Instagram and Facebook land.</p>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 16px">
+<span class="caps" style="color: #666">3 · Inline · 44 px</span>
+<div style="height: 200px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: 0 24px">
+<span style="display: flex; align-items: center; justify-content: center; height: 48px; background: #1a1a1a; color: #fff; font-size: 12px; letter-spacing: .12em; text-transform: uppercase">Order a print</span>
+<a class="peek" href="PlayerDesktop.dc.html" aria-label="Take a peek: watch what arrives at your door, 27 seconds" style="display: inline-flex; align-items: center; gap: 12px; align-self: flex-start">
+<span style="position: relative; display: block; width: 44px; height: 44px; flex: 0 0 auto"><span style="display: block; width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid #1a1a1a; padding: 2px; box-sizing: border-box"><img src="/_blob/327ab7805a257ec24d27a5fe5476425c" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block"></span><span style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none"><svg width="15" height="15" viewBox="0 0 256 256" fill="#ffffff" aria-hidden="true" style="margin-left: 2px; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5))"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"></path></svg></span></span>
+<span style="display: flex; flex-direction: column; gap: 1px"><span style="font-size: 14px; color: #1a1a1a">Take a peek</span><span style="font-size: 12px; color: #666">What arrives at your door · 0:27</span></span>
+</a>
+</div>
+<p style="margin: 0; font-size: 15px; line-height: 1.6; color: #444"><b style="font-weight: 700">Artwork page</b> and the <b style="font-weight: 700">3D room's artwork pop-up</b>, right under Order a print. <b style="font-weight: 700">Cart</b>, under the items. Only for works with a print.</p>
+</div>
+
+</div>
+
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 40px; padding-top: 40px; border-top: 1px solid #e4e4e4">
+<div style="display: flex; flex-direction: column; gap: 14px">
+<span class="caps" style="color: #666">The line next to the circle</span>
+<ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; line-height: 1.5; color: #333">
+<li><b style="font-weight: 700">Take a peek</b> · What arrives at your door (chosen)</li>
+<li>Unboxed · Your print, as it arrives</li>
+<li>Take a peek inside the box</li>
+</ul>
+</div>
+<div style="display: flex; flex-direction: column; gap: 14px">
+<span class="caps" style="color: #666">Rules, so it never gets tiresome</span>
+<ul style="margin: 0; padding-left: 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 40px; row-gap: 10px; font-size: 15px; line-height: 1.55; color: #333">
+<li>At most once per page, never between artworks in a grid.</li>
+<li>Only where something can be bought: never on About, Contact, legal pages or works without a print.</li>
+<li>No pop-ups, sticky bars or sound. The modal opens only when the visitor chooses.</li>
+<li>The circle loops only while on screen. A still frame with reduced motion.</li>
+<li>On an artwork page the modal's button orders that work: "Order a print of <i>Magnolia IX</i>".</li>
+<li>Never inside the checkout steps. The cart is the last place it appears.</li>
+</ul>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1120}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
