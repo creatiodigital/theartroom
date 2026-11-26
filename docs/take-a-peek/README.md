@@ -33,7 +33,7 @@ Note: the boards draw the close and pause buttons round. **The square-corners ru
 
 | File | Use |
 | --- | --- |
-| `print-arrives-full.mp4` | The full video. 21.2 s, 1024 × 576, H.264, **no audio track**, 3 MB, faststart. Opened in the modal only. |
+| `print-arrives-full.mp4` | The full video. 27.1 s, 1024 × 576, H.264, **no audio track**, 4.1 MB (recut 2026-11-26 at the original pace: nothing sped up), faststart. Opened in the modal only. |
 | `print-arrives-preview.mp4` | The circle's loop: the **first second** of the full video, 640 × 360, no audio, 56 KB. |
 | `print-arrives-preview.webm` | Same loop, VP9, 44 KB. List it first in `<source>`. |
 | `print-arrives-poster.jpg` | First frame. `poster` for the loop and the still for reduced motion. |
@@ -58,17 +58,17 @@ preview WebM + MP4, `object-fit: cover`, inside a ring: `border: 1.5px solid #1a
   while the tab is hidden.
 - `prefers-reduced-motion: reduce`: no video at all, just the poster `<img>` in the ring.
 - The whole thing (circle + words) is **one link-styled `<button>`** that opens the modal.
-  `aria-label="Take a peek: watch what arrives at your door, 21 seconds"`; the video is `aria-hidden`.
+  `aria-label="Take a peek: watch what arrives at your door, 27 seconds"`; the video is `aria-hidden`.
 
 **Copy (final, owner 2026-11-26):** label **TAKE A PEEK**, line **What arrives at your door**, duration
-**0:21** (read it from the file's metadata rather than hard-coding if that's easy; else a constant next to the
+**0:27** (read it from the file's metadata rather than hard-coding if that's easy; else a constant next to the
 file path).
 
 | Size | Circle | Words | Where |
 | --- | --- | --- | --- |
 | `full` | 96 px (84 px on phones) | caps label 11 px `#666` · serif line 24 px (21 px phone) · duration 13 px `#666`; 20 px gap from the circle | Homepage Fine-art prints; Prints page |
 | `strip` | 56 px, no badge | serif 18–19 px line + 14 px `#666` sub-line, ArrowRight at the end; hairlines `#d0d0d0` above and below, 14–16 px padding; full content width | Exhibition and artist pages |
-| `inline` | 44 px, no badge | 14 px "Take a peek" + 12 px `#666` "What arrives at your door · 0:21" | Artwork page (and so the room's pop-up), cart |
+| `inline` | 44 px, no badge | 14 px "Take a peek" + 12 px `#666` "What arrives at your door · 0:27" | Artwork page (and so the room's pop-up), cart |
 
 Strip copy:
 - Exhibition page: **"Works in this exhibition are also fine-art prints, approved by {artist name}."** /
@@ -190,6 +190,9 @@ guess would be costly.
   (and Object pages, same info column): at its foot, where it was; exhibition: under Enter 3D room; artist: under the
   name (Q6). Checked at 1440 and 390, no console errors; Open Graph title and image are on all three pages, but the
   link-preview debugger needs a public URL: owed on the preview deploy.
+
+**Media update (2026-11-26):** `public/videos/take-a-peek/*` replaced with the recut at normal speed (27.1 s). Set
+`PEEK_DURATION_S = 27` in `src/components/ui/TakeAPeek/media.ts` and any "21" in labels; the files keep their names.
 
 ## Questions
 
@@ -336,3 +339,37 @@ because it was not well designed. Redesign it to `designs/Share.dc.html` and tur
 ## Build order (Part 2)
 
 T6 → T6b → T7 → T8, same workflow as Part 1. Add a Built line for each under **Built** above.
+
+---
+
+# Part 3 · "Propose your exhibition" button on announcements (owner, 2026-11-26)
+
+Design: `designs/Announcement.dc.html`. The homepage announcement ("Submissions Are Open") gets a button under its text
+that opens the visitor's email app with a ready-made proposal. Announcements are admin content
+(`Announcement` model, `src/components/landing/Announcement/Announcement.tsx`, "No button" today), so:
+
+## T9 · Optional button on an announcement
+
+- **Schema (needs the owner's OK before migrating, per the workflow; the owner asked for this feature on 2026-11-26):**
+  two optional columns on `Announcement`: `buttonLabel String?` and `buttonUrl String?`. No button when either is empty.
+- **Admin › Content › Announcements › edit:** two fields under the text, "Button label" and "Button link", with a help
+  line: *"Optional. A web address, or mailto: to open the visitor's email app."* Accept `https://`, a site path (`/prints`)
+  or `mailto:`; reject anything else.
+- **Homepage:** under the announcement's text, 8 px extra top space: black filled button, square, 48 px tall,
+  24 px side padding, Lato 12 px caps `.12em`, white; Phosphor Envelope (light, 17 px) before the label **only when the
+  link is a `mailto:`**. Hover `#000`. Use the existing `Button` (`primary`, squared) if it matches; else the
+  `OrderPrintButton` look in black. Full width on phones.
+- `mailto:` opens in the same tab (no `target`); web links as today's links.
+- dataLayer: `announcement_cta` `{ label }`.
+
+**What the owner will type in the admin (for reference, not code):**
+- Button label: **Propose your exhibition**
+- Button link (one line; the app shows it decoded):
+  `mailto:contact@theartroom.gallery?subject=Exhibition%20proposal&body=Hello%2C%0A%0AMy%20name%20is%20...%20and%20I%27d%20like%20to%20propose%20an%20exhibition%20at%20The%20Art%20Room.%0A%0AA%20few%20words%20about%20me%3A%0A%0AMy%20portfolio%20or%20a%20selection%20of%20images%3A%0A%0AThe%20body%20of%20work%20I%27d%20like%20to%20show%3A%0A%0AThank%20you%2C%0A`
+
+Keep the email address written in the text too: some visitors have no email app set up and will copy it.
+
+## Media reminder (owner, 2026-11-26)
+
+**Use the normal-pace video** now in `public/videos/take-a-peek/` (27.1 s; the earlier 21 s cut was sped up and is gone
+from the repo). Commit the replaced files and set `PEEK_DURATION_S = 27`.
