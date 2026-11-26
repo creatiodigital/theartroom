@@ -4,12 +4,14 @@ import { PrintsPage } from '@/components/prints'
 import { getGallerySelection } from '@/lib/queries/getGallerySelection'
 import prisma from '@/lib/prisma'
 import { getPurchasesPaused } from '@/lib/settings'
+import { publicPageMetadata } from '@/lib/seo/pageMetadata'
 
-export const metadata: Metadata = {
-  title: { absolute: 'Prints · The Art Room' },
+export const metadata: Metadata = publicPageMetadata({
+  path: '/prints',
+  title: 'Prints · The Art Room',
   description:
     'Order fine-art prints of selected works from The Art Room artists, produced on museum-grade paper.',
-}
+})
 
 // Render per request so a change to the selection, a price, or the CMS copy
 // shows immediately. No ISR / revalidate — by design.

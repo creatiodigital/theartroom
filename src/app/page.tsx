@@ -15,14 +15,15 @@ import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
 import { getHomePrints } from '@/lib/queries/getGallerySelection'
 import { getHomepageAnnouncement } from '@/lib/queries/getHomepageAnnouncement'
+import { publicPageMetadata, SITE_DESCRIPTION, SITE_NAME } from '@/lib/seo/pageMetadata'
 
 import styles from './page.module.scss'
 
-export const metadata: Metadata = {
-  title: { absolute: 'The Art Room' },
-  description:
-    'Explore curated virtual exhibitions in immersive 3D gallery spaces. Discover contemporary art beyond immediacy.',
-}
+export const metadata: Metadata = publicPageMetadata({
+  path: '/',
+  title: SITE_NAME,
+  description: SITE_DESCRIPTION,
+})
 
 // Render per request and read straight from the DB so admin edits (slides,
 // exhibitions, featured artists) appear immediately. No data cache.

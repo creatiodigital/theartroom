@@ -17,6 +17,7 @@ import { Prisma } from '@/generated/prisma'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { secondLanguageOf, secondTextFields } from '@/lib/roomLanguage'
+import { recordSlugChange } from '@/lib/seo/slugRedirects'
 import { generateUniqueSlug } from '@/lib/slugify'
 import { sanitizeLine } from '@/utils/sanitizeLine'
 
@@ -562,6 +563,12 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       }
     }
 
+    // The title changed the slug: the old address keeps working, sent on to the new one (AR-193).
+    // Once the row is saved; best effort, never fails the save.
+    const rememberOldSlug = async () => {
+      if (slug && slug !== existing.slug) await recordSlugChange('artwork', existing.slug, id)
+    }
+
     // Try with new fields first
     try {
       const artwork = await prisma.artwork.update({
@@ -572,6 +579,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
             body.hiddenFromExhibition === true || body.hiddenFromExhibition === 'true',
         },
       })
+      await rememberOldSlug()
 
       // Reconcile limited-edition variants (draft create/update/delete).
       // Publishing — which materialises edition numbers and locks the
@@ -610,6 +618,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         where: { id },
         data: baseData,
       })
+      await rememberOldSlug()
 
       // Same ordering rule as the primary path above: membership commits
       // only after the artwork row itself is safely saved, so a fallback

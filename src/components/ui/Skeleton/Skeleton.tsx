@@ -26,7 +26,7 @@ export const Block = ({
 export const ListPageLoading = ({ title, subtitle }: { title: string; subtitle?: string }) => (
   <PageLayout>
     <div className={styles.page} aria-busy="true">
-      <PageIntro title={title} subtitle={subtitle} />
+      <PageIntro title={title} subtitle={subtitle} placeholder />
       {[0, 1].map((row) => (
         <div key={row} className={styles.row}>
           <Block className={styles.rowImage} />
@@ -48,7 +48,7 @@ export const ListPageLoading = ({ title, subtitle }: { title: string; subtitle?:
 export const GridPageLoading = ({ title, subtitle }: { title: string; subtitle?: string }) => (
   <PageLayout>
     <div className={styles.page} aria-busy="true">
-      <PageIntro title={title} subtitle={subtitle} />
+      <PageIntro title={title} subtitle={subtitle} placeholder />
       <div className={styles.grid}>
         {[0, 1, 2, 3, 4, 5].map((card) => (
           <div key={card} className={styles.card}>

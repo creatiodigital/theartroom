@@ -1,5 +1,5 @@
 import { cache } from 'react'
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { ArtworkDetailPage } from '@/components/artwork/detail'
@@ -15,6 +15,12 @@ import { getArtworkSizes } from '@/lib/editions/artworkSizes'
 import { LIVE_VARIANT_WHERE } from '@/lib/editions/printable'
 import prisma from '@/lib/prisma'
 import { getPrintPresentations } from '@/lib/printPresentation/getPrintPresentations'
+import { artworkJsonLd, artworkMetaDescription } from '@/lib/seo/artworkSeo'
+import { publicPageMetadata } from '@/lib/seo/pageMetadata'
+import { movedArtworkPath } from '@/lib/seo/slugRedirects'
+import { saleFromRow } from '@/lib/editions/artworkSale'
+import { getGalleryCommissionRates } from '@/lib/settings'
+import { JsonLd } from '@/components/seo/JsonLd'
 
 // Render per request and read straight from the DB so artwork edits appear
 // immediately. No data cache.
@@ -189,27 +195,52 @@ export async function generateMetadata({ params }: ArtworkPageProps): Promise<Me
   }
 
   const artistName = `${artwork.user.name} ${artwork.user.lastName}`
-  const tabTitle = `${artistName} | ${artwork.title}`
-  const description = artwork.description?.slice(0, 160) || `"${artwork.title}" by ${artistName}.`
+  const sale = await printSaleOf(artwork)
 
-  return {
-    title: { absolute: tabTitle },
-    description,
-    openGraph: {
-      title: tabTitle,
-      description,
-    },
-  }
+  return publicPageMetadata({
+    path: `/artworks/${artwork.slug}`,
+    title: `${artistName} | ${artwork.title}`,
+    description: artworkMetaDescription(seoInputOf(artwork, sale)),
+  })
 }
+
+type ArtworkRow = NonNullable<Awaited<ReturnType<typeof getArtwork>>>
+
+/** The print on sale, if any (AR-193): the same figures the page's commerce shows. Objects are never prints. */
+async function printSaleOf(artwork: ArtworkRow) {
+  if (artwork.artworkType === 'object') return null
+  return saleFromRow(artwork, await getGalleryCommissionRates())
+}
+
+/** What the description and the structured data are built from. */
+const seoInputOf = (
+  artwork: ArtworkRow,
+  sale: Awaited<ReturnType<typeof printSaleOf>>,
+): Parameters<typeof artworkJsonLd>[0] => ({
+  slug: artwork.slug,
+  title: artwork.title || artwork.name,
+  year: artwork.year,
+  technique: artwork.technique,
+  description: artwork.description,
+  imageUrl: artwork.imageUrl,
+  artist: { name: `${artwork.user.name} ${artwork.user.lastName}`, handler: artwork.user.handler },
+  sale,
+})
 
 const ArtworkPage = async ({ params, searchParams }: ArtworkPageProps) => {
   const { slug } = await params
   const { exhibition: exhibitionSlug, artist: artistHandler, from } = await searchParams
 
   const artwork = await getArtwork(slug)
+  // A slug that changed with the title: on to the work's current page (AR-193), not a 404.
+  if (!artwork) {
+    const moved = await movedArtworkPath(slug)
+    if (moved) permanentRedirect(moved)
+    notFound()
+  }
   // An unpublished artist is hidden everywhere public, their works included —
   // the same rule as the artist page.
-  if (!artwork || !artwork.user.published) notFound()
+  if (!artwork.user.published) notFound()
 
   // `printPriceCents` is pulled out rather than spread onward: it is the
   // ARTIST's cut, the pricing INPUT, and the gallery's margin is one
@@ -227,18 +258,23 @@ const ArtworkPage = async ({ params, searchParams }: ArtworkPageProps) => {
       getMoreByArtist(user.handler, slug),
     ])
     return (
-      <ObjectDetailPage
-        artwork={{
-          // Without the artist's cut (`printPriceCents`) and the variants: never sent to the browser.
-          ...artworkData,
-          model:
-            artwork.modelStatus === 'ready' && artwork.modelUrl ? { url: artwork.modelUrl } : null,
-        }}
-        artist={user}
-        media={media}
-        more={more}
-        neighbours={neighbours}
-      />
+      <>
+        <JsonLd data={artworkJsonLd(seoInputOf(artwork, null))} />
+        <ObjectDetailPage
+          artwork={{
+            // Without the artist's cut (`printPriceCents`) and the variants: never sent to the browser.
+            ...artworkData,
+            model:
+              artwork.modelStatus === 'ready' && artwork.modelUrl
+                ? { url: artwork.modelUrl }
+                : null,
+          }}
+          artist={user}
+          media={media}
+          more={more}
+          neighbours={neighbours}
+        />
+      </>
     )
   }
 
@@ -275,20 +311,35 @@ const ArtworkPage = async ({ params, searchParams }: ArtworkPageProps) => {
     ])
 
   return (
-    <ArtworkDetailPage
-      artwork={{
-        ...artworkData,
-        liveVariantCount: limitedVariants.length,
-        availableNumberCount,
-        sizes: getArtworkSizes({ ...artworkData, variants: limitedVariants }),
-      }}
-      artist={user}
-      media={media}
-      commerce={commerce}
-      neighbours={neighbours}
-      presentation={presentations[artwork.id] ?? null}
-      more={more}
-    />
+    <>
+      {/* The work, and its print while one is on sale (AR-193). */}
+      <JsonLd
+        data={artworkJsonLd(
+          seoInputOf(
+            artwork,
+            commerce && {
+              editionType: commerce.editionType,
+              minPriceCents: commerce.minPriceCents,
+              maxPriceCents: commerce.maxPriceCents,
+            },
+          ),
+        )}
+      />
+      <ArtworkDetailPage
+        artwork={{
+          ...artworkData,
+          liveVariantCount: limitedVariants.length,
+          availableNumberCount,
+          sizes: getArtworkSizes({ ...artworkData, variants: limitedVariants }),
+        }}
+        artist={user}
+        media={media}
+        commerce={commerce}
+        neighbours={neighbours}
+        presentation={presentations[artwork.id] ?? null}
+        more={more}
+      />
+    </>
   )
 }
 

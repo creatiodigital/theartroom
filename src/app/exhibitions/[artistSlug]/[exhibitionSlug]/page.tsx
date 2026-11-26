@@ -1,10 +1,13 @@
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { ArtistBiography } from '@/components/artists/profile/ArtistBiography'
 import { ExhibitionProfilePage } from '@/components/exhibitions/profile'
 import { ExhibitionDescription } from '@/components/exhibitions/profile/ExhibitionDescription'
 import { getPublicExhibitionByUrl } from '@/lib/queries/getPublicExhibitionByUrl'
+import { clip } from '@/lib/seo/metaText'
+import { publicPageMetadata } from '@/lib/seo/pageMetadata'
+import { movedExhibitionPath } from '@/lib/seo/slugRedirects'
 
 // Render per request and read straight from the DB so artwork reordering and
 // metadata edits show immediately (the 3D scene itself still comes from the
@@ -26,26 +29,28 @@ export async function generateMetadata({ params }: ExhibitionProfileProps): Prom
   }
 
   const artistName = `${exhibition.user.name} ${exhibition.user.lastName}`
-  const tabTitle = `${artistName} | ${exhibition.mainTitle} | The Art Room`
-  const description =
+  const description = clip(
     exhibition.shortDescription ||
-    `Explore "${exhibition.mainTitle}" by ${artistName} at The Art Room.`
+      `Explore "${exhibition.mainTitle}" by ${artistName} at The Art Room.`,
+  )
 
-  return {
-    title: { absolute: tabTitle },
+  return publicPageMetadata({
+    path: `/exhibitions/${artistSlug}/${exhibitionSlug}`,
+    title: `${artistName} | ${exhibition.mainTitle} | The Art Room`,
     description,
-    openGraph: {
-      title: tabTitle,
-      description,
-    },
-  }
+  })
 }
 
 const ExhibitionProfile = async ({ params }: ExhibitionProfileProps) => {
   const { artistSlug, exhibitionSlug } = await params
 
   const exhibition = await getPublicExhibitionByUrl(exhibitionSlug)
-  if (!exhibition || exhibition.user.handler !== artistSlug) notFound()
+  if (!exhibition || exhibition.user.handler !== artistSlug) {
+    // A URL or an artist's handler that changed: on to the current page (AR-193), not a 404.
+    const moved = await movedExhibitionPath(artistSlug, exhibitionSlug)
+    if (moved) permanentRedirect(moved)
+    notFound()
+  }
 
   return (
     <ExhibitionProfilePage

@@ -20,6 +20,9 @@ export type ArtworkCommercePayload = {
   editionType: 'open' | 'limited'
   /** Cheapest completable purchase. `null` means live but sold out. */
   minPriceCents: number | null
+  /** A limited edition whose editions in stock differ in price: the dearest (the "€232–€444"
+   *  range's top). Absent otherwise. The page's search data states the range (AR-193). */
+  maxPriceCents?: number
   /** Every live edition, each priced on its own row. Empty for open editions. */
   editionLines: VariantEditionLineParts[]
 }
@@ -46,6 +49,7 @@ export async function buildArtworkCommerce(
   return {
     editionType: sale.editionType,
     minPriceCents: sale.minPriceCents,
+    ...(sale.maxPriceCents != null && { maxPriceCents: sale.maxPriceCents }),
     editionLines: lines.map(variantEditionLineParts),
   }
 }
