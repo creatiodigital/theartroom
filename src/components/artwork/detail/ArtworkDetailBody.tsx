@@ -18,6 +18,7 @@ import { ArtworkViews, printViewTiles, VIEW_COUNT, viewAlt } from './ArtworkView
 import { SHOW_NEIGHBOUR_ARROWS } from './neighbourArrows'
 import { reportImageError } from '@/lib/observability/reportImageError'
 import { PHOTO_VIEWS, type PresentationView } from '@/lib/printPresentation/record'
+import { SITE_URL } from '@/lib/siteUrl'
 import { isRichTextEmpty } from '@/lib/textUtils'
 import { useUnits } from '@/lib/units/UnitsProvider'
 
@@ -153,8 +154,7 @@ export const ArtworkDetailBody = ({
 
   // Canonical artwork URL — identical to the standalone page's URL, built from the slug
   // so it is correct even when opened as a modal over the exhibition route.
-  const shareUrl =
-    typeof window !== 'undefined' ? `${window.location.origin}/artworks/${artwork.slug}` : ''
+  const shareUrl = `${SITE_URL}/artworks/${artwork.slug}`
 
   // GA4 view_item: a work shown with a print on offer, once per work, on the page or in the room's
   // details (where the offer arrives after a fetch). Works not for sale send nothing here.

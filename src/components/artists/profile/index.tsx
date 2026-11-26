@@ -7,9 +7,11 @@ import { ExhibitionRow } from '@/components/exhibitions/ExhibitionRow'
 import { PageLayout } from '@/components/ui/PageLayout'
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 import { SectionHeading } from '@/components/ui/SectionHeading'
+import { Share } from '@/components/ui/Share'
 import { hasPrintOnSale, TakeAPeek } from '@/components/ui/TakeAPeek'
 import { TextSection } from '@/components/ui/TextSection'
 import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
+import { SITE_URL } from '@/lib/siteUrl'
 import type {
   PublicArtistArtwork,
   PublicArtistExhibition,
@@ -61,6 +63,13 @@ export const ArtistProfilePage = ({
         <section className={styles.hero}>
           <div className={styles.heroText}>
             <h1 className={styles.name}>{artistFullName}</h1>
+            {/* Share (docs/take-a-peek T8): under the name (the counts it was drawn under were
+                removed on 2026-11-12). */}
+            <Share
+              type="artist"
+              artist={artistFullName}
+              url={`${SITE_URL}/artists/${artist.handler}`}
+            />
           </div>
           <div className={styles.photo}>
             {artist.profileImageUrl ? (

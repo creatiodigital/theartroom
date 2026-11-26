@@ -15,6 +15,7 @@ import { TextSection } from '@/components/ui/TextSection'
 import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
 import { isRichTextEmpty } from '@/lib/textUtils'
 import { isSafeImageSrc } from '@/lib/imageSafety'
+import { SITE_URL } from '@/lib/siteUrl'
 import type { PublicExhibition } from '@/lib/queries/getPublicExhibitionByUrl'
 
 import { EnterExhibitionButton } from './EnterExhibitionButton'
@@ -29,8 +30,6 @@ interface ExhibitionProfilePageProps {
   /** The artist's biography, rendered on the server (see ArtistBiography). */
   artistBiography?: ReactNode
 }
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://theartroom.gallery'
 
 /**
  * The exhibition page (docs/public-redesign/exhibition.md): hero, About the exhibition, the series,
@@ -94,7 +93,10 @@ export const ExhibitionProfilePage = ({
             {dateRange && <p className={styles.dates}>{dateRange}</p>}
             {enter(styles.enter)}
             <Share
-              title={`${exhibition.mainTitle} — ${artistName}`}
+              type="exhibition"
+              exhibition={exhibition.mainTitle}
+              artist={artistName}
+              walkThrough={exhibition.spacePublished}
               url={shareUrl}
               className={styles.share}
             />

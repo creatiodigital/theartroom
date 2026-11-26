@@ -184,6 +184,12 @@ guess would be costly.
   panels stay in the page with `inert` while shut, so the height eases open (not with reduced motion). The country
   count is `TPS_SUPPORTED_COUNTRIES.length` (38). Two departures, see Q3 and Q4. Checked at 1440 and 390. To look at:
   the last row's hairline and the print details' divider below it sit about 20 px apart.
+- **T8**: Share redesigned and on (`SHOW_SHARE` gone): one row, SHARE · WhatsApp · Email, the messages as written, the
+  link `SITE_URL` + path (new `src/lib/siteUrl.ts`; the artwork and Object pages built it from `window`, which would
+  differ between server and browser), `share_click { method, type }` through `track()`. Artwork page and room pop-up
+  (and Object pages, same info column): at its foot, where it was; exhibition: under Enter 3D room; artist: under the
+  name (Q6). Checked at 1440 and 390, no console errors; Open Graph title and image are on all three pages, but the
+  link-preview debugger needs a public URL: owed on the preview deploy.
 
 ## Questions
 
@@ -200,6 +206,11 @@ guess would be costly.
   per-country estimate back at checkout (the Facts line says it stays), that's one line in `CartCheckout`: say which.
 - **Q4 (T7, copy):** "The frame and passepartout, if you chose them." shows for open editions only: limited editions
   are sold unframed (the limited wizard says so), so nothing can be chosen.
+- **Q5 (T8, copy):** an exhibition whose 3D room isn't open yet would be shared as "…an exhibition by {artist} you can
+  also walk through in 3D". It says "{Exhibition}, an exhibition by {Artist} at The Art Room" instead until the room
+  is open.
+- **Q6 (T8, placement):** the artist page's hero has no "N exhibitions · N works" line any more (counts removed
+  2026-11-12), so Share sits under the artist's name.
 
 ---
 

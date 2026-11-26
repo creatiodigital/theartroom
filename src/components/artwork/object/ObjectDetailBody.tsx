@@ -21,6 +21,7 @@ import { InquireSidebar } from '@/components/ui/InquireSidebar'
 import { track } from '@/lib/analytics/track'
 import { formatObjectSize, formatWeight } from '@/lib/units/format'
 import { useUnits } from '@/lib/units/UnitsProvider'
+import { SITE_URL } from '@/lib/siteUrl'
 
 import detail from '@/components/artwork/detail/ArtworkDetail.module.scss'
 import styles from './ObjectDetail.module.scss'
@@ -88,8 +89,7 @@ export function ObjectDetailBody({
 
   const title = artwork.title || artwork.name || 'Artwork'
   const author = artwork.author || `${artist.name} ${artist.lastName}`.trim()
-  const shareUrl =
-    typeof window !== 'undefined' ? `${window.location.origin}/artworks/${artwork.slug}` : ''
+  const shareUrl = `${SITE_URL}/artworks/${artwork.slug}`
 
   const size = formatObjectSize(artwork, unit)
   const weight = artwork.weightKg ? formatWeight(artwork.weightKg) : null
