@@ -1,9 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowCounterClockwise, Pause, Play } from '@phosphor-icons/react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { ArrowCounterClockwise, ArrowRight, Pause, Play } from '@phosphor-icons/react'
+import c from 'classnames'
 
 import { Button } from '@/components/ui/Button'
+import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
 
 import { clock, PEEK_DURATION_S, PEEK_FULL } from './media'
 
@@ -23,10 +25,16 @@ const TOGGLE = {
  * native controls); it stops on its last frame and offers a replay, never looping. Under it the
  * words and the page's button (`cta`, none on some pages). Closing the window removes the video.
  */
+/** The window's "Order a print of {title}": the page's own Order a print (its wizard). */
+export type TakeAPeekOrder = { title: string; onOrder: () => void }
+
+/** The button under the words: Discover the prints, or order this work. */
+export type PeekCta = { kind: 'prints' } | ({ kind: 'order' } & TakeAPeekOrder)
+
 type PeekPlayerProps = {
   titleId: string
-  /** The page's button under the words, or nothing. */
-  cta: ReactNode
+  /** The page's button under the words, or none. */
+  cta: PeekCta | null
   /** The video reached its end (each time, a replay included). */
   onComplete: () => void
   /** The button was used. */
@@ -139,10 +147,42 @@ export const PeekPlayer = ({ titleId, cta, onComplete, onCta }: PeekPlayerProps)
         {cta && (
           // Hears the button's click (a link or a button) without changing its layout.
           <div className={styles.ctaSlot} onClick={onCta}>
-            {cta}
+            {cta.kind === 'order' ? (
+              <OrderCta title={cta.title} onOrder={cta.onOrder} />
+            ) : (
+              <Button
+                href="/prints"
+                variant="outlineInverse"
+                size="regularSquared"
+                className={styles.cta}
+              >
+                <ArrowRight size={16} weight="light" aria-hidden className={styles.ctaIcon} />
+                Discover the prints
+              </Button>
+            )}
           </div>
         )}
       </div>
     </div>
+  )
+}
+
+/**
+ * Filled white, the work's title in it; the same hop as the page's Order a print (open edition:
+ * the wizard; limited: its flow). Gone while purchases are paused. No bag icon: the owner removed
+ * it from every Order button (2026-11-12), the board's drawing predates that.
+ */
+const OrderCta = ({ title, onOrder }: TakeAPeekOrder) => {
+  const paused = usePurchasesPaused()
+  if (paused) return null
+  return (
+    <Button
+      variant="inverse"
+      size="regularSquared"
+      className={c(styles.cta, styles.orderCta)}
+      onClick={onOrder}
+    >
+      {title ? `Order a print of ${title}` : 'Order a print'}
+    </Button>
   )
 }

@@ -175,6 +175,9 @@ guess would be costly.
   / "When they ship" in the cart email, which always says "your prints"). `estimateDeliveryWindow` is kept but has no
   buyer-facing caller now; duty notices untouched. Emails checked in /dev/emails; the checkout line by type check only.
   The Online terms of sale wording is admin content (suggested text in T6b above).
+- **Fix** (Part 1): the Take a peek styles layered on Button `bare` (and on its size class) now use two classes, so a
+  production stylesheet order can't undo their padding, gaps and alignment (the same trap `CollapsibleSection` notes).
+  The window's button moved into `PeekPlayer` for that. No visible change.
 
 ## Questions
 

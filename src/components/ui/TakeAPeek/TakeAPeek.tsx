@@ -7,11 +7,10 @@ import c from 'classnames'
 
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
-import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
 import { track } from '@/lib/analytics/track'
 
 import { PeekLoop } from './PeekLoop'
-import { PeekPlayer } from './PeekPlayer'
+import { PeekPlayer, type PeekCta, type TakeAPeekOrder } from './PeekPlayer'
 import { clock, PEEK_DURATION_S } from './media'
 
 import styles from './TakeAPeek.module.scss'
@@ -26,8 +25,7 @@ export type TakeAPeekPlacement =
   | 'room'
   | 'cart'
 
-/** The window's "Order a print of {title}": the page's own Order a print (its wizard). */
-export type TakeAPeekOrder = { title: string; onOrder: () => void }
+export type { TakeAPeekOrder }
 
 type TakeAPeekProps = {
   placement: TakeAPeekPlacement
@@ -79,14 +77,11 @@ export const TakeAPeek = ({ size, placement, line, order, className }: TakeAPeek
     else if (wasOpen.current) triggerRef.current?.focus()
   }, [open])
 
-  const cta = order ? (
-    <OrderCta {...order} />
-  ) : NO_CTA.includes(placement) ? null : (
-    <Button href="/prints" variant="outlineInverse" size="regularSquared" className={styles.cta}>
-      <ArrowRight size={16} weight="light" aria-hidden className={styles.ctaIcon} />
-      Discover the prints
-    </Button>
-  )
+  const cta: PeekCta | null = order
+    ? { kind: 'order', ...order }
+    : NO_CTA.includes(placement)
+      ? null
+      : { kind: 'prints' }
 
   return (
     <>
@@ -145,25 +140,5 @@ export const TakeAPeek = ({ size, placement, line, order, className }: TakeAPeek
           document.body,
         )}
     </>
-  )
-}
-
-/**
- * Filled white, the work's title in it; the same hop as the page's Order a print (open edition:
- * the wizard; limited: its flow). Gone while purchases are paused. No bag icon: the owner removed
- * it from every Order button (2026-11-12), the board's drawing predates that.
- */
-const OrderCta = ({ title, onOrder }: TakeAPeekOrder) => {
-  const paused = usePurchasesPaused()
-  if (paused) return null
-  return (
-    <Button
-      variant="inverse"
-      size="regularSquared"
-      className={c(styles.cta, styles.orderCta)}
-      onClick={onOrder}
-    >
-      {title ? `Order a print of ${title}` : 'Order a print'}
-    </Button>
   )
 }

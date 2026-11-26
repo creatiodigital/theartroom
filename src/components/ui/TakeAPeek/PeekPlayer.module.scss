@@ -62,7 +62,8 @@
   }
 }
 
-.toggle {
+// Under `.controls`: two classes, so it wins over Button `bare`'s reset in any stylesheet order.
+.controls .toggle {
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
@@ -119,6 +120,45 @@
 // The button's wrapper only listens for its click; the button lays out as if it were not there.
 .ctaSlot {
   display: contents;
+}
+
+// The page's button. Under `.words`: two classes, so it wins over Button's size class in any
+// stylesheet order.
+.words .cta {
+  height: var(--space-12);
+  padding: 0 var(--space-5);
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  @include media-down(md) {
+    width: 100%;
+    margin-top: auto;
+  }
+}
+
+// A work's title can be long: the button wraps rather than pushing the words aside.
+.words .orderCta {
+  height: auto;
+  min-height: var(--space-12);
+  max-width: 50%;
+  padding-block: var(--space-2);
+  // Semibold, as every Order print (owner, 2026-11-12); Lato draws it with its bold.
+  font-weight: var(--font-semibold);
+  white-space: normal;
+  text-align: center;
+
+  @include media-down(md) {
+    max-width: none;
+  }
+}
+
+// The arrow only beside the words on wide screens (PlayerPhone.dc.html draws the words alone).
+.ctaIcon {
+  @include media-down(md) {
+    display: none;
+  }
 }
 
 // Under the video: the words on the left, the button on the right.

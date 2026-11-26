@@ -52,7 +52,8 @@
 }
 
 // Take a peek under the two kinds, across the column, after a hairline (designs/PrintsPlacement).
-.peek {
+// Under `.description`: wins over Button `bare`'s padding reset in any stylesheet order.
+.description .peek {
   align-self: stretch;
   margin-top: var(--space-3);
   padding-top: var(--space-6);

@@ -8,12 +8,18 @@
 // triangle looks centred.
 
 // One link-styled button: Button `bare` resets it; the circle and the words sit side by side.
+// Every rule here has two classes (the trigger and its size), so it wins over `bare`'s one-class
+// reset (padding, gap, alignment, color) whatever order the stylesheets load in.
 .trigger {
-  align-items: center;
-  font-family: var(--font-sans), var(--font-sans-fallback);
-  color: var(--public-text);
-  text-align: left;
-  cursor: pointer;
+  &.full,
+  &.strip,
+  &.inline {
+    align-items: center;
+    font-family: var(--font-sans), var(--font-sans-fallback);
+    color: var(--public-text);
+    text-align: left;
+    cursor: pointer;
+  }
 
   &:focus-visible {
     outline: 2px solid var(--public-text);
@@ -25,14 +31,13 @@
   }
 }
 
-.full {
+.trigger.full {
   --peek-size: 96px;
   --peek-gap: var(--space-1);
   --peek-play: 30px;
   --peek-nudge: 3px;
 
   gap: var(--space-5);
-  padding: var(--space-1) 0;
 
   @include media-down(md) {
     --peek-size: 84px;
@@ -43,7 +48,7 @@
 }
 
 // Full content width, between two hairlines.
-.strip {
+.trigger.strip {
   --peek-size: var(--space-14);
   --peek-gap: 3px;
   --peek-play: 19px;
@@ -57,7 +62,7 @@
   border-bottom: 1px solid var(--color-gray-55);
 }
 
-.inline {
+.trigger.inline {
   --peek-size: 44px;
   --peek-gap: 2px;
   --peek-play: 15px;
@@ -191,43 +196,4 @@
 .arrow {
   flex: 0 0 auto;
   color: var(--color-text-primary);
-}
-
-// ── The window's button (PeekPlayer lays it out) ────────────────────────────
-
-.cta {
-  height: var(--space-12);
-  padding: 0 var(--space-5);
-  font-size: var(--text-xs);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  white-space: nowrap;
-
-  @include media-down(md) {
-    width: 100%;
-    margin-top: auto;
-  }
-}
-
-// A work's title can be long: the button wraps rather than pushing the words aside.
-.orderCta {
-  height: auto;
-  min-height: var(--space-12);
-  max-width: 50%;
-  padding-block: var(--space-2);
-  // Semibold, as every Order print (owner, 2026-11-12); Lato draws it with its bold.
-  font-weight: var(--font-semibold);
-  white-space: normal;
-  text-align: center;
-
-  @include media-down(md) {
-    max-width: none;
-  }
-}
-
-// The arrow only beside the words on wide screens (PlayerPhone.dc.html draws the words alone).
-.ctaIcon {
-  @include media-down(md) {
-    display: none;
-  }
 }
