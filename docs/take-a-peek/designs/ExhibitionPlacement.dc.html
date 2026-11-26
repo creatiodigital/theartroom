@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Exhibition page with the print-arrival strip</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&amp;family=Lato:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#fff}
+a{color:inherit;text-decoration:none}
+a:hover{color:inherit}
+.serif{font-family:'EB Garamond',Georgia,serif}
+.caps{font-size:12px;letter-spacing:.16em;text-transform:uppercase}
+.loop{animation:drift 3s ease-in-out infinite alternate}
+@keyframes drift{from{transform:scale(1.02) translateY(0)}to{transform:scale(1.1) translateY(-3%)}}
+@media (prefers-reduced-motion: reduce){.loop{animation:none}}
+.strip:focus-visible{outline:2px solid #1a1a1a;outline-offset:3px}
+</style>
+</helmet>
+<div style="width: 1440px; height: 960px; box-sizing: border-box; padding: 56px 48px 0; overflow: hidden; font-family: Lato, -apple-system, sans-serif; color: #1a1a1a; background: #fff; display: flex; flex-direction: column; gap: 40px">
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 80px; color: #9a9a9a; font-size: 16px; line-height: 1.7">
+<p style="margin: 0">The series unfolds in three acts: Magnolia, Misterio, and Memoria. Each one moves closer to the flower, until petals become light, texture and transparency.</p>
+<p style="margin: 0">Through an intimate photographic gaze, organic forms dissolve into abstract landscapes, revealing the hidden within the familiar.</p>
+</div>
+
+<a class="strip" href="PlayerDesktop.dc.html" aria-label="Take a peek: watch what arrives at your door, 27 seconds" style="display: flex; align-items: center; gap: 18px; padding: 16px 0; border-top: 1px solid #d0d0d0; border-bottom: 1px solid #d0d0d0">
+<span style="position: relative; display: block; width: 56px; height: 56px; flex: 0 0 auto"><span style="display: block; width: 56px; height: 56px; border-radius: 50%; border: 1.5px solid #1a1a1a; padding: 3px; box-sizing: border-box"><img src="/_blob/327ab7805a257ec24d27a5fe5476425c" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block"></span><span style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none"><svg width="19" height="19" viewBox="0 0 256 256" fill="#ffffff" aria-hidden="true" style="margin-left: 2px; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5))"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"></path></svg></span></span>
+<span style="display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto"><span class="serif" style="font-size: 19px; line-height: 1.25">Works in this exhibition are also fine-art prints, approved by Beatriz Salvatierra.</span><span style="font-size: 14px; color: #666">Take a peek at what arrives · 0:27</span></span>
+<svg width="18" height="18" viewBox="0 0 256 256" fill="#333" aria-hidden="true"><path d="M220.24,132.24l-72,72a6,6,0,0,1-8.48-8.48L201.51,134H40a6,6,0,0,1,0-12H201.51L139.76,60.24a6,6,0,0,1,8.48-8.48l72,72A6,6,0,0,1,220.24,132.24Z"></path></svg>
+</a>
+
+<h2 class="serif" style="margin: 8px 0 0; font-weight: 400; font-size: 20px; letter-spacing: .16em; text-transform: uppercase; text-align: center">Magnolia</h2>
+
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px">
+<sc-for list="{{works}}" as="w" hint-placeholder-count="3">
+<article style="display: flex; flex-direction: column; gap: 14px">
+<div style="aspect-ratio: 1 / 1; background: #f2f2f2; display: flex; align-items: center; justify-content: center"><img src="{{w.img}}" alt="{{w.title}}, Beatriz Salvatierra" style="width: 100%; height: 100%; object-fit: contain; display: block"></div>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 2px"><span class="serif" style="font-size: 20px">{{w.title}}</span><span style="font-size: 13px; color: #666">Beatriz Salvatierra</span><span style="font-size: 13px; color: #666">2026 · Limited edition</span><span style="font-size: 14px">€284</span></div>
+<a href="#" style="display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border: 1px solid #1a1a1a; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap">Order print</a>
+</div>
+</article>
+</sc-for>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { works: [
+      { title: 'Magnolia II', img: '/_blob/64d16e2353f2b9a7098ffceb616a644e' },
+      { title: 'Magnolia III', img: '/_blob/65b1fea519deb1185295e58a25f42ba8' },
+      { title: 'Magnolia IV', img: '/_blob/cea67c89a3d782c6ee4e58fcdb949e59' }
+    ] };
+  }
+}
+</script>
+</body>
+</html>

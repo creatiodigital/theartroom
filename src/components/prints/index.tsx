@@ -5,6 +5,7 @@ import { Band } from '@/components/ui/Band'
 import { PageIntro } from '@/components/ui/PageIntro'
 import { PageLayout } from '@/components/ui/PageLayout'
 import { RichText } from '@/components/ui/RichText'
+import { TakeAPeek } from '@/components/ui/TakeAPeek'
 import type { GallerySelectionCard } from '@/lib/queries/getGallerySelection'
 
 import { PrintsBanner } from './PrintsBanner'
@@ -47,6 +48,9 @@ export const PrintsPage = ({ selection, pageContent }: PrintsPageProps) => {
             {hasDescription && (
               <RichText content={pageContent!.content} className={styles.descriptionText} />
             )}
+            {/* What arrives at your door (docs/take-a-peek, P5): under the two kinds; its window
+                has no button here (this is where Discover the prints leads). */}
+            <TakeAPeek size="full" placement="prints" className={styles.peek} />
           </div>
         </section>
 

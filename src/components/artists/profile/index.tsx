@@ -7,7 +7,11 @@ import { ExhibitionRow } from '@/components/exhibitions/ExhibitionRow'
 import { PageLayout } from '@/components/ui/PageLayout'
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 import { SectionHeading } from '@/components/ui/SectionHeading'
+import { Share } from '@/components/ui/Share'
+import { hasPrintOnSale, TakeAPeek } from '@/components/ui/TakeAPeek'
 import { TextSection } from '@/components/ui/TextSection'
+import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
+import { SITE_URL } from '@/lib/siteUrl'
 import type {
   PublicArtistArtwork,
   PublicArtistExhibition,
@@ -49,6 +53,9 @@ export const ArtistProfilePage = ({
 }: ArtistProfilePageProps) => {
   const artistFullName = `${artist.name} ${artist.lastName}`
   // No counts anywhere on the page (owner, 2026-11-12: "1 exhibition · 8 works" removed).
+  // Take a peek (docs/take-a-peek, P4): above the works, when one of them has a print to order.
+  const purchasesPaused = usePurchasesPaused()
+  const showPeek = !purchasesPaused && hasPrintOnSale(artworks)
 
   return (
     <PageLayout>
@@ -56,6 +63,13 @@ export const ArtistProfilePage = ({
         <section className={styles.hero}>
           <div className={styles.heroText}>
             <h1 className={styles.name}>{artistFullName}</h1>
+            {/* Share (docs/take-a-peek T8): under the name (the counts it was drawn under were
+                removed on 2026-11-12). */}
+            <Share
+              type="artist"
+              artist={artistFullName}
+              url={`${SITE_URL}/artists/${artist.handler}`}
+            />
           </div>
           <div className={styles.photo}>
             {artist.profileImageUrl ? (
@@ -110,6 +124,14 @@ export const ArtistProfilePage = ({
 
         {artworks.length > 0 && (
           <section className={styles.group} aria-label="Selected works">
+            {showPeek && (
+              <TakeAPeek
+                size="strip"
+                placement="artist"
+                line={`Works by ${artistFullName} are also fine-art prints, approved by the artist.`}
+                className={styles.peek}
+              />
+            )}
             <SectionHeading title="Selected works" />
             {/* `artistHandler` marks the cards as a set the visitor is walking, so
                 the artwork page can offer previous/next through this artist's

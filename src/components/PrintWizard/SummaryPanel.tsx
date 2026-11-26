@@ -216,10 +216,11 @@ export const SummaryPanel = ({
       {/* Says out loud what the price leaves out, at the point of decision (order-flow.md). */}
       <p className={styles.priceNote}>
         Shipping and taxes are calculated at checkout.{' '}
-        {/* Only a limited edition's certificate carries the artist's signature, printed on it. */}
+        {/* Only a limited edition comes with a certificate (the artist's signature printed on it); an
+            open edition comes with a personal letter from the gallery (owner, 2026-11-26). */}
         {editionType === 'limited'
           ? 'Certificate of authenticity with the artist’s printed signature included.'
-          : 'Certificate of authenticity included.'}
+          : 'A personal letter from the gallery included.'}
       </p>
       {caveat && <p className={styles.priceNote}>{caveat}</p>}
 

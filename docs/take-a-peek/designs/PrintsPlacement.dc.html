@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Prints page with Take a peek</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&amp;family=Lato:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#fff}
+a{color:inherit;text-decoration:none}
+a:hover{color:inherit}
+.serif{font-family:'EB Garamond',Georgia,serif}
+.caps{font-size:12px;letter-spacing:.16em;text-transform:uppercase}
+.peek:focus-visible{outline:2px solid #1a1a1a;outline-offset:4px}
+</style>
+</helmet>
+<div style="width: 1440px; height: 960px; box-sizing: border-box; padding: 64px 48px; font-family: Lato, -apple-system, sans-serif; color: #1a1a1a; background: #fff; display: flex; flex-direction: column; gap: 40px">
+
+<div style="display: flex; flex-direction: column; gap: 14px; max-width: 760px">
+<h1 class="serif" style="margin: 0; font-weight: 400; font-size: 52px; line-height: 1.05">Prints</h1>
+<p style="margin: 0; font-size: 16px; line-height: 1.7; color: #444">A selection of prints from our artists. Many more works are available as prints on each exhibition and artist page.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 64px; align-items: start">
+<div style="height: 620px; background: #f2f2f2; overflow: hidden"><img src="/_blob/d54fe27e8b616b6da810b9fe654dbe36" alt="A fine-art print by Elizabeth Mosler, just unwrapped" style="width: 100%; height: 100%; object-fit: cover; display: block"></div>
+
+<div style="display: flex; flex-direction: column; gap: 18px; padding-top: 8px">
+<span class="caps" style="color: #666">Fine-art prints</span>
+<h2 class="serif" style="margin: 0; font-weight: 400; font-size: 38px; line-height: 1.1">Two kinds of prints</h2>
+<p style="margin: 0; font-size: 15px; line-height: 1.7; color: #444">Every print is approved by the artist and produced on archival fine-art paper by the labs museums and collectors rely on.</p>
+<p style="margin: 0; font-size: 15px; line-height: 1.7; color: #444"><b style="font-weight: 700; color: #1a1a1a">Limited editions.</b> A fixed number of prints, each one numbered. Size and paper are set together with the artist. Once the edition is complete, it is never reprinted.</p>
+<p style="margin: 0; font-size: 15px; line-height: 1.7; color: #444"><b style="font-weight: 700; color: #1a1a1a">Open editions.</b> Printed to order, with no fixed number. You choose the size, the paper, the frame and the passepartout.</p>
+
+<a class="peek" href="PlayerDesktop.dc.html" aria-label="Take a peek: watch what arrives at your door, 27 seconds" style="display: inline-flex; align-items: center; gap: 20px; margin-top: 10px; padding-top: 22px; border-top: 1px solid #e4e4e4; align-self: stretch">
+<span style="position: relative; display: block; width: 96px; height: 96px; flex: 0 0 auto">
+<span style="display: block; width: 96px; height: 96px; border-radius: 50%; border: 1.5px solid #1a1a1a; padding: 4px; box-sizing: border-box"><img src="/_blob/327ab7805a257ec24d27a5fe5476425c" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block"></span>
+<span style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none"><svg width="30" height="30" viewBox="0 0 256 256" fill="#ffffff" aria-hidden="true" style="margin-left: 3px; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5))"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"></path></svg></span>
+</span>
+<span style="display: flex; flex-direction: column; gap: 4px">
+<span class="caps" style="color: #666; font-size: 11px">Take a peek</span>
+<span class="serif" style="font-size: 24px; line-height: 1.15">What arrives at your door</span>
+<span style="font-size: 13px; color: #666">0:27</span>
+</span>
+</a>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

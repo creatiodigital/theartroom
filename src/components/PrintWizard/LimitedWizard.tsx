@@ -357,9 +357,9 @@ export const LimitedWizard = ({ artwork, catalog, galleryRate }: Props) => {
             shipping={[
               'All editions are packaged to the highest standards, managed at our warehouse using archival materials.',
               'Shipping is calculated at checkout, based on your delivery address.',
-              'Most editions are dispatched within about a week of purchase.',
+              // One time promise everywhere (docs/take-a-peek T6b, owner 2026-11-26).
+              'Made to order, it usually ships within 2 weeks, with tracking.',
               'Sent with tracked delivery: we’ll email you the tracking when it’s on its way.',
-              'Delivery is typically 1–2 weeks.',
               'Orders may be subject to customs and local import duties.',
             ]}
           />

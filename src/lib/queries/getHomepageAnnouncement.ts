@@ -1,3 +1,4 @@
+import { normalizeButtonLink } from '@/lib/announcementButton'
 import { captureError } from '@/lib/observability/captureError'
 import prisma from '@/lib/prisma'
 
@@ -7,6 +8,8 @@ export type HomepageAnnouncement = {
   /** TipTap HTML; `RichText` sanitizes it when it renders. */
   content: string
   imageUrl: string
+  /** The optional button under the text (docs/take-a-peek T9): only when both label and link are set. */
+  button: { label: string; href: string } | null
 }
 
 /**
@@ -21,11 +24,29 @@ export async function getHomepageAnnouncement(): Promise<HomepageAnnouncement | 
     const rows = await prisma.announcement.findMany({
       where: { isActive: true, imageUrl: { not: null } },
       orderBy: { createdAt: 'desc' },
-      select: { id: true, title: true, content: true, imageUrl: true },
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        imageUrl: true,
+        buttonLabel: true,
+        buttonUrl: true,
+      },
       take: 10,
     })
     const shown = rows.find((row) => row.imageUrl && row.title.trim())
-    return shown ? { ...shown, title: shown.title.trim(), imageUrl: shown.imageUrl! } : null
+    if (!shown) return null
+    const { buttonLabel, buttonUrl, ...rest } = shown
+    // Checked again on the way out: a link saved before the rule, or edited in the database, that
+    // isn't https://, a site path or mailto: shows no button.
+    const label = buttonLabel?.trim()
+    const href = buttonUrl ? normalizeButtonLink(buttonUrl) : null
+    return {
+      ...rest,
+      title: shown.title.trim(),
+      imageUrl: shown.imageUrl!,
+      button: label && href ? { label, href } : null,
+    }
   } catch (err) {
     captureError(err, { flow: 'content', stage: 'homepage-announcement', level: 'warning' })
     return null

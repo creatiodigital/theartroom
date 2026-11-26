@@ -18,6 +18,7 @@ import { ArtworkViews, printViewTiles, VIEW_COUNT, viewAlt } from './ArtworkView
 import { SHOW_NEIGHBOUR_ARROWS } from './neighbourArrows'
 import { reportImageError } from '@/lib/observability/reportImageError'
 import { PHOTO_VIEWS, type PresentationView } from '@/lib/printPresentation/record'
+import { SITE_URL } from '@/lib/siteUrl'
 import { isRichTextEmpty } from '@/lib/textUtils'
 import { useUnits } from '@/lib/units/UnitsProvider'
 
@@ -130,9 +131,10 @@ export const ArtworkDetailBody = ({
 }: ArtworkDetailBodyProps) => {
   const [isInquireOpen, setIsInquireOpen] = useState(false)
   // The work's four views (owner, 2026-11-20): the framed view, then three photos of the print.
-  // Artwork pages only — the 3D room's pop-up keeps the framed view alone.
+  // On the artwork page and in the 3D room's pop-up alike (owner, 2026-11-25; the pop-up kept the
+  // framed view alone until then).
   const withPhotos =
-    surface === 'page' && presentation?.photos && artwork.imageUrl
+    presentation?.photos && artwork.imageUrl
       ? { ...presentation, photos: presentation.photos }
       : null
   const strip = useViewsStrip(withPhotos ? VIEW_COUNT : 1)
@@ -152,8 +154,7 @@ export const ArtworkDetailBody = ({
 
   // Canonical artwork URL — identical to the standalone page's URL, built from the slug
   // so it is correct even when opened as a modal over the exhibition route.
-  const shareUrl =
-    typeof window !== 'undefined' ? `${window.location.origin}/artworks/${artwork.slug}` : ''
+  const shareUrl = `${SITE_URL}/artworks/${artwork.slug}`
 
   // GA4 view_item: a work shown with a print on offer, once per work, on the page or in the room's
   // details (where the offer arrives after a fetch). Works not for sale send nothing here.
@@ -238,6 +239,8 @@ export const ArtworkDetailBody = ({
                 minPriceCents={commerce.minPriceCents}
                 editionLines={commerce.editionLines}
                 artworkSlug={artwork.slug}
+                title={displayTitle}
+                surface={surface}
                 inquire={<ArtworkInquire onClick={openInquire} />}
               />
             ) : (

@@ -124,7 +124,7 @@ export type PresentationView = {
   piece?: PresentationWindow
   /**
    * The work's three photo views, each in both sizes — only while they show the work as it is
-   * (its image and print) and load here. Artwork pages only.
+   * (its image and print) and load here. Artwork pages and the 3D room's pop-up show them.
    */
   photos?: Record<PhotoViewKind, Record<PresentationSize, string>>
 }

@@ -2,13 +2,14 @@ import { HomeSectionHead } from '@/components/landing/HomeSectionHead/HomeSectio
 import { RichText } from '@/components/ui/RichText'
 import type { HomepageAnnouncement } from '@/lib/queries/getHomepageAnnouncement'
 
+import { AnnouncementButton } from './AnnouncementButton'
 import styles from './Announcement.module.scss'
 
 /**
  * "Announcements" on the homepage (AR-174; docs/public-redesign/home.md §4), written in admin →
- * Content → Announcements: the photo 3:2 on the left, the title and text on the right. No button:
- * the text carries its own links. The board's red label ("Open call") has no field in the
- * announcement, so there is none (questions.md Q-P23).
+ * Content → Announcements: the photo 3:2 on the left, the title and text on the right, and an
+ * optional button under the text when the announcement has one (docs/take-a-peek T9). The board's
+ * red label ("Open call") has no field in the announcement, so there is none (questions.md Q-P23).
  */
 export const Announcement = ({ announcement }: { announcement: HomepageAnnouncement }) => (
   <section className={styles.section}>
@@ -26,6 +27,9 @@ export const Announcement = ({ announcement }: { announcement: HomepageAnnouncem
         <h3 className={styles.title}>{announcement.title}</h3>
         {announcement.content && (
           <RichText content={announcement.content} variant="compact" className={styles.text} />
+        )}
+        {announcement.button && (
+          <AnnouncementButton label={announcement.button.label} href={announcement.button.href} />
         )}
       </div>
     </article>

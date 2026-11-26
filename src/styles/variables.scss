@@ -110,6 +110,13 @@
   --public-dark: #2b2b2b;
   --public-print-kind: #3a3a3a;
   --public-print-label: #8a8a8a;
+  // Take a peek's player (docs/take-a-peek): the backdrop and the words on it.
+  --public-dark-backdrop: rgba(20, 20, 20, 0.94);
+  --public-dark-screen: #141414; // the same, solid: the player full screen on phones
+  --public-on-dark-label: #a8a8a8;
+  --public-on-dark-body: #bdbdbd;
+  --public-video-control: rgba(0, 0, 0, 0.45); // the pause / play square over the video
+  --public-video-track: rgba(255, 255, 255, 0.35); // the progress line's unplayed part
 
   // Panels
   --color-surface-elevated: var(--color-gray-15);

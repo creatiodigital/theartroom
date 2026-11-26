@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 
+import { BUTTON_LABEL_MAX, BUTTON_LINK_ERROR, normalizeButtonLink } from '@/lib/announcementButton'
 import { requireAdmin } from '@/lib/authUtils'
 import prisma from '@/lib/prisma'
 import { deleteFromR2 } from '@/lib/r2'
@@ -23,17 +24,34 @@ export async function GET(_request: Request, { params }: RouteParams) {
   }
 }
 
-// PUT the title, text and on/off switch. The photo has its own route (`./image`).
+// PUT the title, text, on/off switch and the optional button (label + link). The photo has its own
+// route (`./image`).
 export async function PUT(request: Request, { params }: RouteParams) {
   const { error: authError } = await requireAdmin()
   if (authError) return authError
   try {
     const { id } = await params
     const body = (await request.json()) as Record<string, unknown>
-    const data: { title?: string; content?: string; isActive?: boolean } = {}
+    const data: {
+      title?: string
+      content?: string
+      isActive?: boolean
+      buttonLabel?: string | null
+      buttonUrl?: string | null
+    } = {}
     if (typeof body.title === 'string') data.title = body.title
     if (typeof body.content === 'string') data.content = body.content
     if (typeof body.isActive === 'boolean') data.isActive = body.isActive
+    // The button (docs/take-a-peek T9): empty clears it; the link must be https://, a site path or
+    // mailto: (the editor checks the same before saving).
+    if (typeof body.buttonLabel === 'string') {
+      data.buttonLabel = body.buttonLabel.trim().slice(0, BUTTON_LABEL_MAX) || null
+    }
+    if (typeof body.buttonUrl === 'string') {
+      const link = normalizeButtonLink(body.buttonUrl)
+      if (link === false) return NextResponse.json({ error: BUTTON_LINK_ERROR }, { status: 400 })
+      data.buttonUrl = link
+    }
 
     const exists = await prisma.announcement.findUnique({ where: { id }, select: { id: true } })
     if (!exists) return notFound()

@@ -45,6 +45,12 @@ type ModalProps = {
   layout?: 'padded' | 'flush'
   /** Full screen on phones (below 640px): no inset, the panel fills the screen. */
   phoneFullScreen?: boolean
+  /**
+   * `dark`: no window; the content sits straight on a near-black backdrop, in white, with the ×
+   * in the screen's corner, and fills the screen below 768px. For a video (Take a peek). The
+   * content sizes itself.
+   */
+  surface?: 'panel' | 'dark'
 }
 
 import styles from './Modal.module.scss'
@@ -58,6 +64,7 @@ const Modal = ({
   tone = 'default',
   layout = 'padded',
   phoneFullScreen = false,
+  surface = 'panel',
 }: ModalProps) => {
   const contentRef = useRef<HTMLDivElement>(null)
   const backdropClose = useBackdropClose(onClose)
@@ -110,6 +117,7 @@ const Modal = ({
         tone === 'admin' && styles.admin,
         tone === 'public' && styles.public,
         phoneFullScreen && styles.phoneFullScreen,
+        surface === 'dark' && styles.dark,
       )}
       onMouseDown={backdropClose.onMouseDown}
       onMouseUp={backdropClose.onMouseUp}

@@ -472,6 +472,12 @@ Verified: typecheck, lint, prettier; logic diffed against HEAD; `gallery-selecti
 headings, handle names, the announcement statuses, the edit page's breadcrumb, no console errors, no horizontal
 scroll.
 
+**Later, 2026-11-26 (AR-192, `docs/take-a-peek/README.md` T9):** the Edit Announcement page has two more sections after
+Text, **Button label** and **Button link** (help: "Optional. A web address, or mailto: to open the visitor's email
+app."), same section look as Title. The link is checked on Save (https://, a site path or mailto:), its error shows
+under the field and clears once fixed; the API refuses the same. New columns `Announcement.buttonLabel` /
+`buttonUrl` (pushed to the dev DB; prod needs them before release).
+
 ### Step 12a · Content list — Built 2026-11-11 · branch `feat/AR-180-ui-admin-improvements` (not committed yet)
 
 Plan: `docs/superpowers/plans/2026-11-11-admin-content-list.md`. Files: new `src/components/admin/content/`
