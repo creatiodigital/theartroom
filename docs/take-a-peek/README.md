@@ -204,6 +204,7 @@ guess would be costly.
   Hover is the site button's (#000 to #333), not the board's #1a1a1a to #000.
   Owner, 2026-11-26: **no email template** (no subject or body in the link): the button's link is just
   `mailto:contact@theartroom.gallery` (typed by the owner on dev; type the same on prod).
+  Owner, 2026-11-26: **no envelope icon** on the button: the label alone, whatever the link.
 
 **Media update (2026-11-26):** `public/videos/take-a-peek/*` replaced with the recut at normal speed (27.1 s). Set
 `PEEK_DURATION_S = 27` in `src/components/ui/TakeAPeek/media.ts` and any "21" in labels; the files keep their names.
