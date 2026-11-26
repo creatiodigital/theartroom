@@ -23,10 +23,15 @@
   max-width: var(--content-max-width);
   width: calc(100% - var(--site-padding) * 2);
   margin: 0 auto;
-  // No space above the print (owner, 2026-11-26): the stage's own margin is enough. Below, a little
-  // (owner, same day), so where the words are taller than the print they don't end on the section's
-  // edge. One column sets its own, under the words.
-  padding-bottom: var(--space-5);
+  // A little space above and below (owner, 2026-11-26; it was 120 px), so where the words are taller
+  // than the print they don't touch the section's edges. One column sets its own, under the words.
+  padding: var(--space-5) 0;
+
+  // The space above is for desktops only (owner, same day): a tablet held sideways, which keeps the
+  // two columns, has none.
+  @media #{$tablet-room} {
+    padding-top: 0;
+  }
 
   // Tablets (owner, 2026-11-26: side by side, the print came out small and the words cramped): one
   // column, the print over the words, in a centred reading column. No space above it, phones
