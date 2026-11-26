@@ -13,12 +13,13 @@ export const PEEK_PREVIEW_MP4 = `${DIR}/print-arrives-preview.mp4`
 export const PEEK_POSTER = `${DIR}/print-arrives-poster.jpg`
 
 /**
- * The full video's length in whole seconds (21.2 s), for the circle's "0:21" before anything is
- * loaded. The player reads the real one from the file once it has it.
+ * The full video's length in whole seconds (27.1 s: the normal-pace recut, 2026-11-26), for the
+ * circle's "0:27" before anything is loaded. The player reads the real one from the file once it
+ * has it.
  */
-export const PEEK_DURATION_S = 21
+export const PEEK_DURATION_S = 27
 
-/** "0:21", "1:05". */
+/** "0:27", "1:05". */
 export const clock = (seconds: number) => {
   const whole = Math.max(0, Math.floor(seconds))
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`

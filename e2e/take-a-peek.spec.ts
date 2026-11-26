@@ -1,9 +1,11 @@
 import { test, expect } from '@playwright/test'
 
+import { PEEK_DURATION_S } from '@/components/ui/TakeAPeek/media'
+
 /**
  * Take a peek (docs/take-a-peek/README.md, T5). The homepage's Fine-art prints shows a small
  * looping circle of a print being unboxed; it opens the full video in a window. The full video
- * (3 MB) must not be requested until the window opens; Escape closes the window and gives focus
+ * (4 MB) must not be requested until the window opens; Escape closes the window and gives focus
  * back to the circle.
  *
  * Needs the homepage's prints section, so at least one rendered print in Admin › Content › Home
@@ -21,7 +23,7 @@ test('Take a peek: the full video loads only once the window opens, and Escape c
 
   await page.goto('/')
   const circle = page.getByRole('button', {
-    name: 'Take a peek: watch what arrives at your door, 21 seconds',
+    name: `Take a peek: watch what arrives at your door, ${PEEK_DURATION_S} seconds`,
   })
   await circle.scrollIntoViewIfNeeded()
   await expect(circle).toBeVisible()
