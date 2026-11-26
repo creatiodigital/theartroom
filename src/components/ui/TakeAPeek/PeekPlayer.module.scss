@@ -116,6 +116,11 @@
   }
 }
 
+// The button's wrapper only listens for its click; the button lays out as if it were not there.
+.ctaSlot {
+  display: contents;
+}
+
 // Under the video: the words on the left, the button on the right.
 .words {
   display: flex;

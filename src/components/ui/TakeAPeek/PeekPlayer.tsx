@@ -23,7 +23,17 @@ const TOGGLE = {
  * native controls); it stops on its last frame and offers a replay, never looping. Under it the
  * words and the page's button (`cta`, none on some pages). Closing the window removes the video.
  */
-export const PeekPlayer = ({ titleId, cta }: { titleId: string; cta: ReactNode }) => {
+type PeekPlayerProps = {
+  titleId: string
+  /** The page's button under the words, or nothing. */
+  cta: ReactNode
+  /** The video reached its end (each time, a replay included). */
+  onComplete: () => void
+  /** The button was used. */
+  onCta: () => void
+}
+
+export const PeekPlayer = ({ titleId, cta, onComplete, onCta }: PeekPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null)
   const fillRef = useRef<HTMLSpanElement>(null)
   const [state, setState] = useState<PlayState>('playing')
@@ -91,6 +101,7 @@ export const PeekPlayer = ({ titleId, cta }: { titleId: string; cta: ReactNode }
           onEnded={() => {
             setState('ended')
             showProgress()
+            onComplete()
           }}
           onTimeUpdate={showProgress}
           onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || PEEK_DURATION_S)}
@@ -119,12 +130,18 @@ export const PeekPlayer = ({ titleId, cta }: { titleId: string; cta: ReactNode }
           <h2 id={titleId} className={styles.title}>
             What arrives at your door
           </h2>
+          {/* No certificate here: open editions have none (owner, 2026-11-26). */}
           <p className={styles.body}>
             Sent flat, wrapped in tissue and sealed. Archival fine-art paper, approved by the
-            artist, with a certificate of authenticity.
+            artist.
           </p>
         </div>
-        {cta}
+        {cta && (
+          // Hears the button's click (a link or a button) without changing its layout.
+          <div className={styles.ctaSlot} onClick={onCta}>
+            {cta}
+          </div>
+        )}
       </div>
     </div>
   )

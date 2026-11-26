@@ -161,6 +161,11 @@ guess would be costly.
 - **T4**: P5 Prints page, `full` under the Two kinds text after a hairline, no button in its window; P6 cart, `inline`
   under the items, before Back to editions, no button (every cart line is a print, so any non-empty cart shows it).
   Checked at 1440 and 390.
+- **T5**: dataLayer events through `track()` (so GA4 Consent Mode as every other event): `take_a_peek_open`,
+  `take_a_peek_complete` (each time the video ends) and `take_a_peek_cta`, each with `{ placement }`; checked in dev.
+  `e2e/take-a-peek.spec.ts`: from the homepage, the full video is not requested before opening, plays without native
+  controls, Escape closes it and focus is back on the circle (passes alone, with `E2E_SKIP_AUTH=1`). Window caption
+  without the certificate (owner, 11-26). The full E2E run is still owed before push.
 
 ## Questions
 

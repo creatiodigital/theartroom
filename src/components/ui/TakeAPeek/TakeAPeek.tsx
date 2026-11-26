@@ -8,6 +8,7 @@ import c from 'classnames'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
+import { track } from '@/lib/analytics/track'
 
 import { PeekLoop } from './PeekLoop'
 import { PeekPlayer } from './PeekPlayer'
@@ -60,6 +61,10 @@ const NO_CTA: TakeAPeekPlacement[] = ['prints', 'cart']
  * Take a peek (docs/take-a-peek/README.md): a small looping circle of a print being unboxed, with
  * its words, as one button that opens the full video in a window. One component, three sizes
  * (`full`, `strip`, `inline`); at most once per page.
+ *
+ * Measured (promotional mode, README "Measuring it"): take_a_peek_open, take_a_peek_complete (the
+ * video reached its end) and take_a_peek_cta (the window's button), each with the placement,
+ * through `track` and so under the site's existing consent.
  */
 export const TakeAPeek = ({ size, placement, line, order, className }: TakeAPeekProps) => {
   const [open, setOpen] = useState(false)
@@ -89,7 +94,10 @@ export const TakeAPeek = ({ size, placement, line, order, className }: TakeAPeek
         ref={triggerRef}
         variant="bare"
         className={c(styles.trigger, styles[size], className)}
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setOpen(true)
+          track('take_a_peek_open', { placement })
+        }}
         aria-label={ARIA_LABEL}
         aria-haspopup="dialog"
       >
@@ -127,7 +135,12 @@ export const TakeAPeek = ({ size, placement, line, order, className }: TakeAPeek
             titleId={titleId}
             onClose={() => setOpen(false)}
           >
-            <PeekPlayer titleId={titleId} cta={cta} />
+            <PeekPlayer
+              titleId={titleId}
+              cta={cta}
+              onComplete={() => track('take_a_peek_complete', { placement })}
+              onCta={() => track('take_a_peek_cta', { placement })}
+            />
           </Modal>,
           document.body,
         )}
