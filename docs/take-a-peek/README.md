@@ -193,17 +193,16 @@ guess would be costly.
 
 ## Questions
 
-- **Q1 (T6, owner, admin content):** the Prints page's text (Admin › Content › Prints), "Open editions." paragraph,
+- **Q1 (T6, owner, admin content; answered 2026-11-26, owner to edit in the admin):** the Prints page's text (Admin › Content › Prints), "Open editions." paragraph,
   ends "Each comes with a certificate of authenticity." (seen in the dev database; prod likely the same). Code can't
   change it: please edit it there, e.g. "Each comes with a personal letter from the gallery." The Online terms of sale
   say "where applicable, accompanied by a certificate of authenticity", which is already right.
-- **Q2 (T6, owner, pricing; not touched):** `TPS_COA_LETTER_SUPPLEMENT_CENTS` (€6, `src/lib/print-providers/printspace/
+- **Q2 (T6, owner, pricing; waiting for the owner's decision, options in the design side's note: €3 / €0 / €6 for open editions):** `TPS_COA_LETTER_SUPPLEMENT_CENTS` (€6, `src/lib/print-providers/printspace/
   pricing.ts`) is added to every print for "a premium COA design and the gallery letter". If open editions get no
   certificate, is the €6 still right for them (the letter alone may cost less)?
-- **Q3 (T7, copy):** the Shipping answer said "The shipping cost and the delivery estimate for your address are shown at
-  checkout". T6b removed that estimate from the checkout (its review line now says "usually ships within 2 weeks"), so
-  the answer says only "The shipping cost for your address is shown at checkout, before you pay." If you want the
-  per-country estimate back at checkout (the Facts line says it stays), that's one line in `CartCheckout`: say which.
+- **Q3 (T7, copy): resolved 2026-11-26.** The Shipping answer now reads "The shipping cost for your address is shown at
+  checkout, before you pay. Delivery then usually takes a few days, depending on where you are." (then the duties
+  line), as the spec above. The checkout keeps no delivery estimate.
 - **Q4 (T7, copy):** "The frame and passepartout, if you chose them." shows for open editions only: limited editions
   are sold unframed (the limited wizard says so), so nothing can be chosen.
 - **Q5 (T8, copy):** an exhibition whose 3D room isn't open yet would be shared as "…an exhibition by {artist} you can
@@ -299,7 +298,7 @@ Four rows, one open at a time, **all closed by default**:
 **SHIPPING**
 - Shipped with tracking from the UK, Germany or the US, to 38 countries: the EU, the UK, Switzerland, Norway, Iceland,
   Liechtenstein, the US, Canada, Australia, New Zealand, Japan and South Korea.
-- The shipping cost and the delivery estimate for your address are shown at checkout, before you pay. Outside the EU,
+- The shipping cost for your address is shown at checkout, before you pay. Delivery then usually takes a few days, depending on where you are. Outside the EU,
   the UK and the US, import duties may apply on delivery (matches `mayOweImportDuty`).
 
 (Build the country sentence from `TPS_SUPPORTED_COUNTRIES` count if easy; else keep it as written and add a comment.)

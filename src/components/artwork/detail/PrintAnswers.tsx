@@ -39,9 +39,9 @@ const answers = (editionType: 'open' | 'limited'): Answer[] => [
     paragraphs: [
       // The count is the print partner's list; the regions are written out (they change rarely).
       `Shipped with tracking from the UK, Germany or the US, to ${TPS_SUPPORTED_COUNTRIES.length} countries: the EU, the UK, Switzerland, Norway, Iceland, Liechtenstein, the US, Canada, Australia, New Zealand, Japan and South Korea.`,
-      // As `mayOweImportDuty` (src/lib/emails/delivery.ts). No delivery estimate is promised at
-      // checkout since T6b, so only the cost is mentioned (questions Q3).
-      'The shipping cost for your address is shown at checkout, before you pay. Outside the EU, the UK and the US, import duties may apply on delivery.',
+      // No delivery estimate at checkout since T6b: only the cost is shown there (README Q3). The
+      // duties line as `mayOweImportDuty` (src/lib/emails/delivery.ts).
+      'The shipping cost for your address is shown at checkout, before you pay. Delivery then usually takes a few days, depending on where you are. Outside the EU, the UK and the US, import duties may apply on delivery.',
     ],
   },
   {
