@@ -103,6 +103,11 @@
   }
 }
 
+// Take a peek's strip, above the works' heading (docs/take-a-peek, P4).
+.peek {
+  margin-bottom: var(--space-10);
+}
+
 .rows {
   margin: 0;
   padding: 0;

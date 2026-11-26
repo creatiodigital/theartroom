@@ -154,6 +154,10 @@ guess would be costly.
   page at 1440 and 390 (lands in the wizard); the room's pop-up not opened here (WebGL): our Escape is stopped at
   `document`, before the room's `window` listener, and the window is portalled to `<body>` above the pop-up. Worth
   one look in the room.
+- **T3**: P3 + P4, `strip` inside the first section whose works have a print to order (`hasPrintOnSale`: on sale and not
+  sold out), before its heading; none when purchases are paused, as the grids' buttons. Artist page: in Selected works.
+  Checked at 1440 and 390 (The Beauty of Permanence; John Doe). To look at: the strip's bottom hairline and the section
+  heading's top hairline sit 40 px apart (the board drew the heading without its hairlines).
 
 ## Questions
 
