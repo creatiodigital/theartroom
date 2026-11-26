@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Take a peek video modal, desktop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&amp;family=Lato:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#141414}
+a{color:inherit;text-decoration:none}
+a:hover{color:inherit}
+.serif{font-family:'EB Garamond',Georgia,serif}
+.caps{font-size:12px;letter-spacing:.16em;text-transform:uppercase}
+.ib{appearance:none;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.ib:focus-visible,.cta:focus-visible{outline:2px solid #fff;outline-offset:3px}
+</style>
+</helmet>
+<div role="dialog" aria-modal="true" aria-label="What arrives at your door" style="width: 1440px; height: 900px; position: relative; background: rgba(20,20,20,0.94); font-family: Lato, -apple-system, sans-serif; color: #fff; display: flex; align-items: center; justify-content: center">
+
+<a class="ib" href="Main.dc.html" aria-label="Close" style="position: absolute; top: 28px; right: 32px; width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.1); color: #fff"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M204.24,195.76a6,6,0,1,1-8.48,8.48L128,136.49,60.24,204.24a6,6,0,0,1-8.48-8.48L119.51,128,51.76,60.24a6,6,0,0,1,8.48-8.48L128,119.51l67.76-67.75a6,6,0,0,1,8.48,8.48L136.49,128Z"></path></svg></a>
+
+<div style="width: 1024px; display: flex; flex-direction: column; gap: 24px">
+<div style="position: relative; width: 1024px; height: 576px; background: #2a2a2a; overflow: hidden">
+<img src="/_blob/d54fe27e8b616b6da810b9fe654dbe36" alt="" style="width: 100%; height: 100%; object-fit: cover; display: block">
+<div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 0 16px 14px; display: flex; align-items: center; gap: 14px">
+<button class="ib" onClick="{{toggle}}" aria-label="{{playLabel}}" style="width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,0.45); color: #fff">
+<sc-if value="{{playing}}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M216,48V208a16,16,0,0,1-16,16H160a16,16,0,0,1-16-16V48a16,16,0,0,1,16-16h40A16,16,0,0,1,216,48ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Z"></path></svg></sc-if>
+<sc-if value="{{paused}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" style="margin-left: 2px"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"></path></svg></sc-if>
+</button>
+<span style="flex: 1 1 auto; height: 2px; background: rgba(255,255,255,0.35); position: relative"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 70%; background: #fff"></span></span>
+<span style="font-size: 12px; color: rgba(255,255,255,0.85); text-shadow: 0 1px 3px rgba(0,0,0,.5)">0:15 / 0:21</span>
+</div>
+</div>
+
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 40px">
+<div style="display: flex; flex-direction: column; gap: 6px; max-width: 620px">
+<span class="caps" style="color: #a8a8a8">Take a peek</span>
+<span class="serif" style="font-size: 30px; line-height: 1.15">What arrives at your door</span>
+<span style="font-size: 15px; line-height: 1.6; color: #bdbdbd">Sent flat, wrapped in tissue and sealed. Archival fine-art paper, approved by the artist, with a certificate of authenticity.</span>
+</div>
+<sc-if value="{{isHome}}" hint-placeholder-val="{{ true }}">
+<a class="cta" href="#" style="display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 20px; border: 1px solid #fff; color: #fff; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M220.24,132.24l-72,72a6,6,0,0,1-8.48-8.48L201.51,134H40a6,6,0,0,1,0-12H201.51L139.76,60.24a6,6,0,0,1,8.48-8.48l72,72A6,6,0,0,1,220.24,132.24Z"></path></svg>Discover the prints</a>
+</sc-if>
+<sc-if value="{{isArtwork}}" hint-placeholder-val="{{ false }}">
+<a class="cta" href="#" style="display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 20px; background: #fff; color: #1a1a1a; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M216,42H40A14,14,0,0,0,26,56V200a14,14,0,0,0,14,14H216a14,14,0,0,0,14-14V56A14,14,0,0,0,216,42Zm2,158a2,2,0,0,1-2,2H40a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2H216a2,2,0,0,1,2,2ZM174,88a46,46,0,0,1-92,0,6,6,0,0,1,12,0,34,34,0,0,0,68,0,6,6,0,0,1,12,0Z"></path></svg>Order a print of Memoria I</a>
+</sc-if>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"context":{"editor":"enum","options":["home","artwork"],"default":"home"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { playing: true }; }
+  renderVals() {
+    const ctx = this.props.context ?? 'home';
+    const playing = this.state.playing;
+    return {
+      isHome: ctx !== 'artwork',
+      isArtwork: ctx === 'artwork',
+      playing: playing,
+      paused: !playing,
+      playLabel: playing ? 'Pause' : 'Play',
+      toggle: () => this.setState({ playing: !playing })
+    };
+  }
+}
+</script>
+</body>
+</html>
