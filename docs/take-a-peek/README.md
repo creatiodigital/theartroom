@@ -84,7 +84,7 @@ Use the existing `Modal` with `tone="public"` and `showClose` (phones need the X
 
 - **Desktop:** the video at its own 16:9 shape, up to 1024 × 576, centred; under it, left: caps **TAKE A PEEK**,
   serif 30 px **What arrives at your door**, then 15 px `#bdbdbd`: **"Sent flat, wrapped in tissue and sealed.
-  Archival fine-art paper, approved by the artist, with a certificate of authenticity."**; right: the button.
+  Archival fine-art paper, approved by the artist."** (owner 2026-11-26: no certificate here; open editions have none); right: the button.
 - **Phone (< md):** full screen. X top right, the video full width cropped to **4:5** (`object-fit: cover`,
   centred; both takes are filmed from above with the action in the middle), the same words under it, the button
   full width at the bottom (48 px).
@@ -170,3 +170,129 @@ guess would be costly.
 ## Questions
 
 (none yet)
+
+---
+
+# Part 2 · Buy with confidence (owner, 2026-11-26)
+
+Same branch. Two more things on the pages where a print can be bought, so a buyer has every answer before ordering:
+**folded answers** under Order a print, and **Share** (WhatsApp, Email). Plus a copy fix about certificates that is
+**wrong on the live site today**. Designs: `designs/ArtworkReassurance.dc.html` (click a row) and `designs/Share.dc.html`.
+
+## Facts the owner confirmed (2026-11-26) — the copy must match these
+
+- **Certificate of authenticity: limited editions only.** Open editions get **no certificate**; they come with a
+  **personal letter from the gallery**. (Owner: "AFAIK theprintspace allows a COA only for limited editions.")
+- **Timing, said broadly so it never disappoints:** prints **usually ship within 2 weeks** of the order. No day ranges
+  in this copy. (The checkout's per-country delivery estimate stays as it is.)
+- **Shipped from the UK, Germany or the US**, with tracking, to the 38 countries in `TPS_SUPPORTED_COUNTRIES`.
+- Returns, damage and cancellation exactly as the Online terms of sale (section 10, 11, 14).
+
+## T6 · Certificate copy (fix first: it's live)
+
+Every visitor-facing line that promises a certificate on **every** print, fix it so only limited editions get one:
+
+| Where | Today | Make it |
+| --- | --- | --- |
+| `src/components/landing/HomePrints/HomePrints.tsx` (lead) | "…approved by the artist before it reaches your wall, and arrives with a certificate of authenticity. A limited edition is also numbered on the print, and its certificate carries the artist's printed signature." | "Each one is produced on archival fine-art paper by the labs museums rely on and approved by the artist before it reaches your wall. A limited edition is also numbered on the print and comes with a certificate of authenticity carrying the artist's printed signature." |
+| `src/components/ui/TakeAPeek/PeekPlayer.tsx` (window caption) | "…approved by the artist, with a certificate of authenticity." | "Sent flat, wrapped in tissue and sealed. Archival fine-art paper, approved by the artist." |
+| `src/components/PrintWizard/SummaryPanel.tsx` (open edition branch) | "Certificate of authenticity included." | "A personal letter from the gallery included." |
+| `src/components/cart/EmptyCart/EmptyCart.tsx` | "Every print is made to order on archival fine-art paper and arrives with a Certificate of Authenticity." | "Every print is made to order on archival fine-art paper and approved by the artist." |
+
+Search the rest of the public site and the buyer emails (`src/lib/emails/`) for "certificate" and make sure an
+**open** edition is never promised one (the limited-edition lines are right). Ask in Questions if one is unclear.
+
+**For the owner, not to change now:** `TPS_COA_LETTER_SUPPLEMENT_CENTS` in `src/lib/print-providers/printspace/pricing.ts`
+says "Every print ships with a premium COA design and the gallery letter (decided 2026-07-24)" and adds €6 to every
+print. If open editions get no COA, that supplement may be wrong for them. Add it to Questions; don't touch pricing.
+
+## T6b · One promise about time, everywhere (owner: "let's be consistent")
+
+The site gives five different time promises today (wizard "about two weeks" / limited wizard "about a week" /
+"Delivery is typically 1–2 weeks" / checkout and order emails "{min}–{max} business days" from `estimateDeliveryWindow`,
+EU 6–10 days end to end / terms "1–2 + 5–10 business days"). Replace them all with **one**, said broadly:
+
+> **Made to order, it usually ships within 2 weeks. You get an email with tracking as soon as it ships.**
+
+| Where | Today | Make it |
+| --- | --- | --- |
+| `src/components/PrintWizard/index.tsx` (~452–464, open) | "Most orders are dispatched within about two weeks; framed pieces can take a little longer." + "Delivery is typically 1–2 weeks." | "Made to order, it usually ships within 2 weeks, with tracking." (drop the delivery line) |
+| `src/components/PrintWizard/LimitedWizard.tsx` (~360–362) | "Most editions are dispatched within about a week of purchase." + "Delivery is typically 1–2 weeks." | same line as above |
+| `src/components/checkout/CartCheckout/CartCheckout.tsx` (~383) | "Your print is made to order and delivered in {min}–{max} business days." | "Your print is made to order and usually ships within 2 weeks, with tracking." (plural: "Your prints are… ship…") |
+| `src/lib/emails/orderPlaced.ts` (~105), `cartOrderPlaced.ts` (~120) | "Expected delivery: {min}–{max} business days from today. Framed prints can occasionally take a few days longer…" | "**When it ships:** usually within 2 weeks. We'll email you tracking as soon as it does." |
+| T7 folded answers | — | already says this |
+
+`estimateDeliveryWindow` then has no buyer-facing caller: leave the function (admin may use it) but don't show its
+numbers to buyers. Keep `mayOweImportDuty` and the duty notices as they are.
+
+**For the owner (content in the admin, not code):** the **Online terms of sale**, section "Production and delivery
+times", says "Order review: within 1–2 business days … Production: approximately 5–10 business days". Suggested
+replacement, to edit in Admin › Content: *"Every print is made to order. It usually ships within 2 weeks of your order;
+framed pieces can take a little longer. Delivery then depends on your destination. These are estimates, not guarantees."*
+
+## T7 · Folded answers under Order a print
+
+`designs/ArtworkReassurance.dc.html`. In the artwork page's info column (`ArtworkInfoColumn` / `ArtworkPurchase`, so the
+room's pop-up gets it too), **after Order a print and the Take a peek inline**, only when the work has a print on sale.
+Four rows, one open at a time, **all closed by default**:
+
+- Row: full-width `<button aria-expanded aria-controls>` inside an `<h2>` (or the right heading level), 48 px min,
+  label Lato 12 px caps `letter-spacing .12em` `#1a1a1a`, Phosphor Plus / Minus 16 px on the right; hairline `#e4e4e4`
+  above the first and under each row. Panel: 14 px, line-height 1.65, `#444`, 18 px bottom padding. Square, no motion
+  beyond a short height transition (none with reduced motion).
+- Copy (final; `{…}` are the work's own values):
+
+**WHAT'S IN THE BOX**
+- Your print on archival fine-art paper. Unframed prints travel flat between card, wrapped in tissue and sealed.
+- *limited edition only:* A certificate of authenticity with the same number as the print and the artist's printed signature.
+- *open edition only:* A personal letter from the gallery.
+- The frame and passepartout, if you chose them.
+
+(Show only the line for this work's edition type. If a work offers both, show both, each with its "Limited editions:" /
+"Open editions:" prefix as on the board.)
+
+**PRODUCTION TIME**
+- Every print is made to order, just for you, by our fine-art print partner. It usually ships within 2 weeks of your order.
+- You get an email with tracking as soon as it ships.
+
+**SHIPPING**
+- Shipped with tracking from the UK, Germany or the US, to 38 countries: the EU, the UK, Switzerland, Norway, Iceland,
+  Liechtenstein, the US, Canada, Australia, New Zealand, Japan and South Korea.
+- The shipping cost and the delivery estimate for your address are shown at checkout, before you pay. Outside the EU,
+  the UK and the US, import duties may apply on delivery (matches `mayOweImportDuty`).
+
+(Build the country sentence from `TPS_SUPPORTED_COUNTRIES` count if easy; else keep it as written and add a comment.)
+
+**RETURNS**
+- If your print arrives damaged, faulty or not what you ordered, write to us within 7 days of delivery with a few
+  photos, and we'll replace it or refund you.
+- Because each print is made for you, we can't take it back for a change of mind. You can cancel free of charge until
+  production starts.
+- → Online terms of sale (`ArrowLink` to `/terms-of-sale`)
+
+## T8 · Share (switch it back on, redesigned)
+
+`src/components/ui/Share/Share.tsx` exists (Email + WhatsApp) and was switched off on 2026-08-27 (`SHOW_SHARE = false`)
+because it was not well designed. Redesign it to `designs/Share.dc.html` and turn it back on:
+
+- **One row, always open (no toggle):** caps label **SHARE** (Lato 12 px, `.16em`, `#666`), then two text links with
+  icons, 22 px apart: **WhatsApp** (today's WhatsApp glyph, 16 px) and **Email** (Phosphor Envelope, light, 17 px);
+  Lato 14 px `#333`, `.03em`, hover `#000`, **no underline**, 44 px tall hit area. Square, no pills or circles.
+- WhatsApp: `https://wa.me/?text=` + encoded message, `target="_blank" rel="noopener noreferrer"`. Email: `mailto:?subject=…&body=…`.
+- The link is the page's **canonical URL** (no `?from=`, no tracking parameters).
+- Messages:
+  - Artwork — WhatsApp: "{Title} by {Artist}, at The Art Room: {url}". Email subject "{Title} by {Artist} · The Art Room",
+    body "I thought you'd like this: {Title} by {Artist}, at The Art Room.\n\n{url}".
+  - Exhibition — "{Exhibition}, an exhibition by {Artist} you can also walk through in 3D: {url}"; subject
+    "{Exhibition} · The Art Room".
+  - Artist — "{Artist} at The Art Room: {url}"; subject "{Artist} · The Art Room".
+- **Where (once per page):** artwork page and room pop-up, at the foot of the info column, 20 px under the folded answers;
+  exhibition page, in the hero under Enter 3D room; **artist page** (new call site), in the hero under
+  "N exhibitions · N works". Never on the homepage, lists, cart, checkout or legal pages.
+- Remove `SHOW_SHARE` once it's back on everywhere. The pages already have Open Graph images, so WhatsApp shows a preview:
+  check one artwork, one exhibition and one artist URL in a link-preview debugger and note it in Built.
+- dataLayer: `share_click` `{ method: 'whatsapp' | 'email', type: 'artwork' | 'exhibition' | 'artist' }`.
+
+## Build order (Part 2)
+
+T6 → T6b → T7 → T8, same workflow as Part 1. Add a Built line for each under **Built** above.
