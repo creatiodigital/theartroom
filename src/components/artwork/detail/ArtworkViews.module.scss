@@ -29,7 +29,10 @@
   }
 }
 
-.tile {
+// Two classes: the tile is a bare Button, whose one-class reset (`align-items: stretch`, no
+// background) won in the production build, where its CSS loads after this file (owner, 2026-11-26:
+// the framed view came out narrower than the work). In dev the order was the other way round.
+.views .tile {
   position: relative;
   display: flex;
   align-items: center;
