@@ -11,7 +11,6 @@ import { ArrowLink } from '@/components/ui/ArrowLink'
 import { Button } from '@/components/ui/Button'
 import { PageIntro } from '@/components/ui/PageIntro'
 import { PageLayout } from '@/components/ui/PageLayout'
-import { TakeAPeek } from '@/components/ui/TakeAPeek'
 import { cartCount, cartSubtotal, hasLimitedItems } from '@/lib/cart/cartMath'
 import { LIMITED_NOT_RESERVED_NOTICE } from '@/lib/cart/notices'
 import { trackCartEvent } from '@/lib/analytics/events'
@@ -61,11 +60,6 @@ export const CartPage = () => {
               {items.map((item) => (
                 <CartLine key={item.lineId} item={item} />
               ))}
-            </div>
-            {/* What arrives at your door (docs/take-a-peek, P6): under the items (every line is a
-                print); no button in its window, they are already buying. */}
-            <div className={styles.peekRow}>
-              <TakeAPeek size="inline" placement="cart" />
             </div>
             {/* Back to the wizard's first screen for the work they last added —
                 the variant picker — because that is where another edition of it

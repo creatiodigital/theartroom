@@ -205,6 +205,9 @@ guess would be costly.
   Owner, 2026-11-26: **no email template** (no subject or body in the link): the button's link is just
   `mailto:contact@theartroom.gallery` (typed by the owner on dev; type the same on prod).
   Owner, 2026-11-26: **no envelope icon** on the button: the label alone, whatever the link.
+- **Fewer placements (owner, 2026-11-26: "showing too many times"):** Take a peek removed from the exhibition page
+  (P3), the artist page (P4) and the cart (P6). It stays on the homepage (P1), the artwork page and so the room's
+  pop-up (P2), and the Prints page (P5). The `strip` size and `hasPrintOnSale` are unused now, kept in the component.
 
 **Media update (2026-11-26):** `public/videos/take-a-peek/*` replaced with the recut at normal speed (27.1 s). Set
 `PEEK_DURATION_S = 27` in `src/components/ui/TakeAPeek/media.ts` and any "21" in labels; the files keep their names.
@@ -215,9 +218,8 @@ guess would be costly.
   ends "Each comes with a certificate of authenticity." (seen in the dev database; prod likely the same). Code can't
   change it: please edit it there, e.g. "Each comes with a personal letter from the gallery." The Online terms of sale
   say "where applicable, accompanied by a certificate of authenticity", which is already right.
-- **Q2 (T6, owner, pricing; waiting for the owner's decision, options in the design side's note: €3 / €0 / €6 for open editions):** `TPS_COA_LETTER_SUPPLEMENT_CENTS` (€6, `src/lib/print-providers/printspace/
-  pricing.ts`) is added to every print for "a premium COA design and the gallery letter". If open editions get no
-  certificate, is the €6 still right for them (the letter alone may cost less)?
+- **Q2 (T6, owner, pricing): resolved 2026-11-26, keep €6.** `TPS_COA_LETTER_SUPPLEMENT_CENTS` stays €6 on every
+  print, open editions included (they get the gallery letter, no certificate). Nothing changed in pricing.
 - **Q3 (T7, copy): resolved 2026-11-26.** The Shipping answer now reads "The shipping cost for your address is shown at
   checkout, before you pay. Delivery then usually takes a few days, depending on where you are." (then the duties
   line), as the spec above. The checkout keeps no delivery estimate.
