@@ -10,9 +10,7 @@ import { Band } from '@/components/ui/Band'
 import { PageLayout } from '@/components/ui/PageLayout'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Share } from '@/components/ui/Share'
-import { hasPrintOnSale, TakeAPeek } from '@/components/ui/TakeAPeek'
 import { TextSection } from '@/components/ui/TextSection'
-import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
 import { isRichTextEmpty } from '@/lib/textUtils'
 import { isSafeImageSrc } from '@/lib/imageSafety'
 import { SITE_URL } from '@/lib/siteUrl'
@@ -63,13 +61,6 @@ export const ExhibitionProfilePage = ({
     startDate && endDate ? `${startDate} – ${endDate}` : startDate || endDate || null
 
   // No counts (owner, 2026-11-12: "26 works · 3 series" and each series' "N works" removed).
-
-  // Take a peek (docs/take-a-peek, P3): once, above the first group with a print to order; none
-  // when nothing can be ordered (no print, or purchases paused, as the grid's buttons).
-  const purchasesPaused = usePurchasesPaused()
-  const peekGroupIndex = purchasesPaused
-    ? -1
-    : exhibition.groups.findIndex((group) => hasPrintOnSale(group.artworks))
 
   const enter = (className?: string) =>
     exhibition.spacePublished ? (
@@ -132,20 +123,12 @@ export const ExhibitionProfilePage = ({
             {/* One grid per section, no-section works first with no heading.
                 The slug rides along on every card link, so the artwork page
                 can offer arrows through THIS exhibition's sequence. */}
-            {exhibition.groups.map((group, index) => (
+            {exhibition.groups.map((group) => (
               <section
                 key={group.id ?? 'unsectioned'}
                 className={styles.group}
                 aria-label={group.title ?? undefined}
               >
-                {index === peekGroupIndex && (
-                  <TakeAPeek
-                    size="strip"
-                    placement="exhibition"
-                    line={`Works in this exhibition are also fine-art prints, approved by ${artistName}.`}
-                    className={styles.peek}
-                  />
-                )}
                 {group.title && <SectionHeading title={group.title} />}
                 <ArtworkGrid
                   artworks={group.artworks}
