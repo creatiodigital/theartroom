@@ -154,11 +154,13 @@ export const HomePrints = ({ slides }: { slides: HomePrintSlide[] }) => {
           <h2 id="home-prints-heading" className={styles.heading}>
             Every print, approved by the artist.
           </h2>
+          {/* Only a limited edition comes with a certificate; an open edition comes with a
+              personal letter from the gallery (owner, 2026-11-26). */}
           <p className={styles.lead}>
-            Each one is produced on archival fine-art paper by the labs museums rely on, approved by
-            the artist before it reaches your wall, and arrives with a certificate of authenticity. A
-            limited edition is also numbered on the print, and its certificate carries the
-            artist&rsquo;s printed signature.
+            Each one is produced on archival fine-art paper by the labs museums rely on and approved
+            by the artist before it reaches your wall. A limited edition is also numbered on the
+            print and comes with a certificate of authenticity carrying the artist&rsquo;s printed
+            signature.
           </p>
           {/* What arrives at your door (docs/take-a-peek, P1): after the lead, before the caption. */}
           <TakeAPeek size="full" placement="home" />

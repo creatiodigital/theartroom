@@ -166,10 +166,20 @@ guess would be costly.
   `e2e/take-a-peek.spec.ts`: from the homepage, the full video is not requested before opening, plays without native
   controls, Escape closes it and focus is back on the circle (passes alone, with `E2E_SKIP_AUTH=1`). Window caption
   without the certificate (owner, 11-26). The full E2E run is still owed before push.
+- **T6**: certificate copy. Homepage lead, wizard summary (open edition: "A personal letter from the gallery included."),
+  empty cart and the Take a peek caption as the table says. Searched the rest: the limited wizard, the in-production and
+  delivered emails and the edition-number notice speak of a certificate only for limited editions (right as they are).
+  Admin content left for the owner: see Questions Q1 (the Prints page text) and Q2 (the €6 supplement).
 
 ## Questions
 
-(none yet)
+- **Q1 (T6, owner, admin content):** the Prints page's text (Admin › Content › Prints), "Open editions." paragraph,
+  ends "Each comes with a certificate of authenticity." (seen in the dev database; prod likely the same). Code can't
+  change it: please edit it there, e.g. "Each comes with a personal letter from the gallery." The Online terms of sale
+  say "where applicable, accompanied by a certificate of authenticity", which is already right.
+- **Q2 (T6, owner, pricing; not touched):** `TPS_COA_LETTER_SUPPLEMENT_CENTS` (€6, `src/lib/print-providers/printspace/
+  pricing.ts`) is added to every print for "a premium COA design and the gallery letter". If open editions get no
+  certificate, is the €6 still right for them (the letter alone may cost less)?
 
 ---
 
