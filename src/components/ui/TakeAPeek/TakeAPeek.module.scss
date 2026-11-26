@@ -1,0 +1,217 @@
+@use '@/styles/mixins' as *;
+
+// docs/take-a-peek/README.md "The component"; designs/Component.dc.html (the three sizes),
+// Main.dc.html and PhoneSection.dc.html (full, on the homepage).
+//
+// Each size sets the circle's drawn measurements: its diameter, the gap between the ring and the
+// video, the play icon (about 30 % of the circle) and the icon's nudge to the right, so the
+// triangle looks centred.
+
+// One link-styled button: Button `bare` resets it; the circle and the words sit side by side.
+.trigger {
+  align-items: center;
+  font-family: var(--font-sans), var(--font-sans-fallback);
+  color: var(--public-text);
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--public-text);
+    outline-offset: var(--space-1);
+  }
+
+  &:hover .play {
+    transform: scale(1.1);
+  }
+}
+
+.full {
+  --peek-size: 96px;
+  --peek-gap: var(--space-1);
+  --peek-play: 30px;
+  --peek-nudge: 3px;
+
+  gap: var(--space-5);
+  padding: var(--space-1) 0;
+
+  @include media-down(md) {
+    --peek-size: 84px;
+    --peek-play: 26px;
+
+    gap: var(--space-4);
+  }
+}
+
+// Full content width, between two hairlines.
+.strip {
+  --peek-size: var(--space-14);
+  --peek-gap: 3px;
+  --peek-play: 19px;
+  --peek-nudge: 2px;
+
+  display: flex;
+  width: 100%;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--color-gray-55);
+  border-bottom: 1px solid var(--color-gray-55);
+}
+
+.inline {
+  --peek-size: 44px;
+  --peek-gap: 2px;
+  --peek-play: 15px;
+  --peek-nudge: 2px;
+
+  gap: var(--space-3);
+  align-self: flex-start;
+}
+
+// ── The circle ──────────────────────────────────────────────────────────────
+
+.ring {
+  position: relative;
+  flex: 0 0 auto;
+  display: block;
+  box-sizing: border-box;
+  width: var(--peek-size);
+  height: var(--peek-size);
+  padding: var(--peek-gap);
+  border: 1.5px solid var(--public-text);
+  // The one round shape among the public site's square controls (owner, 2026-11-26).
+  border-radius: 50%;
+}
+
+.window {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+// The poster and the video, one on the other.
+.media {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.playLayer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.play {
+  width: var(--peek-play);
+  height: var(--peek-play);
+  margin-left: var(--peek-nudge);
+  color: var(--color-white);
+  // Reads on the light box and paper.
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
+  transition: transform 0.2s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// ── The words ───────────────────────────────────────────────────────────────
+
+.words {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.full .words {
+  gap: var(--space-1);
+}
+
+.strip .words {
+  flex: 1 1 auto;
+}
+
+.label {
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.line {
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: var(--text-xl);
+  line-height: 1.15;
+  color: var(--public-text);
+
+  @include media-down(md) {
+    font-size: 21px;
+  }
+}
+
+.duration {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.stripLine {
+  font-family: var(--font-serif), var(--font-serif-fallback);
+  font-size: var(--text-lg);
+  line-height: 1.25;
+  color: var(--public-text);
+}
+
+.sub {
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+
+  .inline & {
+    font-size: var(--text-xs);
+  }
+}
+
+.inlineLabel {
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--public-text);
+}
+
+.arrow {
+  flex: 0 0 auto;
+  color: var(--color-text-primary);
+}
+
+// ── The window's button (PeekPlayer lays it out) ────────────────────────────
+
+.cta {
+  height: var(--space-12);
+  padding: 0 var(--space-5);
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  @include media-down(md) {
+    width: 100%;
+    margin-top: auto;
+  }
+}
+
+// The arrow only beside the words on wide screens (PlayerPhone.dc.html draws the words alone).
+.ctaIcon {
+  @include media-down(md) {
+    display: none;
+  }
+}

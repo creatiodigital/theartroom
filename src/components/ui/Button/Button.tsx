@@ -15,6 +15,7 @@ type ButtonProps = {
     | 'primary'
     | 'secondary'
     | 'outline'
+    | 'outlineInverse'
     | 'danger'
     | 'ghost'
     | 'tab'
@@ -54,6 +55,8 @@ type ButtonProps = {
   role?: string
   /** Roving tabindex in composite widgets (e.g. admin stage tabs). */
   tabIndex?: number
+  /** The rendered <button> (not the link form), e.g. to give focus back to it after a window closes. */
+  ref?: React.Ref<HTMLButtonElement>
 }
 
 export const Button = React.memo(
@@ -89,6 +92,7 @@ export const Button = React.memo(
     'aria-current': ariaCurrent,
     role,
     tabIndex,
+    ref,
   }: ButtonProps) => {
     const isIconOnly = icon && !label && !children
 
@@ -133,6 +137,7 @@ export const Button = React.memo(
 
     return (
       <button
+        ref={ref}
         className={classNames}
         onClick={onClick}
         type={type}

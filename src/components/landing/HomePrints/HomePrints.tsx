@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
 import { ArrowLink } from '@/components/ui/ArrowLink'
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
+import { TakeAPeek } from '@/components/ui/TakeAPeek'
 import { editionTypeLabel, salePriceLabel } from '@/lib/editions/salePriceLabel'
 import type { HomePrintSlide } from '@/lib/queries/getGallerySelection'
 
@@ -159,6 +160,8 @@ export const HomePrints = ({ slides }: { slides: HomePrintSlide[] }) => {
             limited edition is also numbered on the print, and its certificate carries the
             artist&rsquo;s printed signature.
           </p>
+          {/* What arrives at your door (docs/take-a-peek, P1): after the lead, before the caption. */}
+          <TakeAPeek size="full" placement="home" />
           <div className={styles.captions}>
             {slides.map((slide, i) => (
               <div
