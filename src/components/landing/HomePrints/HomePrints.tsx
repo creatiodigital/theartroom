@@ -8,7 +8,6 @@ import { PrintPresentation } from '@/components/printPresentation/PrintPresentat
 import { ArrowLink } from '@/components/ui/ArrowLink'
 import { ProtectedImage } from '@/components/ui/ProtectedImage/ProtectedImage'
 import { TakeAPeek } from '@/components/ui/TakeAPeek'
-import { editionTypeLabel, salePriceLabel } from '@/lib/editions/salePriceLabel'
 import type { HomePrintSlide } from '@/lib/queries/getGallerySelection'
 
 import styles from './HomePrints.module.scss'
@@ -42,12 +41,14 @@ const phoneStageAspect = (slides: HomePrintSlide[]) => {
 /**
  * The homepage's Fine-art prints (docs/public-redesign/home.md §5): on the render wall's grey, a
  * print presentation (as on the artwork page: the piece and a thin border of wall) beside the
- * section's words, the work's caption under a hairline, and "Discover the prints".
+ * section's words and "Discover the prints". No caption under the words (owner, 2026-11-26: the
+ * work's title, artist, edition and price are gone in every view); the print itself opens its page,
+ * and its link names the work and the artist.
  *
  * Rotates through Home page prints (admin › Content), in the list's order, about 6 s each, the
- * picture and its caption cross-fading together; no dots, no arrows. Holds still while the pointer
- * or the keyboard is on the section, and while the tab is hidden. With reduced motion it does not
- * rotate: one print, chosen at random per visit.
+ * pictures cross-fading; no dots, no arrows. Holds still while the pointer or the keyboard is on
+ * the section, and while the tab is hidden. With reduced motion it does not rotate: one print,
+ * chosen at random per visit.
  */
 export const HomePrints = ({ slides }: { slides: HomePrintSlide[] }) => {
   const [index, setIndex] = useState(0)
@@ -162,38 +163,8 @@ export const HomePrints = ({ slides }: { slides: HomePrintSlide[] }) => {
             print and comes with a certificate of authenticity carrying the artist&rsquo;s printed
             signature.
           </p>
-          {/* What arrives at your door (docs/take-a-peek, P1): after the lead, before the caption. */}
+          {/* What arrives at your door (docs/take-a-peek, P1): after the lead. */}
           <TakeAPeek size="full" placement="home" />
-          <div className={styles.captions}>
-            {slides.map((slide, i) => (
-              <div
-                key={slide.id}
-                className={c(styles.caption, i === index && styles.current)}
-                aria-hidden={i !== index}
-              >
-                <Link
-                  href={artworkHref(slide)}
-                  className={styles.work}
-                  tabIndex={i === index ? undefined : -1}
-                >
-                  {/* Title italic only when the year follows: "<i>Title</i>, 2024" (owner,
-                      2026-11-20). Titles stand upright everywhere else. */}
-                  {slide.year ? (
-                    <>
-                      <cite>{workTitle(slide)}</cite>, {slide.year}
-                    </>
-                  ) : (
-                    workTitle(slide)
-                  )}
-                </Link>
-                <span className={styles.artist}>{slide.artistName}</span>
-                {/* The edition and the price under the artist, as the grids' cards (owner,
-                    2026-11-18). Every slide is on sale: getHomePrints keeps no other. */}
-                <span className={styles.artist}>{editionTypeLabel(slide.sale)}</span>
-                <span className={styles.price}>{salePriceLabel(slide.sale)}</span>
-              </div>
-            ))}
-          </div>
           <ArrowLink href="/prints" className={styles.link}>
             Discover the prints
           </ArrowLink>
