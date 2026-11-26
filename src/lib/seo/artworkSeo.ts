@@ -1,3 +1,4 @@
+import { plainParagraphsOf } from '@/lib/richText/headingAnchors'
 import { SITE_URL } from '@/lib/siteUrl'
 
 import { clip, metaTextOf } from './metaText'
@@ -76,7 +77,9 @@ export function artworkJsonLd(input: ArtworkSeoInput) {
     image,
     creator,
     dateCreated: input.year || undefined,
-    artMedium: input.technique || undefined,
+    // The technique is the editor's rich text too ("<p>FUJIFILM X-S20<br>ISO 400</p>"): its lines,
+    // as plain text.
+    artMedium: plainParagraphsOf(input.technique ?? '').join(', ') || undefined,
     description: note,
   }
 
