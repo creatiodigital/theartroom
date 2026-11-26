@@ -17,30 +17,37 @@ export const SITE_DESCRIPTION =
  * - `canonical`: the page's own address, so the artwork page's `?exhibition=` / `?artist=` /
  *   `?from=` (the grid the visitor came through) don't count as separate pages. `metadataBase`
  *   (root layout) makes it absolute.
- * - `openGraph`: Next replaces the root layout's `openGraph` whole when a page sets its own, so the
- *   site name, locale and type are repeated here rather than lost. The image comes from the
- *   route's `opengraph-image` file, which Next adds on top.
+ * - `openGraph`, only with `ownShareImage` (artwork, artist and exhibition pages, which have their
+ *   own `opengraph-image` file). Next replaces the layout's `openGraph` whole when a page sets one,
+ *   and with it the root's monogram card (app/opengraph-image): the home page and /prints lost
+ *   their share image that way. Every other page inherits the layout's, and Next fills in its title
+ *   and description. The site name, locale and type are repeated here rather than lost.
  */
 export function publicPageMetadata({
   path,
   title,
   description,
+  ownShareImage = false,
 }: {
   path: string
   title: string
   description: string
+  /** The route has its own `opengraph-image` file. */
+  ownShareImage?: boolean
 }): Metadata {
   return {
     title: { absolute: title },
     description,
     alternates: { canonical: path },
-    openGraph: {
-      type: 'website',
-      siteName: SITE_NAME,
-      locale: 'en_US',
-      url: path,
-      title,
-      description,
-    },
+    ...(ownShareImage && {
+      openGraph: {
+        type: 'website',
+        siteName: SITE_NAME,
+        locale: 'en_US',
+        url: path,
+        title,
+        description,
+      },
+    }),
   }
 }

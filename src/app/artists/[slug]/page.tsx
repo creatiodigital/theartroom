@@ -33,6 +33,7 @@ export async function generateMetadata({ params }: ArtistProfileProps): Promise<
 
   return publicPageMetadata({
     path: `/artists/${artist.handler}`,
+    ownShareImage: true,
     title: `${artistName} | The Art Room`,
     description,
   })

@@ -36,6 +36,7 @@ export async function generateMetadata({ params }: ExhibitionProfileProps): Prom
 
   return publicPageMetadata({
     path: `/exhibitions/${artistSlug}/${exhibitionSlug}`,
+    ownShareImage: true,
     title: `${artistName} | ${exhibition.mainTitle} | The Art Room`,
     description,
   })

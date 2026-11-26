@@ -199,6 +199,7 @@ export async function generateMetadata({ params }: ArtworkPageProps): Promise<Me
 
   return publicPageMetadata({
     path: `/artworks/${artwork.slug}`,
+    ownShareImage: true,
     title: `${artistName} | ${artwork.title}`,
     description: artworkMetaDescription(seoInputOf(artwork, sale)),
   })
