@@ -23,8 +23,10 @@
   max-width: var(--content-max-width);
   width: calc(100% - var(--site-padding) * 2);
   margin: 0 auto;
-  // No space above or below the print (owner, 2026-11-26): the stage's own margin is enough. One
-  // column keeps space under the words, below.
+  // No space above the print (owner, 2026-11-26): the stage's own margin is enough. Below, a little
+  // (owner, same day), so where the words are taller than the print they don't end on the section's
+  // edge. One column sets its own, under the words.
+  padding-bottom: var(--space-5);
 
   // Tablets (owner, 2026-11-26: side by side, the print came out small and the words cramped): one
   // column, the print over the words, in a centred reading column. No space above it, phones
