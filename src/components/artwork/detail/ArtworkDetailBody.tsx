@@ -8,6 +8,7 @@ import c from 'classnames'
 import { PrintPresentation } from '@/components/printPresentation/PrintPresentation'
 import { Button } from '@/components/ui/Button'
 import { InquireSidebar } from '@/components/ui/InquireSidebar'
+import { TakeAPeek } from '@/components/ui/TakeAPeek'
 import { usePurchasesPaused } from '@/hooks/usePurchasesPaused'
 import { artworkToGa, CURRENCY, euros } from '@/lib/analytics/events'
 import { track } from '@/lib/analytics/track'
@@ -15,6 +16,8 @@ import { artworkSizesText, type ArtworkSizes } from '@/lib/editions/artworkSizes
 import type { VariantEditionLineParts } from '@/lib/editions/variantEditionLines'
 import { ArtworkPrintDetails, ArtworkPurchase } from './ArtworkAvailabilityCard'
 import { ArtworkViews, printViewTiles, VIEW_COUNT, viewAlt } from './ArtworkViews'
+import { PrintAnswers } from './PrintAnswers'
+import { usePrintWizard } from './usePrintWizard'
 import { SHOW_NEIGHBOUR_ARROWS } from './neighbourArrows'
 import { reportImageError } from '@/lib/observability/reportImageError'
 import { PHOTO_VIEWS, type PresentationView } from '@/lib/printPresentation/record'
@@ -143,6 +146,7 @@ export const ArtworkDetailBody = ({
   // the artwork grids, so moving between a listing and a work doesn't re-read.
   const purchasesPaused = usePurchasesPaused()
   const { unit } = useUnits()
+  const openWizard = usePrintWizard(artwork.slug)
 
   const displayTitle = artwork.title || artwork.name || ''
   const displayAuthor = artwork.author || `${artist.name} ${artist.lastName}`.trim()
@@ -239,8 +243,6 @@ export const ArtworkDetailBody = ({
                 minPriceCents={commerce.minPriceCents}
                 editionLines={commerce.editionLines}
                 artworkSlug={artwork.slug}
-                title={displayTitle}
-                surface={surface}
                 inquire={<ArtworkInquire onClick={openInquire} />}
               />
             ) : (
@@ -268,6 +270,22 @@ export const ArtworkDetailBody = ({
               layout="grid"
               className={styles.viewsGrid}
             />
+          )}
+          {/* At the bottom of the column, above Share (owner, 2026-11-27: "move the accordions to
+              the bottom", "move the take a peek before the share buttons"); only while there is a
+              print to order, as before. What's in the box, time, shipping, returns (docs/take-a-peek
+              T7), then what arrives at your door (P2), whose window orders this work. */}
+          {commerce && forSale && commerce.minPriceCents !== null && (
+            <>
+              <PrintAnswers editionType={commerce.editionType} />
+              <div className={styles.peek}>
+                <TakeAPeek
+                  size="inline"
+                  placement={surface === 'room' ? 'room' : 'artwork'}
+                  order={{ title: displayTitle, onOrder: openWizard }}
+                />
+              </div>
+            </>
           )}
         </ArtworkInfoColumn>
 
