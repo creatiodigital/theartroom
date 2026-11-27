@@ -15,6 +15,7 @@ import { artworkSizesText, type ArtworkSizes } from '@/lib/editions/artworkSizes
 import type { VariantEditionLineParts } from '@/lib/editions/variantEditionLines'
 import { ArtworkPrintDetails, ArtworkPurchase } from './ArtworkAvailabilityCard'
 import { ArtworkViews, printViewTiles, VIEW_COUNT, viewAlt } from './ArtworkViews'
+import { PrintAnswers } from './PrintAnswers'
 import { SHOW_NEIGHBOUR_ARROWS } from './neighbourArrows'
 import { reportImageError } from '@/lib/observability/reportImageError'
 import { PHOTO_VIEWS, type PresentationView } from '@/lib/printPresentation/record'
@@ -268,6 +269,12 @@ export const ArtworkDetailBody = ({
               layout="grid"
               className={styles.viewsGrid}
             />
+          )}
+          {/* What's in the box, time, shipping, returns (docs/take-a-peek T7): at the bottom of the
+              column, above Share (owner, 2026-11-27: "move the accordions to the bottom"); only
+              while there is a print to order, as before. */}
+          {commerce && forSale && commerce.minPriceCents !== null && (
+            <PrintAnswers editionType={commerce.editionType} />
           )}
         </ArtworkInfoColumn>
 

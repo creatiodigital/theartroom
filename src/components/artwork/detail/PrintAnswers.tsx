@@ -55,7 +55,8 @@ const answers = (editionType: 'open' | 'limited'): Answer[] => [
 ]
 
 /**
- * Folded answers under Order a print (docs/take-a-peek/README.md T7; designs/ArtworkReassurance):
+ * Folded answers at the bottom of the artwork info column, above Share (owner, 2026-11-27; first
+ * under Order a print, docs/take-a-peek/README.md T7; designs/ArtworkReassurance):
  * what's in the box, production time, shipping, returns. All closed at first, one open at a time;
  * each row a heading with a button that shows its panel.
  */

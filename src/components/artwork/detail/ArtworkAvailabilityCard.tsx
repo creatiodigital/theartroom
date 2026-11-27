@@ -10,7 +10,6 @@ import { editionLineText } from '@/lib/editions/editionLineText'
 import type { VariantEditionLineParts } from '@/lib/editions/variantEditionLines'
 import { formatDimensions, type Unit } from '@/lib/units/format'
 import { useUnits } from '@/lib/units/UnitsProvider'
-import { PrintAnswers } from './PrintAnswers'
 import { usePrintWizard } from './usePrintWizard'
 
 import styles from './ArtworkAvailabilityCard.module.scss'
@@ -120,8 +119,8 @@ export const ArtworkPurchase = ({
             placement={surface === 'room' ? 'room' : 'artwork'}
             order={{ title, onOrder: openWizard }}
           />
-          {/* Folded answers (docs/take-a-peek T7): what's in the box, time, shipping, returns. */}
-          <PrintAnswers editionType={sale.editionType} />
+          {/* The folded answers (PrintAnswers) are at the bottom of the column, above Share
+              (owner, 2026-11-27): ArtworkDetailBody. */}
         </>
       )}
     </div>
