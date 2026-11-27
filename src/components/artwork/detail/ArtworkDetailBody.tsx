@@ -278,12 +278,13 @@ export const ArtworkDetailBody = ({
           {commerce && forSale && commerce.minPriceCents !== null && (
             <>
               <PrintAnswers editionType={commerce.editionType} />
-              <TakeAPeek
-                size="inline"
-                placement={surface === 'room' ? 'room' : 'artwork'}
-                order={{ title: displayTitle, onOrder: openWizard }}
-                className={styles.peek}
-              />
+              <div className={styles.peek}>
+                <TakeAPeek
+                  size="inline"
+                  placement={surface === 'room' ? 'room' : 'artwork'}
+                  order={{ title: displayTitle, onOrder: openWizard }}
+                />
+              </div>
             </>
           )}
         </ArtworkInfoColumn>

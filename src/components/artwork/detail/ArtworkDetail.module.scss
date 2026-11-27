@@ -323,8 +323,11 @@ a.artist:hover {
   margin-top: 4px;
 }
 
-// Take a peek, above Share: the room above it that the views and the answers have. Through .rest:
-// outranks Button's own rules.
-.rest .peek {
+// Take a peek, above Share: the room above it that the views and the answers have, and a hairline
+// under it, as under the answers' rows (owner, 2026-11-27: "add a divider between take a peek and
+// share buttons").
+.peek {
   margin-top: var(--space-2);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-gray-25);
 }
