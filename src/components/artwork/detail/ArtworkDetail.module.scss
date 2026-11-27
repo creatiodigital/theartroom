@@ -322,3 +322,9 @@ a.artist:hover {
 .share {
   margin-top: 4px;
 }
+
+// Take a peek, above Share: the room above it that the views and the answers have. Through .rest:
+// outranks Button's own rules.
+.rest .peek {
+  margin-top: var(--space-2);
+}

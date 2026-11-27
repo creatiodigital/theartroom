@@ -164,8 +164,8 @@ test.describe('the artwork imagery zone', () => {
       })
       await page.goto(`/artworks/${fx.slug}`)
 
-      // The work's own clip, by its address: the page also has Take a peek's looping circle under
-      // Order a print (AR-192), a video of its own.
+      // The work's own clip, by its address: the page also has Take a peek's looping circle, above
+      // Share (AR-192), a video of its own.
       const video = page.locator('video[src="https://r2.test/clip.mp4"]')
       await expect(video).toHaveCount(1)
       // Browsers refuse unmuted autoplay, and iOS takes an un-inlined video

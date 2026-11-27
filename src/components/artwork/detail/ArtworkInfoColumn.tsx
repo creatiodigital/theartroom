@@ -16,8 +16,8 @@ import styles from './ArtworkDetail.module.scss'
  * 3. how it is made: the technical lines (an Object's materials), then the size (owner,
  *    2026-11-25: "Move the sizes where the technical info is", "move the materials first, sizes
  *    later"); gone when both are empty;
- * 4. the rest (`children`: an image's print kind and sizes, the views, the folded answers), then
- *    Share.
+ * 4. the rest (`children`: an image's print kind and sizes, the views, the folded answers, Take a
+ *    peek), then Share.
  */
 export function ArtworkInfoColumn({
   author,
